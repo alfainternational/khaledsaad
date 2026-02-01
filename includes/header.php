@@ -1,0 +1,95 @@
+<?php
+/**
+ * رأس الصفحة
+ */
+if (!isset($pageTitle)) $pageTitle = SITE_NAME;
+if (!isset($pageDescription)) $pageDescription = SITE_TAGLINE;
+?>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title><?= e($pageTitle) ?></title>
+    <meta name="description" content="<?= e($pageDescription) ?>">
+    <?php if (isset($pageKeywords)): ?>
+    <meta name="keywords" content="<?= e($pageKeywords) ?>">
+    <?php endif; ?>
+
+    <meta property="og:title" content="<?= e($pageTitle) ?>">
+    <meta property="og:description" content="<?= e($pageDescription) ?>">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ar_SA">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/responsive.css') ?>">
+</head>
+<body class="<?= isset($_COOKIE['darkMode']) && $_COOKIE['darkMode'] === 'true' ? 'dark-mode' : '' ?>">
+    <a href="#main-content" class="skip-link">تخطي إلى المحتوى</a>
+
+    <?php if (getSetting('promo_active', '0') === '1'): ?>
+    <div class="promo-banner" id="promoBanner">
+        <div class="container">
+            <p>
+                <i class="fas fa-gift"></i>
+                <span><?= e(getSetting('promo_message', 'عرض خاص: خصم 20% للشهر الأول!')) ?></span>
+                <a href="<?= url('pages/contact.php') ?>" class="promo-link">احجز الآن</a>
+            </p>
+        </div>
+        <button type="button" class="promo-close" onclick="closePromo()" aria-label="إغلاق">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <?php endif; ?>
+
+    <header class="site-header" id="siteHeader">
+        <div class="container">
+            <nav class="main-nav" role="navigation" aria-label="القائمة الرئيسية">
+                <a href="<?= url('') ?>" class="logo" aria-label="<?= SITE_NAME ?>">
+                    <span class="logo-text">خالد سعد</span>
+                    <span class="logo-tagline">للاستشارات</span>
+                </a>
+
+                <div class="nav-menu" id="navMenu">
+                    <ul class="nav-list">
+                        <li><a href="<?= url('') ?>" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>">الرئيسية</a></li>
+                        <li class="has-dropdown">
+                            <a href="<?= url('pages/services.php') ?>" class="nav-link">الخدمات <i class="fas fa-chevron-down"></i></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="<?= url('pages/services.php#consulting') ?>">الاستشارات التسويقية</a></li>
+                                <li><a href="<?= url('pages/services.php#digital') ?>">التحول الرقمي</a></li>
+                                <li><a href="<?= url('pages/services.php#branding') ?>">بناء الهوية التجارية</a></li>
+                                <li><a href="<?= url('pages/services.php#training') ?>">التدريب والتطوير</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="<?= url('pages/pricing.php') ?>" class="nav-link">الأسعار</a></li>
+                        <li><a href="<?= url('pages/blog.php') ?>" class="nav-link">المدونة</a></li>
+                        <li><a href="<?= url('pages/diagnostic.php') ?>" class="nav-link">أداة التشخيص</a></li>
+                    </ul>
+
+                    <div class="header-actions">
+                        <button type="button" class="theme-toggle" id="themeToggle" aria-label="تبديل الوضع">
+                            <i class="fas fa-moon dark-icon"></i>
+                            <i class="fas fa-sun light-icon"></i>
+                        </button>
+                        <a href="<?= url('pages/contact.php') ?>" class="btn btn-primary btn-sm">تواصل معنا</a>
+                    </div>
+                </div>
+
+                <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="navMenu" aria-label="القائمة">
+                    <span class="hamburger"><span></span><span></span><span></span></span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">

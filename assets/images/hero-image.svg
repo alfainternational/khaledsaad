@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" fill="none">
+  <!-- Background Shape -->
+  <rect x="50" y="50" width="400" height="300" rx="20" fill="#f0f9ff"/>
+
+  <!-- Chart -->
+  <rect x="80" y="120" width="180" height="200" rx="10" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+
+  <!-- Chart Bars -->
+  <rect x="100" y="240" width="30" height="60" rx="4" fill="#93c5fd"/>
+  <rect x="140" y="200" width="30" height="100" rx="4" fill="#60a5fa"/>
+  <rect x="180" y="160" width="30" height="140" rx="4" fill="#3b82f6"/>
+  <rect x="220" y="180" width="30" height="120" rx="4" fill="#2563eb"/>
+
+  <!-- Chart Title -->
+  <rect x="100" y="135" width="80" height="10" rx="2" fill="#94a3b8"/>
+
+  <!-- Dashboard Panel -->
+  <rect x="280" y="80" width="160" height="120" rx="10" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+
+  <!-- Dashboard Elements -->
+  <circle cx="310" cy="110" r="15" fill="#10b981"/>
+  <rect x="335" y="100" width="80" height="8" rx="2" fill="#1e293b"/>
+  <rect x="335" y="115" width="60" height="6" rx="2" fill="#94a3b8"/>
+
+  <circle cx="310" cy="160" r="15" fill="#f59e0b"/>
+  <rect x="335" y="150" width="70" height="8" rx="2" fill="#1e293b"/>
+  <rect x="335" y="165" width="50" height="6" rx="2" fill="#94a3b8"/>
+
+  <!-- Profile Card -->
+  <rect x="280" y="220" width="160" height="100" rx="10" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+  <circle cx="320" cy="260" r="25" fill="#2563eb"/>
+  <text x="320" y="267" text-anchor="middle" fill="white" font-size="16" font-weight="bold">خ</text>
+  <rect x="355" y="245" width="70" height="10" rx="2" fill="#1e293b"/>
+  <rect x="355" y="262" width="50" height="6" rx="2" fill="#94a3b8"/>
+  <rect x="355" y="280" width="60" height="6" rx="2" fill="#94a3b8"/>
+
+  <!-- Decorative Elements -->
+  <circle cx="420" cy="350" r="30" fill="#dbeafe"/>
+  <circle cx="100" cy="80" r="20" fill="#fef3c7"/>
+
+  <!-- Growth Arrow -->
+  <path d="M120 280 L220 180" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="220,180 210,190 225,195" fill="#10b981"/>
+</svg>
