@@ -1,56 +1,49 @@
 <?php
 /**
- * صفحة التواصل - نموذج العملاء المحتملين متعدد الخطوات
- * موقع خالد سعد للاستشارات
+ * صفحة التواصل - احجز استشارة مع خالد سعد
+ * خالد سعد - خبير التسويق والتحول الرقمي
  */
 
 require_once dirname(__DIR__) . '/includes/init.php';
 
-// إعدادات SEO
-$pageTitle = 'تواصل معنا - ' . SITE_NAME;
-$pageDescription = 'تواصل معنا للحصول على استشارة مجانية. نساعدك في تحقيق أهدافك التسويقية والرقمية.';
+$pageTitle = 'احجز استشارة - ' . SITE_NAME;
+$pageDescription = 'احجز استشارة مجانية مع خالد سعد. سأساعدك في تحقيق أهدافك التسويقية والرقمية.';
 
-// الحصول على معلومات الخدمة إذا تم تمريرها
 $selectedService = isset($_GET['service']) ? clean($_GET['service']) : '';
 $selectedPlan = isset($_GET['plan']) ? clean($_GET['plan']) : '';
 
 include dirname(__DIR__) . '/includes/header.php';
 ?>
 
-<!-- Page Hero -->
-<section class="page-hero" style="background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%); padding: var(--space-12) 0;">
+<!-- Contact Hero -->
+<section class="contact-hero">
     <div class="container">
-        <div class="text-center" data-aos="fade-up">
-            <span class="hero-badge">
-                <i class="fas fa-envelope"></i>
-                تواصل معنا
-            </span>
-            <h1 style="font-size: var(--font-size-4xl); margin-bottom: var(--space-4);">نسعد بتواصلك</h1>
-            <p style="font-size: var(--font-size-lg); color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
-                أخبرنا عن مشروعك وسنتواصل معك خلال 24 ساعة
-            </p>
+        <div class="contact-hero-content" data-aos="fade-up">
+            <span class="section-badge"><i class="fas fa-calendar-check"></i> احجز استشارة</span>
+            <h1>دعنا نتحدث عن مشروعك</h1>
+            <p>أخبرني عن أهدافك وتحدياتك، وسأتواصل معك خلال 24 ساعة لمناقشة كيف يمكنني مساعدتك</p>
         </div>
     </div>
 </section>
 
 <!-- Contact Section -->
-<section style="padding: var(--space-16) 0;">
+<section class="contact-section">
     <div class="container">
-        <div style="display: grid; grid-template-columns: 1fr 400px; gap: var(--space-12); align-items: start;">
+        <div class="contact-grid">
 
             <!-- Multi-Step Form -->
             <div class="contact-form-wrapper" data-aos="fade-up">
-                <div class="card" style="padding: var(--space-8);">
+                <div class="form-card">
 
                     <!-- Progress Bar -->
-                    <div class="form-progress" style="margin-bottom: var(--space-8);">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-3);">
-                            <span class="step-label active" data-step="1">معلومات أساسية</span>
-                            <span class="step-label" data-step="2">عن شركتك</span>
-                            <span class="step-label" data-step="3">تفاصيل المشروع</span>
+                    <div class="form-progress">
+                        <div class="progress-labels">
+                            <span class="step-label active" data-step="1">معلوماتك</span>
+                            <span class="step-label" data-step="2">عن مشروعك</span>
+                            <span class="step-label" data-step="3">التفاصيل</span>
                         </div>
-                        <div style="height: 4px; background: var(--bg-tertiary); border-radius: var(--radius-full); overflow: hidden;">
-                            <div id="progressBar" style="height: 100%; width: 33.33%; background: var(--primary); transition: width var(--transition);"></div>
+                        <div class="progress-bar-track">
+                            <div id="progressBar" class="progress-bar-fill"></div>
                         </div>
                     </div>
 
@@ -60,91 +53,95 @@ include dirname(__DIR__) . '/includes/header.php';
 
                         <!-- Step 1: Basic Info -->
                         <div class="form-step active" data-step="1">
-                            <h3 style="margin-bottom: var(--space-6);">
-                                <i class="fas fa-user" style="color: var(--primary); margin-left: var(--space-2);"></i>
-                                معلوماتك الأساسية
-                            </h3>
+                            <div class="step-header">
+                                <span class="step-icon"><i class="fas fa-user"></i></span>
+                                <div>
+                                    <h3>معلوماتك الأساسية</h3>
+                                    <p>حتى أتمكن من التواصل معك</p>
+                                </div>
+                            </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="full_name">الاسم الكامل <span class="required">*</span></label>
-                                <input type="text" id="full_name" name="full_name" class="form-control" required placeholder="أدخل اسمك الكامل" aria-describedby="nameHelp">
+                                <label class="form-label" for="full_name">الاسم <span class="required">*</span></label>
+                                <input type="text" id="full_name" name="full_name" class="form-control" required placeholder="اسمك الكريم">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label" for="email">البريد الإلكتروني <span class="required">*</span></label>
-                                <input type="email" id="email" name="email" class="form-control" required placeholder="example@company.com" aria-describedby="emailHelp">
+                                <input type="email" id="email" name="email" class="form-control" required placeholder="example@email.com">
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="phone">رقم الهاتف</label>
-                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="+966 5x xxx xxxx" dir="ltr" style="text-align: left;">
+                                <label class="form-label" for="phone">رقم الهاتف (اختياري)</label>
+                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="للتواصل الأسرع" dir="ltr" style="text-align: left;">
                             </div>
 
                             <button type="button" class="btn btn-primary w-100" onclick="nextStep(2)">
-                                التالي
-                                <i class="fas fa-arrow-left"></i>
+                                التالي <i class="fas fa-arrow-left"></i>
                             </button>
                         </div>
 
-                        <!-- Step 2: Company Info -->
+                        <!-- Step 2: Project Info -->
                         <div class="form-step" data-step="2" style="display: none;">
-                            <h3 style="margin-bottom: var(--space-6);">
-                                <i class="fas fa-building" style="color: var(--primary); margin-left: var(--space-2);"></i>
-                                معلومات شركتك
-                            </h3>
-
-                            <div class="form-group">
-                                <label class="form-label" for="company">اسم الشركة</label>
-                                <input type="text" id="company" name="company" class="form-control" placeholder="اسم شركتك أو مشروعك">
+                            <div class="step-header">
+                                <span class="step-icon"><i class="fas fa-briefcase"></i></span>
+                                <div>
+                                    <h3>عن مشروعك</h3>
+                                    <p>ساعدني في فهم طبيعة عملك</p>
+                                </div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="company_size">حجم الشركة</label>
+                                <label class="form-label" for="company">اسم المشروع / الشركة</label>
+                                <input type="text" id="company" name="company" class="form-control" placeholder="اسم مشروعك أو شركتك">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="company_size">حجم الفريق</label>
                                 <select id="company_size" name="company_size" class="form-control">
-                                    <option value="">اختر حجم الشركة</option>
-                                    <option value="1-10">1-10 موظفين</option>
-                                    <option value="11-50">11-50 موظف</option>
-                                    <option value="51-200">51-200 موظف</option>
-                                    <option value="201-500">201-500 موظف</option>
-                                    <option value="500+">أكثر من 500 موظف</option>
+                                    <option value="">اختر</option>
+                                    <option value="solo">أعمل بمفردي</option>
+                                    <option value="1-10">1-10 أشخاص</option>
+                                    <option value="11-50">11-50 شخص</option>
+                                    <option value="51+">أكثر من 50</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="industry">القطاع / الصناعة</label>
+                                <label class="form-label" for="industry">المجال</label>
                                 <select id="industry" name="industry" class="form-control">
-                                    <option value="">اختر القطاع</option>
+                                    <option value="">اختر مجالك</option>
                                     <option value="technology">التقنية</option>
                                     <option value="ecommerce">التجارة الإلكترونية</option>
                                     <option value="retail">التجزئة</option>
+                                    <option value="services">الخدمات</option>
                                     <option value="healthcare">الرعاية الصحية</option>
                                     <option value="education">التعليم</option>
-                                    <option value="finance">المالية والمصارف</option>
+                                    <option value="finance">المالية</option>
                                     <option value="real-estate">العقارات</option>
-                                    <option value="hospitality">الضيافة والسياحة</option>
-                                    <option value="manufacturing">التصنيع</option>
                                     <option value="other">أخرى</option>
                                 </select>
                             </div>
 
-                            <div style="display: flex; gap: var(--space-4);">
-                                <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="prevStep(1)">
-                                    <i class="fas fa-arrow-right"></i>
-                                    السابق
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
+                                    <i class="fas fa-arrow-right"></i> السابق
                                 </button>
-                                <button type="button" class="btn btn-primary" style="flex: 2;" onclick="nextStep(3)">
-                                    التالي
-                                    <i class="fas fa-arrow-left"></i>
+                                <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                                    التالي <i class="fas fa-arrow-left"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Step 3: Project Details -->
+                        <!-- Step 3: Details -->
                         <div class="form-step" data-step="3" style="display: none;">
-                            <h3 style="margin-bottom: var(--space-6);">
-                                <i class="fas fa-clipboard-list" style="color: var(--primary); margin-left: var(--space-2);"></i>
-                                تفاصيل المشروع
-                            </h3>
+                            <div class="step-header">
+                                <span class="step-icon"><i class="fas fa-comment-dots"></i></span>
+                                <div>
+                                    <h3>كيف أساعدك؟</h3>
+                                    <p>أخبرني المزيد عن احتياجاتك</p>
+                                </div>
+                            </div>
 
                             <div class="form-group">
                                 <label class="form-label" for="service_interested">الخدمة المطلوبة</label>
@@ -153,143 +150,87 @@ include dirname(__DIR__) . '/includes/header.php';
                                     <option value="consulting" <?= $selectedService === 'consulting' ? 'selected' : '' ?>>الاستشارات التسويقية</option>
                                     <option value="digital" <?= $selectedService === 'digital' ? 'selected' : '' ?>>التحول الرقمي</option>
                                     <option value="branding" <?= $selectedService === 'branding' ? 'selected' : '' ?>>بناء الهوية التجارية</option>
-                                    <option value="training" <?= $selectedService === 'training' ? 'selected' : '' ?>>التدريب والتطوير</option>
                                     <option value="multiple">عدة خدمات</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="budget">الميزانية المتوقعة</label>
-                                <select id="budget" name="budget" class="form-control">
-                                    <option value="">اختر نطاق الميزانية</option>
-                                    <option value="less_10k">أقل من 10,000 ر.س</option>
-                                    <option value="10k_25k">10,000 - 25,000 ر.س</option>
-                                    <option value="25k_50k">25,000 - 50,000 ر.س</option>
-                                    <option value="50k_100k">50,000 - 100,000 ر.س</option>
-                                    <option value="more_100k">أكثر من 100,000 ر.س</option>
+                                    <option value="not_sure">غير متأكد بعد</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label" for="message">رسالتك <span class="required">*</span></label>
-                                <textarea id="message" name="message" class="form-control" rows="4" required placeholder="أخبرنا المزيد عن مشروعك، أهدافك، والتحديات التي تواجهها..." aria-describedby="messageHelp"></textarea>
-                                <span class="form-hint" id="messageHelp">الحد الأدنى 20 حرفاً</span>
+                                <textarea id="message" name="message" class="form-control" rows="4" required placeholder="أخبرني عن أهدافك، التحديات التي تواجهها، أو أي أسئلة لديك..."></textarea>
                             </div>
 
                             <?php if ($selectedPlan): ?>
                             <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
                             <?php endif; ?>
 
-                            <div style="display: flex; gap: var(--space-4);">
-                                <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="prevStep(2)">
-                                    <i class="fas fa-arrow-right"></i>
-                                    السابق
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
+                                    <i class="fas fa-arrow-right"></i> السابق
                                 </button>
-                                <button type="submit" class="btn btn-primary" style="flex: 2;" id="submitBtn">
-                                    <span class="btn-text">
-                                        <i class="fas fa-paper-plane"></i>
-                                        إرسال الطلب
-                                    </span>
-                                    <span class="btn-loading">
-                                        <i class="fas fa-spinner fa-spin"></i>
-                                        جاري الإرسال...
-                                    </span>
+                                <button type="submit" class="btn btn-primary flex-2" id="submitBtn">
+                                    <span class="btn-text"><i class="fas fa-paper-plane"></i> إرسال الطلب</span>
+                                    <span class="btn-loading"><i class="fas fa-spinner fa-spin"></i> جاري الإرسال...</span>
                                 </button>
                             </div>
                         </div>
                     </form>
 
                     <!-- Success Message -->
-                    <div id="formSuccess" style="display: none; text-align: center; padding: var(--space-8);">
-                        <div style="width: 80px; height: 80px; background: rgba(16, 185, 129, 0.1); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-6);">
-                            <i class="fas fa-check" style="font-size: 2rem; color: var(--success);"></i>
+                    <div id="formSuccess" class="success-message" style="display: none;">
+                        <div class="success-icon">
+                            <i class="fas fa-check"></i>
                         </div>
-                        <h3 style="margin-bottom: var(--space-3);">تم إرسال طلبك بنجاح!</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
-                            شكراً لتواصلك معنا. سيقوم أحد خبرائنا بالتواصل معك خلال 24 ساعة.
-                        </p>
-                        <a href="<?= url('') ?>" class="btn btn-primary">
-                            العودة للرئيسية
-                        </a>
+                        <h3>تم إرسال طلبك بنجاح!</h3>
+                        <p>شكراً لتواصلك معي. سأراجع طلبك وأتواصل معك خلال 24 ساعة.</p>
+                        <a href="<?= url('') ?>" class="btn btn-primary">العودة للرئيسية</a>
                     </div>
                 </div>
             </div>
 
-            <!-- Contact Info Sidebar -->
-            <div class="contact-sidebar" data-aos="fade-up" data-aos-delay="200">
-                <!-- Contact Card -->
-                <div class="card" style="padding: var(--space-6); margin-bottom: var(--space-6);">
-                    <h4 style="margin-bottom: var(--space-5);">
-                        <i class="fas fa-headset" style="color: var(--primary); margin-left: var(--space-2);"></i>
-                        معلومات التواصل
-                    </h4>
+            <!-- Sidebar -->
+            <div class="contact-sidebar" data-aos="fade-up" data-aos-delay="100">
 
-                    <div style="margin-bottom: var(--space-5);">
-                        <div style="display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4);">
-                            <div style="width: 40px; height: 40px; background: rgba(37, 99, 235, 0.1); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i class="fas fa-phone-alt" style="color: var(--primary);"></i>
-                            </div>
-                            <div>
-                                <strong style="display: block; margin-bottom: var(--space-1);">الهاتف</strong>
-                                <a href="tel:+966500000000" style="color: var(--text-secondary);"><?= e(SITE_PHONE) ?></a>
-                            </div>
+                <!-- About Card -->
+                <div class="sidebar-card about-card">
+                    <div class="about-avatar">خ</div>
+                    <h4>خالد سعد</h4>
+                    <p>خبير التسويق والتحول الرقمي</p>
+                    <div class="about-stats">
+                        <div class="stat">
+                            <strong>+10</strong>
+                            <span>سنوات خبرة</span>
                         </div>
-
-                        <div style="display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4);">
-                            <div style="width: 40px; height: 40px; background: rgba(37, 99, 235, 0.1); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i class="fas fa-envelope" style="color: var(--primary);"></i>
-                            </div>
-                            <div>
-                                <strong style="display: block; margin-bottom: var(--space-1);">البريد الإلكتروني</strong>
-                                <a href="mailto:<?= SITE_EMAIL ?>" style="color: var(--text-secondary);"><?= e(SITE_EMAIL) ?></a>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
-                            <div style="width: 40px; height: 40px; background: rgba(37, 99, 235, 0.1); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i class="fas fa-map-marker-alt" style="color: var(--primary);"></i>
-                            </div>
-                            <div>
-                                <strong style="display: block; margin-bottom: var(--space-1);">العنوان</strong>
-                                <span style="color: var(--text-secondary);"><?= e(SITE_ADDRESS) ?></span>
-                            </div>
+                        <div class="stat">
+                            <strong>+150</strong>
+                            <span>عميل</span>
                         </div>
                     </div>
+                </div>
 
-                    <div style="border-top: 1px solid var(--border-color); padding-top: var(--space-5);">
-                        <strong style="display: block; margin-bottom: var(--space-3);">ساعات العمل</strong>
-                        <p style="color: var(--text-secondary); margin: 0;">
-                            <i class="far fa-clock" style="margin-left: var(--space-2);"></i>
-                            الأحد - الخميس: 9 ص - 6 م
-                        </p>
-                    </div>
+                <!-- What to Expect -->
+                <div class="sidebar-card">
+                    <h4><i class="fas fa-lightbulb"></i> ماذا تتوقع؟</h4>
+                    <ul class="expect-list">
+                        <li><i class="fas fa-check"></i> استشارة أولية مجانية</li>
+                        <li><i class="fas fa-check"></i> تحليل أولي لوضعك الحالي</li>
+                        <li><i class="fas fa-check"></i> توصيات مخصصة</li>
+                        <li><i class="fas fa-check"></i> خطة عمل واضحة</li>
+                    </ul>
                 </div>
 
                 <!-- Quick Contact -->
-                <div class="card" style="padding: var(--space-6); background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
-                    <h4 style="margin-bottom: var(--space-3); color: white;">
-                        <i class="fab fa-whatsapp" style="margin-left: var(--space-2);"></i>
-                        تواصل سريع عبر واتساب
-                    </h4>
-                    <p style="color: rgba(255,255,255,0.9); margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
-                        للاستفسارات السريعة، يمكنك التواصل معنا مباشرة عبر واتساب
-                    </p>
-                    <a href="https://wa.me/966500000000?text=مرحباً، أريد الاستفسار عن خدماتكم" target="_blank" class="btn" style="background: white; color: var(--primary); width: 100%;">
-                        <i class="fab fa-whatsapp"></i>
-                        ابدأ المحادثة
+                <div class="sidebar-card whatsapp-card">
+                    <h4><i class="fab fa-whatsapp"></i> تفضل المحادثة المباشرة؟</h4>
+                    <p>يمكنك التواصل معي مباشرة عبر واتساب للاستفسارات السريعة</p>
+                    <a href="https://wa.me/?text=<?= urlencode('مرحباً خالد، أريد الاستفسار عن خدماتك') ?>" target="_blank" class="btn btn-whatsapp">
+                        <i class="fab fa-whatsapp"></i> ابدأ المحادثة
                     </a>
                 </div>
 
-                <!-- Trust Badges -->
-                <div style="margin-top: var(--space-6); text-align: center;">
-                    <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: var(--space-3);">
-                        <i class="fas fa-shield-alt" style="margin-left: var(--space-2);"></i>
-                        معلوماتك آمنة ومحمية
-                    </p>
-                    <div style="display: flex; justify-content: center; gap: var(--space-4); color: var(--text-muted);">
-                        <span><i class="fas fa-lock"></i> SSL</span>
-                        <span><i class="fas fa-user-shield"></i> خصوصية</span>
-                    </div>
+                <!-- Trust -->
+                <div class="trust-badges">
+                    <p><i class="fas fa-shield-alt"></i> معلوماتك آمنة ومحمية</p>
                 </div>
             </div>
         </div>
@@ -297,29 +238,345 @@ include dirname(__DIR__) . '/includes/header.php';
 </section>
 
 <style>
+/* Contact Page Styles */
+.contact-hero {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    padding: var(--space-12) 0;
+}
+
+.contact-hero-content {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.contact-hero-content h1 {
+    font-size: var(--font-size-3xl);
+    margin: var(--space-4) 0;
+}
+
+.contact-hero-content p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-lg);
+}
+
+.section-badge {
+    display: inline-block;
+    padding: var(--space-2) var(--space-4);
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.section-badge i {
+    margin-left: var(--space-2);
+}
+
+.contact-section {
+    padding: var(--space-12) 0 var(--space-16);
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: var(--space-8);
+    align-items: start;
+}
+
+/* Form Card */
+.form-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+}
+
+.form-progress {
+    margin-bottom: var(--space-8);
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+}
+
 .step-label {
     font-size: var(--font-size-sm);
     color: var(--text-muted);
-    transition: color var(--transition);
+    transition: var(--transition);
 }
+
 .step-label.active {
     color: var(--primary);
     font-weight: 600;
 }
+
+.progress-bar-track {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 33.33%;
+    background: var(--primary);
+    transition: width var(--transition);
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-light);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: var(--font-size-xl);
+}
+
+.step-header h3 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+}
+
+.step-header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+}
+
 .form-step {
     animation: fadeIn 0.3s ease;
 }
+
+.btn-group {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.btn-group .btn:first-child {
+    flex: 1;
+}
+
+.btn-group .btn:last-child {
+    flex: 2;
+}
+
+.flex-2 {
+    flex: 2 !important;
+}
+
+/* Success Message */
+.success-message {
+    text-align: center;
+    padding: var(--space-8);
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-6);
+}
+
+.success-icon i {
+    font-size: 2rem;
+    color: var(--success);
+}
+
+.success-message h3 {
+    margin-bottom: var(--space-3);
+}
+
+.success-message p {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-6);
+}
+
+/* Sidebar */
+.sidebar-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    margin-bottom: var(--space-4);
+}
+
+.sidebar-card h4 {
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.sidebar-card h4 i {
+    color: var(--primary);
+}
+
+/* About Card */
+.about-card {
+    text-align: center;
+}
+
+.about-avatar {
+    width: 70px;
+    height: 70px;
+    background: var(--primary);
+    color: white;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    margin: 0 auto var(--space-3);
+}
+
+.about-card h4 {
+    justify-content: center;
+    margin-bottom: var(--space-1);
+}
+
+.about-card > p {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-4);
+}
+
+.about-stats {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-color);
+}
+
+.about-stats .stat {
+    text-align: center;
+}
+
+.about-stats strong {
+    display: block;
+    font-size: var(--font-size-xl);
+    color: var(--primary);
+}
+
+.about-stats span {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+/* Expect List */
+.expect-list {
+    list-style: none;
+}
+
+.expect-list li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    color: var(--text-secondary);
+}
+
+.expect-list li i {
+    color: var(--success);
+    font-size: var(--font-size-sm);
+}
+
+/* WhatsApp Card */
+.whatsapp-card {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+}
+
+.whatsapp-card h4 {
+    color: white;
+}
+
+.whatsapp-card h4 i {
+    color: white;
+}
+
+.whatsapp-card p {
+    color: rgba(255,255,255,0.9);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-4);
+}
+
+.btn-whatsapp {
+    background: white;
+    color: #25D366;
+    width: 100%;
+}
+
+.btn-whatsapp:hover {
+    background: rgba(255,255,255,0.9);
+}
+
+/* Trust */
+.trust-badges {
+    text-align: center;
+    padding: var(--space-4);
+}
+
+.trust-badges p {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.trust-badges i {
+    margin-left: var(--space-2);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-sidebar {
+        order: -1;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-4);
+    }
+
+    .sidebar-card {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .form-card {
+        padding: var(--space-6);
+    }
+
+    .contact-sidebar {
+        grid-template-columns: 1fr;
+    }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-@media (max-width: 992px) {
-    section > .container > div {
-        grid-template-columns: 1fr !important;
-    }
-    .contact-sidebar {
-        order: -1;
-    }
 }
 </style>
 
@@ -328,7 +585,6 @@ let currentStep = 1;
 const totalSteps = 3;
 
 function nextStep(step) {
-    // Validate current step
     const currentStepEl = document.querySelector(`.form-step[data-step="${currentStep}"]`);
     const requiredFields = currentStepEl.querySelectorAll('[required]');
     let isValid = true;
@@ -344,11 +600,8 @@ function nextStep(step) {
 
     if (!isValid) return;
 
-    // Move to next step
     currentStepEl.style.display = 'none';
     document.querySelector(`.form-step[data-step="${step}"]`).style.display = 'block';
-
-    // Update progress
     currentStep = step;
     updateProgress();
 }
@@ -374,7 +627,6 @@ function updateProgress() {
     });
 }
 
-// Form submission
 document.getElementById('leadForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -392,9 +644,6 @@ document.getElementById('leadForm').addEventListener('submit', async function(e)
         const result = await response.json();
 
         if (result.success) {
-            document.querySelector('.card').innerHTML = document.getElementById('formSuccess').innerHTML;
-            document.getElementById('formSuccess').style.display = 'block';
-            // Show success message
             document.querySelectorAll('.form-step, .form-progress').forEach(el => el.style.display = 'none');
             document.getElementById('formSuccess').style.display = 'block';
         } else {

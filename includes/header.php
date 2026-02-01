@@ -31,6 +31,7 @@ if (!isset($pageDescription)) $pageDescription = SITE_TAGLINE;
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
     <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/modern.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/responsive.css') ?>">
 </head>
 <body class="<?= isset($_COOKIE['darkMode']) && $_COOKIE['darkMode'] === 'true' ? 'dark-mode' : '' ?>">
@@ -56,24 +57,14 @@ if (!isset($pageDescription)) $pageDescription = SITE_TAGLINE;
             <nav class="main-nav" role="navigation" aria-label="القائمة الرئيسية">
                 <a href="<?= url('') ?>" class="logo" aria-label="<?= SITE_NAME ?>">
                     <span class="logo-text">خالد سعد</span>
-                    <span class="logo-tagline">للاستشارات</span>
                 </a>
 
                 <div class="nav-menu" id="navMenu">
                     <ul class="nav-list">
                         <li><a href="<?= url('') ?>" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>">الرئيسية</a></li>
-                        <li class="has-dropdown">
-                            <a href="<?= url('pages/services.php') ?>" class="nav-link">الخدمات <i class="fas fa-chevron-down"></i></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="<?= url('pages/services.php#consulting') ?>">الاستشارات التسويقية</a></li>
-                                <li><a href="<?= url('pages/services.php#digital') ?>">التحول الرقمي</a></li>
-                                <li><a href="<?= url('pages/services.php#branding') ?>">بناء الهوية التجارية</a></li>
-                                <li><a href="<?= url('pages/services.php#training') ?>">التدريب والتطوير</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="<?= url('pages/pricing.php') ?>" class="nav-link">الأسعار</a></li>
+                        <li><a href="<?= url('pages/about.php') ?>" class="nav-link">من أنا</a></li>
+                        <li><a href="<?= url('pages/services.php') ?>" class="nav-link">الخدمات</a></li>
                         <li><a href="<?= url('pages/blog.php') ?>" class="nav-link">المدونة</a></li>
-                        <li><a href="<?= url('pages/diagnostic.php') ?>" class="nav-link">أداة التشخيص</a></li>
                     </ul>
 
                     <div class="header-actions">
@@ -81,7 +72,7 @@ if (!isset($pageDescription)) $pageDescription = SITE_TAGLINE;
                             <i class="fas fa-moon dark-icon"></i>
                             <i class="fas fa-sun light-icon"></i>
                         </button>
-                        <a href="<?= url('pages/contact.php') ?>" class="btn btn-primary btn-sm">تواصل معنا</a>
+                        <a href="<?= url('pages/contact.php') ?>" class="btn btn-primary btn-sm">احجز استشارة</a>
                     </div>
                 </div>
 

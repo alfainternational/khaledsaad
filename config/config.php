@@ -10,12 +10,17 @@ if (!defined('SITE_ROOT')) {
 }
 
 // إعدادات الموقع
-define('SITE_NAME', 'خالد سعد للاستشارات');
-define('SITE_TAGLINE', 'شريكك في التحول الرقمي');
-define('SITE_EMAIL', 'info@khaledsaad.com');
-define('SITE_PHONE', '+966 50 000 0000');
-define('SITE_ADDRESS', 'الرياض، المملكة العربية السعودية');
+define('SITE_NAME', 'خالد سعد');
+define('SITE_TAGLINE', 'خبير التسويق والتحول الرقمي');
+define('SITE_EMAIL', 'hello@khaledsaad.com');
+define('SITE_PHONE', '');
+define('SITE_ADDRESS', '');
 define('SITE_URL', 'https://khaledsaad.com');
+
+// معلومات الخبير
+define('EXPERT_NAME', 'خالد سعد');
+define('EXPERT_TITLE', 'خبير التسويق والتحول الرقمي');
+define('EXPERT_BIO', 'أساعد رواد الأعمال والشركات في بناء استراتيجيات تسويقية فعّالة وتحقيق التحول الرقمي');
 
 // إعدادات التطوير
 define('DEBUG_MODE', true);
