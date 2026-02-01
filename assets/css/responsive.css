@@ -1,0 +1,545 @@
+/**
+ * التصميم المتجاوب
+ * موقع خالد سعد للاستشارات
+ */
+
+/* ============================================
+   Large Screens (1200px and below)
+============================================ */
+@media (max-width: 1200px) {
+    .container {
+        max-width: 100%;
+        padding: 0 var(--space-8);
+    }
+
+    .hero-grid {
+        gap: var(--space-8);
+    }
+
+    .footer-grid {
+        grid-template-columns: 1.5fr 1fr 1fr 1.5fr;
+        gap: var(--space-6);
+    }
+
+    .pricing-card.popular {
+        transform: scale(1);
+    }
+}
+
+/* ============================================
+   Medium Screens (992px and below)
+============================================ */
+@media (max-width: 992px) {
+    :root {
+        --header-height: 70px;
+    }
+
+    /* Header */
+    .menu-toggle {
+        display: flex;
+    }
+
+    .nav-menu {
+        position: fixed;
+        top: var(--header-height);
+        right: 0;
+        left: 0;
+        bottom: 0;
+        background: var(--bg-primary);
+        flex-direction: column;
+        align-items: stretch;
+        padding: var(--space-6);
+        gap: var(--space-6);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-20px);
+        transition: all var(--transition);
+        overflow-y: auto;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .nav-menu.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .promo-banner ~ .site-header .nav-menu {
+        top: calc(var(--header-height) + 44px);
+    }
+
+    .nav-list {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .nav-link {
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-color);
+        justify-content: space-between;
+    }
+
+    .has-dropdown .dropdown-menu {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        padding-right: var(--space-6);
+        display: none;
+        background: transparent;
+    }
+
+    .has-dropdown.open .dropdown-menu {
+        display: block;
+    }
+
+    .dropdown-menu li a {
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .header-actions {
+        flex-direction: row;
+        justify-content: center;
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--border-color);
+    }
+
+    /* Hero */
+    .hero-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .hero-content {
+        max-width: 100%;
+    }
+
+    .hero-actions {
+        justify-content: center;
+    }
+
+    .hero-stats {
+        justify-content: center;
+    }
+
+    .hero-image {
+        order: -1;
+        margin-bottom: var(--space-8);
+    }
+
+    .hero-image img {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .floating-card {
+        display: none;
+    }
+
+    /* Methodology */
+    .methodology-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-8);
+    }
+
+    .methodology-grid::before {
+        display: none;
+    }
+
+    /* Footer */
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Newsletter */
+    .newsletter-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .newsletter-text {
+        text-align: center;
+    }
+
+    .newsletter-form {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+/* ============================================
+   Small Screens (768px and below)
+============================================ */
+@media (max-width: 768px) {
+    :root {
+        --font-size-4xl: 2rem;
+        --font-size-5xl: 2.5rem;
+    }
+
+    section {
+        padding: var(--space-12) 0;
+    }
+
+    .container {
+        padding: 0 var(--space-4);
+    }
+
+    /* Section Headers */
+    .section-header {
+        margin-bottom: var(--space-8);
+    }
+
+    .section-header h2 {
+        font-size: var(--font-size-2xl);
+    }
+
+    /* Hero */
+    .hero-section {
+        padding: var(--space-8) 0;
+        min-height: auto;
+    }
+
+    .hero-title {
+        font-size: var(--font-size-3xl);
+    }
+
+    .hero-description {
+        font-size: var(--font-size-base);
+    }
+
+    .hero-actions {
+        flex-direction: column;
+    }
+
+    .hero-actions .btn {
+        width: 100%;
+    }
+
+    .hero-stats {
+        flex-wrap: wrap;
+        gap: var(--space-6);
+    }
+
+    .stat-item {
+        flex: 1 1 calc(50% - var(--space-3));
+    }
+
+    /* Services */
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .service-card {
+        padding: var(--space-6);
+    }
+
+    /* Testimonials */
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .testimonial-card {
+        padding: var(--space-6);
+    }
+
+    .testimonial-metrics {
+        flex-wrap: wrap;
+    }
+
+    .metric {
+        flex: 1 1 calc(50% - var(--space-3));
+    }
+
+    /* Pricing */
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-card {
+        padding: var(--space-6);
+    }
+
+    /* Footer */
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-10);
+    }
+
+    .footer-col {
+        text-align: center;
+    }
+
+    .footer-logo {
+        align-items: center;
+    }
+
+    .social-links {
+        justify-content: center;
+    }
+
+    .footer-links,
+    .contact-info {
+        display: inline-block;
+        text-align: right;
+    }
+
+    .footer-bottom-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .footer-legal {
+        justify-content: center;
+    }
+
+    /* Newsletter */
+    .newsletter-form .form-group {
+        flex-direction: column;
+    }
+
+    .newsletter-form button {
+        width: 100%;
+    }
+
+    /* CTA */
+    .cta-section h2 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .cta-section .btn {
+        width: 100%;
+    }
+
+    /* Chatbot */
+    .chatbot-widget {
+        bottom: var(--space-4);
+        right: var(--space-4);
+    }
+
+    .chatbot-window {
+        width: calc(100vw - var(--space-8));
+        max-width: 350px;
+        right: calc(-50vw + 50% + var(--space-4));
+    }
+
+    /* Scroll to Top */
+    .scroll-to-top {
+        bottom: var(--space-4);
+        left: var(--space-4);
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Promo Banner */
+    .promo-banner .container {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .promo-banner p {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .promo-close {
+        position: static;
+        transform: none;
+    }
+}
+
+/* ============================================
+   Extra Small Screens (480px and below)
+============================================ */
+@media (max-width: 480px) {
+    :root {
+        --font-size-3xl: 1.5rem;
+        --font-size-4xl: 1.75rem;
+        --font-size-5xl: 2rem;
+    }
+
+    .container {
+        padding: 0 var(--space-3);
+    }
+
+    /* Buttons */
+    .btn {
+        padding: var(--space-3) var(--space-5);
+        font-size: var(--font-size-sm);
+    }
+
+    .btn-lg {
+        padding: var(--space-4) var(--space-6);
+    }
+
+    /* Hero */
+    .hero-image img {
+        max-width: 100%;
+    }
+
+    /* Cards */
+    .card-body {
+        padding: var(--space-4);
+    }
+
+    /* Forms */
+    .form-control {
+        padding: var(--space-3);
+    }
+
+    /* Pricing */
+    .price-amount {
+        font-size: var(--font-size-2xl);
+    }
+
+    /* Chatbot */
+    .chatbot-toggle {
+        width: 50px;
+        height: 50px;
+        font-size: var(--font-size-lg);
+    }
+
+    .chatbot-messages {
+        max-height: 250px;
+    }
+
+    .quick-replies button {
+        font-size: 11px;
+        padding: var(--space-1) var(--space-2);
+    }
+}
+
+/* ============================================
+   High Resolution Screens (Retina)
+============================================ */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Use higher resolution images */
+}
+
+/* ============================================
+   Landscape Orientation on Mobile
+============================================ */
+@media (max-width: 768px) and (orientation: landscape) {
+    .hero-section {
+        min-height: auto;
+        padding: var(--space-8) 0;
+    }
+
+    .nav-menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .nav-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}
+
+/* ============================================
+   Reduced Motion
+============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .floating-card {
+        animation: none;
+    }
+
+    [data-aos] {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* ============================================
+   High Contrast Mode
+============================================ */
+@media (prefers-contrast: high) {
+    :root {
+        --border-color: var(--text-primary);
+    }
+
+    .btn {
+        border-width: 3px;
+    }
+
+    .form-control {
+        border-width: 3px;
+    }
+
+    a:focus,
+    button:focus {
+        outline: 3px solid var(--primary);
+        outline-offset: 2px;
+    }
+}
+
+/* ============================================
+   Touch Devices
+============================================ */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase tap targets */
+    .nav-link {
+        padding: var(--space-4);
+    }
+
+    .btn {
+        min-height: 48px;
+    }
+
+    .form-control {
+        min-height: 48px;
+    }
+
+    /* Remove hover effects */
+    .card:hover,
+    .service-card:hover,
+    .pricing-card:hover {
+        transform: none;
+    }
+
+    .social-links a:hover {
+        transform: none;
+    }
+
+    /* Show dropdown on tap */
+    .has-dropdown:hover .dropdown-menu {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+/* ============================================
+   Print Responsive
+============================================ */
+@media print {
+    .container {
+        max-width: 100%;
+        padding: 0;
+    }
+
+    section {
+        padding: 20px 0;
+        page-break-inside: avoid;
+    }
+
+    .hero-grid,
+    .services-grid,
+    .testimonials-grid,
+    .pricing-grid,
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+}
