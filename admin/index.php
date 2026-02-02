@@ -1,135 +1,249 @@
 <?php
+/**
+ * Admin Dashboard
+ * لوحة التحكم الرئيسية
+ */
 session_start();
 require_once dirname(__DIR__) . '/includes/init.php';
 
-if (!isset($_SESSION['admin_id'])) {
-    header('Location: login.php');
-    exit;
-}
-
 $pageTitle = 'لوحة التحكم';
 
-// إحصائيات
+// Get stats
 try {
     $stats = [
-        'leads' => db()->fetchOne("SELECT COUNT(*) as count FROM leads")['count'] ?? 0,
-        'leads_new' => db()->fetchOne("SELECT COUNT(*) as count FROM leads WHERE status = 'new'")['count'] ?? 0,
-        'posts' => db()->fetchOne("SELECT COUNT(*) as count FROM blog_posts WHERE status = 'published'")['count'] ?? 0,
-        'subscribers' => db()->fetchOne("SELECT COUNT(*) as count FROM newsletter_subscribers WHERE status = 'confirmed'")['count'] ?? 0,
+        'leads_total' => db()->fetchOne("SELECT COUNT(*) as c FROM leads")['c'] ?? 0,
+        'leads_new' => db()->fetchOne("SELECT COUNT(*) as c FROM leads WHERE status = 'new'")['c'] ?? 0,
+        'leads_month' => db()->fetchOne("SELECT COUNT(*) as c FROM leads WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")['c'] ?? 0,
+        'posts_total' => db()->fetchOne("SELECT COUNT(*) as c FROM blog_posts WHERE status = 'published'")['c'] ?? 0,
+        'subscribers' => db()->fetchOne("SELECT COUNT(*) as c FROM newsletter_subscribers WHERE status = 'confirmed'")['c'] ?? 0,
+        'diagnostics' => db()->fetchOne("SELECT COUNT(*) as c FROM diagnostic_results WHERE completed_at IS NOT NULL")['c'] ?? 0,
     ];
+
+    // Recent leads
     $recentLeads = db()->fetchAll("SELECT * FROM leads ORDER BY created_at DESC LIMIT 5");
+
+    // Recent posts
+    $recentPosts = db()->fetchAll("SELECT * FROM blog_posts ORDER BY created_at DESC LIMIT 5");
+
+    // Lead status distribution
+    $leadsByStatus = db()->fetchAll("SELECT status, COUNT(*) as count FROM leads GROUP BY status");
+
 } catch (Exception $e) {
-    $stats = ['leads' => 0, 'leads_new' => 0, 'posts' => 0, 'subscribers' => 0];
+    $stats = ['leads_total' => 0, 'leads_new' => 0, 'leads_month' => 0, 'posts_total' => 0, 'subscribers' => 0, 'diagnostics' => 0];
     $recentLeads = [];
+    $recentPosts = [];
+    $leadsByStatus = [];
 }
+
+include __DIR__ . '/includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($pageTitle) ?> - <?= SITE_NAME ?></title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
-    <style>
-        .admin-layout { display: flex; min-height: 100vh; }
-        .admin-sidebar { width: 260px; background: var(--bg-secondary); border-left: 1px solid var(--border-color); padding: var(--space-6); position: fixed; height: 100vh; overflow-y: auto; }
-        .admin-content { flex: 1; margin-right: 260px; padding: var(--space-6); }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border-color); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-8); }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-5); }
-        .stat-card .icon { width: 50px; height: 50px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-3); }
-        .stat-card h3 { font-size: var(--font-size-2xl); margin-bottom: var(--space-1); }
-        .stat-card p { color: var(--text-muted); font-size: var(--font-size-sm); margin: 0; }
-        .nav-menu { list-style: none; margin-top: var(--space-6); }
-        .nav-menu li { margin-bottom: var(--space-2); }
-        .nav-menu a { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius); color: var(--text-secondary); transition: all var(--transition); }
-        .nav-menu a:hover, .nav-menu a.active { background: var(--primary); color: white; }
-        .nav-menu i { width: 20px; }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th, .data-table td { padding: var(--space-3) var(--space-4); text-align: right; border-bottom: 1px solid var(--border-color); }
-        .data-table th { background: var(--bg-tertiary); font-weight: 600; }
-        .status-badge { padding: var(--space-1) var(--space-3); border-radius: var(--radius-full); font-size: var(--font-size-xs); }
-        .status-new { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
-        .sidebar-logo { margin-bottom: var(--space-6); }
-        @media (max-width: 992px) { .admin-sidebar { display: none; } .admin-content { margin-right: 0; } }
-    </style>
-</head>
-<body>
-    <div class="admin-layout">
-        <aside class="admin-sidebar">
-            <div class="sidebar-logo">
-                <span class="logo-text">خالد سعد</span>
-                <span class="logo-tagline" style="display: block; font-size: var(--font-size-xs); color: var(--primary);">لوحة التحكم</span>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="index.php" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
-                <li><a href="leads.php"><i class="fas fa-users"></i> العملاء المحتملين</a></li>
-                <li><a href="blog.php"><i class="fas fa-newspaper"></i> المدونة</a></li>
-                <li><a href="subscribers.php"><i class="fas fa-envelope"></i> المشتركين</a></li>
-                <li><a href="settings.php"><i class="fas fa-cog"></i> الإعدادات</a></li>
-                <li style="margin-top: var(--space-8);"><a href="<?= url('') ?>" target="_blank"><i class="fas fa-external-link-alt"></i> عرض الموقع</a></li>
-                <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
-            </ul>
-        </aside>
 
-        <main class="admin-content">
-            <header class="admin-header">
-                <div>
-                    <h1 style="font-size: var(--font-size-2xl); margin-bottom: var(--space-1);">مرحباً، <?= e($_SESSION['admin_name']) ?></h1>
-                    <p style="color: var(--text-muted); margin: 0;"><?= formatDate(date('Y-m-d'), 'full') ?></p>
-                </div>
-                <a href="logout.php" class="btn btn-secondary btn-sm"><i class="fas fa-sign-out-alt"></i></a>
-            </header>
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1>مرحباً، <?= e($_SESSION['admin_name']) ?></h1>
+        <p>هذه نظرة عامة على نشاط موقعك</p>
+    </div>
+    <div class="quick-actions">
+        <a href="post-edit.php" class="btn btn-primary"><i class="fas fa-plus"></i> مقال جديد</a>
+        <a href="leads.php" class="btn btn-secondary"><i class="fas fa-users"></i> عرض العملاء</a>
+    </div>
+</div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="icon" style="background: rgba(37, 99, 235, 0.1);"><i class="fas fa-users" style="color: var(--primary); font-size: 1.25rem;"></i></div>
-                    <h3><?= formatNumber($stats['leads']) ?></h3>
-                    <p>إجمالي العملاء المحتملين</p>
-                </div>
-                <div class="stat-card">
-                    <div class="icon" style="background: rgba(16, 185, 129, 0.1);"><i class="fas fa-user-plus" style="color: var(--success); font-size: 1.25rem;"></i></div>
-                    <h3><?= formatNumber($stats['leads_new']) ?></h3>
-                    <p>عملاء جدد</p>
-                </div>
-                <div class="stat-card">
-                    <div class="icon" style="background: rgba(245, 158, 11, 0.1);"><i class="fas fa-newspaper" style="color: var(--accent); font-size: 1.25rem;"></i></div>
-                    <h3><?= formatNumber($stats['posts']) ?></h3>
-                    <p>مقالات منشورة</p>
-                </div>
-                <div class="stat-card">
-                    <div class="icon" style="background: rgba(139, 92, 246, 0.1);"><i class="fas fa-envelope" style="color: #8b5cf6; font-size: 1.25rem;"></i></div>
-                    <h3><?= formatNumber($stats['subscribers']) ?></h3>
-                    <p>مشترك في النشرة</p>
-                </div>
-            </div>
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <i class="fas fa-user-tie"></i>
+        </div>
+        <div class="stat-content">
+            <h3><?= formatNumber($stats['leads_total']) ?></h3>
+            <p>إجمالي العملاء المحتملين</p>
+        </div>
+    </div>
 
-            <div class="card" style="padding: var(--space-6);">
-                <h2 style="font-size: var(--font-size-lg); margin-bottom: var(--space-4);">أحدث العملاء المحتملين</h2>
-                <?php if (!empty($recentLeads)): ?>
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="stat-content">
+            <h3><?= formatNumber($stats['leads_new']) ?></h3>
+            <p>عملاء جدد</p>
+            <?php if ($stats['leads_new'] > 0): ?>
+            <span class="stat-change up">يتطلب انتباهك</span>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon warning">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-content">
+            <h3><?= formatNumber($stats['leads_month']) ?></h3>
+            <p>عملاء هذا الشهر</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon info">
+            <i class="fas fa-newspaper"></i>
+        </div>
+        <div class="stat-content">
+            <h3><?= formatNumber($stats['posts_total']) ?></h3>
+            <p>مقالات منشورة</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon danger">
+            <i class="fas fa-envelope"></i>
+        </div>
+        <div class="stat-content">
+            <h3><?= formatNumber($stats['subscribers']) ?></h3>
+            <p>مشترك في النشرة</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <i class="fas fa-stethoscope"></i>
+        </div>
+        <div class="stat-content">
+            <h3><?= formatNumber($stats['diagnostics']) ?></h3>
+            <p>تشخيص مكتمل</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <!-- Recent Leads -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-user-tie"></i> أحدث العملاء المحتملين</h3>
+            <a href="leads.php" class="btn btn-sm btn-secondary">عرض الكل</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <?php if (!empty($recentLeads)): ?>
+            <div class="table-responsive">
                 <table class="data-table">
                     <thead>
-                        <tr><th>الاسم</th><th>البريد</th><th>الخدمة</th><th>الحالة</th><th>التاريخ</th></tr>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>البريد</th>
+                            <th>الخدمة</th>
+                            <th>الحالة</th>
+                            <th>التاريخ</th>
+                        </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($recentLeads as $lead): ?>
                         <tr>
-                            <td><?= e($lead['full_name']) ?></td>
+                            <td>
+                                <a href="lead-view.php?id=<?= $lead['id'] ?>" class="text-primary">
+                                    <?= e($lead['full_name']) ?>
+                                </a>
+                            </td>
                             <td><?= e($lead['email']) ?></td>
                             <td><?= e($lead['service_interested'] ?: '-') ?></td>
-                            <td><span class="status-badge status-<?= $lead['status'] ?>"><?= e($lead['status']) ?></span></td>
+                            <td>
+                                <?php
+                                $statusLabels = [
+                                    'new' => ['label' => 'جديد', 'class' => 'primary'],
+                                    'contacted' => ['label' => 'تم التواصل', 'class' => 'info'],
+                                    'qualified' => ['label' => 'مؤهل', 'class' => 'success'],
+                                    'proposal' => ['label' => 'عرض سعر', 'class' => 'warning'],
+                                    'negotiation' => ['label' => 'تفاوض', 'class' => 'warning'],
+                                    'won' => ['label' => 'مكتمل', 'class' => 'success'],
+                                    'lost' => ['label' => 'خسارة', 'class' => 'danger'],
+                                ];
+                                $status = $statusLabels[$lead['status']] ?? ['label' => $lead['status'], 'class' => 'secondary'];
+                                ?>
+                                <span class="badge badge-<?= $status['class'] ?>"><?= $status['label'] ?></span>
+                            </td>
                             <td><?= formatDate($lead['created_at'], 'short') ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+            <?php else: ?>
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h3>لا يوجد عملاء</h3>
+                <p>لم يتم استلام أي طلبات بعد</p>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div>
+        <!-- Lead Status Chart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-pie"></i> حالة العملاء</h3>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($leadsByStatus)): ?>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <?php
+                    $statusColors = [
+                        'new' => '#2563eb',
+                        'contacted' => '#3b82f6',
+                        'qualified' => '#10b981',
+                        'proposal' => '#f59e0b',
+                        'negotiation' => '#f97316',
+                        'won' => '#22c55e',
+                        'lost' => '#ef4444',
+                    ];
+                    $total = array_sum(array_column($leadsByStatus, 'count'));
+                    foreach ($leadsByStatus as $item):
+                        $percent = $total > 0 ? round(($item['count'] / $total) * 100) : 0;
+                        $color = $statusColors[$item['status']] ?? '#94a3b8';
+                        $label = $statusLabels[$item['status']]['label'] ?? $item['status'];
+                    ?>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="font-size: 0.875rem;"><?= $label ?></span>
+                            <span style="font-size: 0.875rem; color: var(--admin-text-muted);"><?= $item['count'] ?> (<?= $percent ?>%)</span>
+                        </div>
+                        <div style="height: 8px; background: var(--admin-border); border-radius: 4px; overflow: hidden;">
+                            <div style="height: 100%; width: <?= $percent ?>%; background: <?= $color ?>;"></div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
                 <?php else: ?>
-                <p style="color: var(--text-muted); text-align: center; padding: var(--space-8);">لا توجد بيانات</p>
+                <p class="text-muted text-center">لا توجد بيانات</p>
                 <?php endif; ?>
             </div>
-        </main>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-bolt"></i> روابط سريعة</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a href="post-edit.php" class="btn btn-secondary w-100" style="justify-content: flex-start;">
+                        <i class="fas fa-plus"></i> إضافة مقال جديد
+                    </a>
+                    <a href="services.php" class="btn btn-secondary w-100" style="justify-content: flex-start;">
+                        <i class="fas fa-concierge-bell"></i> إدارة الخدمات
+                    </a>
+                    <a href="settings.php" class="btn btn-secondary w-100" style="justify-content: flex-start;">
+                        <i class="fas fa-cog"></i> الإعدادات
+                    </a>
+                    <a href="<?= url('') ?>" target="_blank" class="btn btn-secondary w-100" style="justify-content: flex-start;">
+                        <i class="fas fa-external-link-alt"></i> عرض الموقع
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+</div>
+
+<?php include __DIR__ . '/includes/footer.php'; ?>
