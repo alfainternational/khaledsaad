@@ -4,6 +4,9 @@
  */
 if (!isset($pageTitle)) $pageTitle = SITE_NAME;
 if (!isset($pageDescription)) $pageDescription = SITE_TAGLINE;
+
+// تتبع الزيارة آلياً للذكاء الاصطناعي
+logActivity('page_view', ['title' => $pageTitle]);
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -28,11 +31,32 @@ if (!isset($pageDescription)) $pageDescription = SITE_TAGLINE;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
     <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/utilities.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/modern.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/responsive.css') ?>">
+<!-- AI Activity Pulse -->
+<script>
+    let sessionStartTime = Date.now();
+    function sendPulse() {
+        fetch('<?= url('api/activity_pulse.php') ?>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                duration: Math.round((Date.now() - sessionStartTime) / 1000),
+                path: window.location.pathname 
+            })
+        });
+    }
+    setInterval(sendPulse, 30000); // إرسال نبض كل 30 ثانية
+</script>
+<script>
+    window.SITE_URL = '<?= url() ?>';
+</script>
 </head>
 <body class="<?= isset($_COOKIE['darkMode']) && $_COOKIE['darkMode'] === 'true' ? 'dark-mode' : '' ?>">
     <a href="#main-content" class="skip-link">تخطي إلى المحتوى</a>
@@ -64,6 +88,7 @@ if (!isset($pageDescription)) $pageDescription = SITE_TAGLINE;
                         <li><a href="<?= url('') ?>" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>">الرئيسية</a></li>
                         <li><a href="<?= url('pages/about.php') ?>" class="nav-link">من أنا</a></li>
                         <li><a href="<?= url('pages/services.php') ?>" class="nav-link">الخدمات</a></li>
+                        <li><a href="<?= url('pages/case-studies.php') ?>" class="nav-link">دراسات الحالة</a></li>
                         <li><a href="<?= url('pages/blog.php') ?>" class="nav-link">المدونة</a></li>
                     </ul>
 

@@ -4,6 +4,9 @@
  * موقع خالد سعد للاستشارات
  */
 
+// تعيين المنطقة الزمنية (ضروري لضبط مواعيد إرسال التقارير بدقة)
+date_default_timezone_set('Asia/Riyadh');
+
 // تعريف المسار الجذري
 define('SITE_ROOT', dirname(__DIR__));
 
@@ -22,7 +25,7 @@ require_once SITE_ROOT . '/includes/functions.php';
 mb_internal_encoding('UTF-8');
 
 // إنشاء مجلد السجلات إذا لم يكن موجوداً
-$logsDir = SITE_ROOT . '/logs';
+ $logsDir = SITE_ROOT . '/logs';
 if (!is_dir($logsDir)) {
     mkdir($logsDir, 0755, true);
 }

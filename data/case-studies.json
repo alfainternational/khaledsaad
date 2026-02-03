@@ -1,0 +1,104 @@
+[
+    {
+        "id": "zenithlearn",
+        "title": "ZenithLearn",
+        "subtitle": "منصة تعليمية",
+        "category": "education",
+        "image": "zenithlearn.png",
+        "description": "منصة تعليمية ناشئة تسعى لجذب 10,000 طالب في 6 أشهر",
+        "challenge": "منصة تعليمية ناشئة تحتاج لجذب 10,000 طالب في 6 أشهر مع ميزانية تسويق محدودة",
+        "solution": "استراتيجية تسويق رقمي متكاملة شملت:\n- حملات إعلانية مستهدفة على Facebook و Instagram\n- تسويق المحتوى التعليمي المجاني\n- SEO متقدم لمحركات البحث\n- برنامج إحالة للطلاب",
+        "results": [
+            {"label": "طلاب مسجلون", "value": "12,500", "percentage": "125%"},
+            {"label": "معدل التحويل", "value": "8.5%", "percentage": "+180%"},
+            {"label": "تخفيض TAC", "value": "45%", "percentage": "-45%"}
+        ],
+        "duration": "6 أشهر",
+        "tools": ["Google Ads", "Facebook Ads", "HubSpot", "SEMrush"]
+    },
+    {
+        "id": "brightpath",
+        "title": "BrightPath Solutions",
+        "subtitle": "شركة استشارات",
+        "category": "b2b",
+        "image": "brightpath.png",
+        "description": "شركة استشارات جديدة تحتاج لبناء حضور رقمي وجذب عملاء من الشركات",
+        "challenge": "شركة استشارات جديدة تحتاج لبناء حضور رقمي قوي وجذب عملاء من الشركات الكبرى",
+        "solution": "استراتيجية B2B متكاملة شملت:\n- بناء هوية تجارية احترافية قوية\n- استراتيجية LinkedIn متقدمة للوصول للقادة\n- تسويق المحتوى B2B (White Papers, Case Studies)\n- حملات email marketing مخصصة",
+        "results": [
+            {"label": "عملاء جدد", "value": "35", "percentage": "100%"},
+            {"label": "تفاعل LinkedIn", "value": "280%", "percentage": "+280%"},
+            {"label": "ROI", "value": "420%", "percentage": "+420%"}
+        ],
+        "duration": "12 شهر",
+        "tools": ["LinkedIn Sales Navigator", "HubSpot", "Mailchimp", "Google Analytics"]
+    },
+    {
+        "id": "novamart",
+        "title": "NovaMart",
+        "subtitle": "متجر إلكتروني",
+        "category": "ecommerce",
+        "image": "novamart.png",
+        "description": "متجر إلكتروني يعاني من معدل تحويل منخفض جداً",
+        "challenge": "متجر إلكتروني يعاني من معدل تحويل منخفض (1.2%) ونسبة تخلي مرتفعة عن السلة",
+        "solution": "تحسين شامل لتجربة المستخدم والتسويق:\n- إعادة تصميم واجهة المتجر وتحسين UX\n- حملات Google Ads وShopping مُحسّنة\n- استراتيجية Remarketing متقدمة\n- اختبارات A/B مستمرة",
+        "results": [
+            {"label": "معدل التحويل", "value": "5.8%", "percentage": "+383%"},
+            {"label": "زيادة المبيعات", "value": "340%", "percentage": "+340%"},
+            {"label": "متوسط الطلب", "value": "60%", "percentage": "+60%"}
+        ],
+        "duration": "8 أشهر",
+        "tools": ["Google Ads", "Hotjar", "Optimizely", "Google Analytics"]
+    },
+    {
+        "id": "ecovibe",
+        "title": "EcoVibe Living",
+        "subtitle": "منتجات مستدامة",
+        "category": "retail",
+        "image": "placeholder.jpg",
+        "description": "علامة تجارية جديدة للمنتجات المستدامة تحتاج بناء وعي وولاء",
+        "challenge": "علامة تجارية جديدة للمنتجات الصديقة للبيئة تحتاج بناء وعي بالعلامة وولاء العملاء",
+        "solution": "استراتيجية social media وتأثير:\n- بناء هوية بصرية مميزة صديقة للبيئة\n- حملات Instagram وTikTok إبداعية\n- التعاون مع مؤثرين في مجال الاستدامة\n- محتوى تعليمي عن البيئة",
+        "results": [
+            {"label": "متابعون Instagram", "value": "85K", "percentage": "100%"},
+            {"label": "زيادة المبيعات", "value": "250%", "percentage": "+250%"},
+            {"label": "معدل التفاعل", "value": "12.3%", "percentage": "5x"}
+        ],
+        "duration": "8 أشهر",
+        "tools": ["Instagram Ads", "TikTok Ads", "Canva", "Later"]
+    },
+    {
+        "id": "technova",
+        "title": "TechNova Hub",
+        "subtitle": "حلول SaaS",
+        "category": "technology",
+        "image": "placeholder.jpg",
+        "description": "شركة SaaS تحتاج لزيادة الاشتراكات من 500 إلى 2000",
+        "challenge": "شركة SaaS تحتاج لزيادة الاشتراكات من 500 إلى 2000 في عام واحد",
+        "solution": "تحول رقمي كامل وأتمتة:\n- التحول الرقمي الكامل للعمليات التسويقية\n- أتمتة التسويق باستخدام HubSpot\n- استراتيجية محتوى SEO طويلة المدى\n- برنامج Free Trial محسّن",
+        "results": [
+            {"label": "اشتراكات", "value": "2,400", "percentage": "120%"},
+            {"label": "تخفيض التكاليف", "value": "55%", "percentage": "-55%"},
+            {"label": "العائد السنوي", "value": "380%", "percentage": "+380%"}
+        ],
+        "duration": "12 شهر",
+        "tools": ["HubSpot", "Ahrefs", "Google Ads", "Intercom"]
+    },
+    {
+        "id": "flexfit",
+        "title": "FlexFit Studio",
+        "subtitle": "استوديو رياضي",
+        "category": "fitness",
+        "image": "placeholder.jpg",
+        "description": "استوديو رياضي محلي يحتاج لزيادة العضويات",
+        "challenge": "استوديو رياضي محلي يحتاج لزيادة العضويات وبناء مجتمع رقمي محلي قوي",
+        "solution": "تسويق محلي مكثف:\n- استراتيجية وسائل تواصل محلية\n- تحسين Google My Business\n- حملات Facebook Ads محلية مستهدفة\n- برنامج ولاء رقمي",
+        "results": [
+            {"label": "عضويات جديدة", "value": "320", "percentage": "100%"},
+            {"label": "حجوزات أونلاين", "value": "450%", "percentage": "+450%"},
+            {"label": "متابعون محليون", "value": "15K", "percentage": "100%"}
+        ],
+        "duration": "5 أشهر",
+        "tools": ["Facebook Ads", "Google My Business", "Mindbody", "Instagram"]
+    }
+]

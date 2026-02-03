@@ -1,0 +1,200 @@
+{
+    "version": "5.5",
+    "meta": {
+        "title": "نواة الذكاء الاستراتيجي - النسخة المالية",
+        "description": "تحليل الأثر المالي والهدر التشغيلي للاستشارات"
+    },
+    "benchmarks": {
+        "ecommerce": 65,
+        "services": 55,
+        "tech": 80,
+        "realestate": 50,
+        "fnb": 60,
+        "retail": 45,
+        "industry": 70,
+        "education": 60,
+        "healthcare": 65,
+        "other": 55
+    },
+    "financial_leakage_logic": {
+        "marketing_waste": {
+            "condition": "marketing < 50",
+            "label": "هدر الميزانية التسويقية",
+            "impact": "عالي",
+            "description": "فقدان عملاء محتملين بسبب ضعف الاستهداف أو غياب المتابعة الآلية."
+        },
+        "tech_drag": {
+            "condition": "tech < 40",
+            "label": "هدر الوقت التشغيلي",
+            "impact": "متوسط",
+            "description": "ضياع ساعات عمل بشرية في مهام يمكن أتمتتها بالكامل."
+        },
+        "strategy_risk": {
+            "condition": "strategy < 50",
+            "label": "خطر التوجه الخاطئ",
+            "impact": "شديد",
+            "description": "اتخاذ قرارات استثمارية غير مبنية على بيانات، مما يهدد استمرارية النمو."
+        }
+    },
+    "maturity_labels": {
+        "high": {
+            "min": 85,
+            "label": "الريادة الاستراتيجية (Market Leader)",
+            "color": "#10B981"
+        },
+        "optimized": {
+            "min": 65,
+            "label": "النضج التشغيلي المتقدم (Optimized)",
+            "color": "#3B82F6"
+        },
+        "foundational": {
+            "min": 40,
+            "label": "مرحلة التأسيس الرقمي (Foundational)",
+            "color": "#F59E0B"
+        },
+        "critical": {
+            "min": 0,
+            "label": "الحاجة لتدخل استراتيجي عاجل (At Risk)",
+            "color": "#EF4444"
+        }
+    },
+    "pillar_swot_rules": {
+        "strategy": {
+            "high": {
+                "strengths": [
+                    "وضوح الرؤية"
+                ],
+                "weaknesses": [
+                    "مقاومة التغيير"
+                ],
+                "pros": [
+                    "استقرار"
+                ],
+                "cons": [
+                    "تكلفة عالية"
+                ]
+            },
+            "low": {
+                "strengths": [
+                    "مرونة"
+                ],
+                "weaknesses": [
+                    "تخبط"
+                ],
+                "pros": [
+                    "تكلفة منخفضة"
+                ],
+                "cons": [
+                    "خطر الفشل"
+                ]
+            }
+        },
+        "marketing": {
+            "high": {
+                "strengths": [
+                    "هوية قوية"
+                ],
+                "weaknesses": [
+                    "اعتماد على الممول"
+                ],
+                "pros": [
+                    "سرعة"
+                ],
+                "cons": [
+                    "تكلفة اكتساب"
+                ]
+            },
+            "low": {
+                "strengths": [
+                    "نمو بكر"
+                ],
+                "weaknesses": [
+                    "ضعف وصول"
+                ],
+                "pros": [
+                    "بداية صحيحة"
+                ],
+                "cons": [
+                    "فقدان حصة"
+                ]
+            }
+        },
+        "tech": {
+            "high": {
+                "strengths": [
+                    "أتمتة"
+                ],
+                "weaknesses": [
+                    "تعقيد"
+                ],
+                "pros": [
+                    "كفاءة"
+                ],
+                "cons": [
+                    "تكلفة صيانة"
+                ]
+            },
+            "low": {
+                "strengths": [
+                    "بساطة"
+                ],
+                "weaknesses": [
+                    "عمل يدوي"
+                ],
+                "pros": [
+                    "عدم ارتباط"
+                ],
+                "cons": [
+                    "صعوبة قياس"
+                ]
+            }
+        },
+        "operations": {
+            "high": {
+                "strengths": [
+                    "كفاءة عالية",
+                    "أتمتة العمليات"
+                ],
+                "weaknesses": [
+                    "جمود الأنظمة"
+                ],
+                "pros": [
+                    "تقليل التكاليف"
+                ],
+                "cons": [
+                    "حاجة لصيانة مستمرة"
+                ]
+            },
+            "low": {
+                "strengths": [
+                    "مرونة عالية"
+                ],
+                "weaknesses": [
+                    "هدر الموارد",
+                    "تدخل يدوي كثيف"
+                ],
+                "pros": [
+                    "سهولة التعديل"
+                ],
+                "cons": [
+                    "صعوبة التوسع"
+                ]
+            }
+        }
+    },
+    "consultant_directives": [
+        {
+            "condition": "overall < 40",
+            "directive": "توجيه استشاري: العميل في حالة حرجة. ركز في الجلسة على 'خطة الإنقاذ'."
+        },
+        {
+            "condition": "lead_quality > 80",
+            "directive": "توجيه استشاري: عميل VIP. قدم عرض 'التحول الكامل'."
+        }
+    ],
+    "source_specific_tips": {
+        "google": "ركز على 'السرعة والاحترافية'.",
+        "social": "استخدم محتوى بصري.",
+        "ads": "طابق الوعد الإعلاني."
+    }
+}

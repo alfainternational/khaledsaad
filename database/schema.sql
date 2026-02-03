@@ -215,16 +215,32 @@ DROP TABLE IF EXISTS `diagnostic_results`;
 CREATE TABLE `diagnostic_results` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `session_id` VARCHAR(100) NOT NULL,
+    `report_token` VARCHAR(64) DEFAULT NULL,
+    `full_name` VARCHAR(100) DEFAULT NULL,
     `email` VARCHAR(255) DEFAULT NULL,
+    `phone` VARCHAR(20) DEFAULT NULL,
+    `company_name` VARCHAR(150) DEFAULT NULL,
+    `industry` VARCHAR(100) DEFAULT NULL,
+    `company_size` VARCHAR(50) DEFAULT NULL,
     `answers` JSON NOT NULL,
-    `score` INT DEFAULT 0,
-    `category` VARCHAR(100) DEFAULT NULL,
-    `recommendations` JSON DEFAULT NULL,
+    `overall_score` INT DEFAULT 0,
+    `score` INT DEFAULT 0, -- Keeping for backward compatibility
+    `maturity_level` VARCHAR(100) DEFAULT NULL,
+    `category` VARCHAR(100) DEFAULT NULL, -- Keeping for backward compatibility
+    `benchmark_score` INT DEFAULT 0,
+    `estimated_leakage` VARCHAR(255) DEFAULT NULL,
+    `lead_quality_score` INT DEFAULT 0,
+    `pillars_data` JSON DEFAULT NULL,
+    `recommendations_data` JSON DEFAULT NULL,
+    `recommendations` JSON DEFAULT NULL, -- Keeping for backward compatibility
+    `status` VARCHAR(50) DEFAULT 'pending_review',
+    `scheduled_send_at` DATETIME DEFAULT NULL,
     `ip_address` VARCHAR(45) DEFAULT NULL,
     `completed_at` DATETIME DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_session` (`session_id`),
-    INDEX `idx_email` (`email`)
+    INDEX `idx_email` (`email`),
+    INDEX `idx_report_token` (`report_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================

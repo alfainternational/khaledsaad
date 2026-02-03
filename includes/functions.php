@@ -16,6 +16,49 @@ function url($path = '') {
     return $base . '/' . ltrim($path, '/');
 }
 
+/**
+ * دالة ترجمة المصطلحات الخاصة بالتشخيص الاستراتيجي
+ */
+function translate($str) {
+    if (empty($str)) return '-';
+    $dict = [
+        'ecommerce' => 'تجارة إلكترونية',
+        'services' => 'خدمات',
+        'retail' => 'تجزئة',
+        'tech' => 'تقنية',
+        'fmcg' => 'سلع استهلاكية',
+        'other' => 'أخرى',
+        'google' => 'جوجل',
+        'social' => 'سوشيال ميديا',
+        'referral' => 'توصية',
+        'ads' => 'إعلانات ممولة',
+        'solo' => 'فردي',
+        'small' => 'صغيرة',
+        'medium' => 'متوسطة',
+        'large' => 'كبيرة',
+        'direct' => 'مباشر'
+    ];
+    return $dict[$str] ?? $dict[strtolower($str)] ?? $str;
+}
+
+/**
+ * تسجيل سلوك المستخدم لتحليل الذكاء الاصطناعي اللاحق
+ */
+function logActivity($type, $meta = []) {
+    try {
+        db()->insert('user_activity_logs', [
+            'session_id' => session_id(),
+            'user_id' => $_SESSION['user_id'] ?? ($_SESSION['admin_id'] ?? null),
+            'event_type' => $type,
+            'page_url' => $_SERVER['REQUEST_URI'],
+            'meta_data' => json_encode($meta, JSON_UNESCAPED_UNICODE),
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? ''
+        ]);
+    } catch (Exception $e) {
+        error_log("Activity Logging Error: " . $e->getMessage());
+    }
+}
+
 function asset($path) {
     return url('assets/' . ltrim($path, '/'));
 }
@@ -116,3 +159,23 @@ function trackPageView($url, $title = '') {
         ]);
     } catch (Exception $e) {}
 }
+
+/**
+ * توليد الرابط المختصر (Slug) من النص
+ * يدعم اللغة العربية والإنجليزية
+ */
+function generateSlug($text) {
+    // استبدال المسافات والعلامات بـ -
+    $text = preg_replace('~[^\pL\d]+~u', '-', $text);
+    // التحويل لـ lowercase
+    $text = mb_strtolower($text, 'UTF-8');
+    // إزالة العلامات غير المرغوبة (مع الحفاظ على الحروف العربية)
+    $text = preg_replace('~[^-\w\x{0600}-\x{06FF}]+~u', '', $text);
+    // إزالة الشرطات المتكررة
+    $text = preg_replace('~-+~', '-', $text);
+    // إزالة الشرطات من البداية والنهاية
+    $text = trim($text, '-');
+    
+    return empty($text) ? 'post-' . time() : $text;
+}
+
