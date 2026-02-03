@@ -402,4 +402,82 @@ CREATE TABLE `rate_limits` (
     INDEX `idx_window` (`window_start`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =====================================================
+-- جدول العملاء المسجلين (Clients)
+-- =====================================================
+DROP TABLE IF EXISTS `clients`;
+CREATE TABLE `clients` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `email` VARCHAR(255) NOT NULL UNIQUE,
+    `password` VARCHAR(255) NOT NULL,
+    `full_name` VARCHAR(100) NOT NULL,
+    `phone` VARCHAR(20) DEFAULT NULL,
+    `company` VARCHAR(100) DEFAULT NULL,
+    `avatar` VARCHAR(255) DEFAULT NULL,
+    `bio` TEXT DEFAULT NULL,
+    `is_active` TINYINT(1) DEFAULT 1,
+    `is_verified` TINYINT(1) DEFAULT 0,
+    `verification_token` VARCHAR(100) DEFAULT NULL,
+    `reset_token` VARCHAR(100) DEFAULT NULL,
+    `reset_token_expires` DATETIME DEFAULT NULL,
+    `last_login` DATETIME DEFAULT NULL,
+    `login_attempts` INT DEFAULT 0,
+    `locked_until` DATETIME DEFAULT NULL,
+    `preferences` JSON DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_email` (`email`),
+    INDEX `idx_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- جدول الاستشارات والمواعيد
+-- =====================================================
+DROP TABLE IF EXISTS `consultations`;
+CREATE TABLE `consultations` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `client_id` INT UNSIGNED NOT NULL,
+    `service_id` INT UNSIGNED DEFAULT NULL,
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT DEFAULT NULL,
+    `scheduled_at` DATETIME NOT NULL,
+    `duration` INT DEFAULT 60,
+    `meeting_link` VARCHAR(500) DEFAULT NULL,
+    `status` ENUM('pending', 'confirmed', 'completed', 'cancelled', 'rescheduled') DEFAULT 'pending',
+    `notes` TEXT DEFAULT NULL,
+    `client_notes` TEXT DEFAULT NULL,
+    `rating` TINYINT DEFAULT NULL,
+    `feedback` TEXT DEFAULT NULL,
+    `price` DECIMAL(10,2) DEFAULT NULL,
+    `paid` TINYINT(1) DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_client` (`client_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_scheduled` (`scheduled_at`),
+    FOREIGN KEY (`client_id`) REFERENCES `clients`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`service_id`) REFERENCES `services`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- جدول المقالات المحفوظة
+-- =====================================================
+DROP TABLE IF EXISTS `saved_posts`;
+CREATE TABLE `saved_posts` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `client_id` INT UNSIGNED NOT NULL,
+    `post_id` INT UNSIGNED NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `idx_client_post` (`client_id`, `post_id`),
+    FOREIGN KEY (`client_id`) REFERENCES `clients`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`post_id`) REFERENCES `blog_posts`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- تحديث جدول نتائج التشخيص لربطه بالعملاء
+-- =====================================================
+ALTER TABLE `diagnostic_results` ADD COLUMN `client_id` INT UNSIGNED DEFAULT NULL AFTER `id`;
+ALTER TABLE `diagnostic_results` ADD INDEX `idx_client` (`client_id`);
+ALTER TABLE `diagnostic_results` ADD FOREIGN KEY (`client_id`) REFERENCES `clients`(`id`) ON DELETE SET NULL;
+
 SET FOREIGN_KEY_CHECKS = 1;
