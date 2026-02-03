@@ -33,7 +33,7 @@ class DiagnosticAI {
 
     public function analyze($data) {
         $this->profile = $data;
-        
+
         // 1. حساب النتائج الأولية للركائز
         $this->scores = $this->calculateScores();
         $overall = $this->calculateOverall($this->scores);
@@ -42,17 +42,17 @@ class DiagnosticAI {
         $result = [];
         $result['scores'] = $this->scores;
         $result['overall'] = $overall;
-        
+
         // 2. حالة النضج
         $result['maturity'] = $this->determineMaturity($overall);
-        
+
         // 3. المقارنة المرجعية والهدر
         $result['benchmark'] = $this->getBenchmark();
         $result['leakage'] = $this->estimateLeakage($overall);
-        
+
         // 4. توليد خارطة الطريق الذكية
         $result['roadmap'] = $this->generateSmartRoadmap();
-        
+
         // 5. محرك الاستنتاج العرضي (Correlations)
         $result['insights'] = $this->generateCorrelations();
 
@@ -64,7 +64,7 @@ class DiagnosticAI {
 
         // 8. تحليل الهدر المالي (جديد v5.5)
         $result['financial_analysis'] = $this->generateFinancialImpact();
-        
+
         // 9. تقييم جودة العميل (Lead Scoring)
         $result['lead_quality'] = $this->calculateLeadQuality($overall);
 
@@ -72,10 +72,35 @@ class DiagnosticAI {
         require_once __DIR__ . '/diagnostic_llm.php';
         $llm = new DiagnosticLLM();
         $result['narrative'] = $llm->generateNarrative($result, $this->profile);
-        
+
         // 11. نصيحة المصدر وتوكن التقرير
         $result['source_tip'] = $this->getSourceSpecificTip();
         $result['report_token'] = bin2hex(random_bytes(16));
+
+        // 12. تحليل متقدم باستخدام نظام الخبير (v7.0)
+        try {
+            require_once __DIR__ . '/ai_expert_system.php';
+            $expertSystem = new AIExpertSystem();
+
+            $expertAnalysis = $expertSystem->advancedAnalysis([
+                'industry' => $this->profile['industry'] ?? 'other',
+                'company_size' => $this->profile['company_size'] ?? 'solo',
+                'overall_score' => $overall,
+                'answers' => $this->profile['answers'] ?? []
+            ]);
+
+            $result['expert_analysis'] = $expertAnalysis;
+            $result['ai_confidence'] = $expertAnalysis['confidence_score'] ?? 0;
+
+            // استخدام التوصيات الذكية من النظام الخبير
+            if (!empty($expertAnalysis['smart_recommendations'])) {
+                $result['ai_recommendations'] = array_slice($expertAnalysis['smart_recommendations'], 0, 5);
+            }
+
+        } catch (Exception $e) {
+            error_log("Expert System Integration Error: " . $e->getMessage());
+            $result['expert_analysis'] = ['status' => 'unavailable', 'reason' => 'system_initialization'];
+        }
 
         return $result;
     }
