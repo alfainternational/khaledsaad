@@ -52,6 +52,12 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
                                 <span>التحليلات</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="ai-assistant.php" class="<?= $currentPage === 'ai-assistant' ? 'active' : '' ?>">
+                                <i class="fas fa-brain"></i>
+                                <span style="background: linear-gradient(to right, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">المساعد الذكي</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
 

@@ -1,0 +1,108 @@
+/* ============================================
+   Modern Utility Classes - Orange Theme
+============================================ */
+
+/* Glassmorphism Effects */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-light {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-primary {
+    background: var(--gradient-primary);
+}
+
+.bg-gradient-dark {
+    background: var(--gradient-dark);
+}
+
+/* Animated Gradient */
+.animated-gradient {
+    background: linear-gradient(270deg, #FF6B35, #FFA726, #E64A19);
+    background-size: 400% 400%;
+    animation: gradient-shift 8s ease infinite;
+}
+
+@keyframes gradient-shift {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Glow Effects */
+.glow-on-hover {
+    transition: all var(--transition);
+}
+
+.glow-on-hover:hover {
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
+}
+
+.glow-primary {
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.4),
+        0 0 40px rgba(255, 107, 53, 0.2),
+        0 0 60px rgba(255, 107, 53, 0.1);
+}
+
+/* Gradient Borders  */
+.gradient-border {
+    position: relative;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+}
+
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: var(--gradient-primary);
+    z-index: -1;
+}
+
+/* Orange Accents */
+.text-primary {
+    color: var(--primary) !important;
+}
+
+.text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Micro-animations */
+.hover-scale {
+    transition: transform var(--transition);
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.hover-lift {
+    transition: transform var(--transition);
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px);
+}

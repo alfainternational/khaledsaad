@@ -40,10 +40,10 @@ $leadsByService = db()->fetchAll("
 
 // Top blog posts
 $topPosts = db()->fetchAll("
-    SELECT title, views, slug
+    SELECT title, views_count, slug
     FROM blog_posts
     WHERE status = 'published'
-    ORDER BY views DESC
+    ORDER BY views_count DESC
     LIMIT 5
 ");
 
@@ -182,7 +182,7 @@ include __DIR__ . '/includes/header.php';
                     <tr>
                         <td><?= $i + 1 ?></td>
                         <td><a href="<?= url('pages/blog-post.php?slug=' . $post['slug']) ?>" target="_blank"><?= e($post['title']) ?></a></td>
-                        <td><?= formatNumber($post['views']) ?></td>
+                        <td><?= formatNumber($post['views_count']) ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

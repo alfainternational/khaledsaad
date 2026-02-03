@@ -66,11 +66,17 @@ class Database {
 
     public function update($table, $data, $where, $whereParams = []) {
         $set = [];
+        $params = [];
+        
         foreach ($data as $key => $value) {
-            $set[] = "{$key} = :{$key}";
+            $set[] = "{$key} = ?";
+            $params[] = $value;
         }
+        
+        // دمج قيم التحديث مع قيم شرط WHERE
+        // يتم تحويل قيم whereParams إلى مصفوفة قيم فقط لضمان التوافق مع علامات الاستفهام
         $sql = "UPDATE {$table} SET " . implode(', ', $set) . " WHERE {$where}";
-        return $this->query($sql, array_merge($data, $whereParams));
+        return $this->query($sql, array_merge($params, array_values($whereParams)));
     }
 
     public function delete($table, $where, $params = []) {

@@ -20,12 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
                 'name' => clean($_POST['name'] ?? ''),
                 'slug' => clean($_POST['slug'] ?? '') ?: generateSlug($_POST['name'] ?? ''),
-                'description' => clean($_POST['description'] ?? ''),
+                'full_description' => clean($_POST['description'] ?? ''),
                 'short_description' => clean($_POST['short_description'] ?? ''),
                 'icon' => clean($_POST['icon'] ?? 'fas fa-cog'),
                 'price_from' => (float)($_POST['price_from'] ?? 0),
                 'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
-                'is_active' => isset($_POST['is_active']) ? 1 : 0,
+                'status' => isset($_POST['is_active']) ? 'active' : 'inactive',
                 'sort_order' => (int)($_POST['sort_order'] ?? 0),
             ];
 
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $success = 'تم إنشاء الخدمة بنجاح';
                     }
                 } catch (Exception $e) {
-                    $error = 'حدث خطأ';
+                    $error = 'حدث خطأ: ' . $e->getMessage();
                 }
             }
         }
@@ -115,8 +115,8 @@ include __DIR__ . '/includes/header.php';
                             </td>
                             <td><?= $service['price_from'] ? formatNumber($service['price_from']) . ' ر.س' : '-' ?></td>
                             <td>
-                                <span class="badge badge-<?= $service['is_active'] ? 'success' : 'secondary' ?>">
-                                    <?= $service['is_active'] ? 'مفعّل' : 'معطّل' ?>
+                                <span class="badge badge-<?= ($service['status'] ?? 'active') === 'active' ? 'success' : 'secondary' ?>">
+                                    <?= ($service['status'] ?? 'active') === 'active' ? 'مفعّل' : 'معطّل' ?>
                                 </span>
                             </td>
                             <td>
@@ -180,7 +180,7 @@ include __DIR__ . '/includes/header.php';
                 </div>
                 <div class="form-group">
                     <label class="form-label">الوصف الكامل</label>
-                    <textarea name="description" class="form-control" rows="4"><?= e($editService['description'] ?? '') ?></textarea>
+                    <textarea name="description" class="form-control" rows="4"><?= e($editService['full_description'] ?? '') ?></textarea>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -194,7 +194,7 @@ include __DIR__ . '/includes/header.php';
                 </div>
                 <div class="form-group">
                     <label class="form-check">
-                        <input type="checkbox" name="is_active" value="1" <?= ($editService['is_active'] ?? 1) ? 'checked' : '' ?>>
+                        <input type="checkbox" name="is_active" value="1" <?= ($editService['status'] ?? 'active') === 'active' ? 'checked' : '' ?>>
                         <span>مفعّل</span>
                     </label>
                 </div>

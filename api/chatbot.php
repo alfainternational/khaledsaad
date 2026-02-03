@@ -30,8 +30,10 @@ if (!$data || !isset($data['message'])) {
 $message = clean($data['message']);
 $sessionId = clean($data['session_id'] ?? session_id());
 
-// الحصول على رد البوت
-$response = getBotResponse($message);
+// الحصول على رد البوت الذكي عبر محرك الـ AIBrain
+require_once SITE_ROOT . '/includes/ai_brain.php';
+$brain = new AIBrain();
+$response = $brain->chatWithGuest($message, $sessionId);
 
 // حفظ المحادثة
 try {

@@ -10,17 +10,13 @@ if (!defined('SITE_ROOT')) {
 }
 
 // إعدادات الموقع
-define('SITE_NAME', 'خالد سعد');
-define('SITE_TAGLINE', 'خبير التسويق والتحول الرقمي');
-define('SITE_EMAIL', 'hello@khaledsaad.com');
-define('SITE_PHONE', '');
-define('SITE_ADDRESS', '');
-define('SITE_URL', 'https://khaledsaad.com');
-
-// معلومات الخبير
-define('EXPERT_NAME', 'خالد سعد');
-define('EXPERT_TITLE', 'خبير التسويق والتحول الرقمي');
-define('EXPERT_BIO', 'أساعد رواد الأعمال والشركات في بناء استراتيجيات تسويقية فعّالة وتحقيق التحول الرقمي');
+define('SITE_NAME', 'خالد سعد للاستشارات');
+define('SITE_TAGLINE', 'شريكك في التحول الرقمي');
+define('SITE_EMAIL', 'info@khaledsaad.com');
+define('SITE_PHONE', '+966 50 000 0000');
+define('SITE_ADDRESS', 'الرياض، المملكة العربية السعودية');
+// define('SITE_URL', 'https://khaledsaad.com');
+define('SITE_URL', 'http://localhost/khaledsaad');
 
 // إعدادات التطوير
 define('DEBUG_MODE', true);
@@ -40,6 +36,10 @@ define('CSRF_TOKEN_NAME', '_csrf_token');
 define('PASSWORD_MIN_LENGTH', 8);
 define('MAX_LOGIN_ATTEMPTS', 5);
 define('LOCKOUT_TIME', 900);
+
+// إعدادات الـ AI (Z.AI Integration)
+// إعدادات الـ AI (Z.AI Integration)
+define('ZAI_API_KEY', 'f141419602534134af2de075d9903672.olo1VPFHpkrO8GZB');
 
 // إعدادات Rate Limiting
 define('RATE_LIMIT_REQUESTS', 100);

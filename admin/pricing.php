@@ -15,30 +15,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)($_POST['id'] ?? 0);
 
         if ($action === 'save') {
+            $features = array_filter(array_map('trim', explode("\n", $_POST['features'] ?? '')));
+            
             $data = [
                 'name' => clean($_POST['name'] ?? ''),
+                'slug' => clean($_POST['slug'] ?? '') ?: generateSlug($_POST['name'] ?? ''),
                 'description' => clean($_POST['description'] ?? ''),
                 'price' => (float)($_POST['price'] ?? 0),
-                'billing_period' => clean($_POST['billing_period'] ?? 'monthly'),
-                'features' => clean($_POST['features'] ?? ''),
+                'billing_cycle' => clean($_POST['billing_period'] ?? 'monthly'),
+                'features' => json_encode(array_values($features), JSON_UNESCAPED_UNICODE),
                 'is_popular' => isset($_POST['is_popular']) ? 1 : 0,
-                'is_active' => isset($_POST['is_active']) ? 1 : 0,
+                'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
+                'status' => isset($_POST['is_active']) ? 'active' : 'inactive',
                 'sort_order' => (int)($_POST['sort_order'] ?? 0),
-                'cta_text' => clean($_POST['cta_text'] ?? 'ابدأ الآن'),
             ];
 
-            if ($id) {
-                db()->update('pricing_plans', $data, 'id = ?', ['id' => $id]);
-                $success = 'تم تحديث الباقة';
-            } else {
-                db()->insert('pricing_plans', $data);
-                $success = 'تم إضافة الباقة';
+            // تحويل 'once' إلى 'one_time' لتطابق ENUM في قاعدة البيانات
+            if ($data['billing_cycle'] === 'once') {
+                $data['billing_cycle'] = 'one_time';
+            }
+
+            try {
+                if ($id) {
+                    db()->update('pricing_plans', $data, 'id = ?', ['id' => $id]);
+                    $success = 'تم تحديث الباقة بنجاح';
+                } else {
+                    db()->insert('pricing_plans', $data);
+                    $success = 'تم إضافة الباقة بنجاح';
+                }
+            } catch (Exception $e) {
+                $error = 'حدث خطأ: ' . $e->getMessage();
             }
         }
 
         if ($action === 'delete' && $id) {
             db()->delete('pricing_plans', 'id = ?', ['id' => $id]);
-            $success = 'تم حذف الباقة';
+            $success = 'تم حذف الباقة بنجاح';
         }
     }
 }
@@ -84,12 +96,25 @@ include __DIR__ . '/includes/header.php';
                                 <?php if ($plan['is_popular']): ?>
                                 <span class="badge badge-warning">الأكثر طلباً</span>
                                 <?php endif; ?>
+                                <?php if ($plan['is_featured']): ?>
+                                <span class="badge badge-primary">مميزة</span>
+                                <?php endif; ?>
                             </td>
                             <td><?= formatNumber($plan['price']) ?> ر.س</td>
-                            <td><?= $plan['billing_period'] === 'monthly' ? 'شهري' : ($plan['billing_period'] === 'yearly' ? 'سنوي' : 'لمرة واحدة') ?></td>
                             <td>
-                                <span class="badge badge-<?= $plan['is_active'] ? 'success' : 'secondary' ?>">
-                                    <?= $plan['is_active'] ? 'مفعّل' : 'معطّل' ?>
+                                <?php
+                                $cycles = [
+                                    'monthly' => 'شهري',
+                                    'yearly' => 'سنوي',
+                                    'quarterly' => 'ربع سنوي',
+                                    'one_time' => 'لمرة واحدة'
+                                ];
+                                echo $cycles[$plan['billing_cycle']] ?? $plan['billing_cycle'];
+                                ?>
+                            </td>
+                            <td>
+                                <span class="badge badge-<?= ($plan['status'] ?? 'active') === 'active' ? 'success' : 'secondary' ?>">
+                                    <?= ($plan['status'] ?? 'active') === 'active' ? 'مفعّل' : 'معطّل' ?>
                                 </span>
                             </td>
                             <td>
@@ -132,6 +157,10 @@ include __DIR__ . '/includes/header.php';
                     <input type="text" name="name" class="form-control" value="<?= e($editPlan['name'] ?? '') ?>" required>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">الرابط المختصر (Slug)</label>
+                    <input type="text" name="slug" class="form-control" value="<?= e($editPlan['slug'] ?? '') ?>" dir="ltr">
+                </div>
+                <div class="form-group">
                     <label class="form-label">الوصف</label>
                     <input type="text" name="description" class="form-control" value="<?= e($editPlan['description'] ?? '') ?>">
                 </div>
@@ -143,36 +172,48 @@ include __DIR__ . '/includes/header.php';
                     <div class="form-group">
                         <label class="form-label">فترة الفوترة</label>
                         <select name="billing_period" class="form-control">
-                            <option value="monthly" <?= ($editPlan['billing_period'] ?? '') === 'monthly' ? 'selected' : '' ?>>شهري</option>
-                            <option value="yearly" <?= ($editPlan['billing_period'] ?? '') === 'yearly' ? 'selected' : '' ?>>سنوي</option>
-                            <option value="once" <?= ($editPlan['billing_period'] ?? '') === 'once' ? 'selected' : '' ?>>لمرة واحدة</option>
+                            <option value="monthly" <?= ($editPlan['billing_cycle'] ?? '') === 'monthly' ? 'selected' : '' ?>>شهري</option>
+                            <option value="quarterly" <?= ($editPlan['billing_cycle'] ?? '') === 'quarterly' ? 'selected' : '' ?>>ربع سنوي</option>
+                            <option value="yearly" <?= ($editPlan['billing_cycle'] ?? '') === 'yearly' ? 'selected' : '' ?>>سنوي</option>
+                            <option value="once" <?= ($editPlan['billing_cycle'] ?? '') === 'one_time' ? 'selected' : '' ?>>لمرة واحدة</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">المميزات (سطر لكل ميزة)</label>
-                    <textarea name="features" class="form-control" rows="5" placeholder="ميزة 1&#10;ميزة 2&#10;ميزة 3"><?= e($editPlan['features'] ?? '') ?></textarea>
+                    <?php
+                    $featuresText = '';
+                    if (!empty($editPlan['features'])) {
+                        $fArr = json_decode($editPlan['features'], true);
+                        if (is_array($fArr)) {
+                            $featuresText = implode("\n", $fArr);
+                        }
+                    }
+                    ?>
+                    <textarea name="features" class="form-control" rows="5" placeholder="ميزة 1&#10;ميزة 2&#10;ميزة 3"><?= e($featuresText) ?></textarea>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">نص الزر</label>
-                        <input type="text" name="cta_text" class="form-control" value="<?= e($editPlan['cta_text'] ?? 'ابدأ الآن') ?>">
-                    </div>
                     <div class="form-group">
                         <label class="form-label">الترتيب</label>
                         <input type="number" name="sort_order" class="form-control" value="<?= e($editPlan['sort_order'] ?? 0) ?>">
                     </div>
+                    <div class="form-group">
+                        <label class="form-check" style="margin-top: 2rem;">
+                            <input type="checkbox" name="is_active" value="1" <?= ($editPlan['status'] ?? 'active') === 'active' ? 'checked' : '' ?>>
+                            <span>مفعّل</span>
+                        </label>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-check">
-                        <input type="checkbox" name="is_active" value="1" <?= ($editPlan['is_active'] ?? 1) ? 'checked' : '' ?>>
-                        <span>مفعّل</span>
+                        <input type="checkbox" name="is_popular" value="1" <?= ($editPlan['is_popular'] ?? 0) ? 'checked' : '' ?>>
+                        <span>الأكثر طلباً (قالب مميز)</span>
                     </label>
                 </div>
                 <div class="form-group mb-0">
                     <label class="form-check">
-                        <input type="checkbox" name="is_popular" value="1" <?= ($editPlan['is_popular'] ?? 0) ? 'checked' : '' ?>>
-                        <span>الأكثر طلباً</span>
+                        <input type="checkbox" name="is_featured" value="1" <?= ($editPlan['is_featured'] ?? 0) ? 'checked' : '' ?>>
+                        <span>باقة مميزة</span>
                     </label>
                 </div>
             </div>

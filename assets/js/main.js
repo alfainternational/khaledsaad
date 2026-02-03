@@ -147,7 +147,8 @@ async function sendChatMessage(message) {
     messages.scrollTop = messages.scrollHeight;
 
     try {
-        const response = await fetch('/api/chatbot.php', {
+        const apiUrl = (window.SITE_URL || '').replace(/\/$/, '') + '/api/chatbot.php';
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: message, session_id: getSessionId() })

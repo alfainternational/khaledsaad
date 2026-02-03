@@ -53,8 +53,8 @@ include __DIR__ . '/includes/header.php';
                     <tr>
                         <td><?= e($log['user_name'] ?? 'نظام') ?></td>
                         <td><code><?= e($log['action']) ?></code></td>
-                        <td><?= e($log['table_name'] ?? '-') ?></td>
-                        <td><?= $log['record_id'] ?: '-' ?></td>
+                        <td><?= e($log['entity_type'] ?? '-') ?></td>
+                        <td><?= $log['entity_id'] ?: '-' ?></td>
                         <td><code style="font-size: 0.75rem;"><?= e($log['ip_address']) ?></code></td>
                         <td><?= formatDate($log['created_at']) ?></td>
                     </tr>

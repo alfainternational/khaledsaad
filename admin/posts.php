@@ -134,7 +134,7 @@ include __DIR__ . '/includes/header.php';
                                 <?= $post['status'] === 'published' ? 'منشور' : 'مسودة' ?>
                             </span>
                         </td>
-                        <td><?= formatNumber($post['views']) ?></td>
+                        <td><?= formatNumber($post['views_count']) ?></td>
                         <td><?= formatDate($post['created_at'], 'short') ?></td>
                         <td>
                             <div class="actions">

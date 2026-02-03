@@ -22,7 +22,7 @@
     right: 0;
     width: 50%;
     height: 100%;
-    background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.08) 0%, transparent 60%);
+    background: var(--gradient-glow);
     pointer-events: none;
 }
 
@@ -104,9 +104,18 @@
     margin-right: -10px;
 }
 
-.proof-avatars .avatar:nth-child(2) { background: var(--accent); }
-.proof-avatars .avatar:nth-child(3) { background: var(--success); }
-.proof-avatars .avatar:nth-child(4) { background: var(--bg-tertiary); color: var(--text-muted); }
+.proof-avatars .avatar:nth-child(2) {
+    background: var(--accent);
+}
+
+.proof-avatars .avatar:nth-child(3) {
+    background: var(--success);
+}
+
+.proof-avatars .avatar:nth-child(4) {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
 
 .hero-social-proof p {
     margin: 0;
@@ -141,13 +150,20 @@
     width: 60px;
     height: 60px;
     margin: 0 auto var(--space-4);
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(255, 107, 53, 0.15);
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--primary);
     font-size: var(--font-size-xl);
+    transition: all var(--transition);
+}
+
+.value-item:hover .value-icon {
+    background: rgba(255, 107, 53, 0.25);
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
 }
 
 .value-item h3 {
@@ -191,8 +207,9 @@
 }
 
 .service-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
     padding: var(--space-8);
     position: relative;
@@ -201,13 +218,13 @@
 
 .service-card:hover {
     border-color: var(--primary);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-glow);
     transform: translateY(-4px);
 }
 
 .service-card.featured {
     border-color: var(--primary);
-    background: linear-gradient(180deg, rgba(37, 99, 235, 0.02) 0%, var(--bg-card) 100%);
+    background: linear-gradient(180deg, rgba(255, 107, 53, 0.1) 0%, var(--glass-bg) 100%);
 }
 
 .service-badge {
@@ -235,7 +252,7 @@
     margin-bottom: var(--space-3);
 }
 
-.service-card > p {
+.service-card>p {
     color: var(--text-secondary);
     margin-bottom: var(--space-5);
     line-height: 1.7;
@@ -323,7 +340,7 @@
     margin-bottom: var(--space-2);
 }
 
-.result-card > p {
+.result-card>p {
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     margin: 0;
@@ -453,8 +470,18 @@
 ============================================ */
 .cta-section {
     padding: var(--space-20) 0;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: var(--gradient-primary);
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-glow);
+    opacity: 0.3;
 }
 
 .cta-content h2 {
@@ -504,7 +531,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(255, 107, 53, 0.15);
     color: var(--primary);
     padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-full);
