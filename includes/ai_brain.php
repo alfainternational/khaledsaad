@@ -1,20 +1,28 @@
 <?php
 /**
- * AI Brain Core (v2.0)
+ * AI Brain Core (v7.0 - Enhanced with Expert System)
  * المحرك المسئول عن تحليل السلوك، الدردشة، وتطوير قاعدة المعرفة
+ * مدعوم بنظام الذكاء الاصطناعي الخبير المتقدم
  */
 require_once __DIR__ . '/diagnostic_llm.php';
+require_once __DIR__ . '/ai_expert_system.php';
+require_once __DIR__ . '/behavioral_analytics.php';
 
 class AIBrain {
-    
+
     private $llm;
+    private $expertSystem;
+    private $behavioralAnalytics;
 
     public function __construct() {
         $this->llm = new DiagnosticLLM();
+        $this->expertSystem = new AIExpertSystem();
+        $this->behavioralAnalytics = new BehavioralAnalytics();
     }
 
     /**
      * تحليل سلوك العملاء الأخير وتقديم رؤى للأدمن
+     * v7.0 - محسّن بنظام الذكاء الخبير والتحليلات السلوكية
      */
     public function analyzeGlobalActivity() {
         // جلب البيانات الحقيقية
@@ -24,6 +32,23 @@ class AIBrain {
 
         // تحليل محلي متقدم جداً (True Statistical Engine)
         $aslAnalysis = $this->generateAdvancedStrategicLogic($logs, $results, $stats);
+
+        // استخدام النظام الخبير للتحليل المتقدم
+        try {
+            $expertAnalysis = $this->expertSystem->advancedAnalysis([
+                'industry' => $stats['top_industry'] ?? 'other',
+                'company_size' => 'enterprise',
+                'overall_score' => $stats['avg_score'] ?? 0,
+                'total_cases' => count($results),
+                'activity_level' => count($logs)
+            ]);
+
+            // دمج التحليل الخبير مع التحليل الأساسي
+            $aslAnalysis['expert_insights'] = $expertAnalysis;
+            $aslAnalysis['ai_version'] = '7.0';
+        } catch (Exception $e) {
+            error_log("Expert System Error: " . $e->getMessage());
+        }
 
         $prompt = "
         أنت الآن تمثل 'فريق العمل الاستراتيجي الكامل' لخالد سعد.
