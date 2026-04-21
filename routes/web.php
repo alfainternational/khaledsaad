@@ -1,0 +1,179 @@
+<?php
+
+use App\Http\Controllers\Admin\AccountManagementController;
+use App\Http\Controllers\Admin\AICreditsController;
+use App\Http\Controllers\Admin\AIGenerationController;
+use App\Http\Controllers\Admin\AITemplateController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Admin\ClientManagementController;
+use App\Http\Controllers\Admin\CommentModerationController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FeatureFlagController;
+use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\ProjectManagementController;
+use App\Http\Controllers\Admin\SubscriptionController;
+use App\Http\Controllers\Admin\ToolController;
+use App\Http\Controllers\Admin\ToolRunController as AdminToolRunController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\WorkspaceEntitlementController;
+use App\Http\Controllers\Admin\WorkspaceManagementController;
+use App\Http\Controllers\Api\AiChatController;
+use App\Http\Controllers\Api\ToolRunApiController;
+use App\Http\Controllers\Web\AccountController;
+use App\Http\Controllers\Web\ApprovalController;
+use App\Http\Controllers\PayPalWebhookController;
+use App\Http\Controllers\Web\AuthController;
+use App\Http\Controllers\Web\BillingController;
+use App\Http\Controllers\Web\ClientController;
+use App\Http\Controllers\Web\DashboardController as UserDashboardController;
+use App\Http\Controllers\Web\ExperienceController;
+use App\Http\Controllers\Web\ImpersonationController;
+use App\Http\Controllers\Web\OnboardingController;
+use App\Http\Controllers\Web\PlatformController;
+use App\Http\Controllers\Web\ProjectController;
+use App\Http\Controllers\Web\StudioGenerationController;
+use App\Http\Controllers\Web\TeamController;
+use App\Http\Controllers\Web\ToolController as WebToolController;
+use App\Http\Controllers\Web\ToolRunController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware('guest')->prefix('admin')->group(function (): void {
+    Route::get('/login', [AdminAuthController::class, 'create'])->name('admin.login');
+    Route::post('/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::post('/logout', [AdminAuthController::class, 'destroy'])->name('logout');
+    Route::get('/', DashboardController::class)->name('dashboard');
+
+    Route::resource('users', UserManagementController::class);
+    Route::patch('/users/{user}/status', [UserManagementController::class, 'updateStatus'])->name('users.status');
+    Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
+    Route::post('/users/{user}/impersonate', [UserManagementController::class, 'impersonate'])->name('users.impersonate');
+
+    Route::resource('accounts', AccountManagementController::class);
+    Route::patch('/accounts/{account}/status', [AccountManagementController::class, 'updateStatus'])->name('accounts.status');
+    Route::patch('/accounts/{account}/subscription', [AccountManagementController::class, 'updateSubscription'])->name('accounts.subscription');
+    Route::resource('workspaces', WorkspaceManagementController::class);
+    Route::patch('/workspaces/{workspace}/status', [WorkspaceManagementController::class, 'updateStatus'])->name('workspaces.status');
+
+    Route::resource('plans', PlanController::class)->except(['show']);
+    Route::resource('tools', ToolController::class)->except(['show']);
+    Route::resource('ai-templates', AITemplateController::class)->except(['show'])->parameters([
+        'ai-templates' => 'aiTemplate',
+    ]);
+    Route::resource('feature-flags', FeatureFlagController::class)->except(['show'])->parameters([
+        'feature-flags' => 'featureFlag',
+    ]);
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
+    Route::patch('/subscriptions/{subscription}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
+    Route::post('/subscriptions/{subscription}/extend', [SubscriptionController::class, 'extend'])->name('subscriptions.extend');
+
+    Route::get('/workspaces/{workspace}/entitlements', [WorkspaceEntitlementController::class, 'index'])->name('workspaces.entitlements.index');
+    Route::post('/workspaces/{workspace}/entitlements', [WorkspaceEntitlementController::class, 'store'])->name('workspaces.entitlements.store');
+    Route::delete('/workspaces/{workspace}/entitlements/{entitlement}', [WorkspaceEntitlementController::class, 'destroy'])->name('workspaces.entitlements.destroy');
+
+    Route::resource('projects', ProjectManagementController::class)->except(['create', 'store']);
+    Route::resource('clients', ClientManagementController::class)->except(['create', 'store']);
+
+    Route::get('/tool-runs', [AdminToolRunController::class, 'index'])->name('tool-runs.index');
+    Route::get('/tool-runs/{toolRun}', [AdminToolRunController::class, 'show'])->name('tool-runs.show');
+    Route::patch('/tool-runs/{toolRun}/ops', [AdminToolRunController::class, 'updateOps'])->name('tool-runs.ops');
+    Route::post('/tool-runs/{toolRun}/retry', [AdminToolRunController::class, 'retry'])->name('tool-runs.retry');
+
+    Route::get('/ai-generations', [AIGenerationController::class, 'index'])->name('ai-generations.index');
+    Route::get('/ai-generations/{aiGeneration}', [AIGenerationController::class, 'show'])->name('ai-generations.show');
+    Route::patch('/ai-generations/{aiGeneration}/ops', [AIGenerationController::class, 'updateOps'])->name('ai-generations.ops');
+    Route::post('/ai-generations/{aiGeneration}/retry', [AIGenerationController::class, 'retry'])->name('ai-generations.retry');
+
+    Route::get('/ai-credits', [AICreditsController::class, 'index'])->name('ai-credits.index');
+    Route::post('/ai-credits', [AICreditsController::class, 'store'])->name('ai-credits.store');
+
+    Route::get('/comments', [CommentModerationController::class, 'index'])->name('comments.index');
+    Route::delete('/comments/{comment}', [CommentModerationController::class, 'destroy'])->name('comments.destroy');
+    Route::post('/comments/bulk-destroy', [CommentModerationController::class, 'bulkDestroy'])->name('comments.bulk-destroy');
+
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
+});
+
+Route::post('/paypal/webhook', [PayPalWebhookController::class, 'handle'])->name('paypal.webhook');
+
+Route::middleware('guest')->group(function (): void {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.store');
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.store');
+});
+
+Route::middleware('auth')->group(function (): void {
+    Route::post('/impersonation/stop', [ImpersonationController::class, 'stop'])->name('impersonation.stop');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/dashboard', UserDashboardController::class)->name('dashboard');
+    Route::post('/dashboard/workspaces/{workspace}/switch', [UserDashboardController::class, 'switchWorkspace'])->name('dashboard.workspaces.switch');
+    Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+    // مسارات توافق مع CLAUDE.md — التدفق الحالي موحّد في شاشة واحدة
+    Route::redirect('/onboarding/context', '/onboarding', 302)->name('onboarding.context');
+    Route::redirect('/onboarding/who-are-you', '/onboarding', 302)->name('onboarding.who-are-you');
+    Route::redirect('/onboarding/your-goal', '/onboarding', 302)->name('onboarding.your-goal');
+    Route::redirect('/onboarding/suggested-path', '/onboarding', 302)->name('onboarding.suggested-path');
+    Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
+    Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+    Route::get('/clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
+    Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+    Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
+    Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
+    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
+    Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    Route::patch('/account', [AccountController::class, 'update'])->name('account.update');
+    Route::get('/team', [TeamController::class, 'index'])->name('team.index');
+    Route::post('/team/invitations', [TeamController::class, 'invite'])->name('team.invitations.store');
+    Route::post('/team/invitations/{token}/accept', [TeamController::class, 'accept'])->name('team.invitations.accept');
+    Route::delete('/team/members/{member}', [TeamController::class, 'destroyMember'])->name('team.members.destroy');
+    Route::delete('/team/invitations/{invitation}', [TeamController::class, 'destroyInvitation'])->name('team.invitations.destroy');
+    Route::post('/projects/{project}/tools/{tool}/run', [ToolRunController::class, 'store'])->name('projects.tools.run');
+    Route::post('/tools/{tool}/run', [ToolRunController::class, 'storeFromTool'])->name('tools.run');
+    Route::get('/tools/{tool}', [WebToolController::class, 'show'])->name('tools.show');
+    Route::post('/studio/generations', [StudioGenerationController::class, 'store'])->name('studio.generations.store');
+    Route::get('/studio/generations/{aiGeneration}/export/{format}', [StudioGenerationController::class, 'export'])
+        ->where('format', 'md|markdown|html|pdf')
+        ->name('studio.generations.export');
+    Route::get('/studio/generations/{aiGeneration}', [StudioGenerationController::class, 'show'])->name('studio.generations.show');
+    Route::delete('/studio/generations/{aiGeneration}', [StudioGenerationController::class, 'destroy'])->name('studio.generations.destroy');
+    Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
+    Route::post('/projects/{project}/approvals', [ApprovalController::class, 'store'])->name('projects.approvals.store');
+    Route::patch('/approvals/{approval}', [ApprovalController::class, 'update'])->name('approvals.update');
+
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('/billing/subscribe', [BillingController::class, 'subscribe'])->name('billing.subscribe');
+    Route::get('/billing/paypal/return', [BillingController::class, 'paypalReturn'])->name('billing.paypal.return');
+    Route::post('/billing/cancel-paypal', [BillingController::class, 'cancelPayPal'])->name('billing.paypal.cancel');
+});
+
+Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+Route::get('/account', [AccountController::class, 'edit'])->name('account.index');
+Route::get('/tools', [ExperienceController::class, 'tools'])->name('tools.index');
+Route::get('/studio', [ExperienceController::class, 'studio'])->name('studio.index');
+Route::get('/templates', [ExperienceController::class, 'templates'])->name('templates.index');
+Route::get('/reports', [ExperienceController::class, 'reports'])->name('reports.index');
+Route::get('/agency', [ExperienceController::class, 'agency'])->name('agency.index');
+
+Route::middleware('auth')->prefix('api')->group(function (): void {
+    Route::post('/tool/{tool}/run', [ToolRunApiController::class, 'store'])->name('api.tools.run');
+    Route::get('/tool/{tool}/load', [ToolRunApiController::class, 'load'])->name('api.tools.load');
+    Route::post('/ai/chat', [AiChatController::class, 'chat'])->name('api.ai.chat');
+    Route::post('/ai/analyze', [AiChatController::class, 'analyzeToolInputs'])->name('api.ai.analyze');
+    Route::post('/ai/suggest', [AiChatController::class, 'suggestFields'])->name('api.ai.suggest');
+});
+
+Route::controller(PlatformController::class)->group(function (): void {
+    Route::get('/', 'home')->name('home');
+    Route::get('/paths', 'show')->defaults('page', 'paths')->name('paths.index');
+});

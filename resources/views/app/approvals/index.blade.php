@@ -1,0 +1,75 @@
+@extends('layouts.app', ['title' => 'الاعتمادات', 'pageTitle' => 'المراجعات والاعتمادات', 'pageKicker' => 'Approvals'])
+
+@section('content')
+<section class="app-stat-grid mb-8">
+    <article class="card stat-card-modern">
+        <span class="app-stat-label">قيد المراجعة</span>
+        <strong class="app-stat-value">{{ $pendingCount }}</strong>
+    </article>
+    <article class="card stat-card-modern">
+        <span class="app-stat-label">معتمد</span>
+        <strong class="app-stat-value">{{ $approvedCount }}</strong>
+    </article>
+    <article class="card stat-card-modern">
+        <span class="app-stat-label">مرفوض</span>
+        <strong class="app-stat-value">{{ $rejectedCount }}</strong>
+    </article>
+</section>
+
+<section class="card mb-6">
+    <form method="GET" class="app-form-grid cols-2">
+        <label class="app-field">
+            <span>الحالة</span>
+            <select class="app-input" name="status">
+                <option value="">كل الحالات</option>
+                @foreach (['pending', 'approved', 'rejected'] as $status)
+                    <option value="{{ $status }}" @selected(request('status') === $status)>{{ $status }}</option>
+                @endforeach
+            </select>
+        </label>
+        <div class="app-form-actions">
+            <button type="submit" class="btn btn-secondary btn-lg">تطبيق الفلترة</button>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <div class="app-list">
+        @forelse ($approvals as $approval)
+            <div class="app-list-item app-approval-item">
+                <div>
+                    <strong>{{ $approval->project?->name ?? 'عنصر بدون مشروع' }}</strong>
+                    <small>
+                        {{ $approval->item_type }} ·
+                        {{ $approval->project?->client?->name ?? 'بدون عميل' }} ·
+                        {{ $approval->reviewer?->name ?? 'بدون مراجع' }}
+                    </small>
+                    @if ($approval->note)
+                        <small>{{ $approval->note }}</small>
+                    @endif
+                </div>
+                <div class="app-inline-actions">
+                    <span class="app-badge">{{ $approval->status }}</span>
+                    <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="approved">
+                        <button type="submit" class="btn btn-secondary btn-sm">اعتماد</button>
+                    </form>
+                    <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="rejected">
+                        <button type="submit" class="btn btn-ghost btn-sm">رفض</button>
+                    </form>
+                </div>
+            </div>
+        @empty
+            <p class="app-empty">لا توجد طلبات اعتماد ضمن الفلاتر الحالية.</p>
+        @endforelse
+    </div>
+    <div class="admin-pagination mt-4">
+        {{ $approvals->links() }}
+    </div>
+</section>
+@endsection
