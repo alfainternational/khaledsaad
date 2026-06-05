@@ -24,6 +24,17 @@
 @if ($projects->isNotEmpty())
     @php($analysisIntegrity = $latestAuditReport['analysis_integrity'] ?? [])
 
+    {{-- Audit-in-progress banner — the audit dispatched at onboarding runs async; let the user know drafts will sharpen --}}
+    @if (in_array($latestAudit?->status, ['queued', 'running'], true))
+        <div class="tool-audit-progress mb-4" role="status" aria-live="polite">
+            <span class="tool-audit-progress-spinner" aria-hidden="true"></span>
+            <div>
+                <strong>جارٍ تحليل موقعك الآن</strong>
+                <p>ستتحسّن المقترحات والمسودّات تلقائياً عند اكتمال التحليل. تابع الآن دون انتظار — أعد تحميل الصفحة لاحقاً لرؤية النتائج.</p>
+            </div>
+        </div>
+    @endif
+
     {{-- Context & analysis cards — collapsed by default to keep the tool focused on the form --}}
     <details class="tool-context-rail mb-4">
         <summary class="onb-advanced-summary">

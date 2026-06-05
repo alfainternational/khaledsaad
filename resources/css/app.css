@@ -4737,6 +4737,34 @@ details[open] .onb-advanced-summary {
     color: var(--accent);
 }
 
+/* Audit-in-progress banner on the tool page */
+.tool-audit-progress {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-5);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+.tool-audit-progress p {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.tool-audit-progress-spinner {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    border: 2px solid var(--accent);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
 /* Value strip */
 .onb-value-strip {
     display: flex;
