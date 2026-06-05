@@ -21,14 +21,55 @@
     :current-project="$currentProject"
 />
 
-@if ($hasUpstream)
-    <div class="tool-upstream-context mb-4">
+@if ($projects->isNotEmpty())
+    @php($analysisIntegrity = $latestAuditReport['analysis_integrity'] ?? [])
+
+    {{-- Context & analysis cards — collapsed by default to keep the tool focused on the form --}}
+    <details class="tool-context-rail mb-4">
+        <summary class="onb-advanced-summary">
+            <span>تفاصيل التحليل والسياق (اختياري)</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="tool-context-rail-body">
+
+    <section class="card panel-modern mb-4" @if(empty($latestAuditReport)) hidden @endif>
+        <div class="app-section-head">
+            <h3 class="heading-sm">نتيجة موقعك</h3>
+            <span class="app-badge">{{ $latestAuditSummary['executive_score'] ?? ($latestAuditReport['executive_scores']['executive'] ?? '--') }}%</span>
+        </div>
+        <div class="app-list">
+            <div class="app-list-item">
+                <div>
+                    <strong>{{ $analysisIntegrity['label'] ?? 'لا توجد قراءة موثقة بعد' }}</strong>
+                    <small>{{ $analysisIntegrity['summary'] ?? 'شغّل التحليل من صفحة المشروع حتى تعمل الأداة على scorecards وتشخيص أحدث.' }}</small>
+                </div>
+            </div>
+            @if (! empty($latestAuditReport['honest_diagnosis'][0]))
+                <div class="app-list-item">
+                    <div>
+                        <strong>Honest diagnosis</strong>
+                        <small>{{ $latestAuditReport['honest_diagnosis'][0] }}</small>
+                    </div>
+                </div>
+            @endif
+            @if (! empty($latestAuditReport['priority_actions']['quick_wins_7_days'][0]))
+                <div class="app-list-item">
+                    <div>
+                        <strong>الأولوية السريعة</strong>
+                        <small>{{ $latestAuditReport['priority_actions']['quick_wins_7_days'][0] }}</small>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </section>
+
+    <div class="tool-upstream-context mb-4" data-upstream-context-root @if (! $hasUpstream) hidden @endif>
         <div class="tool-upstream-header">
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             <strong>من خطوات سابقة</strong>
             <small>تُستخدم لتحسين الاقتراح</small>
         </div>
-        <div class="tool-upstream-items">
+        <div class="tool-upstream-items" data-upstream-context-items>
             @foreach ($upstreamContext as $upstream)
                 <div class="tool-upstream-item">
                     <strong>{{ $upstream['headline'] }}</strong>
@@ -37,6 +78,67 @@
             @endforeach
         </div>
     </div>
+
+    <div class="tool-upstream-context mb-4" data-project-brief-root @if (empty($projectBriefAssessment)) hidden @endif>
+        <div class="tool-upstream-header">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10"/></svg>
+            <strong>ملف المشروع التسويقي</strong>
+            <small data-project-brief-score>{{ $projectBriefAssessment['completeness_score'] ?? 0 }}% جاهزية</small>
+        </div>
+        <div class="tool-upstream-items" data-project-brief-items>
+            @foreach (array_slice($projectBriefAssessment['reports']['executive_brief'] ?? [], 0, 3) as $line)
+                <div class="tool-upstream-item">
+                    <strong>{{ $line }}</strong>
+                </div>
+            @endforeach
+            @foreach (array_slice($projectBriefAssessment['next_actions'] ?? [], 0, 1) as $line)
+                <div class="tool-upstream-item">
+                    <p>{{ $line }}</p>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    <section class="card panel-modern mb-4" data-tool-briefing-root @if (empty($toolBriefing)) hidden @endif>
+        <div class="app-section-head">
+            <h3 class="heading-sm">كيف تستفيد هذه الأداة من ملف المشروع؟</h3>
+            <span class="app-badge" data-tool-briefing-score>{{ $toolBriefing['readiness_score'] ?? 0 }}%</span>
+        </div>
+        <p class="text-body mb-4" data-tool-briefing-text>{{ $toolBriefing['summary']['text'] ?? '' }}</p>
+
+        <div class="app-list mb-4" data-tool-briefing-signals @if (empty($toolBriefing['signals'])) hidden @endif>
+            @if (! empty($toolBriefing['signals']))
+                @foreach ($toolBriefing['signals'] as $signal)
+                    <div class="app-list-item">
+                        <div>
+                            <strong>{{ $signal['label'] }}</strong>
+                            <small>{{ $signal['value'] }}</small>
+                        </div>
+                    </div>
+                @endforeach
+            @endif
+        </div>
+
+        <div class="tool-upstream-item mb-4" data-tool-briefing-missing @if (empty($toolBriefing['missing_signals'])) hidden @endif>
+            <strong>ما الذي ما زال ناقصاً؟</strong>
+            <p data-tool-briefing-missing-text>{{ implode('، ', $toolBriefing['missing_signals'] ?? []) }}</p>
+        </div>
+
+        <div class="tool-upstream-item" data-tool-briefing-next-action @if (empty($toolBriefing['next_action']['reason'])) hidden @endif>
+            <strong data-tool-briefing-headline>{{ $toolBriefing['summary']['headline'] ?? 'الخطوة التالية' }}</strong>
+            <p data-tool-briefing-reason>{{ $toolBriefing['next_action']['reason'] ?? '' }}</p>
+            <div class="app-inline-actions mt-3" data-tool-briefing-actions @if (empty(data_get($toolBriefing, 'next_action.cta_url'))) hidden @endif>
+                <a
+                    href="{{ data_get($toolBriefing, 'next_action.cta_url', '#') }}"
+                    class="btn btn-secondary btn-sm"
+                    data-tool-briefing-action-link
+                >{{ data_get($toolBriefing, 'next_action.cta_label', '') }}</a>
+            </div>
+        </div>
+    </section>
+
+        </div>
+    </details>
 @endif
 
 @if ($projects->isEmpty())
@@ -88,6 +190,11 @@
                     :is-diagnosis="$isDiagnosisTool"
                 />
 
+                <details class="tool-context-rail tool-coach-rail">
+                    <summary class="onb-advanced-summary">
+                        <span>مساعد المدخلات (اختياري)</span>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
                 <section class="tool-input-coach" data-tool-input-coach>
                     <div class="tool-input-coach-header">
                         <div>
@@ -124,6 +231,7 @@
                         @endforeach
                     </ul>
                 </section>
+                </details>
 
                 <div class="tool-mode-panels">
                     @foreach ($blueprint['modes'] as $modeKey => $mode)

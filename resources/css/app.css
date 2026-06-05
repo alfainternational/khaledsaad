@@ -986,6 +986,12 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
     flex-wrap: wrap;
     gap: var(--sp-3);
 }
+.page-actions-center {
+    justify-content: center;
+}
+.section-badge-center {
+    margin-inline: auto;
+}
 .page-inline-notes {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4687,6 +4693,48 @@ details[open] .onb-advanced-summary {
 
 .onb-advanced-details > .app-form-grid {
     padding: var(--sp-5);
+}
+
+/* Tool page — collapsible context/coach rail (keeps the tool focused on the form) */
+.tool-context-rail {
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.tool-context-rail-body {
+    padding: var(--sp-5);
+}
+
+.tool-context-rail-body > section:last-child,
+.tool-context-rail-body > div:last-child {
+    margin-bottom: 0;
+}
+
+.tool-coach-rail {
+    margin-bottom: var(--sp-4);
+}
+
+.tool-mode-rail {
+    margin-bottom: var(--sp-4);
+}
+
+.tool-mode-rail-body {
+    padding: var(--sp-4) var(--sp-5);
+}
+
+/* Auto-filled suggestion draft — editable, clearly marked as a draft */
+.is-suggested-draft .app-input {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.tool-field-draft-hint {
+    display: block;
+    margin-top: var(--sp-2);
+    font-size: var(--fs-xs);
+    color: var(--accent);
 }
 
 /* Value strip */

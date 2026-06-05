@@ -26,6 +26,17 @@
     <form method="POST" action="{{ route('onboarding.store') }}" id="onb-form">
         @csrf
 
+        @if ($errors->any())
+            <div class="alert alert-error mb-6" role="alert">
+                <strong class="d-block mb-2">تعذر إكمال التهيئة حالياً.</strong>
+                <ul class="list-reset">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         {{-- ── STEP 1: من أنت؟ (٣ أسئلة فقط) ──────────────────── --}}
         <section class="onb-panel card" data-step="1">
             <div class="onb-panel-hero">
@@ -39,38 +50,38 @@
 
             {{-- Challenge Picker Cards --}}
             <div class="onb-challenge-grid">
-                <label class="onb-challenge-card" data-challenge="no_message">
-                    <input type="radio" name="_challenge_hint" value="no_message" class="onb-hidden-radio">
+                <label class="onb-challenge-card {{ old('_challenge_hint') === 'no_message' ? 'is-selected' : '' }}" data-challenge="no_message">
+                    <input type="radio" name="_challenge_hint" value="no_message" class="onb-hidden-radio" @checked(old('_challenge_hint') === 'no_message')>
                     <div class="onb-challenge-icon">💬</div>
                     <h3 class="onb-challenge-title">رسالتي غير واضحة</h3>
                     <p class="onb-challenge-body">لا أستطيع شرح ما أقدمه بشكل يُقنع العميل بسرعة</p>
                 </label>
-                <label class="onb-challenge-card" data-challenge="no_audience">
-                    <input type="radio" name="_challenge_hint" value="no_audience" class="onb-hidden-radio">
+                <label class="onb-challenge-card {{ old('_challenge_hint') === 'no_audience' ? 'is-selected' : '' }}" data-challenge="no_audience">
+                    <input type="radio" name="_challenge_hint" value="no_audience" class="onb-hidden-radio" @checked(old('_challenge_hint') === 'no_audience')>
                     <div class="onb-challenge-icon">🎯</div>
                     <h3 class="onb-challenge-title">لا أعرف جمهوري بدقة</h3>
                     <p class="onb-challenge-body">أُسوّق للجميع وأحصل على نتائج ضعيفة</p>
                 </label>
-                <label class="onb-challenge-card" data-challenge="no_plan">
-                    <input type="radio" name="_challenge_hint" value="no_plan" class="onb-hidden-radio">
+                <label class="onb-challenge-card {{ old('_challenge_hint') === 'no_plan' ? 'is-selected' : '' }}" data-challenge="no_plan">
+                    <input type="radio" name="_challenge_hint" value="no_plan" class="onb-hidden-radio" @checked(old('_challenge_hint') === 'no_plan')>
                     <div class="onb-challenge-icon">🗺️</div>
                     <h3 class="onb-challenge-title">لا أعرف من أين أبدأ</h3>
                     <p class="onb-challenge-body">أقرأ كثيراً لكن لا أتخذ خطوة واضحة</p>
                 </label>
-                <label class="onb-challenge-card" data-challenge="no_conversion">
-                    <input type="radio" name="_challenge_hint" value="no_conversion" class="onb-hidden-radio">
+                <label class="onb-challenge-card {{ old('_challenge_hint') === 'no_conversion' ? 'is-selected' : '' }}" data-challenge="no_conversion">
+                    <input type="radio" name="_challenge_hint" value="no_conversion" class="onb-hidden-radio" @checked(old('_challenge_hint') === 'no_conversion')>
                     <div class="onb-challenge-icon">📈</div>
                     <h3 class="onb-challenge-title">أبيع لكن التحويل ضعيف</h3>
                     <p class="onb-challenge-body">عندي زيارات أو متابعون لكن المبيعات لا تتناسب</p>
                 </label>
-                <label class="onb-challenge-card" data-challenge="agency_manage">
-                    <input type="radio" name="_challenge_hint" value="agency_manage" class="onb-hidden-radio">
+                <label class="onb-challenge-card {{ old('_challenge_hint') === 'agency_manage' ? 'is-selected' : '' }}" data-challenge="agency_manage">
+                    <input type="radio" name="_challenge_hint" value="agency_manage" class="onb-hidden-radio" @checked(old('_challenge_hint') === 'agency_manage')>
                     <div class="onb-challenge-icon">🏢</div>
                     <h3 class="onb-challenge-title">أُدير عملاء متعددين</h3>
                     <p class="onb-challenge-body">أحتاج نظاماً لتنظيم العمل مع عملائي</p>
                 </label>
-                <label class="onb-challenge-card" data-challenge="other">
-                    <input type="radio" name="_challenge_hint" value="other" class="onb-hidden-radio">
+                <label class="onb-challenge-card {{ old('_challenge_hint') === 'other' ? 'is-selected' : '' }}" data-challenge="other">
+                    <input type="radio" name="_challenge_hint" value="other" class="onb-hidden-radio" @checked(old('_challenge_hint') === 'other')>
                     <div class="onb-challenge-icon">✨</div>
                     <h3 class="onb-challenge-title">شيء آخر</h3>
                     <p class="onb-challenge-body">لديّ تحدٍ مختلف وسأحدده لاحقاً</p>
@@ -92,8 +103,8 @@
                         <span>أنت تعمل كـ</span>
                         <div class="onb-persona-row">
                             @foreach ($personas as $key => $label)
-                                <label class="onb-persona-chip">
-                                    <input type="radio" name="persona" value="{{ $key }}" @checked(old('persona', $profile['persona'] ?? null) === $key) required>
+                                <label class="onb-persona-chip {{ old('persona', $defaults['persona']) === $key ? 'is-selected' : '' }}">
+                                    <input type="radio" name="persona" value="{{ $key }}" @checked(old('persona', $defaults['persona']) === $key) required>
                                     <span>{{ $label }}</span>
                                 </label>
                             @endforeach
@@ -105,11 +116,11 @@
             {{-- Hidden fields with smart defaults --}}
             <input type="hidden" name="workspace_name" value="{{ old('workspace_name', $workspace->name) }}">
             <input type="hidden" name="workspace_type" value="{{ old('workspace_type', $workspace->type ?? 'personal') }}">
-            <input type="hidden" name="awareness_level" id="auto-awareness" value="{{ old('awareness_level', $profile['awareness_level'] ?? 'aware') }}">
-            <input type="hidden" name="primary_goal" id="auto-goal" value="{{ old('primary_goal', $profile['primary_goal'] ?? 'clarify_message') }}">
-            <input type="hidden" name="recommended_path" id="auto-path" value="{{ old('recommended_path', $profile['recommended_path'] ?? '') }}">
-            <input type="hidden" name="audience" id="auto-audience" value="{{ old('audience', $profile['audience'] ?? 'عملاء مناسبون لخدمتي') }}">
-            <input type="hidden" name="content_locale" id="auto-locale" value="{{ old('content_locale', $profile['content_locale'] ?? 'ar_modern_fusha') }}">
+            <input type="hidden" name="awareness_level" id="auto-awareness" value="{{ old('awareness_level', $defaults['awareness_level']) }}">
+            <input type="hidden" name="primary_goal" id="auto-goal" value="{{ old('primary_goal', $defaults['primary_goal']) }}">
+            <input type="hidden" name="recommended_path" id="auto-path" value="{{ old('recommended_path', $defaults['recommended_path']) }}">
+            <input type="hidden" name="audience" id="auto-audience" value="{{ old('audience', $defaults['audience']) }}">
+            <input type="hidden" name="content_locale" id="auto-locale" value="{{ old('content_locale', $defaults['content_locale']) }}">
             <input type="hidden" name="current_challenge" id="auto-challenge" value="{{ old('current_challenge', $profile['current_challenge'] ?? '') }}">
 
             <div class="onb-panel-actions">
@@ -151,15 +162,15 @@
                     <span>اسم المشروع</span>
                     <input class="app-input" name="project_name" value="{{ old('project_name') }}" required placeholder="مثال: إطلاق خدمة الاستشارات">
                 </label>
-                <label class="app-field cols-span-2">
-                    <span>أين أنت الآن في هذا المشروع؟</span>
-                    <div class="onb-stage-row">
-                        @foreach ([1 => 'في البداية — أبني الأساس', 2 => 'أطوّر عرضي وقيمتي', 3 => 'أنمّي وأوسّع', 4 => 'أُطلق وأقيس', 5 => 'أُحكم وأتوسع'] as $stageNum => $stageDesc)
-                            <label class="onb-stage-chip">
-                                <input type="radio" name="project_stage" value="{{ $stageNum }}" @checked(old('project_stage', 1) == $stageNum) required>
-                                <span class="onb-stage-num">{{ $stageNum }}</span>
-                                <span class="onb-stage-desc">{{ $stageDesc }}</span>
-                            </label>
+                    <label class="app-field cols-span-2">
+                        <span>أين أنت الآن في هذا المشروع؟</span>
+                        <div class="onb-stage-row">
+                            @foreach ([1 => 'في البداية — أبني الأساس', 2 => 'أطوّر عرضي وقيمتي', 3 => 'أنمّي وأوسّع', 4 => 'أُطلق وأقيس', 5 => 'أُحكم وأتوسع'] as $stageNum => $stageDesc)
+                                <label class="onb-stage-chip {{ old('project_stage', 1) == $stageNum ? 'is-selected' : '' }}">
+                                    <input type="radio" name="project_stage" value="{{ $stageNum }}" @checked(old('project_stage', 1) == $stageNum) required>
+                                    <span class="onb-stage-num">{{ $stageNum }}</span>
+                                    <span class="onb-stage-desc">{{ $stageDesc }}</span>
+                                </label>
                         @endforeach
                     </div>
                 </label>
@@ -186,12 +197,84 @@
                 <p class="text-caption mb-6">تستطيع تعديل كل هذا لاحقاً من إعدادات الحساب.</p>
             </div>
 
+            <div class="onb-brief-preview card card-nested mb-6">
+                <div class="onb-preview-icon">📄</div>
+                <div>
+                    <p class="text-caption mb-1">ما الذي تبنيه الآن؟</p>
+                    <strong class="text-body">ملف مشروع تسويقي حيّ يُستخدم في التشخيص والاستوديو والخطة.</strong>
+                </div>
+            </div>
+
+            {{-- ٣ حقول أساسية فقط — كل ما عداها اختياري ومطوي --}}
+            <div class="app-form-grid cols-2 mb-6">
+                <label class="app-field cols-span-2">
+                    <span>اشرح النشاط أو المشروع باختصار</span>
+                    <textarea class="app-input" name="brief_business_summary" rows="2" placeholder="ما الذي يفعله المشروع؟ ولماذا يهم العميل؟">{{ old('brief_business_summary') }}</textarea>
+                </label>
+                <label class="app-field">
+                    <span>الدومين الأساسي</span>
+                    <input class="app-input" name="primary_domain" value="{{ old('primary_domain') }}" placeholder="example.com أو https://example.com">
+                </label>
+                <label class="app-field">
+                    <span>القطاع</span>
+                    <select class="app-input" name="sector">
+                        @foreach ($sectorOptions as $key => $label)
+                            <option value="{{ $key }}" @selected(old('sector', 'general_business') === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </label>
+            </div>
+
             <details class="onb-advanced-details">
                 <summary class="onb-advanced-summary">
-                    <span>عرض التفاصيل الإضافية (اختياري)</span>
+                    <span>تفاصيل إضافية تُحسّن دقة النتائج (اختياري)</span>
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </summary>
                 <div class="app-form-grid cols-2 mt-6">
+                    <label class="app-field cols-span-2">
+                        <span>ما العرض الرئيسي الذي تريد بيعه؟</span>
+                        <textarea class="app-input" name="brief_offer" rows="2" placeholder="مثال: خدمة أو عرض أو نتيجة واضحة تريد بيعها.">{{ old('brief_offer') }}</textarea>
+                    </label>
+                    <label class="app-field cols-span-2">
+                        <span>من هو العميل الأقرب لك الآن؟</span>
+                        <textarea class="app-input" name="brief_ideal_customer" rows="2" placeholder="الشريحة الأقرب للدفع الآن.">{{ old('brief_ideal_customer', $profile['audience'] ?? '') }}</textarea>
+                    </label>
+                    <label class="app-field">
+                        <span>ما الهدف الأقرب خلال الفترة القادمة؟</span>
+                        <input class="app-input" name="brief_primary_goal" value="{{ old('brief_primary_goal') }}" placeholder="مثال: زيادة الاستفسارات أو وضوح العرض">
+                    </label>
+                    <label class="app-field">
+                        <span>كيف ستقيس النجاح؟</span>
+                        <input class="app-input" name="brief_success_metric" value="{{ old('brief_success_metric') }}" placeholder="مثال: عدد العملاء أو التحويل">
+                    </label>
+                    <label class="app-field">
+                        <span>القنوات الحالية</span>
+                        <input class="app-input" name="brief_current_channels" value="{{ old('brief_current_channels') }}" placeholder="مثال: إنستغرام، واتساب، موقع">
+                    </label>
+                    <label class="app-field">
+                        <span>ما الأولوية التنفيذية الآن؟</span>
+                        <input class="app-input" name="brief_priority" value="{{ old('brief_priority', $profile['current_challenge'] ?? '') }}" placeholder="مثال: تشخيص الفجوة أو صياغة العرض">
+                    </label>
+                    <label class="app-field cols-span-2">
+                        <span>الروابط الرسمية للسوشيال</span>
+                        <textarea class="app-input" name="official_social_links" rows="3" placeholder="ضع رابطاً واحداً في كل سطر">{{ old('official_social_links') }}</textarea>
+                    </label>
+                    <label class="app-field cols-span-2">
+                        <span>المنافسون</span>
+                        <textarea class="app-input" name="competitors" rows="3" placeholder="اسم أو دومين كل منافس في سطر">{{ old('competitors') }}</textarea>
+                    </label>
+                    <label class="app-field cols-span-2">
+                        <span>أهداف التحليل</span>
+                        <textarea class="app-input" name="analysis_goals" rows="3" placeholder="مثال: تقييم الموقع&#10;تحليل السوشيال&#10;مقارنة المنافسين">{{ old('analysis_goals') }}</textarea>
+                    </label>
+                    <label class="app-field cols-span-2">
+                        <span class="onb-persona-row">
+                            <label class="onb-persona-chip is-selected">
+                                <input type="checkbox" name="monitoring_enabled" value="1" @checked(old('monitoring_enabled'))>
+                                <span>فعّل المراقبة الدورية لهذا المشروع من البداية</span>
+                            </label>
+                        </span>
+                    </label>
                     <label class="app-field">
                         <span>اسم مساحة العمل</span>
                         <input class="app-input" name="_workspace_name_display" value="{{ old('_workspace_name_display', $workspace->name) }}"
@@ -293,12 +376,12 @@
 (function () {
     // Challenge → auto-set hidden fields
     const challengeMap = {
-        no_message:    { goal: 'clarify_message',    challenge: 'الرسالة التسويقية غير واضحة' },
-        no_audience:   { goal: 'define_audience',    challenge: 'الجمهور المستهدف غير محدد بدقة' },
-        no_plan:       { goal: 'build_strategy',     challenge: 'لا توجد خطة أو مسار واضح' },
-        no_conversion: { goal: 'increase_sales',     challenge: 'معدل التحويل ضعيف رغم وجود زيارات' },
-        agency_manage: { goal: 'manage_clients',     challenge: 'إدارة عملاء متعددين وتنظيم العمل' },
-        other:         { goal: 'clarify_message',    challenge: '' },
+        no_message:    { goal: 'build_offer',        challenge: 'الرسالة التسويقية غير واضحة' },
+        no_audience:   { goal: 'improve_marketing',  challenge: 'الجمهور المستهدف غير محدد بدقة' },
+        no_plan:       { goal: 'build_90_day_plan',  challenge: 'لا توجد خطة أو مسار واضح' },
+        no_conversion: { goal: 'get_first_customers', challenge: 'معدل التحويل ضعيف رغم وجود زيارات' },
+        agency_manage: { goal: 'build_90_day_plan',  challenge: 'إدارة عملاء متعددين وتنظيم العمل' },
+        other:         { goal: '{{ $defaults['primary_goal'] }}', challenge: '' },
     };
 
     document.querySelectorAll('.onb-challenge-card').forEach(function(card) {
@@ -333,6 +416,25 @@
     });
 
     // Step navigation
+    function validateStep(step) {
+        const panel = document.querySelector('[data-step="' + step + '"]');
+        if (!panel) return true;
+
+        const fields = Array.from(panel.querySelectorAll('input, select, textarea'))
+            .filter(function(field) {
+                return field.type !== 'hidden' && !field.disabled;
+            });
+
+        for (const field of fields) {
+            if (!field.checkValidity()) {
+                field.reportValidity();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     function showStep(n) {
         document.querySelectorAll('.onb-panel').forEach(p => p.hidden = true);
         const panel = document.querySelector('[data-step="' + n + '"]');
@@ -345,7 +447,11 @@
     }
 
     document.querySelectorAll('[data-onb-next]').forEach(function(btn) {
-        btn.addEventListener('click', function() { showStep(parseInt(btn.dataset.onbNext)); });
+        btn.addEventListener('click', function() {
+            const currentStep = parseInt(btn.closest('[data-step]').dataset.step, 10);
+            if (!validateStep(currentStep)) return;
+            showStep(parseInt(btn.dataset.onbNext, 10));
+        });
     });
     document.querySelectorAll('[data-onb-back]').forEach(function(btn) {
         btn.addEventListener('click', function() { showStep(parseInt(btn.dataset.onbBack)); });
@@ -376,6 +482,8 @@
     if (firstPersona) firstPersona.closest('.onb-persona-chip').classList.add('is-selected');
     const firstStage = document.querySelector('.onb-stage-chip input:checked');
     if (firstStage) firstStage.closest('.onb-stage-chip').classList.add('is-selected');
+    const selectedChallenge = document.querySelector('.onb-challenge-card input:checked');
+    if (selectedChallenge) selectedChallenge.closest('.onb-challenge-card').classList.add('is-selected');
 })();
 </script>
 @endpush

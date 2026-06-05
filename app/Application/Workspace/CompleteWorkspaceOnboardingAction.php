@@ -6,8 +6,11 @@ use App\Domain\Account\Models\Account;
 use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
+use App\Jobs\RunProjectIntelligenceAuditJob;
 use App\Models\User;
 use App\Support\Dashboard\PathRecommendationService;
+use App\Support\Intelligence\MarketingIntelligenceService;
+use App\Support\Projects\ProjectMarketingBriefStore;
 use App\Support\Workspaces\OnboardingState;
 use App\Support\Workspaces\WorkspaceJourneyStore;
 use App\Support\Workspaces\WorkspaceProfileStore;
@@ -19,6 +22,8 @@ class CompleteWorkspaceOnboardingAction
         private readonly WorkspaceProfileStore $profileStore,
         private readonly WorkspaceJourneyStore $journeyStore,
         private readonly PathRecommendationService $pathRecommendationService,
+        private readonly ProjectMarketingBriefStore $projectMarketingBriefStore,
+        private readonly MarketingIntelligenceService $marketingIntelligenceService,
     ) {}
 
     /**
@@ -31,7 +36,7 @@ class CompleteWorkspaceOnboardingAction
         array $data,
         OnboardingState $state,
     ): void {
-        DB::transaction(function () use ($workspace, $account, $user, $data, $state): void {
+        $project = DB::transaction(function () use ($workspace, $account, $user, $data, $state): Project {
             $user->forceFill([
                 'name' => $data['account_name'],
             ])->save();
@@ -61,6 +66,14 @@ class CompleteWorkspaceOnboardingAction
                 'name' => $data['project_name'],
                 'stage' => $data['project_stage'],
                 'status' => 'active',
+                'sector' => $data['sector'] ?? 'general_business',
+                'market_country' => $data['country'] ?? null,
+                'primary_domain' => $data['primary_domain'] ?? null,
+                'official_social_links_json' => $data['official_social_links_json'] ?? [],
+                'verified_social_profiles_json' => $data['verified_social_profiles_json'] ?? [],
+                'competitors_json' => $data['competitors_json'] ?? [],
+                'analysis_goals_json' => $data['analysis_goals_json'] ?? [],
+                'monitoring_enabled' => $data['monitoring_enabled'] ?? false,
             ]);
 
             $this->profileStore->put($workspace, [
@@ -97,10 +110,45 @@ class CompleteWorkspaceOnboardingAction
                 ],
             ], $project);
 
+            $this->projectMarketingBriefStore->put($workspace, $project, [
+                'business' => [
+                    'summary' => $data['brief_business_summary'] ?? null,
+                    'offer' => $data['brief_offer'] ?? null,
+                    'market' => $data['country'] ?? null,
+                ],
+                'audience' => [
+                    'ideal_customer' => $data['brief_ideal_customer'] ?? ($data['audience'] ?? null),
+                ],
+                'goals' => [
+                    'primary_goal' => $data['brief_primary_goal'] ?? ($data['primary_goal'] ?? null),
+                    'success_metric' => $data['brief_success_metric'] ?? null,
+                ],
+                'current_marketing' => [
+                    'channels' => $data['brief_current_channels'] ?? null,
+                ],
+                'execution' => [
+                    'priority' => $data['brief_priority'] ?? ($data['current_challenge'] ?? null),
+                    'next_asset' => 'التشخيص',
+                ],
+            ]);
+
             $state->markCompleted($workspace, [
                 'client_name' => $client->name,
                 'project_name' => $data['project_name'],
             ]);
+
+            return $project;
         });
+
+        // إطلاق تدقيق Marketing Intelligence تلقائياً بعد الـ onboarding متى توفّر ما يُحلَّل،
+        // حتى تكون نتائج التشخيص جاهزة لتعبئة مسودّات الأدوات عند أول استخدام.
+        $hasCrawlableTarget = ! empty($data['primary_domain'])
+            || ! empty($data['official_social_links_json'])
+            || ! empty($data['competitors_json']);
+
+        if ($hasCrawlableTarget) {
+            $auditRun = $this->marketingIntelligenceService->queue($project->fresh(), $workspace, 'onboarding');
+            RunProjectIntelligenceAuditJob::dispatch($auditRun->id);
+        }
     }
 }

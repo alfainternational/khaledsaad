@@ -855,6 +855,150 @@ function ensureToolFieldSuggestionButton(wrap) {
     return button;
 }
 
+function renderToolUpstreamContext(items) {
+    const root = document.querySelector('[data-upstream-context-root]');
+    if (!root) {
+        return;
+    }
+
+    const list = root.querySelector('[data-upstream-context-items]');
+    const entries = Array.isArray(items)
+        ? items.filter((item) => (item?.headline || item?.text))
+        : [];
+
+    root.hidden = entries.length === 0;
+
+    if (!list) {
+        return;
+    }
+
+    list.innerHTML = entries.map((item) => `
+        <div class="tool-upstream-item">
+            ${item.headline ? `<strong>${escapeHtml(item.headline)}</strong>` : ''}
+            ${item.text ? `<p>${escapeHtml(item.text)}</p>` : ''}
+        </div>
+    `).join('');
+}
+
+function renderProjectBriefAssessment(assessment) {
+    const root = document.querySelector('[data-project-brief-root]');
+    if (!root) {
+        return;
+    }
+
+    const scoreNode = root.querySelector('[data-project-brief-score]');
+    const itemsNode = root.querySelector('[data-project-brief-items]');
+    const executiveLines = Array.isArray(assessment?.reports?.executive_brief)
+        ? assessment.reports.executive_brief.slice(0, 3)
+        : [];
+    const nextAction = Array.isArray(assessment?.next_actions)
+        ? assessment.next_actions[0]
+        : null;
+    const hasContent = executiveLines.length > 0 || Boolean(nextAction);
+
+    root.hidden = !hasContent;
+
+    if (scoreNode) {
+        scoreNode.textContent = `${assessment?.completeness_score || 0}% جاهزية`;
+    }
+
+    if (!itemsNode) {
+        return;
+    }
+
+    const markup = [
+        ...executiveLines.map((line) => `
+            <div class="tool-upstream-item">
+                <strong>${escapeHtml(line)}</strong>
+            </div>
+        `),
+        nextAction ? `
+            <div class="tool-upstream-item">
+                <p>${escapeHtml(nextAction)}</p>
+            </div>
+        ` : '',
+    ].filter(Boolean).join('');
+
+    itemsNode.innerHTML = markup;
+}
+
+function renderToolBriefing(toolBriefing) {
+    const root = document.querySelector('[data-tool-briefing-root]');
+    if (!root) {
+        return;
+    }
+
+    const hasBriefing = toolBriefing && typeof toolBriefing === 'object' && Object.keys(toolBriefing).length > 0;
+    root.hidden = !hasBriefing;
+
+    if (!hasBriefing) {
+        return;
+    }
+
+    const scoreNode = root.querySelector('[data-tool-briefing-score]');
+    const textNode = root.querySelector('[data-tool-briefing-text]');
+    const signalsNode = root.querySelector('[data-tool-briefing-signals]');
+    const missingNode = root.querySelector('[data-tool-briefing-missing]');
+    const missingTextNode = root.querySelector('[data-tool-briefing-missing-text]');
+    const nextActionNode = root.querySelector('[data-tool-briefing-next-action]');
+    const headlineNode = root.querySelector('[data-tool-briefing-headline]');
+    const reasonNode = root.querySelector('[data-tool-briefing-reason]');
+    const actionsNode = root.querySelector('[data-tool-briefing-actions]');
+    const actionLink = root.querySelector('[data-tool-briefing-action-link]');
+    const signals = Array.isArray(toolBriefing.signals) ? toolBriefing.signals : [];
+    const missingSignals = Array.isArray(toolBriefing.missing_signals) ? toolBriefing.missing_signals : [];
+    const nextAction = toolBriefing.next_action || {};
+
+    if (scoreNode) {
+        scoreNode.textContent = `${toolBriefing.readiness_score || 0}%`;
+    }
+
+    if (textNode) {
+        textNode.textContent = toolBriefing.summary?.text || '';
+    }
+
+    if (signalsNode) {
+        signalsNode.hidden = signals.length === 0;
+        signalsNode.innerHTML = signals.map((signal) => `
+            <div class="app-list-item">
+                <div>
+                    <strong>${escapeHtml(signal.label || '')}</strong>
+                    <small>${escapeHtml(signal.value || '')}</small>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    if (missingNode) {
+        missingNode.hidden = missingSignals.length === 0;
+    }
+
+    if (missingTextNode) {
+        missingTextNode.textContent = missingSignals.join('، ');
+    }
+
+    if (nextActionNode) {
+        nextActionNode.hidden = !nextAction.reason;
+    }
+
+    if (headlineNode) {
+        headlineNode.textContent = toolBriefing.summary?.headline || 'الخطوة التالية';
+    }
+
+    if (reasonNode) {
+        reasonNode.textContent = nextAction.reason || '';
+    }
+
+    if (actionsNode) {
+        actionsNode.hidden = !(nextAction.cta_url && nextAction.cta_label);
+    }
+
+    if (actionLink) {
+        actionLink.href = nextAction.cta_url || '#';
+        actionLink.textContent = nextAction.cta_label || '';
+    }
+}
+
 function applyToolExperience(form, experience) {
     if (!experience || typeof experience !== 'object') {
         return;
@@ -937,6 +1081,35 @@ function applyToolExperience(form, experience) {
                 suggestionButton.hidden = false;
             } else if (suggestionButton) {
                 suggestionButton.hidden = true;
+            }
+
+            // تعبئة تلقائية: نملأ الحقول النصية الفارغة بالقيمة المقترحة كمسودّة قابلة للتعديل،
+            // دون لمس ما كتبه المستخدم أو أعاد تحميله، ودون إطلاق أي حدث يستدعي الذكاء الاصطناعي.
+            if (
+                meta.suggested_value
+                && input
+                && input.tagName !== 'SELECT'
+                && wrap.dataset.suggestedApplied !== '1'
+                && getToolInputValue(input).trim() === ''
+            ) {
+                input.value = meta.suggested_value;
+                wrap.dataset.suggestedApplied = '1';
+                wrap.classList.add('is-suggested-draft');
+                if (suggestionButton) {
+                    suggestionButton.hidden = true;
+                }
+
+                const draftHint = document.createElement('span');
+                draftHint.className = 'tool-field-draft-hint';
+                draftHint.textContent = 'مسودة مقترحة من ملف مشروعك — عدّلها بحرية';
+                input.insertAdjacentElement('afterend', draftHint);
+
+                const clearDraftState = () => {
+                    wrap.classList.remove('is-suggested-draft');
+                    draftHint.remove();
+                    input.removeEventListener('input', clearDraftState);
+                };
+                input.addEventListener('input', clearDraftState);
             }
         });
     });
@@ -1210,6 +1383,10 @@ function wireToolProjectSwitch() {
                 if (result.experience) {
                     applyToolExperience(form, result.experience);
                 }
+
+                renderToolUpstreamContext(result.upstream_context);
+                renderProjectBriefAssessment(result.project_brief_assessment);
+                renderToolBriefing(result.tool_briefing);
 
                 if (result.success && result.data) {
                     populateFormFields(form, result.data.inputs);
