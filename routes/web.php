@@ -6,10 +6,17 @@ use App\Http\Controllers\Admin\AIGenerationController;
 use App\Http\Controllers\Admin\AITemplateController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Admin\BlogPostController;
+use App\Http\Controllers\Admin\CaseStudyController;
 use App\Http\Controllers\Admin\ClientManagementController;
+use App\Http\Controllers\Admin\CmsPageController;
 use App\Http\Controllers\Admin\CommentModerationController;
+use App\Http\Controllers\Admin\CommunityPostController;
+use App\Http\Controllers\Admin\ContactInboxController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FeatureFlagController;
+use App\Http\Controllers\Admin\MarketingTemplateHighlightController;
+use App\Http\Controllers\Admin\PartnerController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\ProjectManagementController;
 use App\Http\Controllers\Admin\SubscriptionController;
@@ -26,12 +33,15 @@ use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\BillingController;
 use App\Http\Controllers\Web\ClientController;
+use App\Http\Controllers\Web\ContactFormController;
 use App\Http\Controllers\Web\DashboardController as UserDashboardController;
 use App\Http\Controllers\Web\ExperienceController;
+use App\Http\Controllers\Web\MarketingWebsiteController;
 use App\Http\Controllers\Web\ImpersonationController;
 use App\Http\Controllers\Web\OnboardingController;
 use App\Http\Controllers\Web\PlatformController;
 use App\Http\Controllers\Web\ProjectController;
+use App\Http\Controllers\Web\ProjectMarketingBriefController;
 use App\Http\Controllers\Web\StudioGenerationController;
 use App\Http\Controllers\Web\TeamController;
 use App\Http\Controllers\Web\ToolController as WebToolController;
@@ -97,6 +107,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
+
+    Route::resource('cms-pages', CmsPageController::class)->except(['show'])->parameters(['cms-pages' => 'cmsPage']);
+    Route::resource('blog-posts', BlogPostController::class)->except(['show'])->parameters(['blog-posts' => 'blogPost']);
+    Route::resource('case-studies', CaseStudyController::class)->except(['show'])->parameters(['case-studies' => 'caseStudy']);
+    Route::resource('community-posts', CommunityPostController::class)->except(['show'])->parameters(['community-posts' => 'communityPost']);
+    Route::resource('marketing-template-highlights', MarketingTemplateHighlightController::class)->except(['show'])->parameters(['marketing-template-highlights' => 'marketingTemplateHighlight']);
+    Route::resource('partners', PartnerController::class)->except(['show']);
+    Route::resource('contact-messages', ContactInboxController::class)->only(['index', 'show', 'update', 'destroy']);
+    Route::post('/contact-messages/{contact_message}/convert', [ContactInboxController::class, 'convert'])->name('contact-messages.convert');
 });
 
 Route::post('/paypal/webhook', [PayPalWebhookController::class, 'handle'])->name('paypal.webhook');
@@ -130,6 +149,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::post('/projects/{project}/audit', [ProjectController::class, 'runAudit'])->name('projects.audit.run');
+    Route::get('/projects/{project}/audit/status', [ProjectController::class, 'auditStatus'])->name('projects.audit.status');
+    Route::get('/projects/{project}/brief', [ProjectMarketingBriefController::class, 'edit'])->name('projects.brief.edit');
+    Route::put('/projects/{project}/brief', [ProjectMarketingBriefController::class, 'update'])->name('projects.brief.update');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::patch('/account', [AccountController::class, 'update'])->name('account.update');
     Route::get('/team', [TeamController::class, 'index'])->name('team.index');
@@ -165,6 +188,19 @@ Route::get('/templates', [ExperienceController::class, 'templates'])->name('temp
 Route::get('/reports', [ExperienceController::class, 'reports'])->name('reports.index');
 Route::get('/agency', [ExperienceController::class, 'agency'])->name('agency.index');
 
+Route::get('/pricing', [MarketingWebsiteController::class, 'pricing'])->name('pricing');
+Route::get('/blog', [MarketingWebsiteController::class, 'blogIndex'])->name('blog.index');
+Route::get('/blog/{slug}', [MarketingWebsiteController::class, 'blogShow'])->name('blog.show');
+Route::get('/case-studies', [MarketingWebsiteController::class, 'caseStudiesIndex'])->name('case-studies.index');
+Route::get('/case-studies/{slug}', [MarketingWebsiteController::class, 'caseStudyShow'])->name('case-studies.show');
+Route::get('/community', [MarketingWebsiteController::class, 'communityIndex'])->name('community.index');
+Route::get('/community/{slug}', [MarketingWebsiteController::class, 'communityShow'])->name('community.show');
+Route::get('/contact', [MarketingWebsiteController::class, 'contact'])->name('contact');
+Route::post('/contact', [ContactFormController::class, 'store'])->middleware('throttle:20,1')->name('contact.store');
+Route::get('/privacy', [MarketingWebsiteController::class, 'privacy'])->name('privacy');
+Route::get('/partnerships', [MarketingWebsiteController::class, 'partnerships'])->name('partnerships');
+Route::get('/terms', [MarketingWebsiteController::class, 'terms'])->name('terms');
+
 Route::middleware('auth')->prefix('api')->group(function (): void {
     Route::post('/tool/{tool}/run', [ToolRunApiController::class, 'store'])->name('api.tools.run');
     Route::get('/tool/{tool}/load', [ToolRunApiController::class, 'load'])->name('api.tools.load');
@@ -175,5 +211,6 @@ Route::middleware('auth')->prefix('api')->group(function (): void {
 
 Route::controller(PlatformController::class)->group(function (): void {
     Route::get('/', 'home')->name('home');
+    Route::get('/about', 'about')->name('about');
     Route::get('/paths', 'show')->defaults('page', 'paths')->name('paths.index');
 });

@@ -2195,6 +2195,40 @@ function wireStudioGenerationCopy() {
     });
 }
 
+function wireAuditProgressPoll() {
+    const banner = document.querySelector('.tool-audit-progress[data-audit-status-url]');
+    const url = banner?.dataset.auditStatusUrl;
+    if (!url) {
+        return;
+    }
+
+    let stopped = false;
+    const poll = async () => {
+        if (stopped) {
+            return;
+        }
+        try {
+            const res = await fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+            if (res.ok) {
+                const data = await res.json();
+                // التدقيق غير المتزامن اكتمل (أو فشل) — نعيد تحميل الصفحة لإظهار النتائج وإخفاء البانر.
+                if (data && data.in_progress === false) {
+                    stopped = true;
+                    window.location.reload();
+                    return;
+                }
+            }
+        } catch (error) {
+            // نتجاهل أخطاء الشبكة العابرة ونعيد المحاولة.
+        }
+        if (!stopped) {
+            setTimeout(poll, 7000);
+        }
+    };
+
+    setTimeout(poll, 7000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     wireThemeToggle();
     wireWorkspaceSwitcher();
@@ -2214,6 +2248,7 @@ document.addEventListener('DOMContentLoaded', () => {
     wireToolProjectSwitch();
     wireToolAiAnalysis();
     wireToolAiSuggestions();
+    wireAuditProgressPoll();
     wireToolAfterSaveHighlight();
     wireAiChatWidget();
     wireFieldCompletionTracking();

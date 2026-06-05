@@ -26,11 +26,12 @@
 
     {{-- Audit-in-progress banner — the audit dispatched at onboarding runs async; let the user know drafts will sharpen --}}
     @if (in_array($latestAudit?->status, ['queued', 'running'], true))
-        <div class="tool-audit-progress mb-4" role="status" aria-live="polite">
+        <div class="tool-audit-progress mb-4" role="status" aria-live="polite"
+            @if ($currentProject) data-audit-status-url="{{ route('projects.audit.status', $currentProject) }}" @endif>
             <span class="tool-audit-progress-spinner" aria-hidden="true"></span>
             <div>
                 <strong>جارٍ تحليل موقعك الآن</strong>
-                <p>ستتحسّن المقترحات والمسودّات تلقائياً عند اكتمال التحليل. تابع الآن دون انتظار — أعد تحميل الصفحة لاحقاً لرؤية النتائج.</p>
+                <p>ستتحسّن المقترحات والمسودّات تلقائياً عند اكتمال التحليل. تابع الآن دون انتظار — سنحدّث الصفحة فور جهوزية النتائج.</p>
             </div>
         </div>
     @endif
@@ -45,7 +46,10 @@
 
     <section class="card panel-modern mb-4" @if(empty($latestAuditReport)) hidden @endif>
         <div class="app-section-head">
-            <h3 class="heading-sm">نتيجة موقعك</h3>
+            <div>
+                <span class="text-caption text-caption-strong">Marketing Intelligence Snapshot</span>
+                <h3 class="heading-sm">نتيجة موقعك</h3>
+            </div>
             <span class="app-badge">{{ $latestAuditSummary['executive_score'] ?? ($latestAuditReport['executive_scores']['executive'] ?? '--') }}%</span>
         </div>
         <div class="app-list">
