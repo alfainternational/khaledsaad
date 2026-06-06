@@ -16,7 +16,7 @@
 
     @stack('head')
 </head>
-<body>
+<body class="rd-dark @yield('body_class')">
 
     {{-- ═══ NAVIGATION ═══ --}}
     <div class="site-container site-nav-wrap">
@@ -31,9 +31,9 @@
             <nav aria-label="القائمة الرئيسية">
                 <ul class="nav-links" id="nav-links" role="list">
                     @foreach([
-                        'الرئيسية'   => 'home',
-                        'المسارات'  => 'paths.index',
-                        'الأدوات'   => 'tools.index',
+                        'الرئيسية'      => 'home',
+                        'ابدأ من حالتك' => 'paths.index',
+                        'ماذا نفحص'     => 'tools.index',
                     ] as $label => $route)
                     <li>
                         <a href="{{ route($route) }}"
@@ -120,9 +120,9 @@
                     <h3 class="footer-col-title">المنصة</h3>
                     <ul class="footer-links" role="list">
                         <li><a href="{{ route('home') }}" class="footer-link">الرئيسية</a></li>
-                        <li><a href="{{ route('paths.index') }}" class="footer-link">المسارات</a></li>
-                        <li><a href="{{ route('tools.index') }}" class="footer-link">الأدوات</a></li>
-                        <li><a href="{{ route('studio.index') }}" class="footer-link">الاستوديو</a></li>
+                        <li><a href="{{ route('paths.index') }}" class="footer-link">ابدأ من حالتك</a></li>
+                        <li><a href="{{ route('tools.index') }}" class="footer-link">ماذا نفحص</a></li>
+                        <li><a href="{{ route('studio.index') }}" class="footer-link">الاستوديو الذكي</a></li>
                         <li><a href="{{ route('pricing') }}" class="footer-link">التسعير</a></li>
                     </ul>
                 </nav>

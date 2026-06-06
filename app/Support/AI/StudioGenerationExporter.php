@@ -13,7 +13,7 @@ final class StudioGenerationExporter
     public static function markdownBody(AIGeneration $generation): string
     {
         $lines = [
-            '# '.($generation->template?->name ?? 'مخرج الاستوديو'),
+            '# '.($generation->template?->name ?? 'ملف الاستوديو'),
             '',
             '- المشروع: '.($generation->project?->name ?? '—'),
             '- التاريخ: '.($generation->created_at?->format('Y-m-d H:i') ?? '—'),
@@ -28,7 +28,7 @@ final class StudioGenerationExporter
 
     public static function printableHtml(AIGeneration $generation): string
     {
-        $title = e($generation->template?->name ?? 'مخرج الاستوديو');
+        $title = e($generation->template?->name ?? 'ملف الاستوديو');
         $sections = StudioMarkdownSections::split($generation->output ?? '');
         $outlineLinks = '';
         $blocks = '';
@@ -59,11 +59,11 @@ final class StudioGenerationExporter
             .'</style></head><body>'
             .'<main class="studio-export-page">'
             .'<section class="studio-export-hero">'
-            .'<div><p class="studio-export-kicker">AI Studio Export</p><h1>'.$title.'</h1><p class="studio-export-lead">ملف منظم للتسليم والمراجعة والطباعة.</p></div>'
+            .'<div><p class="studio-export-kicker">ملف من الاستوديو الذكي</p><h1>'.$title.'</h1><p class="studio-export-lead">ملف مرتب جاهز للمشاركة والمراجعة والطباعة.</p></div>'
             .'<div class="studio-export-meta">'
             .'<div><strong>المشروع</strong><span>'.e($generation->project?->name ?? 'بدون مشروع').'</span></div>'
             .'<div><strong>التاريخ</strong><span>'.e($generation->created_at?->format('Y-m-d H:i') ?? '—').'</span></div>'
-            .'<div><strong>القالب</strong><span>'.e($generation->template?->name ?? 'مخرج الاستوديو').'</span></div>'
+            .'<div><strong>نوع الملف</strong><span>'.e($generation->template?->name ?? 'ملف الاستوديو').'</span></div>'
             .'</div></section>'
             .$outline
             .'<section class="studio-export-content">'.$blocks.'</section>'

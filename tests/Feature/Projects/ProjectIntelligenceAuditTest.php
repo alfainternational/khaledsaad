@@ -153,8 +153,8 @@ class ProjectIntelligenceAuditTest extends TestCase
             ->withSession(['current_workspace_id' => $workspace->id])
             ->get(route('projects.show', $project))
             ->assertOk()
-            ->assertSee('تم إخفاء executive scores')
-            ->assertSee('تحليل أولي منخفض الثقة');
+            ->assertSee('تم إخفاء الدرجات')
+            ->assertSee('تحليل أولي ما زال ناقصاً');
     }
 
     #[Test]
@@ -213,11 +213,11 @@ class ProjectIntelligenceAuditTest extends TestCase
 
         $this->assertSame('partial', data_get($auditRun->report_json, 'analysis_integrity.status'));
         $this->assertContains(
-            'تم تجاهل منافس "Incomplete Competitor" لأن بياناته لا تحتوي دوميناً أو روابط قابلة للتحليل.',
+            'تجاهلنا المنافس "Incomplete Competitor" لأن بياناته لا تتضمن دوميناً أو روابط قابلة للتحليل.',
             data_get($auditRun->report_json, 'analysis_integrity.warnings', []),
         );
         $this->assertContains(
-            'تمت محاولة قراءة السوشيال لكن لم يتم الوصول إلى أي صفحة عامة قابلة للتحليل.',
+            'حاولنا قراءة حساباتك على التواصل الاجتماعي لكن لم نصل إلى أي صفحة عامة قابلة للتحليل.',
             data_get($auditRun->report_json, 'analysis_integrity.warnings', []),
         );
     }
@@ -273,11 +273,11 @@ class ProjectIntelligenceAuditTest extends TestCase
         $this->assertSame('partial', data_get($auditRun->report_json, 'analysis_integrity.status'));
         $this->assertSame(1, data_get($auditRun->report_json, 'analysis_integrity.counts.social_manual_verified'));
         $this->assertContains(
-            'تعذرت القراءة الآلية للسوشيال وتم الاعتماد على تحقق يدوي موثق لبعض الحسابات.',
+            'تعذّرت القراءة الآلية لحساباتك واعتمدنا على تحقق يدوي موثّق لبعضها.',
             data_get($auditRun->report_json, 'analysis_integrity.warnings', []),
         );
         $this->assertContains(
-            'تم اعتماد 1 حساب/حسابات سوشيال موثقة يدوياً كدليل fallback.',
+            'تم اعتماد 1 حساب موثّق يدوياً كدليل احتياطي.',
             data_get($auditRun->report_json, 'analysis_integrity.highlights', []),
         );
     }
@@ -359,11 +359,11 @@ class ProjectIntelligenceAuditTest extends TestCase
         $this->assertSame(1, data_get($auditRun->report_json, 'analysis_integrity.counts.social_requested'));
         $this->assertSame(1, data_get($auditRun->report_json, 'analysis_integrity.counts.social_manual_verified'));
         $this->assertNotContains(
-            'لا توجد روابط سوشيال رسمية مؤكدة ضمن المشروع.',
+            'لا توجد روابط حسابات تواصل اجتماعي مؤكدة في مشروعك.',
             data_get($auditRun->report_json, 'analysis_integrity.warnings', []),
         );
         $this->assertContains(
-            'تعذرت القراءة الآلية للسوشيال وتم الاعتماد على تحقق يدوي موثق لبعض الحسابات.',
+            'تعذّرت القراءة الآلية لحساباتك واعتمدنا على تحقق يدوي موثّق لبعضها.',
             data_get($auditRun->report_json, 'analysis_integrity.warnings', []),
         );
     }
@@ -387,7 +387,7 @@ class ProjectIntelligenceAuditTest extends TestCase
         $auditRun = AuditRun::query()->where('project_id', $project->id)->latest()->firstOrFail();
 
         $this->assertSame('queued', $auditRun->status);
-        $this->assertSame('تمت جدولة تقرير intelligence', data_get($auditRun->summary_json, 'headline'));
+        $this->assertSame('تمت جدولة تحليل مشروعك', data_get($auditRun->summary_json, 'headline'));
     }
 
     #[Test]
@@ -437,7 +437,7 @@ class ProjectIntelligenceAuditTest extends TestCase
         $this->assertSame('failed', $auditRun->status);
         $this->assertNotNull($auditRun->failed_at);
         $this->assertSame('analysis_failed', data_get($auditRun->error_json, 'code'));
-        $this->assertSame('فشل تشغيل تقرير intelligence', data_get($auditRun->summary_json, 'headline'));
+        $this->assertSame('تعذّر إكمال تحليل مشروعك', data_get($auditRun->summary_json, 'headline'));
     }
 
     /**

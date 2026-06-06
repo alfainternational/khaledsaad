@@ -19,10 +19,10 @@
                 <span class="section-badge-text">دراسات الحالة</span>
             </div>
             <h1 class="heading-lg mb-4">
-                نتائج حقيقية من <span class="text-gradient">منهجية مُختبَرة</span>
+                نتائج حقيقية من <span class="text-gradient">مشاريع مثل مشروعك</span>
             </h1>
             <p class="text-body-lg max-w-2xl mx-auto">
-                قصص تطبيقية موثّقة لمشاريع طبّقت منهجية المنصة على أرض الواقع. أرقام، تحديات، قرارات، ونتائج — لا شعارات تسويقية فضفاضة.
+                قصص حقيقية لمشاريع طبّقت خطوات المنصة على أرض الواقع. أرقام، تحديات، قرارات، ونتائج — لا كلام تسويقي فضفاض.
             </p>
         </div>
     </div>
@@ -50,7 +50,7 @@
             <p class="text-eyebrow mb-3 text-p">القصص الكاملة</p>
             <h2 class="heading-lg mb-4">من <span class="text-gradient">التحدي إلى النتيجة</span></h2>
             <p class="text-body max-w-2xl mx-auto">
-                كل دراسة حالة تتبع نفس المنهجية: السياق، التحدي، القرار الاستراتيجي، التنفيذ، الأرقام النهائية.
+                كل دراسة حالة تتبع نفس الخطوات: السياق، التحدي، القرار، التنفيذ، الأرقام النهائية.
             </p>
         </div>
 
@@ -103,10 +103,10 @@
 <section class="section-lg section-band bg-2">
     <div class="site-container">
         <div class="section-header reveal">
-            <p class="text-eyebrow mb-3 text-p">منهجية الدراسات</p>
+            <p class="text-eyebrow mb-3 text-p">ماذا ستجد في كل دراسة</p>
             <h2 class="heading-lg mb-4">ما الذي تحصل عليه <span class="text-gradient">في كل دراسة</span></h2>
             <p class="text-body max-w-2xl mx-auto">
-                دراسات الحالة لدينا ليست شهادات تسويقية. كل دراسة وثيقة عمل قابلة للاقتباس والتطبيق على مشاريع مشابهة.
+                دراساتنا ليست شهادات تسويقية. كل دراسة وثيقة عمل تستطيع الاستفادة منها وتطبيقها على مشاريع مشابهة.
             </p>
         </div>
 

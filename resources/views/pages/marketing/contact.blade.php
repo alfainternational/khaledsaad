@@ -165,7 +165,7 @@
             <div class="page-summary-card reveal-right d-2">
                 <div class="page-summary-glow" aria-hidden="true"></div>
                 <h3 class="contact-form-title">ابدأ من المسار المناسب</h3>
-                <p class="contact-form-subtitle">رسالة سريعة أو ملف استشارة أولي يحول طلبك إلى brief قابل للمراجعة والتنفيذ.</p>
+                <p class="contact-form-subtitle">رسالة سريعة أو ملف استشارة أولي يحوّل طلبك إلى ملخّص واضح قابل للمراجعة والتنفيذ.</p>
 
                 @if (session('status'))
                     <div class="app-alert success mb-4" role="status">{{ session('status') }}</div>
@@ -214,7 +214,7 @@
                             <ul>
                                 <li>وضع مشروعك الحالي وما الذي يعيق النمو فعليًا.</li>
                                 <li>الجمهور والعرض والقنوات والأولوية التالية.</li>
-                                <li>ما الذي يمكن تحويله مباشرة إلى brief داخل المنصة.</li>
+                                <li>ما الذي يمكن تحويله مباشرة إلى خطوة عمل داخل المنصة.</li>
                             </ul>
                         </div>
 

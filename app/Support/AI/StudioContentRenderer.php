@@ -9,7 +9,7 @@ final class StudioContentRenderer
         $text = trim(str_replace("\r\n", "\n", $text));
 
         if ($text === '') {
-            return '<p class="studio-rich-empty">لا يوجد محتوى متاح.</p>';
+            return '<p class="studio-rich-empty">لا يوجد محتوى بعد.</p>';
         }
 
         $lines = explode("\n", $text);

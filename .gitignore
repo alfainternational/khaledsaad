@@ -24,6 +24,11 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
+# بيانات نشر سرية — لا تُرفع لـ git أبداً
+/deploy/cpanel.env
+/deploy/*.key
+/deploy/*.ppk
+
 # مجلدات/ملفات تطويرية محلية — لا تدخل الإنتاج
 /scratch
 /docs/platform/*.draft.md

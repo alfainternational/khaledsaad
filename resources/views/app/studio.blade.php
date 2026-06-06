@@ -76,7 +76,7 @@
                                 </div>
                                 <div class="app-inline-actions">
                                     <span class="app-badge">{{ $briefMeta['completeness_score'] ?? 0 }}%</span>
-                                    <span class="app-badge">{{ $intelligence['summary']['executive_score'] ?? 0 }}% intelligence</span>
+                                    <span class="app-badge">{{ $intelligence['summary']['executive_score'] ?? 0 }}% تحليل</span>
                                 </div>
                             </div>
                         @endforeach
@@ -177,8 +177,8 @@
             </div>
             <div class="app-list-item">
                 <div>
-                    <strong>Marketing Intelligence</strong>
-                    <small>آخر executive scores، موثوقية التحليل، التشخيص الصادق، والأولويات السريعة قبل التوليد.</small>
+                    <strong>تحليل مشروعك</strong>
+                    <small>آخر الدرجات، موثوقية التحليل، التشخيص الصادق، والأولويات السريعة قبل التوليد.</small>
                 </div>
             </div>
             <div class="app-list-item">

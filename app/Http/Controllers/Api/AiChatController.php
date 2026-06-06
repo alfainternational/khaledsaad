@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\AI\Services\AICreditService;
 use App\Domain\AI\Services\AIService;
+use App\Domain\Workspace\Models\Workspace;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\Concerns\InteractsWithWorkspaceContext;
 use App\Support\AI\WorkspaceGenerationContextBuilder;
@@ -21,7 +23,39 @@ class AiChatController extends Controller
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
         private readonly ToolInputQualityAssessmentService $toolInputQualityAssessmentService,
         private readonly ToolBlueprintCatalog $toolBlueprints,
+        private readonly AICreditService $credits,
     ) {}
+
+    /**
+     * فحص الرصيد قبل أي نداء LLM. يعيد استجابة خطأ عند نفاد الرصيد، أو null للمتابعة.
+     */
+    private function creditGuard(?Workspace $workspace, int $needed = 1): ?JsonResponse
+    {
+        $account = $workspace?->account;
+        if ($account === null) {
+            return null;
+        }
+
+        if (! $this->credits->hasBalance($account, $needed)) {
+            return response()->json([
+                'error' => 'نفد رصيد المساعد الذكي لهذا الحساب. رقِّ باقتك أو أضف رصيداً للمتابعة.',
+                'code' => 'AI_CREDITS_EXHAUSTED',
+            ], 402);
+        }
+
+        return null;
+    }
+
+    /**
+     * تسجيل استهلاك الـ credits بعد نجاح التوليد.
+     */
+    private function chargeCredits(?Workspace $workspace, int $amount, string $reason): void
+    {
+        $account = $workspace?->account;
+        if ($account !== null) {
+            $this->credits->consume($account, $amount, $reason);
+        }
+    }
 
     public function chat(Request $request): JsonResponse
     {
@@ -57,11 +91,17 @@ class AiChatController extends Controller
             'content' => $systemPrompt,
         ]);
 
+        if ($guard = $this->creditGuard($workspace)) {
+            return $guard;
+        }
+
         $result = $this->ai->chat($messages);
 
         if (! $result['success']) {
             return response()->json(['error' => $result['message'] ?? 'حدث خطأ.'], 503);
         }
+
+        $this->chargeCredits($workspace, 1, 'ai.chat');
 
         return response()->json(['response' => $result['response']]);
     }
@@ -102,7 +142,10 @@ class AiChatController extends Controller
         );
         $result['narrative_enriched'] = false;
 
-        $wantEnrich = $request->boolean('enrich', true);
+        // التقييم المنظّم أعلاه محلي بالكامل (بدون LLM) ولا يستهلك رصيداً.
+        // الاستهلاك فقط على طبقة الصقل النصي عبر LLM إن طُلبت وتوفّر رصيد.
+        $wantEnrich = $request->boolean('enrich', true)
+            && $this->creditGuard($workspace) === null;
 
         if ($wantEnrich) {
             $enriched = $this->ai->enrichToolAssessmentNarrative(
@@ -119,6 +162,7 @@ class AiChatController extends Controller
                 $result['verdict'] = $enriched['verdict'];
                 $result['strategic_note'] = $enriched['strategic_note'];
                 $result['narrative_enriched'] = true;
+                $this->chargeCredits($workspace, 1, 'ai.tool_assessment_enrich');
             }
         }
 
@@ -179,6 +223,10 @@ class AiChatController extends Controller
             $modeLabel = (string) $blueprint['modes'][$mode]['label'];
         }
 
+        if ($guard = $this->creditGuard($workspace)) {
+            return $guard;
+        }
+
         $result = $this->ai->generateFieldSuggestions(
             toolCode: $toolCode,
             toolName: $request->input('tool_name'),
@@ -193,6 +241,8 @@ class AiChatController extends Controller
         if (! $result['success']) {
             return response()->json(['error' => $result['error'] ?? 'فشل التوليد.'], 503);
         }
+
+        $this->chargeCredits($workspace, 1, 'ai.field_suggestions');
 
         return response()->json([
             'suggestions' => $result['suggestions'] ?? [],

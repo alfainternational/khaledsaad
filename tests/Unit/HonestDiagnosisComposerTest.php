@@ -48,7 +48,7 @@ class HonestDiagnosisComposerTest extends TestCase
 
         $this->assertSame([], $report['priority_actions']['improvements_30_days']);
         $this->assertSame([], $report['priority_actions']['strategic_90_days']);
-        $this->assertStringContainsString('لا توجد تغطية كافية', $report['honest_diagnosis'][0]);
+        $this->assertStringContainsString('المعلومات الحالية لا تكفي', $report['honest_diagnosis'][0]);
         $this->assertSame(
             'لا توجد بيانات منافسين مؤكدة تكفي لصناعة snapshot موثوق.',
             $report['competitor_snapshot']['summary'],

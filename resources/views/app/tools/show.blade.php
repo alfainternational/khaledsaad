@@ -47,7 +47,7 @@
     <section class="card panel-modern mb-4" @if(empty($latestAuditReport)) hidden @endif>
         <div class="app-section-head">
             <div>
-                <span class="text-caption text-caption-strong">Marketing Intelligence Snapshot</span>
+                <span class="text-caption text-caption-strong">لمحة تحليل مشروعك</span>
                 <h3 class="heading-sm">نتيجة موقعك</h3>
             </div>
             <span class="app-badge">{{ $latestAuditSummary['executive_score'] ?? ($latestAuditReport['executive_scores']['executive'] ?? '--') }}%</span>
@@ -56,13 +56,13 @@
             <div class="app-list-item">
                 <div>
                     <strong>{{ $analysisIntegrity['label'] ?? 'لا توجد قراءة موثقة بعد' }}</strong>
-                    <small>{{ $analysisIntegrity['summary'] ?? 'شغّل التحليل من صفحة المشروع حتى تعمل الأداة على scorecards وتشخيص أحدث.' }}</small>
+                    <small>{{ $analysisIntegrity['summary'] ?? 'شغّل التحليل من صفحة المشروع حتى تعمل الأداة على درجات وتحليل أحدث.' }}</small>
                 </div>
             </div>
             @if (! empty($latestAuditReport['honest_diagnosis'][0]))
                 <div class="app-list-item">
                     <div>
-                        <strong>Honest diagnosis</strong>
+                        <strong>تشخيص صادق</strong>
                         <small>{{ $latestAuditReport['honest_diagnosis'][0] }}</small>
                     </div>
                 </div>

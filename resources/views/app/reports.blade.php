@@ -1,4 +1,4 @@
-@extends('layouts.app', ['title' => 'تقارير الذكاء التسويقي', 'pageTitle' => 'تقارير الذكاء التسويقي', 'pageKicker' => 'Intelligence Reports'])
+@extends('layouts.app', ['title' => 'تقارير الذكاء التسويقي', 'pageTitle' => 'تقارير الذكاء التسويقي', 'pageKicker' => 'تقارير التحليل'])
 
 @section('content')
 <section class="app-stat-grid mb-8">
@@ -49,7 +49,7 @@
                         <strong>{{ $run->project?->name ?? 'بدون مشروع' }}</strong>
                         <small>
                             {{ $run->project?->client?->name ?? 'بدون عميل' }}
-                            · {{ $run->trigger_source === 'monitoring' ? 'Monitoring' : 'Audit' }}
+                            · {{ $run->trigger_source === 'monitoring' ? 'مراقبة' : 'تحليل' }}
                             · {{ $run->created_at?->diffForHumans() }}
                         </small>
                         @if(! empty($run->report_json['honest_diagnosis']))

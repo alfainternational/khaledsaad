@@ -212,36 +212,36 @@ JSON,
         $dictionary = is_array($analysis['brand_dictionary'] ?? null) ? $analysis['brand_dictionary'] : [];
 
         return implode("\n\n", array_filter([
-            '## الملف التحليلي المرجعي',
-            $this->paragraphSection('### ملخص الشخصية', $analysis['client_personality_summary'] ?? ''),
-            $this->bulletSection('### اللهجة والنبرة والأسلوب', array_filter([
+            '## ملف عميلك باختصار',
+            $this->paragraphSection('### من هو عميلك', $analysis['client_personality_summary'] ?? ''),
+            $this->bulletSection('### كيف نكلّمه (اللهجة والأسلوب)', array_filter([
                 $voice['dialect'] ?? null,
                 $voice['register'] ?? null,
                 $voice['style'] ?? null,
                 $voice['pace'] ?? null,
                 $voice['persuasion_style'] ?? null,
             ])),
-            $this->bulletSection('### ما يبني الثقة ويدفع القرار', array_merge(
+            $this->bulletSection('### ما الذي يكسب ثقته ويدفعه للشراء', array_merge(
                 $this->normalizeStringList($drivers['trust_builders'] ?? []),
                 $this->normalizeStringList($drivers['decision_triggers'] ?? []),
             )),
-            $this->bulletSection('### المخاوف والاعتراضات وما يجب تجنبه', array_merge(
+            $this->bulletSection('### مخاوفه واعتراضاته وما نتجنّبه', array_merge(
                 $this->normalizeStringList($drivers['objections_or_fears'] ?? []),
                 $this->normalizeStringList($drivers['aversion_triggers'] ?? []),
                 $this->normalizeStringList($preferences['avoided_patterns'] ?? []),
             )),
-            $this->bulletSection('### الأنماط والزوايا المفضلة', array_merge(
+            $this->bulletSection('### الأفكار والزوايا التي تناسبه', array_merge(
                 $this->normalizeStringList($preferences['preferred_angles'] ?? []),
                 $this->normalizeStringList($preferences['preferred_patterns'] ?? []),
             )),
-            $this->bulletSection('### القاموس المعتمد', array_merge(
+            $this->bulletSection('### الكلمات التي نستخدمها معه', array_merge(
                 $this->prefixedList('كلمات مفضلة: ', $dictionary['preferred_keywords'] ?? []),
                 $this->prefixedList('عبارات مفضلة: ', $dictionary['preferred_phrases'] ?? []),
                 $this->prefixedList('تجنب: ', $dictionary['phrases_to_avoid'] ?? []),
-                $this->prefixedList('CTA مناسب: ', $dictionary['cta_patterns'] ?? []),
+                $this->prefixedList('جملة دعوة مناسبة: ', $dictionary['cta_patterns'] ?? []),
             )),
-            $this->bulletSection('### قواعد التنفيذ الإلزامية', $this->normalizeStringList($analysis['execution_rules'] ?? [])),
-            $this->paragraphSection('### الخلاصة الاستراتيجية', $analysis['strategic_summary'] ?? ''),
+            $this->bulletSection('### قواعد مهمة عند الكتابة له', $this->normalizeStringList($analysis['execution_rules'] ?? [])),
+            $this->paragraphSection('### الخلاصة', $analysis['strategic_summary'] ?? ''),
         ]));
     }
 

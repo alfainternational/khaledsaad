@@ -26,41 +26,41 @@ class ProjectActionAdvisor
         if ($briefScore < 45) {
             return [
                 'headline' => 'أكمل ملف المشروع أولاً',
-                'reason' => 'الـ brief ما زال ناقصاً، وأقوى مردود الآن يأتي من إغلاق فجوات السياق قبل تشغيل أدوات إضافية.',
+                'reason' => 'ملف المشروع ما زال ناقصاً، وأفضل خطوة الآن هي إكمال معلوماته قبل تشغيل أدوات إضافية.',
                 'recommended_tool_code' => null,
-                'recommended_tool_label' => 'تحرير brief المشروع',
+                'recommended_tool_label' => 'تعديل ملف المشروع',
                 'action_type' => 'brief',
                 'priority' => 'critical',
             ];
         }
 
         if (! in_array('diagnosis', $toolCodes, true)) {
-            return $this->toolAction('diagnosis', 'ابدأ بالتشخيص', 'لديك سياق كافٍ ليخرج التشخيص بقرار أوضح وأولوية تنفيذ أقرب.');
+            return $this->toolAction('diagnosis', 'ابدأ بالتشخيص', 'معلوماتك كافية ليعطيك التشخيص قراراً أوضح وأولوية تنفيذ أقرب.');
         }
 
         if (! in_array('ideal-customer', $toolCodes, true) && trim((string) data_get($brief, 'audience.ideal_customer', '')) === '') {
-            return $this->toolAction('ideal-customer', 'ثبّت صورة العميل', 'الخطوة التالية المنطقية هي تحويل وصف الجمهور إلى ملف شراء أوضح قبل الرسائل والعرض.');
+            return $this->toolAction('ideal-customer', 'حدّد صورة عميلك', 'الخطوة التالية هي تحويل وصف عميلك إلى صورة أوضح قبل الرسائل والعرض.');
         }
 
         if (! in_array('positioning', $toolCodes, true) && $this->missingPositioningSignal($brief)) {
-            return $this->toolAction('positioning', 'وضّح التمركز', 'المشروع يحتاج صياغة أوضح للفارق الذي يجب أن يراه العميل قبل توسيع الخطة أو المحتوى.');
+            return $this->toolAction('positioning', 'وضّح ما يميّزك', 'مشروعك يحتاج صياغة أوضح للفرق الذي يجب أن يراه العميل قبل توسيع الخطة أو المحتوى.');
         }
 
         if (! in_array('offer-builder', $toolCodes, true)) {
-            return $this->toolAction('offer-builder', 'حوّل الفهم إلى عرض', 'الجمهور والهدف واضحان بما يكفي لتحويلهما إلى عرض يمكن بيعه وتوصيله.');
+            return $this->toolAction('offer-builder', 'حوّل الفهم إلى عرض', 'صار عميلك وهدفك واضحين بما يكفي لتحويلهما إلى عرض يمكن بيعه وتسليمه.');
         }
 
         if (! in_array('marketing-plan', $toolCodes, true)) {
-            return $this->toolAction('marketing-plan', 'ابنِ الخطة التسويقية', 'بعد العرض، الأفضل الآن تثبيت الشريحة والقناة والرسالة في خطة تنفيذية قريبة.');
+            return $this->toolAction('marketing-plan', 'ابنِ الخطة التسويقية', 'بعد العرض، الأفضل الآن تثبيت العميل والقناة والرسالة في خطة تنفيذية قريبة.');
         }
 
         if (! in_array('content-plan', $toolCodes, true)) {
-            return $this->toolAction('content-plan', 'نظّم المحتوى', 'الخطة موجودة، والخطوة التالية المنطقية هي ترجمتها إلى محتوى يخدم القناة والرسالة.');
+            return $this->toolAction('content-plan', 'نظّم المحتوى', 'الخطة موجودة، والخطوة التالية هي تحويلها إلى محتوى يخدم القناة والرسالة.');
         }
 
         return [
-            'headline' => 'المشروع جاهز للمخرجات والتنفيذ',
-            'reason' => 'الأساس الاستراتيجي جيد بما يكفي للانتقال إلى الاستوديو، الحملات، أو مراجعة الأداء بدل جمع معلومات إضافية.',
+            'headline' => 'مشروعك جاهز للنتائج والتنفيذ',
+            'reason' => 'أساسك جيد بما يكفي للانتقال إلى الاستوديو أو الحملات أو مراجعة النتائج بدل جمع معلومات إضافية.',
             'recommended_tool_code' => null,
             'recommended_tool_label' => 'استخدم الاستوديو أو راجع التقارير',
             'action_type' => 'studio',

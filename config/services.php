@@ -43,6 +43,14 @@ return [
     */
     'ai' => [
         'provider' => env('AI_PROVIDER', 'gemini'),
+        /* الكاش لتقليل الإنفاق على الـ API (انظر CachingAiGateway). */
+        'cache' => env('AI_CACHE', true),
+        'cache_ttl_minutes' => env('AI_CACHE_TTL_MINUTES', 1440),
+        /*
+         | تطبيق رصيد الـ credits قبل نداء LLM. افتراضياً false حتى لا تنقطع الخدمة
+         | عن الحسابات قبل تهيئة الأرصدة؛ الاستهلاك يُسجَّل دائماً في ai_credits_ledger.
+         */
+        'enforce_credits' => env('AI_ENFORCE_CREDITS', false),
     ],
 
     /*
@@ -57,6 +65,8 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
         'temperature' => env('GEMINI_TEMPERATURE', 0.35),
         'max_output_tokens' => env('GEMINI_MAX_OUTPUT_TOKENS', 1024),
+        /* الأمان: أبقِه true في الإنتاج. false فقط لتطوير محلي به مشاكل DNS/CA. */
+        'verify_tls' => env('GEMINI_VERIFY_TLS', true),
     ],
 
     'nvidia' => [

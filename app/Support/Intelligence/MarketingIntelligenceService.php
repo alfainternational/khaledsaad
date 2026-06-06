@@ -39,7 +39,7 @@ class MarketingIntelligenceService
             'status' => 'queued',
             'trigger_source' => $triggerSource,
             'summary_json' => [
-                'headline' => 'تمت جدولة تقرير intelligence',
+                'headline' => 'تمت جدولة تحليل مشروعك',
             ],
         ]);
     }
@@ -116,7 +116,7 @@ class MarketingIntelligenceService
         foreach ($competitors as $competitor) {
             if ($competitor['domain'] === null && $competitor['social_links'] === []) {
                 $competitorStats['skipped']++;
-                $competitorStats['warnings'][] = 'تم تجاهل منافس "'.$competitor['label'].'" لأن بياناته لا تحتوي دوميناً أو روابط قابلة للتحليل.';
+                $competitorStats['warnings'][] = 'تجاهلنا المنافس "'.$competitor['label'].'" لأن بياناته لا تتضمن دوميناً أو روابط قابلة للتحليل.';
 
                 continue;
             }
@@ -202,9 +202,9 @@ class MarketingIntelligenceService
             'report' => $report,
             'summary' => [
                 'headline' => match ($evidence['status']) {
-                    'verified' => 'تقرير intelligence موثّق وجاهز',
-                    'partial' => 'تقرير intelligence جزئي',
-                    default => 'تقرير intelligence أولي منخفض الثقة',
+                    'verified' => 'تحليل موثّق وجاهز',
+                    'partial' => 'تحليل جزئي',
+                    default => 'تحليل أولي ما زال ناقصاً',
                 },
                 'executive_score' => $scoreSummary['executive_score'],
             ],
@@ -323,7 +323,7 @@ class MarketingIntelligenceService
             'failed_at' => null,
             'error_json' => null,
             'summary_json' => [
-                'headline' => 'جارٍ تشغيل تقرير intelligence',
+                'headline' => 'جارٍ تحليل مشروعك الآن',
             ],
         ]);
     }
@@ -341,7 +341,7 @@ class MarketingIntelligenceService
             'status' => 'failed',
             'failed_at' => now(),
             'summary_json' => [
-                'headline' => 'فشل تشغيل تقرير intelligence',
+                'headline' => 'تعذّر إكمال تحليل مشروعك',
             ],
             'error_json' => [
                 'code' => $code,
@@ -402,47 +402,47 @@ class MarketingIntelligenceService
         $warnings = [];
 
         if (! $websiteReadable) {
-            $warnings[] = 'تعذر الوصول إلى الموقع الأساسي أو قراءة الصفحة الرئيسية بشكل كافٍ.';
+            $warnings[] = 'تعذّر الوصول إلى موقعك أو قراءة صفحته الرئيسية بشكل كافٍ.';
         }
 
         if ($socialRequested === 0) {
-            $warnings[] = 'لا توجد روابط سوشيال رسمية مؤكدة ضمن المشروع.';
+            $warnings[] = 'لا توجد روابط حسابات تواصل اجتماعي مؤكدة في مشروعك.';
         } elseif ($socialAccessible === 0) {
-            $warnings[] = 'تمت محاولة قراءة السوشيال لكن لم يتم الوصول إلى أي صفحة عامة قابلة للتحليل.';
+            $warnings[] = 'حاولنا قراءة حساباتك على التواصل الاجتماعي لكن لم نصل إلى أي صفحة عامة قابلة للتحليل.';
         } elseif ($socialAutomatedAccessible === 0 && $socialManualVerified > 0) {
-            $warnings[] = 'تعذرت القراءة الآلية للسوشيال وتم الاعتماد على تحقق يدوي موثق لبعض الحسابات.';
+            $warnings[] = 'تعذّرت القراءة الآلية لحساباتك واعتمدنا على تحقق يدوي موثّق لبعضها.';
         }
 
         if ($verifiedContacts === 0) {
-            $warnings[] = 'لم يتم استخراج قنوات تواصل رسمية مؤكدة من المصادر المقروءة.';
+            $warnings[] = 'لم نستخرج قنوات تواصل رسمية مؤكدة من المصادر التي قرأناها.';
         }
 
         if ($competitorStats['requested'] === 0) {
-            $warnings[] = 'لا توجد قائمة منافسين مؤكدة داخل المشروع.';
+            $warnings[] = 'لا توجد قائمة منافسين مؤكدة داخل مشروعك.';
         } elseif ($competitorStats['analyzed'] === 0) {
-            $warnings[] = 'قائمة المنافسين الحالية لم تنتج أي مقارنة قابلة للتحقق.';
+            $warnings[] = 'قائمة المنافسين الحالية لم تُنتج أي مقارنة يمكن التحقق منها.';
         }
 
         $warnings = [...$warnings, ...$competitorStats['warnings']];
 
         $label = match ($status) {
-            'verified' => 'تحليل مبني على مصادر فعلية',
+            'verified' => 'تحليل مبني على بيانات فعلية',
             'partial' => 'تحليل جزئي يحتاج استكمال',
-            default => 'تحليل أولي منخفض الثقة',
+            default => 'تحليل أولي ما زال ناقصاً',
         };
 
         $summary = match ($status) {
-            'verified' => 'النتائج مبنية على قراءة فعلية للموقع مع إشارات قابلة للتحقق من السوشيال أو التواصل أو المنافسين.',
-            'partial' => 'النتائج الحالية تعتمد على جزء من المصادر فقط، لذا بعض الاستنتاجات إرشادية وليست نهائية.',
-            default => 'النتائج الحالية لا تكفي لبناء diagnosis أو action plan موثوق، ويجب استكمال المدخلات أو إتاحة الوصول ثم إعادة التحليل.',
+            'verified' => 'النتائج مبنية على قراءة فعلية لموقعك مع إشارات مؤكدة من حساباتك أو وسائل تواصلك أو منافسيك.',
+            'partial' => 'النتائج الحالية تعتمد على جزء من المعلومات فقط، لذا بعض الملاحظات استرشادية وليست نهائية.',
+            default => 'المعلومات الحالية لا تكفي لإعطائك تحليلاً وخطة عمل يمكن الاعتماد عليهما. أكمل البيانات أو افتح الوصول ثم أعد التحليل.',
         };
 
         $highlights = array_values(array_filter([
-            $websiteReadable ? 'تم تحليل الموقع الأساسي مباشرة.' : null,
-            $socialAccessible > 0 ? 'تم الوصول إلى '.$socialAccessible.' من حسابات السوشيال العامة.' : null,
-            $socialManualVerified > 0 ? 'تم اعتماد '.$socialManualVerified.' حساب/حسابات سوشيال موثقة يدوياً كدليل fallback.' : null,
+            $websiteReadable ? 'تم تحليل موقعك الأساسي مباشرة.' : null,
+            $socialAccessible > 0 ? 'تم الوصول إلى '.$socialAccessible.' من حساباتك العامة على التواصل الاجتماعي.' : null,
+            $socialManualVerified > 0 ? 'تم اعتماد '.$socialManualVerified.' حساب موثّق يدوياً كدليل احتياطي.' : null,
             $verifiedContacts > 0 ? 'تم توثيق '.$verifiedContacts.' قناة تواصل رسمية.' : null,
-            $competitorStats['analyzed'] > 0 ? 'تم تحليل '.$competitorStats['analyzed'].' منافس/منافسين فعلياً.' : null,
+            $competitorStats['analyzed'] > 0 ? 'تم تحليل '.$competitorStats['analyzed'].' من منافسيك فعلياً.' : null,
         ]));
 
         return [
@@ -465,8 +465,8 @@ class MarketingIntelligenceService
                 'high_confidence_findings' => $highConfidenceFindings,
             ],
             'competitor_summary' => $competitorStats['analyzed'] > 0
-                ? 'تم جمع مقارنات منافسين من مصادر قابلة للقراءة.'
-                : 'لا توجد بيانات منافسين مؤكدة تكفي لصناعة snapshot موثوق.',
+                ? 'جمعنا مقارنات مع منافسيك من مصادر يمكن قراءتها.'
+                : 'لا توجد بيانات منافسين مؤكدة تكفي لتكوين صورة مقارنة موثوقة.',
         ];
     }
 
@@ -562,16 +562,16 @@ class MarketingIntelligenceService
         string $scope,
     ): void {
         $labels = [
-            'executive' => 'Executive Score',
-            'website' => 'Website',
-            'social' => 'Social',
-            'seo' => 'SEO',
-            'trust' => 'Trust',
-            'conversion' => 'Conversion',
-            'ads_readiness' => 'Ads Readiness',
-            'ai_visibility' => 'AI Visibility',
-            'competition' => 'Competition',
-            'lead_readiness' => 'Lead Readiness',
+            'executive' => 'الدرجة الإجمالية',
+            'website' => 'الموقع',
+            'social' => 'الحسابات الاجتماعية',
+            'seo' => 'الظهور في البحث',
+            'trust' => 'الثقة',
+            'conversion' => 'تحويل الزائر إلى عميل',
+            'ads_readiness' => 'الجاهزية للإعلان',
+            'ai_visibility' => 'الظهور في محركات الإجابة',
+            'competition' => 'المنافسة',
+            'lead_readiness' => 'الجاهزية لاستقبال العملاء',
         ];
 
         foreach ($scores as $code => $score) {

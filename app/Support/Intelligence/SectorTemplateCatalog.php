@@ -67,7 +67,7 @@ class SectorTemplateCatalog
                 ],
             ],
             'b2b_services' => [
-                'label' => 'خدمات B2B',
+                'label' => 'خدمات للشركات',
                 'weights' => [
                     'website' => 0.15,
                     'social' => 0.07,
@@ -95,7 +95,7 @@ class SectorTemplateCatalog
                 ],
             ],
             'saas' => [
-                'label' => 'SaaS',
+                'label' => 'برمجيات بالاشتراك',
                 'weights' => [
                     'website' => 0.16,
                     'social' => 0.07,

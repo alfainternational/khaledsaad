@@ -149,7 +149,7 @@
                 <div class="onb-preview-icon">🚀</div>
                 <div>
                     <p class="text-caption mb-1">بعد إنشاء المشروع ستصل مباشرة للأداة الأولى في مسارك</p>
-                    <strong class="text-body">الخطوة الأولى: تشخيص وضع مشروعك الحالي</strong>
+                    <strong class="text-body">الخطوة الأولى: تحليل وضع مشروعك الحالي</strong>
                 </div>
             </div>
 
@@ -201,7 +201,7 @@
                 <div class="onb-preview-icon">📄</div>
                 <div>
                     <p class="text-caption mb-1">ما الذي تبنيه الآن؟</p>
-                    <strong class="text-body">ملف مشروع تسويقي حيّ يُستخدم في التشخيص والاستوديو والخطة.</strong>
+                    <strong class="text-body">ملف مشروع تسويقي حيّ يُستخدم في التحليل والاستوديو والخطة.</strong>
                 </div>
             </div>
 

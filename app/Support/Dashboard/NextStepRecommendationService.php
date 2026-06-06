@@ -25,9 +25,9 @@ class NextStepRecommendationService
 
         if (! $targetProject) {
             return [
-                'title' => 'أنشئ أول مشروع داخل المساحة',
-                'summary' => 'وجود مشروع واحد على الأقل هو نقطة البداية لكل الأدوات والتقارير والمخرجات.',
-                'action_label' => 'إضافة مشروع',
+                'title' => 'ابدأ بإضافة مشروعك الأول',
+                'summary' => 'أضف مشروعك، ونبدأ نحلّله ونعطيك خطوات واضحة تمشي عليها.',
+                'action_label' => 'أضف مشروع',
                 'action_route' => route('projects.create'),
                 'stage' => 1,
             ];
@@ -40,9 +40,9 @@ class NextStepRecommendationService
             || empty($profile['awareness_level'])
         ) {
             return [
-                'title' => 'أكمل ملف العمل الأساسي',
-                'summary' => 'ثبّت نوع الاستخدام ومستوى الوعي والهدف والجمهور حتى تصبح التوصيات والمخرجات مرتبطة بسياقك الحقيقي.',
-                'action_label' => 'تحديث التهيئة',
+                'title' => 'عرّفنا على مشروعك أكثر',
+                'summary' => 'أجب عن أسئلة قصيرة عن مشروعك وعملائك، حتى تكون نتائجنا وخطواتنا على مقاسك أنت.',
+                'action_label' => 'أكمل التعريف',
                 'action_route' => route('onboarding.show'),
                 'stage' => (int) $targetProject->stage,
             ];
@@ -62,9 +62,9 @@ class NextStepRecommendationService
 
         if ($tool) {
             return [
-                'title' => 'شغّل أداة '.$tool->name,
-                'summary' => 'هذه هي الخطوة العملية الأقرب لحالة المشروع الحالية داخل '.$targetProject->name.' وبما يناسب هدفك ومسارك الحالي.',
-                'action_label' => 'فتح الأداة المناسبة',
+                'title' => 'ابدأ بـ'.$tool->name,
+                'summary' => 'هذه أنسب خطوة لمشروعك الآن. أنجزها وننتقل للتي بعدها.',
+                'action_label' => 'ابدأ الآن',
                 'action_route' => route('tools.show', $tool),
                 'stage' => $currentStage,
             ];
@@ -73,9 +73,9 @@ class NextStepRecommendationService
         $nextStage = min($currentStage + 1, 5);
 
         return [
-            'title' => 'انتقل إلى '.$this->stageLabel($nextStage),
-            'summary' => 'المشروع الحالي جاهز للانتقال إلى الخطوة التالية ضمن الرحلة التسويقية الكاملة.',
-            'action_label' => 'استعراض الأدوات',
+            'title' => 'انتقل إلى: '.$this->stageLabel($nextStage),
+            'summary' => 'أنهيت هذه المرحلة. تابع إلى الخطوة التالية.',
+            'action_label' => 'تابع',
             'action_route' => route('tools.index'),
             'stage' => $nextStage,
         ];

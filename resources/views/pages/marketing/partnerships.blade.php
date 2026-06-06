@@ -47,10 +47,10 @@
                 <span class="section-badge-text">{{ $page?->subtitle ?? 'الشراكات' }}</span>
             </div>
             <h1 class="heading-lg mb-4">
-                {{ $page?->title ?? 'نبني مع من يؤمن بالمنهجية' }} — <span class="text-gradient">لا مع من يبحث عن شعار</span>
+                {{ $page?->title ?? 'نبني مع من يهتم بالجودة فعلاً' }} — <span class="text-gradient">لا مع من يبحث عن شعار</span>
             </h1>
             <p class="text-body-lg max-w-2xl mx-auto">
-                شراكاتنا ليست شعارات على صفحة. هي علاقات تحريرية وتجارية مدروسة مع جهات تشارك فلسفتنا في جودة المحتوى ورصانة المنهج.
+                شراكاتنا ليست شعارات على صفحة. هي علاقات تحريرية وتجارية مدروسة مع جهات تشاركنا الاهتمام بجودة المحتوى وطريقة العمل الجادّة.
             </p>
             <div class="page-actions page-actions-center mt-6">
                 <a href="{{ route('contact') }}" class="btn btn-primary btn-lg">قدّم طلب شراكة</a>
@@ -71,7 +71,7 @@
     <div class="site-container">
         <div class="section-header reveal mb-8">
             <p class="text-eyebrow mb-3 text-p">أنواع الشراكات</p>
-            <h2 class="heading-lg mb-4">ثلاث مسارات <span class="text-gradient">للعمل معاً</span></h2>
+            <h2 class="heading-lg mb-4">ثلاثة مسارات <span class="text-gradient">للعمل معاً</span></h2>
             <p class="text-body max-w-2xl mx-auto">
                 اختر المسار الأقرب إلى طبيعة عملك. كل مسار له نموذج تعاون محدد، ومؤشرات نجاح متفق عليها مسبقاً.
             </p>

@@ -107,7 +107,7 @@ class ToolStrategicAdvisor
         return match ($toolCode) {
             'diagnosis' => [
                 'goal' => 'الهدف الحالي',
-                'priority' => 'عنق الزجاجة الحالي',
+                'priority' => 'أكبر ما يعطلك الآن',
                 'audience' => 'الجمهور المرجعي',
             ],
             'ideal-customer' => [
@@ -119,7 +119,7 @@ class ToolStrategicAdvisor
             'positioning' => [
                 'offer' => 'العرض الحالي',
                 'audience' => 'الجمهور',
-                'positioning' => 'ميزة التمركز',
+                'positioning' => 'ميزة تميّزك',
                 'market_gap' => 'فجوة السوق',
             ],
             'offer-builder' => [
@@ -239,11 +239,11 @@ class ToolStrategicAdvisor
             ];
         }
 
-        if (in_array('ميزة التمركز', $missingSignals, true) || in_array('فجوة السوق', $missingSignals, true)) {
+        if (in_array('ميزة تميّزك', $missingSignals, true) || in_array('فجوة السوق', $missingSignals, true)) {
             return [
                 'action_type' => 'tool',
                 'recommended_tool_code' => $toolCode === 'positioning' ? null : 'positioning',
-                'recommended_tool_label' => $toolCode === 'positioning' ? 'تحرير brief المشروع' : 'التمركز',
+                'recommended_tool_label' => $toolCode === 'positioning' ? 'تحرير ملف المشروع' : 'تميّز المشروع',
                 'reason' => 'الرسالة أو العرض سيبقيان عامين حتى يثبت الفرق الحقيقي الذي يجب أن يراه السوق.',
             ];
         }
@@ -252,7 +252,7 @@ class ToolStrategicAdvisor
             return [
                 'action_type' => 'brief',
                 'recommended_tool_code' => null,
-                'recommended_tool_label' => 'تحرير brief المشروع',
+                'recommended_tool_label' => 'تحرير ملف المشروع',
                 'reason' => 'هذه الأداة تحتاج معرفة القناة أو المسار الحالي كي لا تنتهي بتوصيات عامة أو غير قابلة للتنفيذ.',
             ];
         }
@@ -260,7 +260,7 @@ class ToolStrategicAdvisor
         return [
             'action_type' => 'brief',
             'recommended_tool_code' => null,
-            'recommended_tool_label' => 'تحرير brief المشروع',
+            'recommended_tool_label' => 'تحرير ملف المشروع',
             'reason' => 'إغلاق الفجوات المتبقية في ملف المشروع سيرفع جودة هذه الأداة مباشرة ويقلل التكرار على المستخدم.',
         ];
     }

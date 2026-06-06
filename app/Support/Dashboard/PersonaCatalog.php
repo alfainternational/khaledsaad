@@ -12,35 +12,35 @@ class PersonaCatalog
         return [
             'idea' => [
                 'label' => 'صاحب فكرة',
-                'description' => 'تحتاج إلى وضوح في الفكرة، الرسالة، والخطوة التالية.',
+                'description' => 'تحتاج توضّح فكرتك ورسالتك وتعرف خطوتك التالية.',
                 'workspace_types' => ['personal'],
                 'focus' => ['discover', 'foundation', 'offer'],
                 'default_awareness' => 'guided',
             ],
             'freelancer' => [
                 'label' => 'مقدم خدمة',
-                'description' => 'تدير أكثر من عميل أو عرض وتحتاج إلى تنفيذ سريع ورسائل جاهزة.',
+                'description' => 'تتعامل مع أكثر من عميل أو عرض وتحتاج تنفيذاً سريعاً ورسائل جاهزة.',
                 'workspace_types' => ['personal', 'agency'],
                 'focus' => ['offer', 'follow_up', 'content'],
                 'default_awareness' => 'structured',
             ],
             'business' => [
                 'label' => 'صاحب مشروع قائم',
-                'description' => 'تحتاج إلى رؤية أوضح للأداء والعرض والقمع والخطة.',
+                'description' => 'تحتاج صورة أوضح عن نتائجك وعرضك وخطوات جذب العميل وخطتك.',
                 'workspace_types' => ['personal', 'team'],
                 'focus' => ['market', 'funnel', 'kpis'],
                 'default_awareness' => 'structured',
             ],
             'team' => [
                 'label' => 'فريق أو شركة',
-                'description' => 'تحتاج إلى تنظيم الأعضاء والمشاريع والتقارير مع قيادة تشغيلية واضحة.',
+                'description' => 'تحتاج تنظيم الأعضاء والمشاريع والتقارير مع إدارة عمل واضحة.',
                 'workspace_types' => ['team'],
                 'focus' => ['team', 'execution', 'reports'],
                 'default_awareness' => 'expert',
             ],
             'agency' => [
                 'label' => 'وكالة',
-                'description' => 'تدير عدة عملاء ومشاريع واعتمادات ضمن مساحة واحدة.',
+                'description' => 'تدير عدة عملاء ومشاريع وموافقات في مكان واحد.',
                 'workspace_types' => ['agency'],
                 'focus' => ['clients', 'approvals', 'portfolio'],
                 'default_awareness' => 'expert',
@@ -60,7 +60,7 @@ class PersonaCatalog
 
     public static function description(?string $persona): string
     {
-        return static::all()[$persona]['description'] ?? 'لم يتم تحديد نوع الاستخدام بعد.';
+        return static::all()[$persona]['description'] ?? 'لم تحدد نوع استخدامك بعد.';
     }
 
     /**

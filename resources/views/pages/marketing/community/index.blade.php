@@ -36,7 +36,7 @@
                 مجتمع يفكر معك <span class="text-gradient">لا يعظك</span>
             </h1>
             <p class="text-body-lg max-w-2xl mx-auto">
-                فضاء نقاشي لرواد الأعمال ومديري التسويق ومقدمي الخدمات — مكان لطرح تحدياتك الفعلية، والتعلم من تجارب مَن سبقوك إلى نفس المنعطف.
+                فضاء نقاشي لأصحاب المشاريع ومديري التسويق ومقدمي الخدمات — مكان لطرح تحدياتك الفعلية، والتعلم من تجارب مَن سبقوك إلى نفس المنعطف.
             </p>
 
             <div class="page-actions page-actions-center mt-6">
@@ -160,7 +160,7 @@
                     <span class="section-badge-text internal-cta-badge-text">كن جزءاً من النقاش</span>
                 </div>
                 <h2 class="cta-headline">التعلم يتضاعف حين تشاركه</h2>
-                <p class="cta-body">سجّل حسابك وانضم إلى حوار مهني مع رواد أعمال ومديري تسويق يتعلمون معاً كل يوم.</p>
+                <p class="cta-body">سجّل حسابك وانضم إلى حوار مهني مع أصحاب مشاريع ومديري تسويق يتعلمون معاً كل يوم.</p>
                 <div class="cta-actions">
                     <a href="{{ route('register') }}" class="btn btn-primary btn-xl">إنشاء حساب</a>
                     <a href="{{ route('paths.index') }}" class="btn btn-ghost btn-xl">استكشف المسارات</a>

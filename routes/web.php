@@ -30,12 +30,16 @@ use App\Http\Controllers\Api\ToolRunApiController;
 use App\Http\Controllers\Web\AccountController;
 use App\Http\Controllers\Web\ApprovalController;
 use App\Http\Controllers\PayPalWebhookController;
+use App\Http\Controllers\Web\AgencyBrandingController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\BillingController;
 use App\Http\Controllers\Web\ClientController;
 use App\Http\Controllers\Web\ContactFormController;
 use App\Http\Controllers\Web\DashboardController as UserDashboardController;
+use App\Http\Controllers\Web\ExecutionPackageController;
 use App\Http\Controllers\Web\ExperienceController;
+use App\Http\Controllers\Web\GuestDiagnosisController;
+use App\Http\Controllers\Web\RecommendationController;
 use App\Http\Controllers\Web\MarketingWebsiteController;
 use App\Http\Controllers\Web\ImpersonationController;
 use App\Http\Controllers\Web\OnboardingController;
@@ -120,6 +124,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 Route::post('/paypal/webhook', [PayPalWebhookController::class, 'handle'])->name('paypal.webhook');
 
+// Public pre-registration diagnosis funnel (Phase أ) — open to guests and logged-in users.
+Route::prefix('diagnose')->name('diagnose.')->group(function (): void {
+    Route::get('/', [GuestDiagnosisController::class, 'form'])->name('form');
+    Route::post('/', [GuestDiagnosisController::class, 'start'])
+        ->middleware('throttle:6,1')
+        ->name('start');
+    Route::get('/{case}', [GuestDiagnosisController::class, 'show'])->name('show');
+    Route::get('/{case}/status', [GuestDiagnosisController::class, 'status'])->name('status');
+    Route::post('/{case}/email', [GuestDiagnosisController::class, 'captureEmail'])->name('email');
+});
+
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.store');
@@ -154,6 +169,19 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/projects/{project}/brief', [ProjectMarketingBriefController::class, 'edit'])->name('projects.brief.edit');
     Route::put('/projects/{project}/brief', [ProjectMarketingBriefController::class, 'update'])->name('projects.brief.update');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+
+    // Execution layer (Phase ج): recommendations → execution packages.
+    Route::get('/projects/{project}/recommendations', [RecommendationController::class, 'index'])->name('projects.recommendations.index');
+    Route::post('/projects/{project}/recommendations/{recommendation}/package', [RecommendationController::class, 'storePackage'])->name('projects.recommendations.package');
+    Route::get('/execution-packages/{executionPackage}', [ExecutionPackageController::class, 'show'])->name('execution-packages.show');
+    Route::patch('/execution-packages/{executionPackage}/status', [ExecutionPackageController::class, 'updateStatus'])->name('execution-packages.status');
+
+    // Agency white-label settings (Phase د) — gated by the white_label entitlement.
+    Route::get('/agency/branding', [AgencyBrandingController::class, 'edit'])
+        ->middleware('entitlement:white_label')->name('agency.branding.edit');
+    Route::patch('/agency/branding', [AgencyBrandingController::class, 'update'])
+        ->middleware('entitlement:white_label')->name('agency.branding.update');
+
     Route::patch('/account', [AccountController::class, 'update'])->name('account.update');
     Route::get('/team', [TeamController::class, 'index'])->name('team.index');
     Route::post('/team/invitations', [TeamController::class, 'invite'])->name('team.invitations.store');
@@ -163,9 +191,12 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/projects/{project}/tools/{tool}/run', [ToolRunController::class, 'store'])->name('projects.tools.run');
     Route::post('/tools/{tool}/run', [ToolRunController::class, 'storeFromTool'])->name('tools.run');
     Route::get('/tools/{tool}', [WebToolController::class, 'show'])->name('tools.show');
-    Route::post('/studio/generations', [StudioGenerationController::class, 'store'])->name('studio.generations.store');
+    Route::post('/studio/generations', [StudioGenerationController::class, 'store'])
+        ->middleware('entitlement:modules.ai_studio')
+        ->name('studio.generations.store');
     Route::get('/studio/generations/{aiGeneration}/export/{format}', [StudioGenerationController::class, 'export'])
         ->where('format', 'md|markdown|html|pdf')
+        ->middleware('entitlement:outputs.can_export')
         ->name('studio.generations.export');
     Route::get('/studio/generations/{aiGeneration}', [StudioGenerationController::class, 'show'])->name('studio.generations.show');
     Route::delete('/studio/generations/{aiGeneration}', [StudioGenerationController::class, 'destroy'])->name('studio.generations.destroy');
@@ -204,9 +235,9 @@ Route::get('/terms', [MarketingWebsiteController::class, 'terms'])->name('terms'
 Route::middleware('auth')->prefix('api')->group(function (): void {
     Route::post('/tool/{tool}/run', [ToolRunApiController::class, 'store'])->name('api.tools.run');
     Route::get('/tool/{tool}/load', [ToolRunApiController::class, 'load'])->name('api.tools.load');
-    Route::post('/ai/chat', [AiChatController::class, 'chat'])->name('api.ai.chat');
-    Route::post('/ai/analyze', [AiChatController::class, 'analyzeToolInputs'])->name('api.ai.analyze');
-    Route::post('/ai/suggest', [AiChatController::class, 'suggestFields'])->name('api.ai.suggest');
+    Route::post('/ai/chat', [AiChatController::class, 'chat'])->middleware('throttle:ai-assist')->name('api.ai.chat');
+    Route::post('/ai/analyze', [AiChatController::class, 'analyzeToolInputs'])->middleware('throttle:ai-assist')->name('api.ai.analyze');
+    Route::post('/ai/suggest', [AiChatController::class, 'suggestFields'])->middleware('throttle:ai-assist')->name('api.ai.suggest');
 });
 
 Route::controller(PlatformController::class)->group(function (): void {

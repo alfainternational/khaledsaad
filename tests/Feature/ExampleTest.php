@@ -10,9 +10,12 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
+        // Assert stable structure (not volatile marketing copy) so the test survives
+        // ongoing content edits: the hero, the nav, and the wired diagnosis funnel CTA.
         $response
             ->assertOk()
-            ->assertSee('Marketing Intelligence Platform')
-            ->assertSee('اقرأ وضعك التسويقي بصدق');
+            ->assertSee('hero-section')
+            ->assertSee('site-nav')
+            ->assertSee('/diagnose');
     }
 }

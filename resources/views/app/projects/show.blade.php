@@ -1,4 +1,4 @@
-@extends('layouts.app', ['title' => $project->name, 'pageTitle' => $project->name, 'pageKicker' => 'Project'])
+@extends('layouts.app', ['title' => $project->name, 'pageTitle' => $project->name, 'pageKicker' => 'مشروع'])
 
 @section('content')
 <section class="app-grid app-two-col mb-8">
@@ -11,7 +11,7 @@
             <div><span>العميل</span><strong>{{ $project->client?->name ?? 'بدون عميل' }}</strong></div>
             <div><span>المرحلة</span><strong>{{ \App\Support\Dashboard\StageCatalog::label((int) $project->stage) }}</strong></div>
             <div><span>الحالة</span><strong>{{ $project->status }}</strong></div>
-            <div><span>Public ID</span><strong>{{ $project->public_id }}</strong></div>
+            <div><span>المعرّف</span><strong>{{ $project->public_id }}</strong></div>
             <div><span>القطاع</span><strong>{{ app(\App\Support\Intelligence\SectorTemplateCatalog::class)->options()[$project->sector] ?? $project->sector }}</strong></div>
             <div><span>السوق</span><strong>{{ $project->market_country ?: 'غير محدد' }}</strong></div>
             <div><span>الدومين</span><strong>{{ $project->primary_domain ?: 'غير مضاف' }}</strong></div>
@@ -27,7 +27,7 @@
             <div class="app-list-item">
                 <div>
                     <strong>تشغيل الأدوات</strong>
-                    <small>Action Workspace بعد التقرير</small>
+                    <small>الاستوديو بعد التقرير</small>
                 </div>
                 <span class="app-badge">{{ $project->tool_runs_count }}</span>
             </div>
@@ -40,7 +40,7 @@
             </div>
             <div class="app-list-item">
                 <div>
-                    <strong>آخر تقرير Intelligence</strong>
+                    <strong>آخر تقرير تحليل</strong>
                     <small>
                         @if($latestAudit?->status === 'completed')
                             {{ $latestAudit?->completed_at?->diffForHumans() ?? 'اكتمل الآن' }}
@@ -55,11 +55,11 @@
                 </div>
                 <span class="app-badge">
                     @if($latestAudit?->status === 'queued')
-                        queued
+                        قيد الانتظار
                     @elseif($latestAudit?->status === 'running')
-                        running
+                        قيد التشغيل
                     @elseif($latestAudit?->status === 'failed')
-                        failed
+                        فشل
                     @else
                         {{ $latestAuditReport['executive_scores']['executive'] ?? '--' }}
                     @endif
@@ -74,11 +74,12 @@
 
     <div class="app-section-head">
         <div>
-            <h3 class="heading-sm">Marketing Intelligence</h3>
-            <p class="text-caption">الموقع + السوشيال + المنافسون + readiness + contacts + action plan.</p>
+            <h3 class="heading-sm">تحليل مشروعك</h3>
+            <p class="text-caption">الموقع + الحسابات + المنافسون + الجاهزية + جهات الاتصال + خطة العمل.</p>
         </div>
         <div class="app-inline-actions">
-            <a href="{{ route('projects.edit', $project) }}" class="btn btn-secondary btn-sm">تحديث intake</a>
+            <a href="{{ route('projects.edit', $project) }}" class="btn btn-secondary btn-sm">تحديث البيانات</a>
+            <a href="{{ route('projects.recommendations.index', $project) }}" class="btn btn-secondary btn-sm">التوصيات والتنفيذ</a>
             <form method="POST" action="{{ route('projects.audit.run', $project) }}">
                 @csrf
                 <button type="submit" class="btn btn-primary btn-sm">تشغيل التحليل الآن</button>
@@ -87,7 +88,7 @@
     </div>
 
     @if($latestAudit?->status === 'queued')
-        <p class="app-empty mb-6">تمت جدولة التحليل. سيبدأ التنفيذ عبر الـ queue ويظهر التقرير هنا تلقائياً بعد اكتماله.</p>
+        <p class="app-empty mb-6">تمت جدولة التحليل. سيبدأ التنفيذ تلقائياً، وسيظهر التقرير هنا فور اكتماله.</p>
     @elseif($latestAudit?->status === 'running')
         <p class="app-empty mb-6">التحليل قيد التشغيل حالياً. يتم الآن جمع أدلة الموقع والسوشيال والمنافسين لهذا المشروع.</p>
     @elseif($latestAudit?->status === 'failed')
@@ -124,7 +125,7 @@
     @endif
 
     @if(($analysisIntegrity['status'] ?? null) === 'insufficient')
-        <p class="app-empty mb-6">تم إخفاء executive scores لأن التغطية الحالية لا تكفي لعرض قراءة تبدو نهائية. أضف مصادر أو أعد التشغيل بعد إتاحة الوصول.</p>
+        <p class="app-empty mb-6">تم إخفاء الدرجات لأن التغطية الحالية لا تكفي لعرض قراءة تبدو نهائية. أضف مصادر أو أعد التشغيل بعد إتاحة الوصول.</p>
     @else
         <div class="app-stat-grid mb-6">
             @forelse (($latestAuditReport['executive_scores'] ?? []) as $label => $score)
@@ -133,7 +134,7 @@
                     <strong class="app-stat-value">{{ $score }}/100</strong>
                 </article>
             @empty
-                <p class="app-empty">أضف الدومين والروابط الرسمية ثم شغّل التحليل لتظهر executive scores هنا.</p>
+                <p class="app-empty">أضف الدومين والروابط الرسمية ثم شغّل التحليل لتظهر الدرجات هنا.</p>
             @endforelse
         </div>
     @endif
@@ -141,7 +142,7 @@
     <div class="app-grid app-two-col mb-6">
         <article class="card">
             <div class="app-section-head">
-                <h3 class="heading-sm">Honest Diagnosis</h3>
+                <h3 class="heading-sm">تشخيص صادق</h3>
             </div>
             <div class="app-list">
                 @forelse (($latestAuditReport['honest_diagnosis'] ?? []) as $line)
@@ -238,7 +239,7 @@
     <div class="app-grid app-two-col mb-6">
         <article class="card">
             <div class="app-section-head">
-                <h3 class="heading-sm">Quick Wins خلال 7 أيام</h3>
+                <h3 class="heading-sm">مكاسب سريعة خلال 7 أيام</h3>
             </div>
             <div class="app-list">
                 @forelse (($latestAuditReport['priority_actions']['quick_wins_7_days'] ?? []) as $line)
@@ -246,7 +247,7 @@
                         <div><strong>{{ $line }}</strong></div>
                     </div>
                 @empty
-                    <p class="app-empty">{{ ($analysisIntegrity['status'] ?? null) === 'insufficient' ? 'تم إيقاف quick wins الواسعة لأن الأدلة الحالية غير كافية.' : 'لا توجد quick wins محفوظة بعد.' }}</p>
+                    <p class="app-empty">{{ ($analysisIntegrity['status'] ?? null) === 'insufficient' ? 'تم إيقاف المكاسب السريعة الواسعة لأن الأدلة الحالية غير كافية.' : 'لا توجد مكاسب سريعة محفوظة بعد.' }}</p>
                 @endforelse
             </div>
         </article>
@@ -285,7 +286,7 @@
 
         <article class="card">
             <div class="app-section-head">
-                <h3 class="heading-sm">Competitor Snapshot</h3>
+                <h3 class="heading-sm">لمحة عن منافسيك</h3>
             </div>
             <div class="app-list">
                 @forelse (($latestAuditReport['competitor_snapshot']['leaders'] ?? []) as $competitor)
@@ -306,19 +307,19 @@
 
 <section class="card mb-8">
     <div class="app-section-head">
-        <h3 class="heading-sm">Before / After Trend</h3>
+        <h3 class="heading-sm">التغيّر قبل / بعد</h3>
     </div>
     <div class="app-list">
         @forelse ($monitoringTrend as $point)
             <div class="app-list-item">
                 <div>
                     <strong>{{ $point['captured_at'] }}</strong>
-                    <small>Website {{ $point['website_score'] }} · Social {{ $point['social_score'] }} · SEO {{ $point['seo_score'] }} · Conversion {{ $point['conversion_score'] }}</small>
+                    <small>الموقع {{ $point['website_score'] }} · الحسابات {{ $point['social_score'] }} · البحث {{ $point['seo_score'] }} · التحويل {{ $point['conversion_score'] }}</small>
                 </div>
                 <span class="app-badge">{{ $point['executive_score'] }}/100</span>
             </div>
         @empty
-            <p class="app-empty">سيتكوّن trend بعد إعادة التحليل أو عند تفعيل المراقبة الدورية.</p>
+            <p class="app-empty">سيتكوّن الاتجاه بعد إعادة التحليل أو عند تفعيل المراقبة الدورية.</p>
         @endforelse
     </div>
 </section>
@@ -326,7 +327,7 @@
 <section class="app-grid app-two-col mb-8">
     <article class="card">
         <div class="app-section-head">
-            <h3 class="heading-sm">Intelligence Intake + ملف المشروع</h3>
+            <h3 class="heading-sm">بيانات المشروع وملفه</h3>
             <a href="{{ route('projects.brief.edit', $project) }}" class="btn btn-secondary btn-sm">تحديث الملف</a>
         </div>
         <div class="app-list">
@@ -380,7 +381,7 @@
 <section class="app-grid app-two-col mb-8">
     <article class="card">
         <div class="app-section-head">
-            <h3 class="heading-sm">Action Workspace</h3>
+            <h3 class="heading-sm">الاستوديو الذكي</h3>
         </div>
         <div class="app-list">
             @forelse ($availableTools as $tool)
@@ -446,7 +447,7 @@
                         <small>{{ $generation->created_at?->diffForHumans() }}</small>
                     </div>
                     <div class="app-inline-actions">
-                        <span class="app-badge">{{ $generation->tokens_used }} tokens</span>
+                        <span class="app-badge">{{ $generation->tokens_used }} وحدة</span>
                         <form method="POST" action="{{ route('projects.approvals.store', $project) }}">
                             @csrf
                             <input type="hidden" name="item_type" value="ai_generation">
@@ -456,7 +457,7 @@
                     </div>
                 </div>
             @empty
-                <p class="app-empty">لا توجد مخرجات AI مرتبطة بهذا المشروع بعد.</p>
+                <p class="app-empty">لا توجد مخرجات ذكاء اصطناعي مرتبطة بهذا المشروع بعد.</p>
             @endforelse
         </div>
     </article>

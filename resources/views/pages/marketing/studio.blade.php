@@ -109,7 +109,7 @@
                 <div class="page-summary-item mb-5">
                     <p class="page-summary-label">سياق ذكي</p>
                     <p class="page-summary-body mb-0">
-                        كل توليد يقرأ من Workspace Data: عرضك، عميلك، تسعيرك، خطتك التسويقية.
+                        كل توليد يقرأ من بيانات مشروعك: عرضك، عميلك، تسعيرك، خطتك التسويقية.
                     </p>
                 </div>
 

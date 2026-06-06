@@ -27,17 +27,15 @@ class GeminiGateway implements AiGatewayInterface
             'gemini-2.0-flash',
         ]));
 
+        // الأمان: التحقق من شهادة TLS مُفعّل افتراضياً. لا يُعطّل إلا صراحةً في بيئة
+        // تطوير محلية تعاني من مشاكل DNS/CA (GEMINI_VERIFY_TLS=false) — وعندها فقط
+        // نطبّق التفافة DNS المؤقتة. في الإنتاج يبقى التحقق فعّالاً لمنع هجوم MITM.
+        $verifyTls = (bool) config('services.gemini.verify_tls', true);
+
         foreach ($models as $model) {
             $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
             try {
-                $host = 'generativelanguage.googleapis.com';
-                $ip = gethostbyname($host);
-
-                if ($ip === $host) {
-                    $ip = '142.251.209.170';
-                }
-
                 $payload = [
                     'system_instruction' => [
                         'parts' => [['text' => $systemPrompt]],
@@ -63,14 +61,24 @@ class GeminiGateway implements AiGatewayInterface
                     $payload['generationConfig'] = $generationConfig;
                 }
 
-                $response = Http::withOptions([
-                    'verify' => false,
+                $options = [
+                    'verify' => $verifyTls,
                     'force_ip_resolve' => 'v4',
-                    'curl' => [
+                ];
+
+                if (! $verifyTls) {
+                    $host = 'generativelanguage.googleapis.com';
+                    $ip = gethostbyname($host);
+                    if ($ip === $host) {
+                        $ip = '142.251.209.170';
+                    }
+                    $options['curl'] = [
                         CURLOPT_RESOLVE => ["{$host}:443:{$ip}"],
                         CURLOPT_DNS_SERVERS => '8.8.8.8,8.8.4.4',
-                    ],
-                ])
+                    ];
+                }
+
+                $response = Http::withOptions($options)
                     ->connectTimeout(30)
                     ->timeout(90)
                     ->post($url, $payload);

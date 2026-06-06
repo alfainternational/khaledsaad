@@ -212,7 +212,7 @@ class WorkspaceGenerationContextBuilder
         }
 
         if (! empty($context['latest_audit_report']['executive_scores'])) {
-            $parts[] = '=== Marketing Intelligence Snapshot ===';
+            $parts[] = '=== ملخص تحليل مشروعك ===';
             foreach (($context['latest_audit_report']['executive_scores'] ?? []) as $label => $score) {
                 if (is_numeric($score)) {
                     $parts[] = '- '.$label.': '.$score.'/100';

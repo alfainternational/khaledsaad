@@ -1,5 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
+@import "./diagnose.css";
 
 /* ═══════════════════════════════════════════════════════════════════
    KHALED SAAD PLATFORM — Centralized Design System
@@ -18,23 +19,33 @@
     --teal-dark: #0d9488;
     --gold:      #f59e0b;
     --rose:      #f43f5e;
+    --accent:    #6366f1;   /* لون التمييز — كان غير معرّف (85 استخداماً) فيظهر بلا خلفية */
+    --accent-contrast: #ffffff;
+    /* متغيّرات توافق — كانت مستخدمة بلا تعريف فتُخفي نصوصاً/أنماطاً */
+    --text-primary:   var(--text);
+    --text-secondary: var(--text-muted);
+    --p-base:         var(--p);
+    --feature-tone:   var(--p);
+    --radius-md:      var(--r-md);
+    --radius-lg:      var(--r-lg);
+    --dur-normal:     var(--dur-base);
 
     /* Glow */
     --p-glow:    rgba(99, 102, 241, 0.28);
     --t-glow:    rgba(20, 184, 166, 0.22);
 
     /* Typography */
-    --font:      'Alexandria', 'Segoe UI', system-ui, sans-serif;
-    --fs-xs:     0.7rem;    /* 11.2px */
-    --fs-sm:     0.8rem;    /* 12.8px */
-    --fs-base:   0.9rem;    /* 14.4px */
-    --fs-md:     1rem;      /* 16px   */
-    --fs-lg:     1.125rem;  /* 18px   */
-    --fs-xl:     1.25rem;   /* 20px   */
-    --fs-2xl:    1.5rem;    /* 24px   */
-    --fs-3xl:    1.875rem;  /* 30px   */
-    --fs-4xl:    2.25rem;   /* 36px   */
-    --fs-5xl:    2.75rem;   /* 44px   */
+    --font:      'Cairo', 'Segoe UI', system-ui, sans-serif;
+    --fs-xs:     0.75rem;   /* 12px */
+    --fs-sm:     0.875rem;  /* 14px */
+    --fs-base:   1rem;      /* 16px */
+    --fs-md:     1rem;      /* 16px */
+    --fs-lg:     1.125rem;  /* 18px */
+    --fs-xl:     1.25rem;   /* 20px */
+    --fs-2xl:    1.5rem;    /* 24px */
+    --fs-3xl:    1.875rem;  /* 30px */
+    --fs-4xl:    2.25rem;   /* 36px */
+    --fs-5xl:    3rem;      /* 48px */
 
     /* Spacing */
     --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
@@ -105,6 +116,8 @@
     --text-2:      #e2e8f0;
     --text-muted:  #94a3b8;
     --text-dim:    #64748b;
+    --text-primary:   #f1f5f9;
+    --text-secondary: #94a3b8;
 
     --nav-bg:      rgba(4, 8, 15, 0.6);
     --nav-border:  rgba(255, 255, 255, 0.07);
@@ -192,14 +205,14 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .heading-xl {
     font-size: clamp(var(--fs-3xl), 4vw, var(--fs-5xl));
     font-weight: 900;
-    line-height: 1.1;
+    line-height: 1.3;
     letter-spacing: -0.03em;
     color: var(--text);
 }
 .heading-lg {
     font-size: clamp(var(--fs-2xl), 3vw, var(--fs-4xl));
     font-weight: 800;
-    line-height: 1.15;
+    line-height: 1.3;
     letter-spacing: -0.025em;
     color: var(--text);
 }
@@ -211,7 +224,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
     color: var(--text);
 }
 .heading-sm {
-    font-size: clamp(var(--fs-lg), 1.8vw, var(--fs-2xl));
+    font-size: clamp(var(--fs-md), 1.4vw, var(--fs-lg));
     font-weight: 700;
     line-height: 1.25;
     color: var(--text);
@@ -818,8 +831,8 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .hero-headline {
     font-size: clamp(var(--fs-3xl), 4.5vw, var(--fs-5xl));
     font-weight: 900;
-    line-height: 1.1;
-    letter-spacing: -0.035em;
+    line-height: 1.32;
+    letter-spacing: -0.01em;
     color: var(--text);
     margin-bottom: var(--sp-6);
 }
@@ -1300,7 +1313,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .cta-headline {
     font-size: clamp(var(--fs-2xl), 4vw, var(--fs-4xl));
     font-weight: 900;
-    line-height: 1.15;
+    line-height: 1.3;
     color: #f1f5f9;
     margin-bottom: var(--sp-5);
     letter-spacing: -0.025em;
@@ -2673,7 +2686,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
     justify-content: space-between;
     align-items: center;
     gap: var(--sp-4);
-    padding: var(--sp-6) var(--sp-8);
+    padding: var(--sp-3) var(--sp-6);
     border-bottom: 1px solid var(--border);
     background: rgba(4, 8, 15, 0.35);
     backdrop-filter: blur(12px);
@@ -2688,7 +2701,7 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 }
 .app-header-title {
     color: var(--text);
-    font-size: var(--fs-2xl);
+    font-size: var(--fs-lg);
     font-weight: 900;
 }
 .app-header-meta {
@@ -3583,8 +3596,8 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 
 .dash-welcome-title {
     font-size: clamp(var(--fs-xl), 3vw, var(--fs-3xl));
-    line-height: 1.1;
-    letter-spacing: -0.02em;
+    line-height: 1.3;
+    letter-spacing: -0.008em;
 }
 
 .dash-welcome-sub {
@@ -6273,3 +6286,370 @@ details[open] .onb-advanced-summary {
     background: var(--accent);
     border-radius: 50%;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   REDESIGN SAMPLE — "Editorial Dark" (عيّنة الأناقة الداكنة)
+   مفعّلة فقط على body.rd-dark (الصفحة الرئيسية حالياً) قبل التعميم.
+   ذهبي راقٍ على فحمي عميق — بعيداً عن البنفسجي التقني.
+   ════════════════════════════════════════════════════════════════════════ */
+body.rd-dark {
+    /* اللون التوقيع: ذهبي */
+    --p:         #e8b84b;
+    --p-dark:    #c99a2e;
+    --p-light:   #f2cd6b;
+    --p2:        #f5d27a;
+    --teal:      #fcd34d;      /* يبقي تدرّج النص ذهبياً موحّداً */
+    --gold:      #e8b84b;
+    --rose:      #e8b84b;
+    --p-glow:    rgba(232, 184, 75, 0.22);
+    --t-glow:    rgba(232, 184, 75, 0.16);
+    --p-subtle:  rgba(232, 184, 75, 0.10);
+    --p-border:  rgba(232, 184, 75, 0.32);
+
+    /* خلفيات فحمية متدرّجة الطبقات */
+    --bg:          #0a0a0e;
+    --bg-2:        #0f0f15;
+    --bg-3:        #14141c;
+    --surface:     rgba(255, 255, 255, 0.035);
+    --surface-2:   rgba(255, 255, 255, 0.06);
+    --surface-3:   rgba(255, 255, 255, 0.04);
+    --border:      rgba(255, 255, 255, 0.09);
+    --border-2:    rgba(255, 255, 255, 0.18);
+    --text:        #f5f5f7;
+    --text-2:      #e4e4ea;
+    --text-muted:  #a6a6b4;
+    --text-dim:    #8b8b99;
+    --nav-bg:      rgba(10, 10, 14, 0.72);
+    --nav-border:  rgba(255, 255, 255, 0.08);
+    --card-bg:     rgba(255, 255, 255, 0.035);
+    --card-border: rgba(255, 255, 255, 0.10);
+    --card-hover:  rgba(255, 255, 255, 0.06);
+    --shadow-sm:   0 1px 3px rgba(0,0,0,0.5);
+    --shadow-md:   0 8px 30px rgba(0,0,0,0.45);
+    --shadow-lg:   0 24px 60px rgba(0,0,0,0.55);
+
+    background:
+        radial-gradient(1100px 520px at 82% -8%, rgba(232,184,75,0.10), transparent 60%),
+        radial-gradient(900px 600px at 8% 4%, rgba(232,184,75,0.05), transparent 55%),
+        var(--bg);
+    color: var(--text);
+}
+
+/* الطباعة التحريرية: عنوان أكبر وأوثق */
+body.rd-dark .hero-headline {
+    font-size: clamp(var(--fs-4xl), 5.2vw, 3.4rem);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    font-weight: 900;
+}
+body.rd-dark .hero-body { color: var(--text-muted); font-size: var(--fs-lg); }
+
+/* التنقّل: زجاج داكن + حد رفيع */
+body.rd-dark .site-nav {
+    background: var(--nav-bg);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid var(--nav-border);
+}
+
+/* الأزرار: ذهبي مصمت بنص داكن + ثانوي زجاجي */
+body.rd-dark .btn-primary {
+    background: linear-gradient(135deg, #f2cd6b, #e8b84b);
+    color: #1a1505;
+    box-shadow: 0 6px 26px var(--p-glow), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+body.rd-dark .btn-secondary,
+body.rd-dark .btn-ghost {
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    border: 1px solid var(--border-2);
+    backdrop-filter: blur(8px);
+}
+
+/* البطاقات: زجاجية بحد مضيء بدل التوهّج الملوّن */
+body.rd-dark .metric-card,
+body.rd-dark .card,
+body.rd-dark .benefit-card,
+body.rd-dark .path-card,
+body.rd-dark .hero-chip,
+body.rd-dark .studio-window {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    box-shadow: var(--shadow-md);
+}
+body.rd-dark .metric-card:hover,
+body.rd-dark .benefit-card:hover,
+body.rd-dark .path-card:hover {
+    border-color: var(--p-border);
+    box-shadow: 0 26px 60px rgba(0,0,0,0.55), 0 0 0 1px var(--p-border);
+}
+
+/* تأكيدات ذهبية للنصوص الدلالية */
+body.rd-dark .metric-value { color: #fff; }
+body.rd-dark .metric-label,
+body.rd-dark .text-eyebrow,
+body.rd-dark .text-p,
+body.rd-dark .text-teal { color: var(--p-light); }
+body.rd-dark .metric-desc { color: var(--text-muted); }
+
+/* توحيد ألوان الإشارات الزخرفية على الذهبي (تحييد التعدد اللوني) */
+body.rd-dark .metric-top-bar { background: linear-gradient(90deg, var(--p), var(--p2)) !important; }
+
+/* شارة القسم زجاجية ذهبية */
+body.rd-dark .section-badge {
+    background: var(--p-subtle);
+    border: 1px solid var(--p-border);
+    backdrop-filter: blur(8px);
+}
+body.rd-dark .section-badge-text { color: var(--p-light); }
+
+/* تخفيف التوهّجات الثقيلة القديمة */
+body.rd-dark .hero-img-glow,
+body.rd-dark .cta-section-glow,
+body.rd-dark .footer-glow { opacity: 0.35; filter: hue-rotate(-25deg) saturate(0.6); }
+
+/* تدرّج النص الفاتح في CTA → ذهبي */
+body.rd-dark .text-gradient-light {
+    background: linear-gradient(120deg, #f5d27a, #e8b84b, #c99a2e);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   DASH HERO — رأس لوحة العمل المدمج (ترحيب + تقدّم + خطوة تالية في بطاقة واحدة)
+   يستبدل التكديس السابق (journey-bar + welcome + spotlight) بكتلة نظيفة.
+   ════════════════════════════════════════════════════════════════════════ */
+.dash-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    padding: var(--sp-6);
+    margin-bottom: var(--sp-5);
+}
+.dash-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--sp-4);
+}
+.dash-hero-greeting { font-size: var(--fs-xl); font-weight: 900; color: var(--text); }
+.dash-hero-sub { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 2px; }
+.dash-hero-progress { display: flex; align-items: center; gap: var(--sp-3); }
+.dash-hero-progress-bar {
+    flex: 1; height: 8px; border-radius: 999px;
+    background: var(--surface-3); overflow: hidden;
+}
+.dash-hero-progress-fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--p), var(--teal));
+}
+.dash-hero-progress-text { font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+.dash-hero-next {
+    display: flex; justify-content: space-between; align-items: center; gap: var(--sp-5);
+    padding: var(--sp-5);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--card-border);
+    background:
+        radial-gradient(circle at top left, var(--p-subtle), transparent 60%),
+        var(--surface-3);
+}
+.dash-hero-next-badge { display: inline-block; font-size: var(--fs-xs); font-weight: 800; color: var(--p-light); margin-bottom: 6px; }
+.dash-hero-next-text strong { display: block; font-size: var(--fs-lg); font-weight: 900; color: var(--text); margin-bottom: 4px; }
+.dash-hero-next-text p { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.7; max-width: 64ch; }
+.dash-hero-next-cta { white-space: nowrap; flex-shrink: 0; }
+@media (max-width: 640px) {
+    .dash-hero-top { flex-direction: column; align-items: flex-start; }
+    .dash-hero-next { flex-direction: column; align-items: stretch; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   SIDEBAR NAV FIX — إصلاح القائمة الجانبية
+   قاعدة سابقة كانت تفرض flex-direction:column فتُكدّس الأيقونة والنص عمودياً.
+   هذه القاعدة (.app-nav .app-nav-link، أولوية أعلى) تعيدهما لصفّ أفقي نظيف.
+   ════════════════════════════════════════════════════════════════════════ */
+.app-nav .app-nav-link {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--sp-3);
+    min-height: 0;
+    padding: 11px 14px;
+    line-height: 1.2;
+}
+.app-nav .app-nav-link svg {
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+}
+.app-nav .app-nav-link span {
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   TOOLS PAGE — بطاقات أدوات مدمجة وشبكة أكثف (تقليل التكدّس)
+   ════════════════════════════════════════════════════════════════════════ */
+.app-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: var(--sp-4);
+}
+.card[data-tool-card] {
+    padding: var(--sp-5);
+    border-radius: var(--r-lg);
+    display: flex;
+    flex-direction: column;
+}
+.card[data-tool-card] h3 {
+    font-size: var(--fs-base);
+    margin-bottom: 6px;
+}
+.card[data-tool-card] .text-body {
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    margin-bottom: var(--sp-4);
+    /* قصّ الوصف لسطرين لتوحيد ارتفاع البطاقات ومنع التكدّس */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.card[data-tool-card] .text-caption { margin-bottom: var(--sp-3); }
+.card[data-tool-card] .app-inline-actions { margin-top: auto; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   PROJECT COCKPIT — رؤية «قمرة المشروع» للوحة العمل
+   ════════════════════════════════════════════════════════════════════════ */
+.cockpit-head { padding: var(--sp-6); margin-bottom: var(--sp-5); }
+.cockpit-project {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: var(--sp-4); margin-bottom: var(--sp-6);
+}
+.cockpit-project h2 { font-size: var(--fs-xl); font-weight: 900; color: var(--text); }
+.cockpit-project-meta { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 3px; }
+.cockpit-head-actions { display: flex; gap: var(--sp-2); flex-shrink: 0; }
+
+.cockpit-stepper { display: flex; align-items: flex-start; overflow-x: auto; padding-bottom: var(--sp-1); }
+.cockpit-step {
+    flex: 1 1 0; min-width: 96px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    gap: 7px; position: relative;
+}
+/* خط الوصل بين الخطوات (منطقي لدعم RTL) */
+.cockpit-step:not(:first-child)::before {
+    content: ''; position: absolute; top: 17px;
+    inset-inline-start: 50%; width: 100%; height: 2px;
+    background: var(--border); z-index: 0;
+}
+.cockpit-step--done:not(:first-child)::before,
+.cockpit-step--current:not(:first-child)::before {
+    background: linear-gradient(90deg, var(--teal), var(--p));
+}
+.cockpit-step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: var(--fs-sm);
+    background: var(--surface-3); color: var(--text-dim);
+    border: 1px solid var(--border);
+    position: relative; z-index: 1;
+}
+.cockpit-step--done .cockpit-step-num {
+    background: linear-gradient(135deg, var(--p), var(--teal)); color: #fff; border-color: transparent;
+}
+.cockpit-step--current .cockpit-step-num {
+    color: var(--p-light); border-color: var(--p);
+    box-shadow: 0 0 0 4px var(--p-subtle);
+}
+.cockpit-step-label { font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); line-height: 1.3; }
+.cockpit-step-count { font-size: var(--fs-xs); color: var(--text-dim); }
+.cockpit-step--done .cockpit-step-label,
+.cockpit-step--current .cockpit-step-label { color: var(--text); }
+
+.cockpit-next {
+    display: flex; justify-content: space-between; align-items: center; gap: var(--sp-5);
+    padding: var(--sp-5) var(--sp-6); margin-bottom: var(--sp-5);
+    background: radial-gradient(circle at top left, var(--p-subtle), transparent 55%), var(--card-bg);
+}
+.cockpit-next-badge { display: block; font-size: var(--fs-xs); font-weight: 800; color: var(--p-light); margin-bottom: 5px; }
+.cockpit-next strong { font-size: var(--fs-lg); font-weight: 900; color: var(--text); }
+.cockpit-next p { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 3px; max-width: 60ch; line-height: 1.6; }
+.cockpit-next .btn { flex-shrink: 0; }
+@media (max-width: 640px) {
+    .cockpit-project { flex-direction: column; align-items: flex-start; }
+    .cockpit-next { flex-direction: column; align-items: stretch; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   COMPACT APP THEME — نظام مدمّج وجديد لشيل التطبيق/الإدارة (.app-body)
+   خط أصغر · بطاقات مسطّحة صغيرة · أزرار مدمجة · حواف أرفع · مسافات أضيق
+   ════════════════════════════════════════════════════════════════════════ */
+.app-body {
+    /* مقياس الخط موحّد مع باقي الموقع — التطبيق يبقى مدمجاً عبر الحشوات/الحواف فقط */
+    --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px;
+}
+
+/* بطاقات مسطّحة مدمجة (إلغاء الحواف الكبيرة والظلال والتدرّجات) */
+.app-body .card,
+.app-body .dash-card,
+.app-body .card-nested,
+.app-body .app-hero,
+.app-body .cockpit-head {
+    padding: var(--sp-4) var(--sp-5);
+    border-radius: 10px;
+    box-shadow: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+.app-body .card[data-tool-card] { padding: var(--sp-4); }
+
+/* مسافات شبكات أضيق */
+.app-body .dash-grid,
+.app-body .app-grid,
+.app-body .app-card-grid { gap: var(--sp-3); }
+.app-body .app-content { padding: var(--sp-5); }
+
+/* أزرار مدمجة ومسطّحة */
+.app-body .btn {
+    padding: 6px 12px; border-radius: 8px;
+    font-size: var(--fs-sm); font-weight: 700;
+    box-shadow: none; letter-spacing: 0;
+}
+.app-body .btn:hover { transform: none; box-shadow: none; }
+.app-body .btn-sm { padding: 4px 9px; font-size: var(--fs-xs); }
+.app-body .btn-lg { padding: 7px 14px; font-size: var(--fs-sm); }
+.app-body .btn-primary { background: var(--p); }
+.app-body .btn-primary:hover { background: var(--p-dark); }
+.app-body .btn-primary::after { display: none; }
+
+/* تسطيح خلفيات التمييز */
+.app-body .cockpit-next,
+.app-body .dash-hero-next {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: var(--sp-4) var(--sp-5);
+}
+
+/* رأس الصفحة مدمج ومسطّح */
+.app-body .app-header { padding: var(--sp-3) var(--sp-5); }
+.app-body .shell-header { border-radius: 10px; box-shadow: none; }
+
+/* العلامة في الشريط الجانبي أصغر وأهدأ */
+.app-body .app-brand { border-radius: 10px; padding: var(--sp-3); }
+.app-body .app-brand-mark { width: 34px; height: 34px; box-shadow: none; border-radius: 8px; }
+
+/* بطاقات الإحصاء/الستِبر أصغر */
+.app-body .cockpit-step-num { width: 30px; height: 30px; }
+.app-body .cockpit-step:not(:first-child)::before { top: 14px; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   توحيد عناوين صفحات التطبيق على الأساس الصغير (مطابقة الرئيسية/لوحة العمل)
+   ════════════════════════════════════════════════════════════════════════ */
+.app-body .heading-lg { font-size: var(--fs-xl); }
+.app-body .heading-md { font-size: var(--fs-lg); }
+.app-body .heading-xl { font-size: var(--fs-xl); }
+.app-body .text-body-lg { font-size: var(--fs-base); line-height: 1.7; }
+/* إخفاء الـ kicker الإنجليزي المكرّر فوق عنوان الصفحة (العنوان العربي يكفي) */
+.app-body .app-header-kicker { display: none; }

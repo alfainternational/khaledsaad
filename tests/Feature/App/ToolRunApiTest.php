@@ -111,9 +111,9 @@ class ToolRunApiTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Marketing Intelligence Snapshot')
+            ->assertSee('ملخص تحليل مشروعك')
             ->assertSee('تحليل مبني على مصادر فعلية')
-            ->assertSee('حسّن الـ CTA الرئيسي قبل توسيع العرض')
+            ->assertSee('حسّن زر الإجراء الرئيسي قبل توسيع العرض')
             ->assertSee('data-upstream-context-root', false)
             ->assertSee('data-project-brief-root', false)
             ->assertSee('data-tool-briefing-root', false)
@@ -251,7 +251,7 @@ class ToolRunApiTest extends TestCase
                 ],
                 'priority_actions' => [
                     'quick_wins_7_days' => [
-                        'حسّن الـ CTA الرئيسي قبل توسيع العرض.',
+                        'حسّن زر الإجراء الرئيسي قبل توسيع العرض.',
                     ],
                 ],
             ],

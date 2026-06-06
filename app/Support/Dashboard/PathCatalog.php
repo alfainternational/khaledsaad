@@ -12,7 +12,7 @@ class PathCatalog
         return [
             'start_your_project' => [
                 'label' => 'ابدأ مشروعك',
-                'description' => 'مسار تأسيسي يركز على وضوح الفكرة والجمهور ثم بناء عرض أولي قابل للانطلاق.',
+                'description' => 'مسار للبداية يساعدك توضّح فكرتك وتعرف عميلك، ثم تبني أول عرض جاهز للانطلاق.',
                 'personas' => ['idea'],
                 'goals' => ['clarify_idea', 'build_offer'],
                 'awareness_levels' => ['guided', 'structured'],
@@ -20,7 +20,7 @@ class PathCatalog
             ],
             'service_growth' => [
                 'label' => 'نمو مقدم الخدمة',
-                'description' => 'مسار يحول الخدمة إلى عرض واضح ورسائل متابعة وحملات ومحتوى قابل للبيع.',
+                'description' => 'يحوّل خدمتك إلى عرض واضح، مع رسائل متابعة وحملات ومحتوى يجذب العملاء.',
                 'personas' => ['freelancer'],
                 'goals' => ['build_offer', 'get_first_customers', 'launch_campaigns'],
                 'awareness_levels' => ['guided', 'structured', 'expert'],
@@ -28,7 +28,7 @@ class PathCatalog
             ],
             'growth_system' => [
                 'label' => 'نظام نمو لمشروع قائم',
-                'description' => 'مسار لمشروع قائم يريد إعادة ضبط السوق والعرض والقمع والقياس.',
+                'description' => 'لمشروع شغّال يريد يعيد ضبط السوق والعرض وخطوات جذب العميل وقياس النتائج.',
                 'personas' => ['business'],
                 'goals' => ['improve_marketing', 'build_90_day_plan'],
                 'awareness_levels' => ['structured', 'expert'],
@@ -36,7 +36,7 @@ class PathCatalog
             ],
             'growth_operations' => [
                 'label' => 'تشغيل فريق النمو',
-                'description' => 'مسار يركز على الجاهزية التنفيذية، توزيع العمل، التقارير، والقياس للفريق.',
+                'description' => 'يركّز على تجهيز التنفيذ وتوزيع العمل والتقارير وقياس نتائج الفريق.',
                 'personas' => ['team'],
                 'goals' => ['build_90_day_plan', 'improve_marketing'],
                 'awareness_levels' => ['structured', 'expert'],
@@ -44,7 +44,7 @@ class PathCatalog
             ],
             'agency_delivery' => [
                 'label' => 'تشغيل الوكالة',
-                'description' => 'مسار متعدد العملاء يوازن بين بناء العروض والحملات والموافقات والقياس.',
+                'description' => 'مسار لعدة عملاء يوازن بين بناء العروض والحملات والموافقات وقياس النتائج.',
                 'personas' => ['agency'],
                 'goals' => ['build_offer', 'launch_campaigns', 'build_90_day_plan'],
                 'awareness_levels' => ['structured', 'expert'],
@@ -97,6 +97,6 @@ class PathCatalog
 
     public static function description(?string $path): string
     {
-        return static::all()[$path]['description'] ?? 'لا يوجد مسار مخصص بعد.';
+        return static::all()[$path]['description'] ?? 'لا يوجد مسار محدد لك بعد.';
     }
 }

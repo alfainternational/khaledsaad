@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web;
 
 use App\Application\Auth\EnsureUserWorkspaceAccessAction;
 use App\Application\Auth\RegisterUserAction;
+use App\Application\Diagnosis\ConvertDiagnosisCaseAction;
+use App\Domain\Intelligence\Models\DiagnosisCase;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
@@ -83,6 +85,15 @@ class AuthController extends Controller
 
         $workspace = $ensureUserWorkspaceAccessAction->handle($user);
         $request->session()->put('current_workspace_id', $workspace->id);
+
+        // Continue from a pre-registration diagnosis instead of starting from scratch.
+        $publicId = $request->session()->pull('diagnosis_public_id');
+        if (is_string($publicId) && $publicId !== '') {
+            $case = DiagnosisCase::query()->where('public_id', $publicId)->first();
+            if ($case) {
+                app(ConvertDiagnosisCaseAction::class)->handle($case, $user, $workspace);
+            }
+        }
 
         return redirect()->route('onboarding.show');
     }

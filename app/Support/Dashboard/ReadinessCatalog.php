@@ -19,19 +19,19 @@ class ReadinessCatalog
                 'tools' => ['ideal-customer', 'market-analysis', 'competitor-analysis', 'positioning'],
             ],
             'offer_readiness' => [
-                'label' => 'جاهزية العرض',
+                'label' => 'اكتمال العرض',
                 'tools' => ['offer-builder', 'pricing-strategy', 'value-ladder', 'package-builder', 'promise-builder'],
             ],
             'marketing_readiness' => [
-                'label' => 'جاهزية التسويق',
+                'label' => 'اكتمال التسويق',
                 'tools' => ['funnel-builder', 'customer-journey', 'marketing-plan', 'content-plan', 'campaign-builder'],
             ],
             'sales_readiness' => [
-                'label' => 'جاهزية التحويل والمتابعة',
+                'label' => 'اكتمال البيع والمتابعة',
                 'tools' => ['offer-builder', 'pricing-strategy', 'funnel-builder', 'follow-up-sequence'],
             ],
             'measurement_readiness' => [
-                'label' => 'جاهزية القياس والتوسع',
+                'label' => 'اكتمال قياس النتائج والتوسّع',
                 'tools' => ['kpi-tracker', 'execution-plan', 'performance-review', 'smart-recommendations', 'growth-priorities'],
             ],
         ];

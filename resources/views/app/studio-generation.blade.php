@@ -3,6 +3,7 @@
 @section('content')
 @php
     $titledSections = collect($sections ?? [])->filter(fn (array $section): bool => ($section['title'] ?? '') !== '')->values();
+    $canExport = (bool) entitlement('outputs.can_export');
 @endphp
 
 <section class="studio-gen-header mb-6">
@@ -16,10 +17,14 @@
     </div>
     <div class="studio-gen-actions studio-gen-actions-wrap">
         <a href="{{ route('studio.index') }}" class="btn btn-secondary">العودة للاستوديو</a>
-        <button type="button" class="btn btn-primary" data-copy-studio>نسخ المخرج</button>
-        <a href="{{ route('studio.generations.export', [$generation, 'md']) }}" class="btn btn-secondary">تنزيل Markdown</a>
-        <a href="{{ route('studio.generations.export', [$generation, 'html']) }}" class="btn btn-secondary">تنزيل HTML</a>
-        <a href="{{ route('studio.generations.export', [$generation, 'pdf']) }}" class="btn btn-secondary">تنزيل PDF</a>
+        @if ($canExport)
+            <button type="button" class="btn btn-primary" data-copy-studio>نسخ المخرج</button>
+            <a href="{{ route('studio.generations.export', [$generation, 'md']) }}" class="btn btn-secondary">تنزيل Markdown</a>
+            <a href="{{ route('studio.generations.export', [$generation, 'html']) }}" class="btn btn-secondary">تنزيل HTML</a>
+            <a href="{{ route('studio.generations.export', [$generation, 'pdf']) }}" class="btn btn-secondary">تنزيل PDF</a>
+        @else
+            <a href="{{ route('billing.index') }}" class="btn btn-primary">رقِّ اشتراكك للنسخ والتصدير</a>
+        @endif
     </div>
 </section>
 
@@ -135,9 +140,22 @@
 @endif
 
 <section class="studio-gen-layout mb-8">
-    <div class="studio-gen-main" id="studio-output" data-studio-output>
+    @unless ($canExport)
+        <div class="gate-banner" data-read-only-banner>
+            <span class="gate-banner-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg>
+            </span>
+            <div>
+                <strong>نسخة للقراءة فقط</strong>
+                <p>هذا المخرج متاح للقراءة داخل المنصة. اشترك لنسخه وتصديره وطباعته واستخدامه في التنفيذ.</p>
+            </div>
+            <a href="{{ route('billing.index') }}" class="btn btn-primary">عرض الباقات</a>
+        </div>
+    @endunless
+
+    <div class="studio-gen-main {{ $canExport ? '' : 'gate-locked' }}" id="studio-output" data-studio-output @unless($canExport) data-locked-output @endunless>
         @foreach ($sections as $section)
-            <article class="card studio-output-card" id="{{ $section['id'] }}">
+            <article class="card studio-output-card {{ $canExport ? '' : 'gate-watermark' }}" id="{{ $section['id'] }}">
                 @if (($section['title'] ?? '') !== '')
                     <div class="studio-output-card-head">
                         <h3 class="heading-sm studio-output-section-title">{{ $section['title'] }}</h3>

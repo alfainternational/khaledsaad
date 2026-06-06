@@ -1,6 +1,11 @@
 @extends('layouts.app', ['title' => 'وضع الوكالة', 'pageTitle' => 'وضع الوكالة', 'pageKicker' => 'Agency'])
 
 @section('content')
+@if (entitlement('white_label'))
+    <div class="app-inline-actions mb-6">
+        <a href="{{ route('agency.branding.edit') }}" class="btn btn-secondary btn-sm">إعدادات العلامة البيضاء</a>
+    </div>
+@endif
 <section class="app-grid app-two-col mb-8">
     <article class="card">
         <div class="app-section-head">

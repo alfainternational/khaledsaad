@@ -16,7 +16,7 @@
             <div class="brief-score-fill" style="width: {{ $score }}%"></div>
         </div>
         <p class="text-body mt-4">
-            ابنِ هذا الملف مرة واحدة، ثم استخدمه في التشخيص والخطة والاستوديو والمخرجات التنفيذية.
+            ابنِ هذا الملف مرة واحدة، ثم استخدمه في التحليل والخطة والاستوديو والمخرجات التنفيذية.
         </p>
         <div class="app-list mt-4">
             @foreach (($briefAssessment['next_actions'] ?? []) as $action)

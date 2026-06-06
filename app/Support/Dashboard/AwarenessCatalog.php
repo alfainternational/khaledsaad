@@ -17,13 +17,13 @@ class AwarenessCatalog
             ],
             'structured' => [
                 'label' => 'مرتّب',
-                'description' => 'يربط بين وضع مشروعك الآن والمخرج الذي تحتاجه في الخطة أو العرض.',
+                'description' => 'يربط بين وضع مشروعك الآن والنتيجة التي تحتاجها في الخطة أو العرض.',
                 'tone' => 'ترتيب الأفكار وربطها بخطوة عملية تالية.',
             ],
             'expert' => [
                 'label' => 'مفصّل',
                 'description' => 'أسئلة أكثر وتفاصيل أعمق؛ مناسب عندما لديك خلفية أو قرار يحتاج تحليلاً أدق.',
-                'tone' => 'تركيز على الخيارات والتحليل أكثر من تكرار المقدّمات.',
+                'tone' => 'تركيز على الخيارات والتحليل أكثر من إعادة الشرح من البداية.',
             ],
         ];
     }
@@ -50,6 +50,6 @@ class AwarenessCatalog
 
     public static function description(?string $awareness): string
     {
-        return static::all()[$awareness]['description'] ?? 'لم يتم تحديد مستوى الوعي بعد.';
+        return static::all()[$awareness]['description'] ?? 'لم تحدد مستوى التفصيل بعد.';
     }
 }

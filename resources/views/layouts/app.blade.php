@@ -48,20 +48,6 @@
                 </div>
             </a>
 
-            {{-- Journey Mini Progress in Sidebar --}}
-            @if(isset($journeyProgress) && $journeyProgress['total'] > 0)
-            <div class="sidebar-journey-progress">
-                <div class="sidebar-journey-label">
-                    <span>تقدم الرحلة</span>
-                    <strong>{{ $journeyProgress['pct'] }}%</strong>
-                </div>
-                <div class="sidebar-journey-track">
-                    <div class="sidebar-journey-fill" style="width: {{ $journeyProgress['pct'] }}%"></div>
-                </div>
-                <span class="sidebar-journey-sub">{{ $journeyProgress['completed'] }} من {{ $journeyProgress['total'] }} أداة</span>
-            </div>
-            @endif
-
             <nav class="app-nav" aria-label="التنقل الداخلي">
                 <a href="{{ route('dashboard') }}" class="app-nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
@@ -118,22 +104,6 @@
             </nav>
 
             <div class="app-sidebar-stack">
-                @if ($workspaceLinks->isNotEmpty())
-                    <form method="POST" action="{{ route('dashboard.workspaces.switch', $currentWorkspace ?? $workspaceLinks->first()) }}" class="app-workspace-switcher" id="workspace-switcher-form">
-                        @csrf
-                        <label class="app-field">
-                            <span>المساحة</span>
-                            <select class="app-input" id="workspace-switcher">
-                                @foreach ($workspaceLinks as $workspaceOption)
-                                    <option value="{{ route('dashboard.workspaces.switch', $workspaceOption) }}" @selected(($currentWorkspace?->id ?? null) === $workspaceOption->id)>
-                                        {{ $workspaceOption->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </label>
-                    </form>
-                @endif
-
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="btn btn-ghost btn-sm app-logout-button">تسجيل الخروج</button>
@@ -159,13 +129,19 @@
                             </button>
                         </div>
                     </div>
-                    <p class="app-header-kicker">{{ $pageKicker ?? 'Workspace' }}</p>
+                    @if(($pageKicker ?? '') !== '')
+                        <p class="app-header-kicker">{{ $pageKicker }}</p>
+                    @endif
                     <h1 class="app-header-title">{{ $pageTitle ?? 'لوحة العمل' }}</h1>
                 </div>
                 <div class="app-header-meta shell-header-meta">
+                    @php
+                        $wsTypeAr = ['agency' => 'وكالة', 'team' => 'فريق', 'personal' => 'شخصي'][$currentWorkspace?->type] ?? 'مساحة عمل';
+                        $roleAr = ['owner' => 'مالك', 'admin' => 'مدير', 'editor' => 'محرر', 'contributor' => 'مساهم', 'viewer' => 'مشاهد', 'client' => 'عميل'][$currentWorkspaceRole] ?? 'عضو';
+                    @endphp
                     <div class="shell-header-chip">
                         <span>{{ auth()->user()->name }}</span>
-                        <small>{{ $currentWorkspace?->type ?? 'workspace' }} · {{ $currentWorkspaceRole ?? 'viewer' }}</small>
+                        <small>{{ $wsTypeAr }} · {{ $roleAr }}</small>
                     </div>
                 </div>
             </header>
@@ -216,6 +192,19 @@
         </header>
 
         <div class="ai-chat-messages" id="ai-chat-messages">
+            @if (! empty($ambientAdvisor))
+                <div class="ai-chat-msg ai-chat-msg-assistant ai-chat-msg-nextstep">
+                    <p><strong>خطوتك التالية:</strong> {{ $ambientAdvisor['headline'] }}</p>
+                    @if (! empty($ambientAdvisor['body']))
+                        <p>{{ $ambientAdvisor['body'] }}</p>
+                    @endif
+                    @foreach ($ambientAdvisor['actions'] as $advisorAction)
+                        @if (! empty($advisorAction['route']) && ! empty($advisorAction['label']))
+                            <a href="{{ $advisorAction['route'] }}" class="btn btn-secondary btn-sm">{{ $advisorAction['label'] }}</a>
+                        @endif
+                    @endforeach
+                </div>
+            @endif
             <div class="ai-chat-msg ai-chat-msg-assistant">
                 <p>أنا المستشار الذكي. أستطيع مساعدتك في:</p>
                 <ul class="ai-chat-capabilities">

@@ -184,7 +184,7 @@
                 <p class="blog-author-card-name">{{ $authorName }}</p>
                 <p class="blog-author-card-title">{{ $authorTitle }}</p>
                 <p class="blog-author-card-bio">
-                    مدير تسويق بخبرة تتجاوز {{ (int)(now()->year - 2011) }} عاماً في التسويق الرقمي والاستراتيجي. مؤسس منصة خالد سعد للنمو التي تقود المشاريع من الفكرة إلى التنفيذ بمنهجية مهندسة.
+                    مدير تسويق بخبرة تتجاوز {{ (int)(now()->year - 2011) }} عاماً في التسويق الرقمي. مؤسس منصة خالد سعد التي تقود المشاريع من الفكرة إلى التنفيذ خطوة بخطوة.
                 </p>
                 <div class="blog-author-card-links">
                     <a href="https://www.linkedin.com/in/khaledaasaad/" target="_blank" rel="noopener noreferrer" class="blog-author-social">لينكد إن</a>

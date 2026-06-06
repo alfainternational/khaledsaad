@@ -12,32 +12,32 @@ class StageCatalog
         return [
             1 => [
                 'key' => 'discover',
-                'label' => 'اكتشف مشروعك',
-                'description' => 'تشخيص الفكرة والهدف والمشكلة الأساسية.',
+                'label' => 'اعرف وضعك',
+                'description' => 'نحدّد فكرتك وهدفك والمشكلة التي تحلّها لعميلك.',
                 'core_tools' => ['diagnosis', 'idea-clarity', 'goal-definition', 'problem-definition', 'swot-analysis'],
             ],
             2 => [
                 'key' => 'foundation',
-                'label' => 'ابنِ أساسك التسويقي',
-                'description' => 'الجمهور والتموضع والرسالة والسوق.',
+                'label' => 'جهّز رسالتك',
+                'description' => 'من عميلك؟ ماذا تقول له؟ وبماذا تتميّز عن غيرك؟',
                 'core_tools' => ['tagline-builder', 'ideal-customer', 'positioning', 'market-analysis', 'competitor-analysis'],
             ],
             3 => [
                 'key' => 'offer',
-                'label' => 'ابنِ عرضك',
-                'description' => 'العرض والتسعير وسلّم القيمة والوعد.',
+                'label' => 'جهّز عرضك',
+                'description' => 'ماذا تقدّم؟ بكم؟ ولماذا يستحق أن يدفع له عميلك؟',
                 'core_tools' => ['offer-builder', 'pricing-strategy', 'value-ladder', 'package-builder', 'promise-builder'],
             ],
             4 => [
                 'key' => 'conversion',
-                'label' => 'اجذب وحوّل',
-                'description' => 'القمع، المحتوى، الحملات، والمتابعة.',
+                'label' => 'اجلب عملاء',
+                'description' => 'كيف توصل لعملائك وتحوّلهم من مهتمّين إلى مشترين؟',
                 'core_tools' => ['funnel-builder', 'customer-journey', 'marketing-plan', 'content-plan', 'campaign-builder', 'follow-up-sequence'],
             ],
             5 => [
                 'key' => 'scale',
-                'label' => 'قِس ووسّع',
-                'description' => 'KPIs، الخطة التنفيذية، والتوصيات الذكية.',
+                'label' => 'قِس وكبّر',
+                'description' => 'اعرف ما الذي ينجح، وخطّط لتنمو أكثر.',
                 'core_tools' => ['kpi-tracker', 'execution-plan', 'performance-review', 'smart-recommendations', 'growth-priorities'],
             ],
         ];

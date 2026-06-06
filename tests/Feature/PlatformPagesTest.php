@@ -13,7 +13,7 @@ class PlatformPagesTest extends TestCase
         $pages = [
             '/' => 'منصة التسويق الاستراتيجي',
             '/paths' => 'المسارات',
-            '/tools' => 'الأدوات',
+            '/tools' => 'أدوات التحليل',
             '/studio' => 'الاستوديو الذكي',
             '/templates' => 'القوالب',
             '/reports' => 'التقارير',

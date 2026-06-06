@@ -24,6 +24,11 @@ class Workspace extends Model
         'name',
         'type',
         'status',
+        'branding_json',
+    ];
+
+    protected $casts = [
+        'branding_json' => 'array',
     ];
 
     public function account(): BelongsTo
