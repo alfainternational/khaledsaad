@@ -23,7 +23,19 @@
             <div class="admin-list-item"><div><strong>مساحة العمل</strong></div><span>{{ $client->workspace?->name ?? '—' }}</span></div>
             <div class="admin-list-item"><div><strong>الحساب</strong></div><span>{{ $client->workspace?->account?->name ?? '—' }}</span></div>
             <div class="admin-list-item"><div><strong>المالك</strong></div><span>{{ $client->workspace?->account?->owner?->name ?? '—' }}</span></div>
-            <div class="admin-list-item"><div><strong>معلومات التواصل</strong></div><span>{{ $client->contact_info ?? '—' }}</span></div>
+            <div class="admin-list-item">
+                <div><strong>معلومات التواصل</strong></div>
+                <span>
+                    @php($contact = collect((array) ($client->contact_info ?? []))->filter(fn ($value) => filled($value)))
+                    @if ($contact->isEmpty())
+                        —
+                    @else
+                        @foreach ($contact as $contactKey => $contactValue)
+                            <span class="d-block">{{ is_string($contactKey) ? $contactKey.': ' : '' }}{{ is_array($contactValue) ? json_encode($contactValue, JSON_UNESCAPED_UNICODE) : $contactValue }}</span>
+                        @endforeach
+                    @endif
+                </span>
+            </div>
             <div class="admin-list-item"><div><strong>الحالة</strong></div><span class="app-badge">{{ $client->status }}</span></div>
             <div class="admin-list-item"><div><strong>تاريخ الإنشاء</strong></div><span>{{ $client->created_at?->format('Y-m-d H:i') }}</span></div>
         </div>

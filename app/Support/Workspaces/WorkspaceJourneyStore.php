@@ -39,6 +39,15 @@ class WorkspaceJourneyStore
     }
 
     /**
+     * @param  iterable<int, Project>  $projects
+     * @return array<int, array<string, mixed>>
+     */
+    public function getSnapshotMap(Workspace $workspace, iterable $projects): array
+    {
+        return $this->getValueMap($workspace, $projects, self::SNAPSHOT_KEY);
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      */
     public function putSnapshot(Workspace $workspace, array $payload, ?Project $project = null): WorkspaceData
@@ -52,6 +61,15 @@ class WorkspaceJourneyStore
     public function getReadiness(Workspace $workspace, ?Project $project = null): array
     {
         return $this->getValue($workspace, $project, self::READINESS_KEY);
+    }
+
+    /**
+     * @param  iterable<int, Project>  $projects
+     * @return array<int, array<string, mixed>>
+     */
+    public function getReadinessMap(Workspace $workspace, iterable $projects): array
+    {
+        return $this->getValueMap($workspace, $projects, self::READINESS_KEY);
     }
 
     /**
@@ -72,6 +90,33 @@ class WorkspaceJourneyStore
             ->where('project_id', $project?->id)
             ->where('key', $key)
             ->first()?->value_json ?? [];
+    }
+
+    /**
+     * @param  iterable<int, Project>  $projects
+     * @return array<int, array<string, mixed>>
+     */
+    private function getValueMap(Workspace $workspace, iterable $projects, string $key): array
+    {
+        $projectIds = collect($projects)
+            ->map(fn (Project $project): int => $project->id)
+            ->filter()
+            ->values();
+
+        if ($projectIds->isEmpty()) {
+            return [];
+        }
+
+        $rows = WorkspaceData::query()
+            ->where('workspace_id', $workspace->id)
+            ->whereIn('project_id', $projectIds->all())
+            ->where('key', $key)
+            ->get()
+            ->keyBy('project_id');
+
+        return $projectIds
+            ->mapWithKeys(fn (int $projectId): array => [$projectId => $rows->get($projectId)?->value_json ?? []])
+            ->all();
     }
 
     /**

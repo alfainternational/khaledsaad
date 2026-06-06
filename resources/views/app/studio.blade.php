@@ -54,6 +54,34 @@
                         @endforeach
                     </select>
                 </label>
+                <div class="studio-project-health">
+                    <strong class="text-caption text-caption-strong">ما الذي يعرفه النظام عن مشاريعك الآن؟</strong>
+                    <div class="app-list mt-3">
+                        @foreach ($projects->take(3) as $project)
+                            @php($briefMeta = $projectBriefs[$project->id]['assessment'] ?? ['completeness_score' => 0, 'next_actions' => []])
+                            @php($projectAction = $projectActions[$project->id] ?? null)
+                            @php($intelligence = $projectIntelligence[$project->id] ?? ['summary' => [], 'report' => []])
+                            <div class="app-list-item">
+                                <div>
+                                    <strong>{{ $project->name }}</strong>
+                                    <small>
+                                        {{ $project->client?->name ?? 'بدون عميل' }}
+                                        @if(! empty($projectAction['headline']))
+                                            · {{ $projectAction['headline'] }}
+                                        @endif
+                                    </small>
+                                    @if(! empty($intelligence['report']['honest_diagnosis'][0]))
+                                        <small>{{ $intelligence['report']['honest_diagnosis'][0] }}</small>
+                                    @endif
+                                </div>
+                                <div class="app-inline-actions">
+                                    <span class="app-badge">{{ $briefMeta['completeness_score'] ?? 0 }}%</span>
+                                    <span class="app-badge">{{ $intelligence['summary']['executive_score'] ?? 0 }}% intelligence</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
                 <label class="app-field">
                     <span>ملاحظات إضافية (اختياري)</span>
                     <textarea class="app-input" name="brief" rows="3" placeholder="مثلاً: ركّز على فئة الشباب، استخدم نبرة غير رسمية..."></textarea>
@@ -115,6 +143,8 @@
         <div class="app-list">
             @forelse ($projects as $project)
                 @php($context = $projectContexts[$project->id] ?? ['journey' => [], 'readiness' => []])
+                @php($briefMeta = $projectBriefs[$project->id]['assessment'] ?? ['completeness_score' => 0, 'next_actions' => []])
+                @php($projectAction = $projectActions[$project->id] ?? null)
                 <div class="app-list-item">
                     <div>
                         <strong>{{ $project->name }}</strong>
@@ -122,10 +152,14 @@
                             {{ $project->client?->name ?? 'بدون عميل' }}
                             · {{ \App\Support\Dashboard\StageCatalog::label((int) ($context['journey']['current_stage'] ?? $project->stage)) }}
                         </small>
+                        @if(! empty($projectAction['reason']))
+                            <small>{{ $projectAction['reason'] }}</small>
+                        @endif
                     </div>
-                    <span class="app-badge">
-                        {{ collect($context['readiness'])->avg('score') ? (int) round((float) collect($context['readiness'])->avg('score')) : 0 }}%
-                    </span>
+                    <div class="app-inline-actions">
+                        <span class="app-badge">{{ collect($context['readiness'])->avg('score') ? (int) round((float) collect($context['readiness'])->avg('score')) : 0 }}%</span>
+                        <span class="app-badge">{{ $briefMeta['completeness_score'] ?? 0 }}% brief</span>
+                    </div>
                 </div>
             @empty
                 <p class="app-empty">لا توجد مشاريع في المساحة الحالية.</p>
@@ -135,6 +169,18 @@
 
     <x-app.card title="ما الذي يستخدمه الاستوديو؟">
         <div class="app-list">
+            <div class="app-list-item">
+                <div>
+                    <strong>ملف المشروع التسويقي</strong>
+                    <small>وصف النشاط، الجمهور، العرض، التمركز، والقنوات والأولوية الحالية.</small>
+                </div>
+            </div>
+            <div class="app-list-item">
+                <div>
+                    <strong>Marketing Intelligence</strong>
+                    <small>آخر executive scores، موثوقية التحليل، التشخيص الصادق، والأولويات السريعة قبل التوليد.</small>
+                </div>
+            </div>
             <div class="app-list-item">
                 <div>
                     <strong>ملف العمل</strong>

@@ -12,6 +12,8 @@ use App\Http\Requests\Web\ExecuteToolRequest;
 use App\Support\Tooling\ToolBlueprintCatalog;
 use App\Support\Tooling\ToolFormExperienceBuilder;
 use App\Support\Tooling\ToolModePolicy;
+use App\Support\Tooling\ToolStrategicAdvisor;
+use App\Support\Projects\ProjectMarketingBriefStore;
 use App\Support\Workspaces\WorkspaceProfileStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -97,6 +99,8 @@ class ToolRunApiController extends Controller
         ToolBlueprintCatalog $toolBlueprintCatalog,
         ToolFormExperienceBuilder $toolFormExperienceBuilder,
         WorkspaceProfileStore $profileStore,
+        ProjectMarketingBriefStore $briefStore,
+        ToolStrategicAdvisor $toolStrategicAdvisor,
     ): JsonResponse
     {
         $workspace = $this->currentWorkspace($request);
@@ -116,6 +120,18 @@ class ToolRunApiController extends Controller
 
         $profile = $profileStore->get($workspace);
         $blueprint = $toolBlueprintCatalog->for($tool);
+        $upstreamContext = $this->buildUpstreamContext($workspace->id, $project->id, $tool);
+        $projectBrief = $briefStore->get($workspace, $project);
+        $projectBriefAssessment = $briefStore->assess($projectBrief);
+        $toolBriefing = $toolStrategicAdvisor->advise(
+            $tool,
+            $profile,
+            $project,
+            $projectBrief,
+            $projectBriefAssessment,
+            $upstreamContext,
+        );
+        $toolBriefing = $this->decorateToolBriefing($toolBriefing, $project);
 
         $latestRun = ToolRun::query()
             ->where('workspace_id', $workspace->id)
@@ -130,6 +146,8 @@ class ToolRunApiController extends Controller
             $profile,
             $project->loadMissing('client'),
             $latestRun,
+            $upstreamContext,
+            $toolBriefing,
         );
 
         if (! $latestRun) {
@@ -137,12 +155,18 @@ class ToolRunApiController extends Controller
                 'success' => true,
                 'data' => null,
                 'experience' => $formExperience,
+                'upstream_context' => $upstreamContext,
+                'project_brief_assessment' => $projectBriefAssessment,
+                'tool_briefing' => $toolBriefing,
             ]);
         }
 
         return response()->json([
             'success' => true,
             'experience' => $formExperience,
+            'upstream_context' => $upstreamContext,
+            'project_brief_assessment' => $projectBriefAssessment,
+            'tool_briefing' => $toolBriefing,
             'data' => [
                 'run_id' => $latestRun->id,
                 'run_public_id' => $latestRun->public_id,
@@ -156,5 +180,74 @@ class ToolRunApiController extends Controller
                 'created_at' => $latestRun->created_at?->diffForHumans(),
             ],
         ]);
+    }
+
+    /**
+     * @return array<int, array{tool_code: string, tool_name: string, headline: string, text: string, completeness: int}>
+     */
+    private function buildUpstreamContext(int $workspaceId, int $projectId, Tool $tool): array
+    {
+        $dependsOn = $tool->depends_on_json ?? [];
+
+        if (empty($dependsOn)) {
+            return [];
+        }
+
+        return \App\Domain\WorkspaceData\Models\WorkspaceData::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('project_id', $projectId)
+            ->whereIn('key', collect($dependsOn)->map(fn (string $code) => 'tool.summary.'.$code)->all())
+            ->get()
+            ->map(fn (\App\Domain\WorkspaceData\Models\WorkspaceData $row) => [
+                'tool_code' => str_replace('tool.summary.', '', $row->key),
+                'tool_name' => $row->value_json['stage_label'] ?? str_replace('tool.summary.', '', $row->key),
+                'headline' => $row->value_json['headline'] ?? '',
+                'text' => $row->value_json['text'] ?? '',
+                'completeness' => (int) ($row->value_json['completeness_score'] ?? 0),
+            ])
+            ->filter(fn (array $item) => $item['headline'] !== '')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $toolBriefing
+     * @return array<string, mixed>
+     */
+    private function decorateToolBriefing(array $toolBriefing, Project $project): array
+    {
+        if ($toolBriefing === []) {
+            return $toolBriefing;
+        }
+
+        $nextAction = $toolBriefing['next_action'] ?? [];
+        $actionType = $nextAction['action_type'] ?? null;
+        $ctaUrl = null;
+        $ctaLabel = null;
+
+        if ($actionType === 'brief') {
+            $ctaUrl = route('projects.brief.edit', $project);
+            $ctaLabel = 'تحرير brief المشروع';
+        }
+
+        if ($actionType === 'tool' && ! empty($nextAction['recommended_tool_code'])) {
+            $recommendedTool = Tool::query()
+                ->where('code', $nextAction['recommended_tool_code'])
+                ->where('status', '!=', 'hidden')
+                ->first();
+
+            if ($recommendedTool) {
+                $ctaUrl = route('tools.show', $recommendedTool);
+                $ctaLabel = 'افتح '.($nextAction['recommended_tool_label'] ?? $recommendedTool->name ?? $recommendedTool->code);
+            }
+        }
+
+        $toolBriefing['next_action'] = [
+            ...$nextAction,
+            'cta_url' => $ctaUrl,
+            'cta_label' => $ctaLabel,
+        ];
+
+        return $toolBriefing;
     }
 }

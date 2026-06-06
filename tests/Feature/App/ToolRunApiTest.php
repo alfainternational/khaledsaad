@@ -6,12 +6,15 @@ use App\Domain\Account\Models\Account;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Client\Models\Client;
+use App\Domain\Intelligence\Models\AuditRun;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Domain\Workspace\Models\WorkspaceMember;
+use App\Domain\WorkspaceData\Models\WorkspaceData;
 use App\Models\User;
+use App\Support\Projects\ProjectMarketingBriefStore;
 use App\Support\Workspaces\OnboardingState;
 use Database\Seeders\PlatformBootstrapSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -83,13 +86,38 @@ class ToolRunApiTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data', null)
             ->assertJsonPath('experience.summary.project_label', 'API Project')
-            ->assertJsonPath('experience.modes.guided.fields.offer_audience.priority', 'critical');
+            ->assertJsonPath('experience.modes.guided.fields.offer_audience.priority', 'critical')
+            ->assertJsonPath('experience.modes.guided.fields.offer_audience.suggested_value', 'أصحاب مشاريع قائمة يحتاجون وضوحاً أعلى')
+            ->assertJsonPath('project_brief_assessment.completeness_score', 57)
+            ->assertJsonPath('tool_briefing.readiness_score', 100)
+            ->assertJsonPath('upstream_context.0.headline', 'تشخيص أولي للمشروع');
 
         $this->assertSame(
             'API Client',
             $response->json('experience.summary.client_label')
         );
+        $this->assertSame('current_tool', $response->json('tool_briefing.next_action.action_type'));
         $this->assertNotEmpty($response->json('experience.summary.bullets'));
+    }
+
+    #[Test]
+    public function tool_page_renders_dynamic_project_context_targets(): void
+    {
+        [$owner, $workspace, $project, $tool] = $this->makeWorkspaceToolScenario();
+
+        $response = $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('tools.show', $tool));
+
+        $response
+            ->assertOk()
+            ->assertSee('Marketing Intelligence Snapshot')
+            ->assertSee('تحليل مبني على مصادر فعلية')
+            ->assertSee('حسّن الـ CTA الرئيسي قبل توسيع العرض')
+            ->assertSee('data-upstream-context-root', false)
+            ->assertSee('data-project-brief-root', false)
+            ->assertSee('data-tool-briefing-root', false)
+            ->assertSee('كيف تستفيد هذه الأداة من ملف المشروع؟');
     }
 
     /**
@@ -146,7 +174,7 @@ class ToolRunApiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $tool = Tool::query()->firstOrCreate(
+        $tool = Tool::query()->updateOrCreate(
             ['code' => 'offer-builder'],
             [
                 'name' => 'Offer Builder',
@@ -157,8 +185,78 @@ class ToolRunApiTest extends TestCase
                 'has_guided_mode' => true,
                 'has_structured_mode' => true,
                 'has_expert_mode' => true,
+                'depends_on_json' => ['diagnosis'],
             ],
         );
+
+        WorkspaceData::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'key' => 'tool.summary.diagnosis',
+            'value_json' => [
+                'headline' => 'تشخيص أولي للمشروع',
+                'text' => 'الخلل الحالي أقرب إلى غموض العرض والرسالة.',
+                'completeness_score' => 82,
+                'stage_label' => 'التشخيص',
+            ],
+        ]);
+
+        app(ProjectMarketingBriefStore::class)->put($workspace, $project, [
+            'business' => [
+                'summary' => 'نقدم خدمات تسويق تشغيلي للمشاريع القائمة.',
+                'offer' => 'عرض تشخيص وخطة ورسائل',
+                'market' => 'السعودية',
+            ],
+            'audience' => [
+                'ideal_customer' => 'أصحاب مشاريع قائمة يحتاجون وضوحاً أعلى',
+                'pain_points' => 'تسويق متعب بلا نظام واضح',
+            ],
+            'goals' => [
+                'primary_goal' => 'رفع جودة العملاء المحتملين',
+                'success_metric' => 'عدد الاستفسارات المؤهلة',
+            ],
+            'positioning' => [
+                'edge' => 'تنفيذ مرتبط بالقرار والبيع لا بالنشر فقط',
+                'promise' => 'وضوح أسرع ومخرجات قابلة للتنفيذ',
+            ],
+            'execution' => [
+                'next_asset' => 'خطة تسويق ثم محتوى منظم',
+            ],
+        ]);
+
+        AuditRun::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'status' => 'completed',
+            'trigger_source' => 'manual',
+            'started_at' => now()->subMinutes(5),
+            'completed_at' => now(),
+            'summary_json' => [
+                'headline' => 'تقرير intelligence موثّق وجاهز',
+                'executive_score' => 72,
+            ],
+            'report_json' => [
+                'executive_scores' => [
+                    'executive' => 72,
+                    'website' => 74,
+                    'social' => 61,
+                ],
+                'analysis_integrity' => [
+                    'status' => 'verified',
+                    'label' => 'تحليل مبني على مصادر فعلية',
+                    'summary' => 'المشروع يملك تغطية فعلية كافية ليستخدمها Action Workspace قبل التوليد.',
+                ],
+                'honest_diagnosis' => [
+                    'الرسالة الحالية تحتاج وضوحاً أكبر في أول شاشة قرار.',
+                ],
+                'priority_actions' => [
+                    'quick_wins_7_days' => [
+                        'حسّن الـ CTA الرئيسي قبل توسيع العرض.',
+                    ],
+                ],
+            ],
+            'payload_json' => [],
+        ]);
 
         return [$owner, $workspace, $project, $tool];
     }

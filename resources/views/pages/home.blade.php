@@ -45,7 +45,7 @@
         <div class="hero-layout">
             {{-- Text Content --}}
             <div class="hero-text reveal-left">
-                <x-marketing.section-badge text="منهجية تشغيل واضحة" />
+                <x-marketing.section-badge text="Marketing Intelligence Platform" />
 
                 <h1 class="hero-headline">
                     @php $headline = explode('،', $hero['headline']); @endphp
@@ -75,11 +75,11 @@
                             </div>
                         @endfor
                     </div>
-                    <span class="hero-trust-text">+2,400 رائد أعمال يثقون بالمنهجية</span>
+                    <span class="hero-trust-text">موقعك + سوشيالك + منافسوك في تقرير واحد</span>
                     <div class="hero-divider"></div>
                     <div class="hero-trust-badge">
                         <svg width="14" height="14" fill="none" stroke="var(--teal)" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <span>خطوات متتابعة</span>
+                        <span>تشخيص قابل للتنفيذ</span>
                     </div>
                 </div>
             </div>
@@ -93,15 +93,15 @@
 
                 <div class="hero-chip hero-chip-1 hero-chip-floating-primary">
                     <div>
-                        <p class="hero-chip-label">مخرجات ذكية</p>
-                        <p class="hero-chip-value">تجهيز النتيجة التالية تلقائياً</p>
+                        <p class="hero-chip-label">Executive Score</p>
+                        <p class="hero-chip-value">تشخيص واضح وخطة أولوية فورية</p>
                     </div>
                 </div>
 
                 <div class="hero-chip hero-chip-2 hero-chip-floating-secondary">
                     <div>
-                        <p class="hero-chip-label">رضا المستخدمين</p>
-                        <p class="hero-chip-value">4.9 من 5</p>
+                        <p class="hero-chip-label">Competitor Snapshot</p>
+                        <p class="hero-chip-value">من الأوضح؟ من الأنشط؟ أين فرصتك؟</p>
                     </div>
                 </div>
             </div>
@@ -109,23 +109,12 @@
     </div>
 </section>
 
-{{-- ═══ TRUST STRIP ═══ --}}
-<div class="trust-strip">
-    <div class="site-container">
-        <div class="trust-strip-inner">
-            @foreach(['المملكة العربية السعودية', 'الإمارات', 'مصر', 'الأردن', 'الكويت', 'قطر'] as $index => $country)
-                <span class="trust-strip-item reveal d-{{ $index+1 }}">{{ $country }}</span>
-            @endforeach
-        </div>
-    </div>
-</div>
-
 {{-- ═══ METRICS SECTION ═══ --}}
 <section class="section-lg">
     <div class="site-container">
         <div class="section-header reveal">
-            <p class="text-eyebrow mb-3 text-p">مؤشرات الأداء الاستراتيجي</p>
-            <h2 class="heading-lg mb-4">نتائج ملموسة تحققت عبر <span class="text-gradient">نمو مدروس</span></h2>
+            <p class="text-eyebrow mb-3 text-p">درجات readiness مترابطة</p>
+            <h2 class="heading-lg mb-4">قراءة موحدة عبر <span class="text-gradient">الموقع والسوشيال والمنافسة</span></h2>
         </div>
 
         <div class="three-col">
@@ -146,13 +135,13 @@
     <div class="site-container">
         <div class="two-col-wide">
             <div class="reveal-left">
-                <p class="text-eyebrow mb-3 text-p">الهندسة الاستراتيجية</p>
-                <h2 class="heading-lg mb-5">الربط المنطقي بين <span class="text-gradient">الرؤية والنمو</span></h2>
+                <p class="text-eyebrow mb-3 text-p">التشخيص قبل التنفيذ</p>
+                <h2 class="heading-lg mb-5">الربط المنطقي بين <span class="text-gradient">الفجوة والفرصة</span></h2>
                 <p class="text-body-lg mb-6">
-                    نقدم لك نظاماً عملياً يربط بين أهداف مشروعك وخطوات التنفيذ والنمو.
+                    النظام لا يكتفي بالقول إن موقعك جيد أو ضعيف، بل يحدد أين تتعطل الثقة والرسائل والظهور والتحويل وما الذي يجب إصلاحه أولاً.
                 </p>
                 <a href="{{ route('paths.index') }}" class="btn btn-primary btn-lg">
-                    استكشف المنهجية
+                    استكشف طبقات المنصة
                 </a>
             </div>
 
@@ -185,16 +174,16 @@
                     <div class="studio-message">
                         <div class="studio-msg-avatar studio-msg-avatar-user">أنت</div>
                         <div>
-                            <p class="studio-msg-role">رائد الأعمال</p>
-                            <p class="studio-msg-text">صياغة العرض التسويقي لخدمات التدريب الاستشاري.</p>
+                            <p class="studio-msg-role">صاحب النشاط</p>
+                            <p class="studio-msg-text">حلّل موقعي وحساباتي ومنافسيّ ثم أعطني أولويات التنفيذ.</p>
                         </div>
                     </div>
                     <div class="studio-ai-box">
                         <div class="studio-ai-header">
                             <div class="studio-msg-avatar studio-msg-avatar-ai">ذكاء</div>
-                            <p class="section-badge-text section-badge-text-accent">الاستوديو الذكي</p>
+                            <p class="section-badge-text section-badge-text-accent">Action Workspace</p>
                         </div>
-                        <p class="studio-msg-text">بناءً على بيانات مشروعك، هذه مسودة مقترحة يمكنك تعديلها مباشرة.</p>
+                        <p class="studio-msg-text">بناءً على نتائج التدقيق والـ scorecards، هذه أولوياتك التنفيذية التالية.</p>
                         <div class="studio-progress">
                             @foreach($studioProgressItems as $progressItem)
                                 <div class="studio-progress-item">
@@ -214,12 +203,12 @@
 
             <div class="reveal-right d-2">
                 <p class="text-eyebrow mb-3 text-teal">التحليل المتقدم</p>
-                <h2 class="heading-md mb-4">النظام الآلي <span class="text-gradient-teal">لاستنباط المخرجات</span></h2>
+                <h2 class="heading-md mb-4">من التشخيص إلى <span class="text-gradient-teal">خطة التنفيذ</span></h2>
                 <p class="text-body mb-6">
-                    نقوم بمعالجة مخرجات المرحلة السابقة لاستنتاج الخطوة التالية بدقة استثنائية، مما يضمن تدفقاً منطقياً لا يتطلب إعادة إدخال البيانات.
+                    نربط نتائج Website Audit وSocial Audit وCompetitor Intelligence مع الأدوات الحالية، بحيث لا يبدأ التنفيذ من الصفر ولا ينفصل عن الواقع المكتشف.
                 </p>
                 <div class="two-col-cards">
-                    @foreach(['توفير الوقت 80%', 'دقة التحليل', 'تسلسل منطقي', 'توصيات فورية'] as $index => $feat)
+                    @foreach(['Honest Diagnosis', 'Priority Actions', 'Official Contacts', 'Monitoring Trend'] as $index => $feat)
                         <div class="card card-sm reveal d-{{ $index+1 }}">
                             <div class="flex items-center gap-3">
                                 <svg width="16" height="16" fill="none" stroke="var(--teal)" viewBox="0 0 24 24" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
@@ -237,9 +226,9 @@
 <section class="section-lg bg-3">
     <div class="site-container">
         <div class="section-header reveal">
-            <p class="text-eyebrow mb-3 text-p">خرائط الطريق</p>
-            <h2 class="heading-lg mb-4">حدد مسارك <span class="text-gradient">نحو التوسع</span></h2>
-            <p class="text-body">اختر المنهجية التي تتوافق مع وضع مشروعك الحالي لبدء الهندسة الاستراتيجية.</p>
+            <p class="text-eyebrow mb-3 text-p">من يستفيد من المنصة؟</p>
+            <h2 class="heading-lg mb-4">اختر طبقة الاستخدام <span class="text-gradient">الأنسب لوضعك</span></h2>
+            <p class="text-body">سواء كنت صاحب مشروع أو فريقاً داخلياً أو وكالة، تبدأ من نفس طبقة Intelligence ثم تتخصص التوصيات بحسب القطاع والهدف.</p>
         </div>
 
         <div class="two-col-cards">
@@ -267,15 +256,15 @@
                 <div class="section-badge internal-cta-badge mb-5">
                     <span class="section-badge-text internal-cta-badge-text">ابدأ الآن</span>
                 </div>
-                <h2 class="cta-headline">هل أنت مستعد لبناء <span class="text-gradient-light">أصولك الاستراتيجية؟</span></h2>
+                <h2 class="cta-headline">هل أنت مستعد لقراءة <span class="text-gradient-light">وضعك التسويقي بصدق؟</span></h2>
                 <p class="cta-body">
-                    ابدأ بخطوات واضحة تساعدك على ترتيب التسويق وبناء نتائج قابلة للتنفيذ.
+                    ابدأ بتحليل مشروعك، ثم انتقل مباشرة من التقرير إلى التنفيذ داخل نفس المساحة.
                 </p>
                 <div class="cta-actions">
-                    <a href="{{ route('paths.index') }}" class="btn btn-primary btn-xl">ابدأ رحلتك مجاناً</a>
-                    <a href="{{ route('tools.index') }}" class="btn btn-ghost btn-xl btn-inverse">شاهد كيف يعمل</a>
+                    <a href="{{ route('paths.index') }}" class="btn btn-primary btn-xl">ابدأ التحليل مجاناً</a>
+                    <a href="{{ route('tools.index') }}" class="btn btn-ghost btn-xl btn-inverse">شاهد طبقات المنصة</a>
                 </div>
-                <p class="cta-note">لا يلزم بطاقة ائتمانية · مجاني للأبد في الخطة الأساسية</p>
+                <p class="cta-note">تقرير موحد · مقارنة منافسين · خطة أولوية قابلة للتنفيذ</p>
             </div>
         </div>
     </div>

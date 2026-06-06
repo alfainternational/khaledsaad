@@ -23,7 +23,7 @@ class BootstrapSeederTest extends TestCase
 
         $this->assertDatabaseCount('plans', 6);
         $this->assertDatabaseHas('users', [
-            'email' => 'admin@khaledsaad.local',
+            'email' => config('platform.admin.email'),
             'is_super_admin' => true,
         ]);
         $this->assertSame(6, Plan::query()->count());
@@ -38,7 +38,7 @@ class BootstrapSeederTest extends TestCase
         $this->seed(PlatformBootstrapSeeder::class);
         $this->seed(PlatformBootstrapSeeder::class);
 
-        $this->assertSame(1, User::query()->where('email', 'admin@khaledsaad.local')->count());
+        $this->assertSame(1, User::query()->where('email', config('platform.admin.email'))->count());
     }
 
     #[Test]

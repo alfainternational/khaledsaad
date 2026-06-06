@@ -61,11 +61,23 @@ class ClientManagementController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'contact_info' => ['nullable', 'string', 'max:500'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'company' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:1000'],
             'status' => ['required', 'string', 'in:active,archived'],
         ]);
 
-        $client->update($validated);
+        $client->update([
+            'name' => $validated['name'],
+            'status' => $validated['status'],
+            'contact_info' => array_filter([
+                'email' => $validated['email'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+                'company' => $validated['company'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ], fn ($value) => filled($value)),
+        ]);
 
         $this->auditLogger->record(
             action: 'admin.client.updated',

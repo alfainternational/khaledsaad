@@ -5,6 +5,7 @@
     $nextStep = $dashboard['nextStep'];
     $currentProject = $dashboard['currentProject'];
     $toolPipeline = $dashboard['toolPipeline'];
+    $briefAssessment = $dashboard['briefAssessment'] ?? ['completeness_score' => 0, 'next_actions' => []];
     $greeting = now()->hour < 12 ? 'صباح الخير' : (now()->hour < 17 ? 'مرحباً' : 'مساء الخير');
 
     // حساب تقدم الرحلة الكلية
@@ -228,6 +229,28 @@
 
     {{-- Right: Shortcuts + Progress --}}
     <div class="dash-side">
+        <article class="card dash-card">
+            <div class="dash-card-head">
+                <h3 class="heading-sm">ملف المشروع التسويقي</h3>
+                @if($currentProject)
+                    <a href="{{ route('projects.brief.edit', $currentProject) }}" class="btn btn-ghost btn-sm">تحديث الملف</a>
+                @endif
+            </div>
+            <div class="app-list">
+                <div class="app-list-item">
+                    <div>
+                        <strong>اكتمال الملف</strong>
+                        <small>كلما ارتفع، تحسنت الأدوات والتقارير والاستوديو.</small>
+                    </div>
+                    <span class="app-badge">{{ $briefAssessment['completeness_score'] ?? 0 }}%</span>
+                </div>
+                @foreach (array_slice($briefAssessment['next_actions'] ?? [], 0, 3) as $action)
+                    <div class="app-list-item">
+                        <div><small>{{ $action }}</small></div>
+                    </div>
+                @endforeach
+            </div>
+        </article>
 
         {{-- Quick Actions --}}
         <article class="card dash-card">

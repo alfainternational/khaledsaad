@@ -25,6 +25,7 @@ class ToolFormExperienceBuilder
         ?Project $project = null,
         ?ToolRun $latestRun = null,
         array $upstreamContext = [],
+        array $toolBriefing = [],
     ): array {
         $modes = [];
 
@@ -37,11 +38,12 @@ class ToolFormExperienceBuilder
                 $project,
                 $latestRun,
                 $upstreamContext,
+                $toolBriefing,
             );
         }
 
         return [
-            'summary' => $this->buildSummary($tool, $blueprint, $profile, $project, $latestRun, $upstreamContext, $modes),
+            'summary' => $this->buildSummary($tool, $blueprint, $profile, $project, $latestRun, $upstreamContext, $modes, $toolBriefing),
             'modes' => $modes,
         ];
     }
@@ -60,13 +62,18 @@ class ToolFormExperienceBuilder
         ?Project $project,
         ?ToolRun $latestRun,
         array $upstreamContext,
+        array $toolBriefing,
     ): array {
         $fields = [];
+        $briefFieldSuggestions = $toolBriefing['field_suggestions'] ?? [];
 
         foreach (($mode['fields'] ?? []) as $index => $field) {
             $category = $this->categoryForField($field);
             $priority = $this->priorityForField($category, $modeKey, $index);
             $quality = $this->qualityRulesForField($category, $field);
+            $briefSuggestion = is_string($briefFieldSuggestions[$field['key']] ?? null)
+                ? trim((string) $briefFieldSuggestions[$field['key']])
+                : null;
 
             $fields[$field['key']] = [
                 'category' => $category,
@@ -74,8 +81,12 @@ class ToolFormExperienceBuilder
                 'priority_label' => $this->priorityLabel($priority),
                 'context_hint' => $this->contextHintForField($category, $field, $tool, $profile, $project, $latestRun, $upstreamContext),
                 'smart_placeholder' => $this->smartPlaceholderForField($category, $field, $profile, $project, $latestRun, $upstreamContext),
-                'suggested_value' => $this->suggestedValueForField($category, $field, $profile, $project, $latestRun, $upstreamContext),
-                'suggestion_label' => $this->suggestionLabelForPriority($priority),
+                'suggested_value' => $briefSuggestion !== '' && $briefSuggestion !== null
+                    ? $briefSuggestion
+                    : $this->suggestedValueForField($category, $field, $profile, $project, $latestRun, $upstreamContext),
+                'suggestion_label' => $briefSuggestion !== '' && $briefSuggestion !== null
+                    ? 'اسحب من ملف المشروع'
+                    : $this->suggestionLabelForPriority($priority),
                 'empty_prompt' => $this->emptyPromptForField($category, $field),
                 'weak_prompt' => $this->weakPromptForField($category, $quality['min_length']),
                 'quality' => $quality,
@@ -115,6 +126,7 @@ class ToolFormExperienceBuilder
         ?ToolRun $latestRun,
         array $upstreamContext,
         array $modes,
+        array $toolBriefing,
     ): array {
         $currentMode = array_key_first($modes) ?: 'guided';
         $firstCriticalField = collect($modes)
@@ -138,6 +150,7 @@ class ToolFormExperienceBuilder
                 ! empty($profile['audience']) ? 'اكتب بلغة مرتبطة بجمهورك الفعلي: '.$profile['audience'].'.' : null,
                 $upstreamHeadline !== '' ? 'استفد من المخرج السابق: '.$upstreamHeadline.'.' : null,
                 $latestHeadline !== '' ? 'آخر مخرج محفوظ لهذه الأداة: '.$latestHeadline.'.' : null,
+                ! empty($toolBriefing['summary']['bullets'][0]) ? (string) $toolBriefing['summary']['bullets'][0] : null,
                 $firstCriticalField ? 'ابدأ بالحقل الأهم أولاً: '.$this->humanizeFieldKey($firstCriticalField['key']).'.' : null,
             ])),
             'focus_field' => $firstCriticalField['key'] ?? null,
@@ -145,6 +158,7 @@ class ToolFormExperienceBuilder
             'project_label' => $project?->name,
             'client_label' => $project?->client?->name,
             'mode_label' => $blueprint['modes'][$currentMode]['label'] ?? null,
+            'tool_briefing' => $toolBriefing,
         ];
     }
 

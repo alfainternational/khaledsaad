@@ -12,7 +12,7 @@ class ExampleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('منصة التسويق الاستراتيجي')
-            ->assertSee('رتّب تسويق مشروعك');
+            ->assertSee('Marketing Intelligence Platform')
+            ->assertSee('اقرأ وضعك التسويقي بصدق');
     }
 }

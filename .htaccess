@@ -1,9 +1,15 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # للبيئة المحلية (XAMPP) — غيّر /khaledsaad حسب مسار مشروعك
     RewriteCond %{REQUEST_URI} !^/khaledsaad/public/
-    RewriteRule ^$ public/ [L]
+    RewriteRule ^$ /khaledsaad/public/ [L]
+    RewriteCond %{REQUEST_URI} !^/khaledsaad/public/
+    RewriteRule ^(.*)$ /khaledsaad/public/$1 [L]
 
-    RewriteCond %{REQUEST_URI} !^/khaledsaad/public/
-    RewriteRule ^(.*)$ public/$1 [L]
+    # للاستضافة المشتركة (cPanel) — الملفات في public_html/
+    # RewriteCond %{REQUEST_URI} !^/public/
+    # RewriteRule ^$ public/ [L]
+    # RewriteCond %{REQUEST_URI} !^/public/
+    # RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

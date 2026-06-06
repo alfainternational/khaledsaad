@@ -58,7 +58,7 @@ class ClientProjectManagementTest extends TestCase
 
         app(OnboardingState::class)->markCompleted($workspace);
 
-        $this->actingAs($user)->withSession(['current_workspace_id' => $workspace->id])
+        $clientCreateResponse = $this->actingAs($user)->withSession(['current_workspace_id' => $workspace->id])
             ->post(route('clients.store'), [
                 'name' => 'Client Test',
                 'email' => 'client@test.com',
@@ -66,29 +66,61 @@ class ClientProjectManagementTest extends TestCase
                 'company' => 'Client Co',
                 'notes' => 'Important',
                 'status' => 'active',
-            ])->assertRedirect(route('clients.index'));
+            ]);
+        $clientCreateResponse->assertStatus(302);
+        $this->assertSame(route('clients.index'), $clientCreateResponse->headers->get('Location'));
 
         $client = Client::query()->where('workspace_id', $workspace->id)->firstOrFail();
 
-        $this->actingAs($user)->withSession(['current_workspace_id' => $workspace->id])
+        $projectCreateResponse = $this->actingAs($user)->withSession(['current_workspace_id' => $workspace->id])
             ->post(route('projects.store'), [
                 'name' => 'Project Test',
                 'client_id' => $client->id,
                 'stage' => 3,
                 'status' => 'active',
-            ])->assertRedirect(route('projects.index'));
+                'sector' => 'b2b_services',
+                'verified_social_profiles_json' => [
+                    [
+                        'network' => 'LinkedIn',
+                        'url' => 'https://www.linkedin.com/company/project-test',
+                        'handle' => 'project-test',
+                        'title' => 'Project Test LinkedIn',
+                        'description' => 'حساب موثق يدوياً داخل المشروع.',
+                        'primary_cta' => 'تواصل معنا',
+                        'links_back_to_site' => '1',
+                        'verification_notes' => 'verified manually',
+                    ],
+                ],
+            ]);
+        $projectCreateResponse->assertStatus(302);
+        $this->assertSame(route('projects.index'), $projectCreateResponse->headers->get('Location'));
 
         $project = Project::query()->where('workspace_id', $workspace->id)->firstOrFail();
 
-        $this->actingAs($user)->withSession(['current_workspace_id' => $workspace->id])
+        $projectUpdateResponse = $this->actingAs($user)->withSession(['current_workspace_id' => $workspace->id])
             ->put(route('projects.update', $project), [
                 'name' => 'Project Updated',
                 'client_id' => $client->id,
                 'stage' => 4,
                 'status' => 'paused',
-            ])->assertRedirect(route('projects.index'));
+                'sector' => 'b2b_services',
+                'verified_social_profiles_json' => [
+                    [
+                        'network' => 'X',
+                        'url' => 'https://x.com/projectupdated',
+                        'handle' => '@projectupdated',
+                        'title' => 'Project Updated X',
+                        'description' => 'حساب X موثق يدوياً.',
+                        'primary_cta' => 'احجز استشارة',
+                        'links_back_to_site' => '1',
+                        'verification_notes' => 'updated manually',
+                    ],
+                ],
+            ]);
+        $projectUpdateResponse->assertStatus(302);
+        $this->assertSame(route('projects.index'), $projectUpdateResponse->headers->get('Location'));
 
-        $this->actingAs($user)->withSession(['current_workspace_id' => $workspace->id])
+        $accountUpdateResponse = $this->actingAs($user)->withSession(['current_workspace_id' => $workspace->id])
             ->patch(route('account.update'), [
                 'name' => 'Updated User',
                 'locale' => 'en',
@@ -103,7 +135,9 @@ class ClientProjectManagementTest extends TestCase
                 'country' => 'الإمارات',
                 'content_locale' => 'ar_gulf',
                 'current_challenge' => 'Weak conversion path',
-            ])->assertRedirect(route('account.index'));
+            ]);
+        $accountUpdateResponse->assertStatus(302);
+        $this->assertSame(route('account.index'), $accountUpdateResponse->headers->get('Location'));
 
         $this->assertDatabaseHas('projects', [
             'id' => $project->id,
@@ -111,6 +145,8 @@ class ClientProjectManagementTest extends TestCase
             'stage' => 4,
             'status' => 'paused',
         ]);
+        $this->assertSame('X', $project->fresh()->verified_social_profiles_json[0]['network']);
+        $this->assertTrue((bool) $project->fresh()->verified_social_profiles_json[0]['links_back_to_site']);
 
         $this->assertDatabaseHas('accounts', [
             'id' => $account->id,

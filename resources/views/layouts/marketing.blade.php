@@ -102,11 +102,11 @@
                     </p>
                     <div class="footer-socials" aria-label="وسائل التواصل الاجتماعي">
                         @foreach([
-                            ['href' => '#', 'label' => 'تويتر X', 'path' => 'M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z'],
-                            ['href' => '#', 'label' => 'لينكد إن',  'path' => 'M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z M4 6a2 2 0 100-4 2 2 0 000 4z'],
+                            ['href' => 'https://x.com/KhaledAASaad', 'label' => 'تويتر X', 'path' => 'M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z'],
+                            ['href' => 'https://www.linkedin.com/in/khaledaasaad/', 'label' => 'لينكد إن',  'path' => 'M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z M4 6a2 2 0 100-4 2 2 0 000 4z'],
                             ['href' => '#', 'label' => 'يوتيوب',   'path' => 'M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.95A29 29 0 0023 12a29 29 0 00-.46-5.58z M9.75 15.02L15.5 12l-5.75-3.02v6.04z'],
                         ] as $s)
-                        <a href="{{ $s['href'] }}" class="footer-social-btn" aria-label="{{ $s['label'] }}" title="{{ $s['label'] }}">
+                        <a href="{{ $s['href'] }}" class="footer-social-btn" aria-label="{{ $s['label'] }}" title="{{ $s['label'] }}" @if(!str_starts_with($s['href'], '#')) target="_blank" rel="noopener noreferrer" @endif>
                             <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="{{ $s['path'] }}"/>
                             </svg>
@@ -116,30 +116,43 @@
                 </div>
 
                 {{-- Link columns --}}
-                @foreach([
-                    'المنصة'  => ['الرئيسية','المسارات','الأدوات','الاستوديو','التسعير'],
-                    'المعرفة' => ['المدونة','دراسات الحالة','المجتمع','القوالب'],
-                    'الشركة'  => ['عن خالد سعد','تواصل معنا','سياسة الخصوصية','الشراكات'],
-                ] as $heading => $items)
-                <nav aria-label="روابط {{ $heading }}">
-                    <h3 class="footer-col-title">{{ $heading }}</h3>
+                <nav aria-label="روابط المنصة">
+                    <h3 class="footer-col-title">المنصة</h3>
                     <ul class="footer-links" role="list">
-                        @foreach($items as $item)
-                        <li><a href="#" class="footer-link">{{ $item }}</a></li>
-                        @endforeach
+                        <li><a href="{{ route('home') }}" class="footer-link">الرئيسية</a></li>
+                        <li><a href="{{ route('paths.index') }}" class="footer-link">المسارات</a></li>
+                        <li><a href="{{ route('tools.index') }}" class="footer-link">الأدوات</a></li>
+                        <li><a href="{{ route('studio.index') }}" class="footer-link">الاستوديو</a></li>
+                        <li><a href="{{ route('pricing') }}" class="footer-link">التسعير</a></li>
                     </ul>
                 </nav>
-                @endforeach
+                <nav aria-label="روابط المعرفة">
+                    <h3 class="footer-col-title">المعرفة</h3>
+                    <ul class="footer-links" role="list">
+                        <li><a href="{{ route('blog.index') }}" class="footer-link">المدونة</a></li>
+                        <li><a href="{{ route('case-studies.index') }}" class="footer-link">دراسات الحالة</a></li>
+                        <li><a href="{{ route('community.index') }}" class="footer-link">المجتمع</a></li>
+                        <li><a href="{{ route('templates.index') }}" class="footer-link">القوالب</a></li>
+                    </ul>
+                </nav>
+                <nav aria-label="روابط الشركة">
+                    <h3 class="footer-col-title">الشركة</h3>
+                    <ul class="footer-links" role="list">
+                        <li><a href="{{ route('about') }}" class="footer-link">عن خالد سعد</a></li>
+                        <li><a href="{{ route('contact') }}" class="footer-link">تواصل معنا</a></li>
+                        <li><a href="{{ route('privacy') }}" class="footer-link">سياسة الخصوصية</a></li>
+                        <li><a href="{{ route('partnerships') }}" class="footer-link">الشراكات</a></li>
+                    </ul>
+                </nav>
             </div>
 
             {{-- Bottom bar --}}
             <div class="footer-bottom">
                 <p class="footer-copy">© {{ date('Y') }} خالد سعد للاستشارات التسويقية. جميع الحقوق محفوظة.</p>
                 <nav class="footer-legal" aria-label="روابط قانونية">
-                    <a href="#">سياسة الخصوصية</a>
-                    <a href="#">شروط الاستخدام</a>
+                    <a href="{{ route('privacy') }}">سياسة الخصوصية</a>
+                    <a href="{{ route('terms') }}">شروط الاستخدام</a>
                 </nav>
-                <p class="footer-copy">تطوير وتشغيل في المملكة العربية السعودية</p>
             </div>
         </div>
     </footer>

@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PlatformBootstrapSeeder::class,
             DemoPlatformSeeder::class,
+            CmsContentSeeder::class,
         ]);
     }
 }

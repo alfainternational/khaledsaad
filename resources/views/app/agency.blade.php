@@ -68,13 +68,13 @@
             <h3 class="heading-sm">صحة ملفات العملاء</h3>
         </div>
         <div class="app-list">
-            @forelse ($clientSummaries as $client)
+            @forelse ($clientHealth as $item)
                 <div class="app-list-item">
                     <div>
-                        <strong>{{ $client->name }}</strong>
-                        <small>{{ $client->projects_count }} مشاريع · {{ $client->status }}</small>
+                        <strong>{{ $item['client']->name }}</strong>
+                        <small>{{ $item['projects_count'] }} مشاريع · {{ $item['client']->status }}</small>
                     </div>
-                    <span class="app-badge">{{ $client->projects->first()?->status ?? 'بدون مشروع' }}</span>
+                    <span class="app-badge">{{ $item['brief_health'] }}%</span>
                 </div>
             @empty
                 <p class="app-empty">لا توجد ملفات عملاء جاهزة للعرض بعد.</p>

@@ -18,11 +18,11 @@ class AdminAuthenticationTest extends TestCase
         $this->seed(PlatformBootstrapSeeder::class);
 
         $response = $this->post(route('admin.login.store'), [
-            'email' => 'admin@khaledsaad.local',
-            'password' => 'Demo@123456',
+            'email' => config('platform.admin.email'),
+            'password' => config('platform.admin.password'),
         ]);
 
-        $response->assertRedirect(route('admin.dashboard'));
+        $response->assertRedirectToRoute('admin.dashboard');
         $this->assertAuthenticated();
     }
 

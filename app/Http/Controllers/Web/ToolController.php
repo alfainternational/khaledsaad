@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\Intelligence\Models\AuditRun;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
 use App\Domain\Tool\Models\ToolRun;
@@ -10,10 +11,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\Concerns\InteractsWithWorkspaceContext;
 use App\Support\Dashboard\StageCatalog;
 use App\Support\Dashboard\ToolExperienceResolver;
+use App\Support\Projects\ProjectMarketingBriefStore;
 use App\Support\Tooling\ToolBlueprintCatalog;
 use App\Support\Tooling\ToolCopyCatalog;
 use App\Support\Tooling\ToolFormExperienceBuilder;
 use App\Support\Tooling\ToolModePolicy;
+use App\Support\Tooling\ToolStrategicAdvisor;
 use App\Support\Workspaces\WorkspaceProfileStore;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -31,6 +34,8 @@ class ToolController extends Controller
         ToolFormExperienceBuilder $toolFormExperienceBuilder,
         ToolModePolicy $toolModePolicy,
         ToolCopyCatalog $toolCopyCatalog,
+        ProjectMarketingBriefStore $briefStore,
+        ToolStrategicAdvisor $toolStrategicAdvisor,
     ): View {
         $workspace = $this->currentWorkspace($request);
         $this->authorize('useTools', $workspace);
@@ -79,6 +84,26 @@ class ToolController extends Controller
 
         $blueprint = $toolBlueprintCatalog->for($tool);
         $upstreamContext = $this->buildUpstreamContext($workspace->id, $currentProject?->id, $tool);
+        $projectBrief = $currentProject ? $briefStore->get($workspace, $currentProject) : [];
+        $projectBriefAssessment = $currentProject ? $briefStore->assess($projectBrief) : [];
+        $toolBriefing = $currentProject
+            ? $toolStrategicAdvisor->advise(
+                $tool,
+                $profile,
+                $currentProject,
+                $projectBrief,
+                $projectBriefAssessment,
+                $upstreamContext,
+            )
+            : [];
+        $toolBriefing = $this->decorateToolBriefing($toolBriefing, $currentProject);
+        $latestAudit = $currentProject
+            ? AuditRun::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('project_id', $currentProject->id)
+                ->latest()
+                ->first()
+            : null;
         $formExperience = $toolFormExperienceBuilder->build(
             $tool,
             $blueprint,
@@ -86,6 +111,7 @@ class ToolController extends Controller
             $currentProject?->loadMissing('client'),
             $latestRun,
             $upstreamContext,
+            $toolBriefing,
         );
 
         $feedsInto = collect($tool->feeds_into_json ?? [])
@@ -115,6 +141,12 @@ class ToolController extends Controller
             ],
             'upstreamContext' => $upstreamContext,
             'feedsInto' => $feedsInto,
+            'projectBrief' => $projectBrief,
+            'projectBriefAssessment' => $projectBriefAssessment,
+            'toolBriefing' => $toolBriefing,
+            'latestAudit' => $latestAudit,
+            'latestAuditReport' => $latestAudit?->report_json ?? [],
+            'latestAuditSummary' => $latestAudit?->summary_json ?? [],
         ]);
     }
 
@@ -150,5 +182,46 @@ class ToolController extends Controller
             ->filter(fn (array $item) => $item['headline'] !== '')
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $toolBriefing
+     * @return array<string, mixed>
+     */
+    private function decorateToolBriefing(array $toolBriefing, ?Project $project): array
+    {
+        if ($toolBriefing === [] || ! $project) {
+            return $toolBriefing;
+        }
+
+        $nextAction = $toolBriefing['next_action'] ?? [];
+        $actionType = $nextAction['action_type'] ?? null;
+        $ctaUrl = null;
+        $ctaLabel = null;
+
+        if ($actionType === 'brief') {
+            $ctaUrl = route('projects.brief.edit', $project);
+            $ctaLabel = 'تحرير brief المشروع';
+        }
+
+        if ($actionType === 'tool' && ! empty($nextAction['recommended_tool_code'])) {
+            $recommendedTool = Tool::query()
+                ->where('code', $nextAction['recommended_tool_code'])
+                ->where('status', '!=', 'hidden')
+                ->first();
+
+            if ($recommendedTool) {
+                $ctaUrl = route('tools.show', $recommendedTool);
+                $ctaLabel = 'افتح '.($nextAction['recommended_tool_label'] ?? $recommendedTool->name ?? $recommendedTool->code);
+            }
+        }
+
+        $toolBriefing['next_action'] = [
+            ...$nextAction,
+            'cta_url' => $ctaUrl,
+            'cta_label' => $ctaLabel,
+        ];
+
+        return $toolBriefing;
     }
 }

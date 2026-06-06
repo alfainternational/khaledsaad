@@ -2,6 +2,8 @@
 
 namespace App\Domain\Project\Models;
 
+use App\Domain\Intelligence\Models\AuditRun;
+use App\Domain\Intelligence\Models\MonitorSnapshot;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Client\Models\Client;
 use App\Domain\Tool\Models\ToolRun;
@@ -24,6 +26,22 @@ class Project extends Model
         'name',
         'stage',
         'status',
+        'sector',
+        'market_country',
+        'primary_domain',
+        'official_social_links_json',
+        'verified_social_profiles_json',
+        'competitors_json',
+        'analysis_goals_json',
+        'monitoring_enabled',
+    ];
+
+    protected $casts = [
+        'official_social_links_json' => 'array',
+        'verified_social_profiles_json' => 'array',
+        'competitors_json' => 'array',
+        'analysis_goals_json' => 'array',
+        'monitoring_enabled' => 'boolean',
     ];
 
     public function workspace(): BelongsTo
@@ -44,5 +62,15 @@ class Project extends Model
     public function approvals(): HasMany
     {
         return $this->hasMany(Approval::class);
+    }
+
+    public function auditRuns(): HasMany
+    {
+        return $this->hasMany(AuditRun::class);
+    }
+
+    public function monitorSnapshots(): HasMany
+    {
+        return $this->hasMany(MonitorSnapshot::class);
     }
 }

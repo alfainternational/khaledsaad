@@ -13,9 +13,27 @@
         </label>
 
         <label class="admin-field">
-            <span>معلومات التواصل</span>
-            <textarea name="contact_info" class="admin-input" rows="3">{{ old('contact_info', $client->contact_info) }}</textarea>
-            @error('contact_info') <small class="admin-error">{{ $message }}</small> @enderror
+            <span>البريد الإلكتروني</span>
+            <input type="email" name="email" value="{{ old('email', data_get($client->contact_info, 'email')) }}" class="admin-input">
+            @error('email') <small class="admin-error">{{ $message }}</small> @enderror
+        </label>
+
+        <label class="admin-field">
+            <span>الهاتف</span>
+            <input type="text" name="phone" value="{{ old('phone', data_get($client->contact_info, 'phone')) }}" class="admin-input">
+            @error('phone') <small class="admin-error">{{ $message }}</small> @enderror
+        </label>
+
+        <label class="admin-field">
+            <span>الشركة</span>
+            <input type="text" name="company" value="{{ old('company', data_get($client->contact_info, 'company')) }}" class="admin-input">
+            @error('company') <small class="admin-error">{{ $message }}</small> @enderror
+        </label>
+
+        <label class="admin-field">
+            <span>ملاحظات</span>
+            <textarea name="notes" class="admin-input" rows="3">{{ old('notes', data_get($client->contact_info, 'notes')) }}</textarea>
+            @error('notes') <small class="admin-error">{{ $message }}</small> @enderror
         </label>
 
         <label class="admin-field">

@@ -11,6 +11,7 @@ use App\Support\Dashboard\ContentLocaleCatalog;
 use App\Support\Dashboard\GoalCatalog;
 use App\Support\Dashboard\PathCatalog;
 use App\Support\Dashboard\PersonaCatalog;
+use App\Support\Intelligence\SectorTemplateCatalog;
 use App\Support\Ui\FlashMessageCatalog;
 use App\Support\Workspaces\OnboardingState;
 use App\Support\Workspaces\WorkspaceProfileStore;
@@ -26,6 +27,7 @@ class OnboardingController extends Controller
         Request $request,
         OnboardingState $state,
         WorkspaceProfileStore $profileStore,
+        SectorTemplateCatalog $sectorTemplateCatalog,
     ): View|RedirectResponse {
         $workspace = $this->currentWorkspace($request);
 
@@ -33,14 +35,38 @@ class OnboardingController extends Controller
             return redirect()->route('dashboard');
         }
 
+        $profile = $profileStore->get($workspace);
+        $defaultPersona = PersonaCatalog::exists($profile['persona'] ?? null)
+            ? (string) $profile['persona']
+            : PersonaCatalog::inferFromWorkspaceType($workspace->type);
+        $defaultAwarenessLevel = AwarenessCatalog::exists($profile['awareness_level'] ?? null)
+            ? (string) $profile['awareness_level']
+            : PersonaCatalog::defaultAwareness($defaultPersona);
+        $defaultPrimaryGoal = GoalCatalog::exists($profile['primary_goal'] ?? null)
+            ? (string) $profile['primary_goal']
+            : $this->defaultGoalForPersona($defaultPersona);
+
         return view('app.onboarding', [
             'workspace' => $workspace->load('account.owner'),
-            'profile' => $profileStore->get($workspace),
+            'profile' => $profile,
             'personas' => PersonaCatalog::options(),
             'awarenessLevels' => AwarenessCatalog::options(),
             'goals' => GoalCatalog::options(),
+            'sectorOptions' => $sectorTemplateCatalog->options(),
             'paths' => PathCatalog::options(),
             'contentLocales' => ContentLocaleCatalog::options(),
+            'defaults' => [
+                'persona' => $defaultPersona,
+                'awareness_level' => $defaultAwarenessLevel,
+                'primary_goal' => $defaultPrimaryGoal,
+                'recommended_path' => PathCatalog::exists($profile['recommended_path'] ?? null)
+                    ? (string) $profile['recommended_path']
+                    : PathCatalog::recommend($defaultPersona, $defaultPrimaryGoal, $defaultAwarenessLevel),
+                'audience' => (string) ($profile['audience'] ?? 'عملاء مناسبون لخدمتي'),
+                'content_locale' => ContentLocaleCatalog::exists($profile['content_locale'] ?? null)
+                    ? (string) $profile['content_locale']
+                    : 'ar_modern_fusha',
+            ],
         ]);
     }
 
@@ -58,5 +84,15 @@ class OnboardingController extends Controller
         $action->handle($workspace, $account, $user, $data, $state);
 
         return redirect()->route('dashboard')->with('status', $flash->onboardingCompleted());
+    }
+
+    private function defaultGoalForPersona(string $persona): string
+    {
+        return match ($persona) {
+            'freelancer' => 'build_offer',
+            'business' => 'improve_marketing',
+            'team', 'agency' => 'build_90_day_plan',
+            default => 'clarify_idea',
+        };
     }
 }

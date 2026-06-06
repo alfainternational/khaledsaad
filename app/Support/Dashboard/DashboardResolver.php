@@ -10,6 +10,7 @@ use App\Domain\Tool\Models\Tool;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Models\User;
+use App\Support\Projects\ProjectMarketingBriefStore;
 use App\Support\Workspaces\WorkspaceJourneyStore;
 use App\Support\Workspaces\WorkspaceProfileStore;
 
@@ -18,6 +19,7 @@ class DashboardResolver
     public function __construct(
         private readonly WorkspaceProfileStore $profileStore,
         private readonly WorkspaceJourneyStore $journeyStore,
+        private readonly ProjectMarketingBriefStore $projectMarketingBriefStore,
         private readonly NextStepRecommendationService $nextStepRecommendationService,
         private readonly WidgetRegistry $widgetRegistry,
         private readonly EntitlementResolver $entitlementResolver,
@@ -95,6 +97,17 @@ class DashboardResolver
         $readiness = $currentProject
             ? $this->journeyStore->getReadiness($workspace, $currentProject)
             : [];
+        $currentProjectBrief = $currentProject
+            ? $this->projectMarketingBriefStore->get($workspace, $currentProject)
+            : [];
+        $briefAssessment = $currentProject
+            ? $this->projectMarketingBriefStore->assess($currentProjectBrief)
+            : [
+                'completeness_score' => 0,
+                'known_fields' => 0,
+                'total_fields' => 0,
+                'next_actions' => ['ابدأ ببناء ملف مشروعك التسويقي حتى تظهر لك التوصيات التالية بوضوح.'],
+            ];
 
         $stageProgress = collect(StageCatalog::all())
             ->map(function (array $stage, int $stageNumber) use ($projectSummary): array {
@@ -228,6 +241,8 @@ class DashboardResolver
             'profile' => $profile,
             'journeySnapshot' => $journeySnapshot,
             'readiness' => $readiness,
+            'brief' => $currentProjectBrief,
+            'briefAssessment' => $briefAssessment,
             'toolPipeline' => $toolPipeline,
             'actionCenters' => $actionCenters,
             'metrics' => $metrics,

@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Web;
 
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\AI\Models\AITemplate;
+use App\Domain\Intelligence\Models\AuditRun;
+use App\Domain\Intelligence\Models\MonitorSnapshot;
 use App\Domain\Approval\Models\Approval;
+use App\Domain\WorkspaceData\Models\WorkspaceData;
 use App\Domain\Entitlement\Services\EntitlementResolver;
 use App\Domain\FeatureFlag\Services\FeatureFlagService;
 use App\Domain\Project\Models\Project;
@@ -12,7 +15,11 @@ use App\Domain\Tool\Models\Tool;
 use App\Domain\Tool\Models\ToolRun;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\Concerns\InteractsWithWorkspaceContext;
+use App\Http\Controllers\Web\MarketingWebsiteController;
 use App\Support\PlatformSectionCatalog;
+use App\Support\Intelligence\ProjectIntelligenceRepository;
+use App\Support\Projects\ProjectMarketingBriefStore;
+use App\Support\Tooling\ProjectActionAdvisor;
 use App\Support\Workspaces\WorkspaceJourneyStore;
 use App\Support\Workspaces\WorkspaceProfileStore;
 use Illuminate\Http\Request;
@@ -127,13 +134,56 @@ class ExperienceController extends Controller
         FeatureFlagService $flags,
         WorkspaceProfileStore $profileStore,
         WorkspaceJourneyStore $journeyStore,
+        ProjectMarketingBriefStore $briefStore,
+        ProjectActionAdvisor $projectActionAdvisor,
+        ProjectIntelligenceRepository $projectIntelligenceRepository,
     ): View {
         if (! $request->user()) {
-            return view('pages.section', PlatformSectionCatalog::section('studio'));
+            return app(MarketingWebsiteController::class)->guestStudio();
         }
 
         $workspace = $this->currentWorkspace($request);
         $context = $this->workspaceContext($request);
+
+        $projects = Project::query()
+            ->where('workspace_id', $workspace->id)
+            ->with('client')
+            ->orderBy('name')
+            ->get();
+
+        $briefMap = $briefStore->getMany($workspace, $projects);
+        $briefAssessmentMap = collect($briefMap)
+            ->map(fn (array $brief): array => $briefStore->assess($brief))
+            ->all();
+        $journeySnapshotMap = $journeyStore->getSnapshotMap($workspace, $projects);
+        $readinessMap = $journeyStore->getReadinessMap($workspace, $projects);
+        $latestAuditMap = $projectIntelligenceRepository->latestAuditMap($workspace, $projects);
+
+        $projectActionMap = $projects
+            ->mapWithKeys(function (Project $project) use ($briefMap, $briefAssessmentMap, $journeySnapshotMap, $projectActionAdvisor): array {
+                return [
+                    $project->id => $projectActionAdvisor->advise(
+                        $project,
+                        $briefMap[$project->id] ?? [],
+                        $briefAssessmentMap[$project->id] ?? [],
+                        $journeySnapshotMap[$project->id] ?? [],
+                        [],
+                    ),
+                ];
+            })
+            ->all();
+        $projectIntelligence = $projects
+            ->mapWithKeys(function (Project $project) use ($latestAuditMap): array {
+                $latestAudit = $latestAuditMap[$project->id] ?? null;
+                return [
+                    $project->id => [
+                        'audit' => $latestAudit,
+                        'summary' => $latestAudit?->summary_json ?? [],
+                        'report' => $latestAudit?->report_json ?? [],
+                    ],
+                ];
+            })
+            ->all();
 
         return view('app.studio', [
             'workspace' => $workspace,
@@ -141,21 +191,27 @@ class ExperienceController extends Controller
             'studioEnabled' => $resolver->boolean('modules.ai_studio', $workspace),
             'newTemplatesEnabled' => $flags->isEnabled('ai_studio.new_templates', $context),
             'templates' => AITemplate::query()->where('status', 'published')->orderBy('credit_cost')->get(),
-            'projects' => Project::query()->where('workspace_id', $workspace->id)->orderBy('name')->get(),
-            'projectContexts' => Project::query()
-                ->where('workspace_id', $workspace->id)
-                ->with('client')
-                ->orderBy('name')
-                ->get()
-                ->mapWithKeys(function (Project $project) use ($workspace, $journeyStore): array {
+            'projects' => $projects,
+            'projectBriefs' => $projects
+                ->mapWithKeys(fn (Project $project): array => [
+                    $project->id => [
+                        'brief' => $briefMap[$project->id] ?? [],
+                        'assessment' => $briefAssessmentMap[$project->id] ?? [],
+                    ],
+                ])
+                ->all(),
+            'projectContexts' => $projects
+                ->mapWithKeys(function (Project $project) use ($journeySnapshotMap, $readinessMap): array {
                     return [
                         $project->id => [
-                            'journey' => $journeyStore->getSnapshot($workspace, $project),
-                            'readiness' => $journeyStore->getReadiness($workspace, $project),
+                            'journey' => $journeySnapshotMap[$project->id] ?? [],
+                            'readiness' => $readinessMap[$project->id] ?? [],
                         ],
                     ];
                 })
                 ->all(),
+            'projectActions' => $projectActionMap,
+            'projectIntelligence' => $projectIntelligence,
             'recentGenerations' => AIGeneration::query()
                 ->where('workspace_id', $workspace->id)
                 ->with('template')
@@ -168,7 +224,7 @@ class ExperienceController extends Controller
     public function templates(Request $request): View
     {
         if (! $request->user()) {
-            return view('pages.section', PlatformSectionCatalog::section('templates'));
+            return app(MarketingWebsiteController::class)->guestTemplates();
         }
 
         return view('app.templates', [
@@ -181,6 +237,8 @@ class ExperienceController extends Controller
         Request $request,
         WorkspaceJourneyStore $journeyStore,
         WorkspaceProfileStore $profileStore,
+        ProjectMarketingBriefStore $briefStore,
+        ProjectActionAdvisor $projectActionAdvisor,
     ): View {
         if (! $request->user()) {
             return view('pages.section', PlatformSectionCatalog::section('reports'));
@@ -204,6 +262,71 @@ class ExperienceController extends Controller
                 'average_score' => collect($readiness)->avg('score') ? (int) round((float) collect($readiness)->avg('score')) : 0,
             ];
         });
+        $projectBriefs = $projects->map(function (Project $project) use ($workspace, $briefStore): array {
+            $brief = $briefStore->get($workspace, $project);
+            $assessment = $briefStore->assess($brief);
+
+            return [
+                'project' => $project,
+                'brief' => $brief,
+                'assessment' => $assessment,
+            ];
+        });
+        $projectActions = $projects->mapWithKeys(function (Project $project) use ($workspace, $briefStore, $journeyStore, $projectActionAdvisor): array {
+            $brief = $briefStore->get($workspace, $project);
+            $assessment = $briefStore->assess($brief);
+            $toolSummaries = \App\Domain\WorkspaceData\Models\WorkspaceData::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('project_id', $project->id)
+                ->where('key', 'like', 'tool.summary.%')
+                ->get()
+                ->map(fn ($row) => ['tool_code' => str_replace('tool.summary.', '', $row->key)])
+                ->all();
+
+            return [
+                $project->id => $projectActionAdvisor->advise(
+                    $project,
+                    $brief,
+                    $assessment,
+                    $journeyStore->getSnapshot($workspace, $project),
+                    $toolSummaries,
+                ),
+            ];
+        });
+        $completedAuditRuns = AuditRun::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('status', 'completed')
+            ->latest()
+            ->get();
+        $weakestIntelligenceDimensions = $completedAuditRuns
+            ->map(function (AuditRun $auditRun): ?array {
+                $scores = $auditRun->report_json['executive_scores'] ?? [];
+                unset($scores['executive']);
+
+                if ($scores === [] || ! is_array($scores)) {
+                    return null;
+                }
+
+                asort($scores);
+                $dimension = array_key_first($scores);
+
+                if (! is_string($dimension)) {
+                    return null;
+                }
+
+                return [
+                    'dimension' => $dimension,
+                    'score' => (int) ($scores[$dimension] ?? 0),
+                ];
+            })
+            ->filter()
+            ->countBy('dimension')
+            ->sortDesc()
+            ->take(6);
+        $analysisIntegrityDistribution = $completedAuditRuns
+            ->map(fn (AuditRun $auditRun): string => (string) ($auditRun->report_json['analysis_integrity']['status'] ?? 'unknown'))
+            ->countBy()
+            ->sortDesc();
 
         return view('app.reports', [
             'workspace' => $workspace,
@@ -231,19 +354,50 @@ class ExperienceController extends Controller
                 ->pluck('aggregate', 'stage'),
             'toolRunsCount' => ToolRun::query()->where('workspace_id', $workspace->id)->count(),
             'aiGenerationsCount' => AIGeneration::query()->where('workspace_id', $workspace->id)->count(),
+            'auditRunsCount' => AuditRun::query()->where('workspace_id', $workspace->id)->count(),
+            'averageExecutiveScore' => (int) round((float) $completedAuditRuns
+                ->avg(fn (AuditRun $auditRun): int => (int) ($auditRun->report_json['executive_scores']['executive'] ?? 0))),
+            'monitoredProjectsCount' => $workspace->projects()->where('monitoring_enabled', true)->count(),
             'pendingApprovalsCount' => (int) ($approvalStatusCounts['pending'] ?? 0),
             'approvedApprovalsCount' => (int) ($approvalStatusCounts['approved'] ?? 0),
             'projectReadiness' => $projectReadiness,
+            'briefReadiness' => $projectBriefs,
+            'projectActions' => $projectActions,
+            'briefHealthAverage' => (int) round((float) $projectBriefs->avg(fn (array $item): int => (int) ($item['assessment']['completeness_score'] ?? 0))),
+            'commonBriefGaps' => $projectBriefs
+                ->flatMap(fn (array $item): array => $item['assessment']['missing_labels'] ?? [])
+                ->countBy()
+                ->sortDesc()
+                ->take(6),
             'recentStructuredOutputs' => ToolRun::query()
                 ->where('workspace_id', $workspace->id)
                 ->with(['project.client', 'tool'])
                 ->latest()
                 ->limit(8)
                 ->get(),
+            'recentAuditRuns' => AuditRun::query()
+                ->where('workspace_id', $workspace->id)
+                ->with('project.client')
+                ->latest()
+                ->limit(8)
+                ->get(),
+            'monitorSnapshots' => MonitorSnapshot::query()
+                ->where('workspace_id', $workspace->id)
+                ->with('project.client')
+                ->latest('captured_at')
+                ->limit(8)
+                ->get(),
+            'weakestIntelligenceDimensions' => $weakestIntelligenceDimensions,
+            'analysisIntegrityDistribution' => $analysisIntegrityDistribution,
         ]);
     }
 
-    public function agency(Request $request, EntitlementResolver $resolver, FeatureFlagService $flags): View
+    public function agency(
+        Request $request,
+        EntitlementResolver $resolver,
+        FeatureFlagService $flags,
+        ProjectMarketingBriefStore $briefStore,
+    ): View
     {
         if (! $request->user()) {
             return view('pages.section', PlatformSectionCatalog::section('agency'));
@@ -251,6 +405,24 @@ class ExperienceController extends Controller
 
         $workspace = $this->currentWorkspace($request);
         $context = $this->workspaceContext($request);
+
+        $clientHealth = $workspace->clients()
+            ->with(['projects' => fn ($query) => $query->latest()->limit(5)])
+            ->latest()
+            ->get()
+            ->map(function ($client) use ($workspace, $briefStore): array {
+                $scores = $client->projects->map(function (Project $project) use ($workspace, $briefStore): int {
+                    $assessment = $briefStore->assess($briefStore->get($workspace, $project));
+
+                    return (int) ($assessment['completeness_score'] ?? 0);
+                });
+
+                return [
+                    'client' => $client,
+                    'brief_health' => $scores->isNotEmpty() ? (int) round((float) $scores->avg()) : 0,
+                    'projects_count' => $client->projects->count(),
+                ];
+            });
 
         return view('app.agency', [
             'workspace' => $workspace,
@@ -270,6 +442,7 @@ class ExperienceController extends Controller
                 ->latest()
                 ->limit(6)
                 ->get(),
+            'clientHealth' => $clientHealth,
         ]);
     }
 }

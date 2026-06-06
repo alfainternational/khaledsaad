@@ -43,6 +43,15 @@
                     <a href="{{ route('admin.ai-templates.index') }}" class="app-nav-link {{ request()->routeIs('admin.ai-templates.*') ? 'active' : '' }}"><span>قوالب AI</span></a>
                     <a href="{{ route('admin.feature-flags.index') }}" class="app-nav-link {{ request()->routeIs('admin.feature-flags.*') ? 'active' : '' }}"><span>Feature Flags</span></a>
 
+                    <span class="shell-nav-label">المحتوى والتسويق</span>
+                    <a href="{{ route('admin.cms-pages.index') }}" class="app-nav-link {{ request()->routeIs('admin.cms-pages.*') ? 'active' : '' }}"><span>صفحات CMS</span></a>
+                    <a href="{{ route('admin.blog-posts.index') }}" class="app-nav-link {{ request()->routeIs('admin.blog-posts.*') ? 'active' : '' }}"><span>المدونة</span></a>
+                    <a href="{{ route('admin.case-studies.index') }}" class="app-nav-link {{ request()->routeIs('admin.case-studies.*') ? 'active' : '' }}"><span>دراسات الحالة</span></a>
+                    <a href="{{ route('admin.community-posts.index') }}" class="app-nav-link {{ request()->routeIs('admin.community-posts.*') ? 'active' : '' }}"><span>المجتمع</span></a>
+                    <a href="{{ route('admin.marketing-template-highlights.index') }}" class="app-nav-link {{ request()->routeIs('admin.marketing-template-highlights.*') ? 'active' : '' }}"><span>عروض القوالب</span></a>
+                    <a href="{{ route('admin.partners.index') }}" class="app-nav-link {{ request()->routeIs('admin.partners.*') ? 'active' : '' }}"><span>الشركاء</span></a>
+                    <a href="{{ route('admin.contact-messages.index') }}" class="app-nav-link {{ request()->routeIs('admin.contact-messages.*') ? 'active' : '' }}"><span>رسائل التواصل</span></a>
+
                     <span class="shell-nav-label">المراقبة</span>
                     <a href="{{ route('admin.tool-runs.index') }}" class="app-nav-link {{ request()->routeIs('admin.tool-runs.*') ? 'active' : '' }}"><span>سجل الأدوات</span></a>
                     <a href="{{ route('admin.ai-generations.index') }}" class="app-nav-link {{ request()->routeIs('admin.ai-generations.*') ? 'active' : '' }}"><span>مخرجات AI</span></a>

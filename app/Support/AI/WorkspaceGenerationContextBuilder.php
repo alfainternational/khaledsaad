@@ -2,6 +2,8 @@
 
 namespace App\Support\AI;
 
+use App\Domain\Intelligence\Models\AuditRun;
+use App\Domain\Intelligence\Models\OfficialContact;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Comment\Models\Comment;
@@ -9,17 +11,40 @@ use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Domain\WorkspaceData\Models\WorkspaceData;
+use App\Support\Projects\ProjectMarketingBriefStore;
+use App\Support\Tooling\ProjectActionAdvisor;
 use App\Support\Workspaces\WorkspaceJourneyStore;
 use App\Support\Workspaces\WorkspaceProfileStore;
 use Illuminate\Support\Str;
 
 class WorkspaceGenerationContextBuilder
 {
+    private readonly ProjectMarketingBriefStore $projectMarketingBriefStore;
+
+    private readonly StudioAnalyticalDossierBuilder $dossierBuilder;
+
+    private readonly ProjectActionAdvisor $projectActionAdvisor;
+
     public function __construct(
         private readonly WorkspaceProfileStore $profileStore,
         private readonly WorkspaceJourneyStore $journeyStore,
-        private readonly StudioAnalyticalDossierBuilder $dossierBuilder,
-    ) {}
+        mixed $projectMarketingBriefStore = null,
+        mixed $dossierBuilder = null,
+        ?ProjectActionAdvisor $projectActionAdvisor = null,
+    ) {
+        if ($projectMarketingBriefStore instanceof StudioAnalyticalDossierBuilder && $dossierBuilder === null) {
+            $dossierBuilder = $projectMarketingBriefStore;
+            $projectMarketingBriefStore = null;
+        }
+
+        $this->projectMarketingBriefStore = $projectMarketingBriefStore instanceof ProjectMarketingBriefStore
+            ? $projectMarketingBriefStore
+            : app(ProjectMarketingBriefStore::class);
+        $this->dossierBuilder = $dossierBuilder instanceof StudioAnalyticalDossierBuilder
+            ? $dossierBuilder
+            : app(StudioAnalyticalDossierBuilder::class);
+        $this->projectActionAdvisor = $projectActionAdvisor ?? app(ProjectActionAdvisor::class);
+    }
 
     /**
      * @return array<string, mixed>
@@ -57,6 +82,10 @@ class WorkspaceGenerationContextBuilder
         $profile = $this->profileStore->get($workspace);
         $journeySnapshot = $project ? $this->journeyStore->getSnapshot($workspace, $project) : [];
         $readiness = $project ? $this->journeyStore->getReadiness($workspace, $project) : [];
+        $projectBrief = $project ? $this->projectMarketingBriefStore->get($workspace, $project) : [];
+        $projectBriefAssessment = $project ? $this->projectMarketingBriefStore->assess($projectBrief) : [];
+        $latestAudit = $project ? $this->latestAudit($workspace, $project) : null;
+        $officialContacts = $project ? $this->officialContacts($latestAudit) : [];
 
         $toolSummaries = $this->toolSummaryRows($workspace, $project);
         $toolContexts = $this->toolContextRows($workspace, $project);
@@ -87,6 +116,14 @@ class WorkspaceGenerationContextBuilder
                 'name' => $project->client->name,
             ] : null,
             'workspace_profile' => $profile,
+            'project_brief' => $projectBrief,
+            'project_brief_assessment' => $projectBriefAssessment,
+            'project_next_action' => $project
+                ? $this->projectActionAdvisor->advise($project, $projectBrief, $projectBriefAssessment, $journeySnapshot, $toolSummaries)
+                : [],
+            'latest_audit_report' => $latestAudit?->report_json ?? [],
+            'latest_audit_summary' => $latestAudit?->summary_json ?? [],
+            'official_contacts' => $officialContacts,
             'journey_snapshot' => $journeySnapshot,
             'readiness_snapshot' => $readiness,
             'tool_summaries' => $toolSummaries,
@@ -143,6 +180,61 @@ class WorkspaceGenerationContextBuilder
         ]);
         if ($profileLine !== null) {
             $parts[] = $profileLine;
+        }
+
+        if (! empty($context['project_brief_assessment']['reports']['executive_brief'])) {
+            $parts[] = '=== ملف المشروع التسويقي ===';
+            foreach ($context['project_brief_assessment']['reports']['executive_brief'] as $line) {
+                $parts[] = '- '.$line;
+            }
+        }
+
+        if (! empty($context['project_brief_assessment']['reports']['audience_snapshot'])) {
+            $parts[] = '=== صورة الجمهور ===';
+            foreach ($context['project_brief_assessment']['reports']['audience_snapshot'] as $line) {
+                $parts[] = '- '.$line;
+            }
+        }
+
+        if (! empty($context['project_brief_assessment']['reports']['offer_positioning'])) {
+            $parts[] = '=== العرض والتمركز ===';
+            foreach ($context['project_brief_assessment']['reports']['offer_positioning'] as $line) {
+                $parts[] = '- '.$line;
+            }
+        }
+
+        if (! empty($context['project_next_action']['headline'])) {
+            $parts[] = '=== القرار التالي للمشروع ===';
+            $parts[] = '- '.$this->stringValue($context['project_next_action']['headline'] ?? null);
+            if ($this->stringValue($context['project_next_action']['reason'] ?? null) !== '') {
+                $parts[] = '- السبب: '.$this->stringValue($context['project_next_action']['reason'] ?? null);
+            }
+        }
+
+        if (! empty($context['latest_audit_report']['executive_scores'])) {
+            $parts[] = '=== Marketing Intelligence Snapshot ===';
+            foreach (($context['latest_audit_report']['executive_scores'] ?? []) as $label => $score) {
+                if (is_numeric($score)) {
+                    $parts[] = '- '.$label.': '.$score.'/100';
+                }
+            }
+        }
+
+        if (! empty($context['latest_audit_report']['honest_diagnosis'])) {
+            $parts[] = '=== Honest Diagnosis ===';
+            foreach ($context['latest_audit_report']['honest_diagnosis'] as $line) {
+                $parts[] = '- '.$line;
+            }
+        }
+
+        if (! empty($context['official_contacts'])) {
+            $parts[] = '=== Official Contacts ===';
+            foreach ($context['official_contacts'] as $contact) {
+                $parts[] = '- '.implode(' | ', array_filter([
+                    $contact['contact_type'] ?? null,
+                    $contact['contact_value'] ?? null,
+                ]));
+            }
         }
 
         $journeyLine = $this->formatKeyValueLine('الرحلة الحالية', [
@@ -635,6 +727,12 @@ class WorkspaceGenerationContextBuilder
             'project' => null,
             'client' => null,
             'workspace_profile' => [],
+            'project_brief' => [],
+            'project_brief_assessment' => [],
+            'project_next_action' => [],
+            'latest_audit_report' => [],
+            'latest_audit_summary' => [],
+            'official_contacts' => [],
             'journey_snapshot' => [],
             'readiness_snapshot' => [],
             'tool_summaries' => [],
@@ -646,5 +744,35 @@ class WorkspaceGenerationContextBuilder
             'analytical_dossier' => [],
             'prompt_block' => '',
         ];
+    }
+
+    private function latestAudit(Workspace $workspace, Project $project): ?AuditRun
+    {
+        return AuditRun::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('project_id', $project->id)
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * @return array<int, array{contact_type: string, contact_value: string}>
+     */
+    private function officialContacts(?AuditRun $auditRun): array
+    {
+        if (! $auditRun) {
+            return [];
+        }
+
+        return OfficialContact::query()
+            ->where('audit_run_id', $auditRun->id)
+            ->orderByDesc('is_primary')
+            ->get()
+            ->map(fn (OfficialContact $contact): array => [
+                'contact_type' => $contact->contact_type,
+                'contact_value' => $contact->contact_value,
+            ])
+            ->values()
+            ->all();
     }
 }
