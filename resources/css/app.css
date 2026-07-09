@@ -6855,3 +6855,25 @@ body.rd-dark .text-gradient-light {
 .agent-wave-1 { background: rgba(79,70,229,0.15); color: #818cf8; }
 .agent-wave-2 { background: rgba(13,148,136,0.15); color: #2dd4bf; }
 .agent-wave-3 { background: rgba(180,83,9,0.15); color: #f59e0b; }
+
+/* ── مراجعة الأخصائيين (Specialist Review) — بطاقة نتيجة الأداة ────────── */
+.specialist-review {
+    margin-top: 1rem; padding-top: 0.85rem;
+    border-top: 1px dashed var(--border, rgba(148,163,184,0.25));
+    display: flex; flex-direction: column; gap: 0.6rem;
+}
+.specialist-review-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.specialist-review-title { font-size: 0.82rem; font-weight: 800; color: var(--muted, #94a3b8); }
+.specialist-review-score {
+    font-size: 0.78rem; font-weight: 800; padding: 0.1rem 0.55rem;
+    border-radius: 999px; background: rgba(79,70,229,0.15); color: #818cf8;
+}
+.specialist-panel { display: flex; flex-direction: column; gap: 0.3rem; }
+.specialist-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.specialist-panel-name { font-size: 0.82rem; font-weight: 700; }
+.specialist-panel-score { font-size: 0.74rem; font-weight: 800; padding: 0.05rem 0.5rem; border-radius: 999px; }
+.specialist-tier-good { background: rgba(16,185,129,0.15); color: #10b981; }
+.specialist-tier-warn { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.specialist-tier-low { background: rgba(239,68,68,0.15); color: #ef4444; }
+.specialist-items { margin: 0.15rem 0 0; padding-inline-start: 1.1rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.specialist-items li { font-size: 0.8rem; color: var(--muted, #cbd5e1); line-height: 1.7; }

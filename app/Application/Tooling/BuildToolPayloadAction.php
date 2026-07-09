@@ -2,6 +2,7 @@
 
 namespace App\Application\Tooling;
 
+use App\Domain\AI\Kernel\Agents\SpecialistReviewService;
 use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\AI\Services\AIService;
 use App\Domain\AI\Web\WebContextEnricher;
@@ -28,6 +29,7 @@ class BuildToolPayloadAction
         private readonly AIService $aiService,
         private readonly WebContextEnricher $webEnricher,
         private readonly KnowledgeStore $knowledge,
+        private readonly SpecialistReviewService $specialistReview,
     ) {}
 
     /**
@@ -158,6 +160,10 @@ class BuildToolPayloadAction
             + (! empty($readiness) ? 10 : 0)
         );
 
+        // مراجعة الأخصائيين المحليين على إجابات المستخدم: صياغة عربية دائماً،
+        // وقوة العرض في أدوات المرحلة الثالثة. محلي بالكامل، يتدهور بأمان.
+        $specialistReview = $this->buildSpecialistReview($tool, $inputs);
+
         return [
             'output' => [
                 'headline' => $summary['headline'],
@@ -167,6 +173,7 @@ class BuildToolPayloadAction
                     ...$insights,
                 ])),
                 'next_actions' => $nextActions,
+                'specialist_review' => $specialistReview,
                 'brief' => $brief !== '' ? $brief : null,
                 'inputs' => $inputs,
                 'source_context' => $sourceContext,
@@ -489,6 +496,33 @@ class BuildToolPayloadAction
             ),
             default => null,
         };
+    }
+
+    /**
+     * مراجعة الأخصائيين المحليين على إجابات المستخدم النصية.
+     *
+     * @param  array<string, mixed>  $inputs
+     * @return array{score: int|null, panels: array<int, array{key: string, name: string, score: int, items: array<int, string>}>}|null
+     */
+    private function buildSpecialistReview(Tool $tool, array $inputs): ?array
+    {
+        $reviewText = collect($inputs)
+            ->filter(fn ($value): bool => is_string($value) && trim($value) !== '')
+            ->map(fn ($value): string => trim((string) $value))
+            ->implode(' • ');
+
+        if ($reviewText === '') {
+            return null;
+        }
+
+        $aspects = [SpecialistReviewService::ASPECT_LOCALIZATION];
+        if ((int) $tool->stage === 3) {
+            $aspects[] = SpecialistReviewService::ASPECT_OFFER;
+        }
+
+        $review = $this->specialistReview->review($reviewText, $aspects);
+
+        return $review['panels'] === [] ? null : $review;
     }
 
     /**

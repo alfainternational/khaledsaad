@@ -60,6 +60,34 @@
                 <li>{{ $isDiagnosis ? 'ستظهر الأولوية التالية بعد ملء المدخلات.' : 'املأ الحقول لتظهر التوصيات.' }}</li>
             @endif
         </ul>
+
+        @php $specialistReview = $latestRun?->output_json['specialist_review'] ?? null; @endphp
+        @if (! empty($specialistReview['panels']))
+            <div class="specialist-review" data-specialist-review>
+                <div class="specialist-review-head">
+                    <span class="specialist-review-title">مراجعة الأخصائيين</span>
+                    @if (! is_null($specialistReview['score']))
+                        <span class="specialist-review-score">{{ $specialistReview['score'] }}%</span>
+                    @endif
+                </div>
+                @foreach ($specialistReview['panels'] as $panel)
+                    @php $tier = $panel['score'] >= 80 ? 'good' : ($panel['score'] >= 50 ? 'warn' : 'low'); @endphp
+                    <div class="specialist-panel">
+                        <div class="specialist-panel-head">
+                            <span class="specialist-panel-name">{{ $panel['name'] }}</span>
+                            <span class="specialist-panel-score specialist-tier-{{ $tier }}">{{ $panel['score'] }}%</span>
+                        </div>
+                        @if (! empty($panel['items']))
+                            <ul class="specialist-items">
+                                @foreach (array_slice($panel['items'], 0, 3) as $item)
+                                    <li>{{ $item }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     @if ($latestRun)
