@@ -2,9 +2,16 @@
 
 namespace Tests\Unit\Agents;
 
+use App\Domain\AI\Kernel\Agents\Specialists\CustomerJourneySpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\EmailSequenceSpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\GrowthLoopSpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\InfluencerSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\LocalizationSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\OfferConversionSpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\PaidCampaignSpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\PrOutreachSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\SearchVisibilitySpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\SocialContentSpecialist;
 use App\Domain\AI\Kernel\Agents\SpecialistReviewService;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,6 +24,13 @@ class SpecialistReviewServiceTest extends TestCase
             new LocalizationSpecialist,
             new OfferConversionSpecialist,
             new SearchVisibilitySpecialist,
+            new EmailSequenceSpecialist,
+            new SocialContentSpecialist,
+            new PaidCampaignSpecialist,
+            new CustomerJourneySpecialist,
+            new GrowthLoopSpecialist,
+            new PrOutreachSpecialist,
+            new InfluencerSpecialist,
         );
     }
 
@@ -67,5 +81,37 @@ class SpecialistReviewServiceTest extends TestCase
 
         $this->assertNull($result['score']);
         $this->assertSame([], $result['panels']);
+    }
+
+    #[Test]
+    public function it_dispatches_to_all_registered_aspects(): void
+    {
+        $aspects = [
+            SpecialistReviewService::ASPECT_EMAIL,
+            SpecialistReviewService::ASPECT_SOCIAL,
+            SpecialistReviewService::ASPECT_CAMPAIGN,
+            SpecialistReviewService::ASPECT_JOURNEY,
+            SpecialistReviewService::ASPECT_GROWTH,
+            SpecialistReviewService::ASPECT_PR,
+            SpecialistReviewService::ASPECT_INFLUENCER,
+        ];
+
+        $result = $this->service()->review('نص تجريبي للمراجعة عبر كل الجوانب.', $aspects);
+
+        $this->assertCount(count($aspects), $result['panels']);
+        $this->assertEqualsCanonicalizing($aspects, array_column($result['panels'], 'key'));
+        foreach ($result['panels'] as $panel) {
+            $this->assertIsInt($panel['score']);
+            $this->assertNotSame('', $panel['name']);
+        }
+    }
+
+    #[Test]
+    public function unknown_aspect_is_skipped(): void
+    {
+        $result = $this->service()->review('نص', ['does_not_exist', SpecialistReviewService::ASPECT_LOCALIZATION]);
+
+        $this->assertCount(1, $result['panels']);
+        $this->assertSame('localization', $result['panels'][0]['key']);
     }
 }
