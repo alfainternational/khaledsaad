@@ -6961,3 +6961,82 @@ body.rd-dark .text-gradient-light {
     z-index: 30;
     background: color-mix(in srgb, var(--bg) 82%, transparent);
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   طبقة إعادة التصميم — إلغاء تسطيح COMPACT ومطابقة التصميم المرجعي
+   (بطاقات 20px بظلال ولوحات · أزرار متدرّجة · بانر خطوة متدرّج · ستِبر صندوقي)
+   تُلحَق بعد كتلة COMPACT لتتغلّب عليها بنفس الأولوية.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* البطاقات: استعادة لغة التصميم */
+.app-body .card,
+.app-body .dash-card {
+    border-radius: 20px;
+    box-shadow: var(--shadow-sm);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 22px;
+}
+.app-body .cockpit-head { border-radius: 20px; box-shadow: var(--shadow-sm); background: var(--panel); padding: 24px; }
+
+/* الأزرار: استعادة التدرّج والحجم المريح */
+.app-body .btn { border-radius: 10px; padding: 9px 16px; font-weight: 700; }
+.app-body .btn-sm { padding: 7px 13px; }
+.app-body .btn-primary,
+.app-body .btn-primary:hover {
+    background: linear-gradient(135deg, var(--p), var(--p2));
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+/* بانر الخطوة التالية: تدرّج بنفسجي كالتصميم */
+.app-body .cockpit-next,
+.app-body .dash-hero-next {
+    background: linear-gradient(120deg, var(--p-subtle), transparent);
+    border: 1px solid var(--p-border);
+    border-radius: 20px;
+    padding: 24px;
+}
+.app-body .cockpit-next-badge {
+    display: inline-block;
+    background: var(--p-subtle);
+    color: var(--p);
+    padding: 3px 12px;
+    border-radius: 9999px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+}
+
+/* شعار البراند: أكبر ومتدرّج بظلّ */
+.app-body .app-brand-mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
+/* الـ kicker فوق العنوان (كالتصميم) بلون هادئ */
+.app-body .app-header-kicker { display: block; color: var(--text-muted); letter-spacing: 0.04em; text-transform: none; }
+
+/* الستِبر: صناديق كالتصميم بدل نقاط متّصلة */
+.app-body .cockpit-stepper { gap: 10px; align-items: stretch; }
+.app-body .cockpit-step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 8px 10px;
+    flex: 1 1 0;
+    min-width: 150px;
+    text-align: right;
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+}
+.app-body .cockpit-step::before { display: none; }
+.app-body .cockpit-step-num { grid-row: 1; grid-column: 1; width: 30px; height: 30px; }
+.app-body .cockpit-step-label { grid-row: 1; grid-column: 2; text-align: right; font-weight: 800; font-size: var(--fs-sm); color: var(--text); }
+.app-body .cockpit-step-count { grid-row: 2; grid-column: 1 / -1; font-family: monospace; direction: ltr; text-align: right; color: var(--text-muted); }
+.app-body .cockpit-step--current { border-color: var(--p); box-shadow: 0 0 0 3px var(--p-subtle); }
+.app-body .cockpit-step--done { border-color: color-mix(in srgb, var(--green) 45%, var(--border)); }
+.app-body .cockpit-step--done .cockpit-step-num { background: linear-gradient(135deg, var(--p), var(--p2)); color: #fff; border-color: transparent; }
