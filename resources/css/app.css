@@ -64,7 +64,7 @@
 
 /* ─────────────────── LIGHT MODE (default) ─────────────────── */
 :root {
-    --bg:          #ffffff;
+    --bg:          #f5f6fa;
     --bg-2:        #f8fafc;
     --bg-3:        #f1f5f9;
     --bg-invert:   #0f172a;
@@ -96,6 +96,16 @@
     --p-subtle:    rgba(99, 102, 241, 0.07);
     --p-subtle-2:  rgba(99, 102, 241, 0.12);
     --p-border:    rgba(99, 102, 241, 0.2);
+
+    /* مواءمة نظام التصميم (خالد سعد redesign): لوحات، غائر، شريط جانبي داكن دائماً */
+    --panel:       #ffffff;
+    --panel-2:     #f8fafc;
+    --sunken:      #f1f5f9;
+    --green:       #22c55e;
+    --sidebar:             #0b1120;
+    --sidebar-text:        #94a3b8;
+    --sidebar-active:      rgba(99, 102, 241, 0.16);
+    --sidebar-active-text: #c7d2fe;
 }
 
 /* ─────────────────── DARK MODE ─────────────────── */
@@ -134,6 +144,15 @@
     --p-subtle:    rgba(99, 102, 241, 0.1);
     --p-subtle-2:  rgba(99, 102, 241, 0.16);
     --p-border:    rgba(99, 102, 241, 0.25);
+
+    --panel:       #0b1220;
+    --panel-2:     #0d1525;
+    --sunken:      #111a2b;
+    --green:       #22c55e;
+    --sidebar:             #070c16;
+    --sidebar-text:        #8b98ac;
+    --sidebar-active:      rgba(99, 102, 241, 0.2);
+    --sidebar-active-text: #c7d2fe;
 }
 
 /* ─────────────────── BASE ─────────────────── */
@@ -6878,3 +6897,59 @@ body.rd-dark .text-gradient-light {
 .specialist-items { margin: 0.15rem 0 0; padding-inline-start: 1.1rem; display: flex; flex-direction: column; gap: 0.25rem; }
 .specialist-items li { font-size: 0.8rem; color: var(--muted, #cbd5e1); line-height: 1.7; }
 .specialist-review-body { display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* ════════════════════════════════════════════════════════════════════
+   خالد سعد — طبقة إعادة التصميم (مطابقة للتصميم المرجعي)
+   شريط جانبي داكن دائماً · عناصر تنقّل 10px · شعار متدرّج · بطاقات 20px
+   ════════════════════════════════════════════════════════════════════ */
+
+/* الشريط الجانبي داكن في الوضعين (توقيع التصميم) */
+[data-theme="light"] .app-sidebar,
+[data-theme="dark"] .app-sidebar,
+.app-sidebar {
+    background: var(--sidebar);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 12px;
+}
+
+/* البراند داخل الشريط الداكن */
+[data-theme="light"] .app-brand,
+.app-brand {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.app-brand strong { color: #f1f5f9; }
+.app-brand span:last-child { color: var(--sidebar-text); }
+
+/* روابط التنقّل بلغة التصميم */
+[data-theme="light"] .app-nav-link,
+.app-nav-link {
+    color: var(--sidebar-text);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    padding: 9px 12px;
+    font-weight: 600;
+}
+[data-theme="light"] .app-nav-link:hover,
+[data-theme="light"] .app-nav-link.active,
+.app-nav-link:hover,
+.app-nav-link.active {
+    color: var(--sidebar-active-text);
+    background: var(--sidebar-active);
+    border-color: transparent;
+}
+
+/* بطاقات الشريط على الخلفية الداكنة */
+[data-theme="light"] .app-sidebar-card,
+.app-sidebar-card {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--sidebar-text);
+}
+
+/* لوحات المحتوى: نصف قطر 20px + ظلّ ناعم (لغة التصميم) */
+.card,
+.panel-modern {
+    border-radius: 20px;
+    box-shadow: var(--shadow-sm);
+}
