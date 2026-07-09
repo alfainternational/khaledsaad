@@ -2,6 +2,7 @@
 
 use App\Application\Intelligence\CompileWorkspaceIntelligenceAction;
 use App\Contracts\AiGatewayInterface;
+use App\Domain\AI\Kernel\Agents\Ops\AnomalyDetector;
 use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
@@ -299,3 +300,52 @@ Schedule::command('intelligence:monitoring-snapshots monthly')
     ->monthlyOn(1, '09:00')
     ->withoutOverlapping()
     ->name('intelligence-monthly-monitoring');
+
+/*
+ | مراقب الأداء (performance_monitor) عبر cron: يبني سلسلة يومية لنشاط الأدوات
+ | لكل مساحة ويرصد الشذوذ (>2σ) عبر AnomalyDetector المحلي، فيكتب إنذاراً في
+ | KnowledgeStore. cron-only، بلا worker دائم، بلا مورد خارجي.
+ */
+Artisan::command('ai:monitor-performance {days=14}', function (AnomalyDetector $detector, KnowledgeStore $knowledge, int $days = 14): void {
+    $alerts = 0;
+    $checked = 0;
+
+    Workspace::query()->orderBy('id')->chunkById(50, function ($workspaces) use ($detector, $knowledge, $days, &$alerts, &$checked): void {
+        foreach ($workspaces as $workspace) {
+            $series = ToolRun::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('created_at', '>=', now()->subDays($days))
+                ->selectRaw('DATE(created_at) as d, COUNT(*) as c')
+                ->groupBy('d')
+                ->orderBy('d')
+                ->pluck('c')
+                ->map(fn ($v): int => (int) $v)
+                ->all();
+
+            if (count($series) < 4) {
+                continue;
+            }
+            $checked++;
+
+            $result = $detector->detect($series);
+            if ($result['status'] === 'anomaly') {
+                $knowledge->remember('monitor.performance.ws'.$workspace->id, [
+                    'workspace_id' => $workspace->id,
+                    'window_days' => $days,
+                    'series' => $series,
+                    'mean' => $result['mean'],
+                    'std' => $result['std'],
+                    'anomalies' => $result['anomalies'],
+                ]);
+                $alerts++;
+            }
+        }
+    });
+
+    $this->info(sprintf('مراقبة الأداء: فُحصت %d مساحة، إنذارات شذوذ: %d.', $checked, $alerts));
+})->purpose('رصد شذوذ نشاط الأدوات لكل مساحة عبر AnomalyDetector (performance_monitor).');
+
+Schedule::command('ai:monitor-performance')
+    ->dailyAt('05:00')
+    ->withoutOverlapping()
+    ->name('ai-performance-monitor');
