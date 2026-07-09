@@ -352,18 +352,18 @@ class PlatformBootstrapSeeder extends Seeder
             ['code' => 'swot-analysis', 'name' => 'تحليل SWOT', 'description' => 'تحليل نقاط القوة والضعف والفرص والتهديدات.', 'module' => 'modules.stage_1', 'stage' => 1, 'sort_order' => 30, 'status' => 'published'],
             ['code' => 'goal-definition', 'name' => 'تحديد الهدف', 'description' => 'صياغة الهدف التجاري أو التسويقي الأقرب حالياً.', 'module' => 'modules.stage_1', 'stage' => 1, 'sort_order' => 40, 'status' => 'published'],
             ['code' => 'problem-definition', 'name' => 'تحديد المشكلة', 'description' => 'تثبيت المشكلة الأساسية التي يحلها المشروع للعميل.', 'module' => 'modules.stage_1', 'stage' => 1, 'sort_order' => 50, 'status' => 'published'],
-            ['code' => 'tagline-builder', 'name' => 'الجملة التعريفية', 'description' => 'بناء رسالة تعريفية مختصرة وواضحة للمشروع.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 10, 'status' => 'published'],
-            ['code' => 'ideal-customer', 'name' => 'العميل المثالي', 'description' => 'تحديد الجمهور الأساسي وصفاته واحتياجاته.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 20, 'status' => 'published'],
-            ['code' => 'positioning', 'name' => 'التمركز', 'description' => 'توضيح موقع المشروع في السوق وما يميزه.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 30, 'status' => 'published'],
-            ['code' => 'market-analysis', 'name' => 'تحليل السوق', 'description' => 'قراءة السوق والفرص والاتجاهات ذات الصلة.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 40, 'status' => 'published'],
-            ['code' => 'competitor-analysis', 'name' => 'تحليل المنافسين', 'description' => 'مقارنة المنافسين الحاليين واستخراج الفجوات.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 50, 'status' => 'published'],
+            ['code' => 'ideal-customer', 'name' => 'العميل المثالي', 'description' => 'تحديد الجمهور الأساسي وصفاته واحتياجاته.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 10, 'status' => 'published'],
+            ['code' => 'market-analysis', 'name' => 'تحليل السوق', 'description' => 'قراءة السوق والفرص والاتجاهات ذات الصلة.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 20, 'status' => 'published'],
+            ['code' => 'competitor-analysis', 'name' => 'تحليل المنافسين', 'description' => 'مقارنة المنافسين الحاليين واستخراج الفجوات.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 30, 'status' => 'published'],
+            ['code' => 'positioning', 'name' => 'التمركز', 'description' => 'توضيح موقع المشروع في السوق وما يميزه.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 40, 'status' => 'published'],
+            ['code' => 'tagline-builder', 'name' => 'الجملة التعريفية', 'description' => 'بناء رسالة تعريفية مختصرة وواضحة للمشروع.', 'module' => 'modules.stage_2', 'stage' => 2, 'sort_order' => 50, 'status' => 'published'],
             ['code' => 'offer-builder', 'name' => 'بناء العرض', 'description' => 'تحويل القيمة إلى عرض واضح ومقنع.', 'module' => 'modules.stage_3', 'stage' => 3, 'sort_order' => 10, 'status' => 'published'],
             ['code' => 'pricing-strategy', 'name' => 'التسعير', 'description' => 'بناء منطق تسعير مناسب للسوق والعرض.', 'module' => 'modules.stage_3', 'stage' => 3, 'sort_order' => 20, 'status' => 'published'],
             ['code' => 'value-ladder', 'name' => 'سلم القيمة', 'description' => 'ترتيب مستويات القيمة والعروض عبر مراحل مختلفة.', 'module' => 'modules.stage_3', 'stage' => 3, 'sort_order' => 30, 'status' => 'published'],
             ['code' => 'package-builder', 'name' => 'الحزم', 'description' => 'بناء باقات أو مستويات عرض مختلفة.', 'module' => 'modules.stage_3', 'stage' => 3, 'sort_order' => 40, 'status' => 'published'],
             ['code' => 'promise-builder', 'name' => 'الوعد التسويقي', 'description' => 'صياغة الوعد الرئيسي الذي يقدمه المشروع.', 'module' => 'modules.stage_3', 'stage' => 3, 'sort_order' => 50, 'status' => 'published'],
-            ['code' => 'funnel-builder', 'name' => 'القمع التسويقي', 'description' => 'تحديد مراحل الجذب والتحويل والانتقال بينها.', 'module' => 'modules.stage_4', 'stage' => 4, 'sort_order' => 10, 'status' => 'published'],
-            ['code' => 'customer-journey', 'name' => 'رحلة العميل', 'description' => 'قراءة رحلة العميل من الوعي حتى الشراء والاحتفاظ.', 'module' => 'modules.stage_4', 'stage' => 4, 'sort_order' => 20, 'status' => 'published'],
+            ['code' => 'customer-journey', 'name' => 'رحلة العميل', 'description' => 'قراءة رحلة العميل من الوعي حتى الشراء والاحتفاظ.', 'module' => 'modules.stage_4', 'stage' => 4, 'sort_order' => 10, 'status' => 'published'],
+            ['code' => 'funnel-builder', 'name' => 'القمع التسويقي', 'description' => 'تحديد مراحل الجذب والتحويل والانتقال بينها.', 'module' => 'modules.stage_4', 'stage' => 4, 'sort_order' => 20, 'status' => 'published'],
             ['code' => 'marketing-plan', 'name' => 'الخطة التسويقية', 'description' => 'بناء خطة تنفيذية للحملات والمحتوى والقنوات.', 'module' => 'modules.stage_4', 'stage' => 4, 'sort_order' => 30, 'status' => 'published'],
             ['code' => 'content-plan', 'name' => 'خطة المحتوى', 'description' => 'تحويل الرسائل إلى محتوى منظم وقابل للتنفيذ.', 'module' => 'modules.stage_4', 'stage' => 4, 'sort_order' => 40, 'status' => 'published'],
             ['code' => 'campaign-builder', 'name' => 'الحملات', 'description' => 'بناء حملة أو أكثر مع الرسائل والقنوات والمتابعة.', 'module' => 'modules.stage_4', 'stage' => 4, 'sort_order' => 50, 'status' => 'published'],
@@ -378,6 +378,9 @@ class PlatformBootstrapSeeder extends Seeder
                 $tool,
                 $this->defaultStageMetadata((int) $tool['stage']),
                 $this->toolMetadata()[$tool['code']] ?? [],
+                // دمج المستويات الثلاثة في تجربة واحدة موحّدة (core + تفاصيل اختيارية):
+                // وضع واحد فقط، فلا يظهر مبدّل «بسيط/مرتّب/مفصّل».
+                ['has_guided_mode' => true, 'has_structured_mode' => false, 'has_expert_mode' => false],
             );
         })->all();
     }

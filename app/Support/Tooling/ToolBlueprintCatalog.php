@@ -767,8 +767,64 @@ class ToolBlueprintCatalog
             'outcome' => $outcome,
             'ai_role' => $aiRole,
             'result_label' => $resultLabel,
-            'modes' => $modes,
+            // دمج المستويات الثلاثة (بسيط/مرتب/مفصل) في مجموعة أسئلة واحدة موحّدة:
+            // أسئلة الأساس (core) من أول مستوى، والباقي تفاصيل (detail) اختيارية.
+            // نضعها تحت نفس مفاتيح الأداة الأصلية فلا ينكسر أي مستهلك؛ وطيّ المبدّل
+            // يتم بأعلام الأوضاع في قاعدة البيانات (guided وحده). المفاتيح محفوظة.
+            'modes' => $this->unifyModeKeys($modes),
         ];
+    }
+
+    /**
+     * يُعيد نفس مفاتيح الأوضاع الأصلية لكن كلها تشير للمجموعة الموحّدة نفسها،
+     * فيبقى كل مستهلك (السياسة/النموذج/التحليل) يعمل بلا تغيير، ويرى المستخدم
+     * تجربة واحدة تدريجية بدل ثلاثة مستويات مكرّرة.
+     *
+     * @param  array<string, array<string, mixed>>  $modes
+     * @return array<string, array<string, mixed>>
+     */
+    private function unifyModeKeys(array $modes): array
+    {
+        $unified = $this->mergeModesToUnified($modes);
+        $keys = array_keys($modes) ?: ['guided'];
+
+        return array_fill_keys($keys, $unified);
+    }
+
+    /**
+     * يوحّد حقول المستويات الثلاثة في مجموعة واحدة بلا تكرار (dedup بالمفتاح).
+     * حقول المستوى الأول = core (تُعرض دائماً)؛ ما تفرّد به المستويان الأعمق = detail.
+     *
+     * @param  array<string, array<string, mixed>>  $modes
+     * @return array<string, mixed>
+     */
+    private function mergeModesToUnified(array $modes): array
+    {
+        $modeList = array_values($modes);
+        $coreKeys = [];
+        foreach (($modeList[0]['fields'] ?? []) as $field) {
+            $coreKeys[(string) ($field['key'] ?? '')] = true;
+        }
+
+        $seen = [];
+        $unified = [];
+        foreach ($modeList as $mode) {
+            foreach (($mode['fields'] ?? []) as $field) {
+                $key = (string) ($field['key'] ?? '');
+                if ($key === '' || isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+                $field['depth'] = isset($coreKeys[$key]) ? 'core' : 'detail';
+                $unified[] = $field;
+            }
+        }
+
+        return $this->mode(
+            'الأسئلة',
+            'أجب عن الأساس، ووسّع بالتفاصيل الاختيارية متى شئت لنتيجة أدقّ.',
+            $unified,
+        );
     }
 
     /**
