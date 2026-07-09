@@ -59,10 +59,14 @@ class StudioGenerationController extends Controller
 
         $aiGeneration->load(['template', 'project.client', 'author', 'workspace']);
 
-        // content_creator + brand_guardian: مراجعة صياغة عربية محلية للمخرَج المولّد.
+        // content_creator + brand_guardian: مراجعة الأخصائيين على المخرَج المولّد،
+        // مع اختيار الجوانب حسب نوع القالب (السوشيال/الإيميل/العرض…). استشارية دائماً.
+        $output = (string) ($aiGeneration->output ?? '');
+        $firstLine = trim((string) strtok($output, "\n"));
         $review = $specialistReview->review(
-            (string) ($aiGeneration->output ?? ''),
-            [SpecialistReviewService::ASPECT_LOCALIZATION],
+            $output,
+            $this->reviewAspectsFor($aiGeneration->template?->code),
+            ['subject' => $firstLine, 'platform' => 'general'],
         );
 
         $sections = collect(StudioMarkdownSections::split($aiGeneration->output ?? ''))
@@ -85,6 +89,24 @@ class StudioGenerationController extends Controller
             'sections' => $sections,
             'specialistReview' => $review['panels'] === [] ? null : $review,
         ]);
+    }
+
+    /**
+     * جوانب مراجعة الأخصائيين المناسبة لنوع القالب (localization أساس دائماً).
+     *
+     * @return array<int, string>
+     */
+    private function reviewAspectsFor(?string $templateCode): array
+    {
+        $base = [SpecialistReviewService::ASPECT_LOCALIZATION];
+
+        return match ($templateCode) {
+            'social-ad' => [...$base, SpecialistReviewService::ASPECT_SOCIAL, SpecialistReviewService::ASPECT_CAMPAIGN],
+            'content-calendar' => [...$base, SpecialistReviewService::ASPECT_SOCIAL],
+            'email-sequence', 'whatsapp-followup' => [...$base, SpecialistReviewService::ASPECT_EMAIL],
+            'landing-headlines', 'sales-script' => [...$base, SpecialistReviewService::ASPECT_OFFER],
+            default => $base,
+        };
     }
 
     public function export(Request $request, AIGeneration $aiGeneration, string $format): Response
