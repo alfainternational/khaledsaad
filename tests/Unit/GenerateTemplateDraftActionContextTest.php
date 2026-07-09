@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Application\AI\GenerateTemplateDraftAction;
 use App\Contracts\AiGatewayInterface;
 use App\Domain\AI\Models\AITemplate;
+use App\Domain\AI\Services\AiCreditService;
 use App\Domain\Account\Models\Account;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Client\Models\Client;
@@ -164,6 +165,7 @@ TXT;
             ),
             app(StudioTemplateContractRegistry::class),
             app(StudioTemplateReadinessGate::class),
+            app(AiCreditService::class),
         );
 
         $generation = $action->handle(
@@ -298,6 +300,7 @@ TXT;
             ),
             app(StudioTemplateContractRegistry::class),
             app(StudioTemplateReadinessGate::class),
+            app(AiCreditService::class),
         );
 
         $generation = $action->handle(
@@ -420,6 +423,7 @@ TXT;
             ),
             app(StudioTemplateContractRegistry::class),
             app(StudioTemplateReadinessGate::class),
+            app(AiCreditService::class),
         );
 
         $generation = $action->handle(

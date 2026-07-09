@@ -5,6 +5,7 @@ namespace App\Application\AI;
 use App\Contracts\AiGatewayInterface;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\AI\Models\AITemplate;
+use App\Domain\AI\Services\AiCreditService;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
 use App\Models\User;
@@ -30,7 +31,14 @@ class GenerateTemplateDraftAction
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
         private readonly StudioTemplateContractRegistry $contractRegistry,
         private readonly StudioTemplateReadinessGate $readinessGate,
+        private readonly AiCreditService $credits,
     ) {}
+
+    /** تقدير توكن واقعي (الحرف العربي ≈ توكن لكل ~4 محارف) بدل عدّ الكلمات المضلّل. */
+    private function estimateTokens(string $text): int
+    {
+        return (int) ceil(mb_strlen(trim($text)) / 4);
+    }
 
     public function handle(
         Workspace $workspace,
@@ -123,7 +131,7 @@ class GenerateTemplateDraftAction
                     'readiness_assessment' => $readinessAssessment,
                 ],
                 'output' => $output,
-                'tokens_used' => str_word_count(strip_tags($output)),
+                'tokens_used' => 0, // مسار نقص الإدخال: لا نداء LLM، لا استهلاك.
                 'status' => 'needs_input',
             ]);
         }
@@ -199,7 +207,7 @@ class GenerateTemplateDraftAction
                     ],
                 ],
                 'output' => $output,
-                'tokens_used' => str_word_count(strip_tags($output)),
+                'tokens_used' => $this->estimateTokens($output),
                 'status' => 'needs_input',
             ]);
         }
@@ -220,7 +228,7 @@ class GenerateTemplateDraftAction
             'output_contract' => $template->output_contract_json,
         ];
 
-        return AIGeneration::query()->create([
+        $generation = AIGeneration::query()->create([
             'account_id' => $workspace->account_id,
             'workspace_id' => $workspace->id,
             'project_id' => $project?->id,
@@ -238,9 +246,26 @@ class GenerateTemplateDraftAction
                 'readiness_assessment' => $readinessAssessment,
             ],
             'output' => $output,
-            'tokens_used' => str_word_count(strip_tags($output)),
+            'tokens_used' => $this->estimateTokens($aiPrompt.' '.$output),
             'status' => 'completed',
         ]);
+
+        // §31: كل توليد ناجح يستهلك رصيداً من دفتر الأرصدة. أفضل جهد — لا يكسر التسليم.
+        $account = $workspace->account;
+        if ($account !== null) {
+            try {
+                $this->credits->consume(
+                    $account,
+                    max(1, (int) $template->credit_cost),
+                    'ai_studio.generation',
+                    (string) ($generation->public_id ?? $generation->id),
+                );
+            } catch (\Throwable $e) {
+                Log::warning('AI credit consume failed: '.$e->getMessage());
+            }
+        }
+
+        return $generation;
     }
 
     /**
