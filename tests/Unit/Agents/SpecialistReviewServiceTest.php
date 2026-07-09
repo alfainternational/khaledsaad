@@ -6,7 +6,9 @@ use App\Domain\AI\Kernel\Agents\Specialists\CustomerJourneySpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\EmailSequenceSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\GrowthLoopSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\InfluencerSpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\LeadQualitySpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\LocalizationSpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\MeasurementPlanSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\OfferConversionSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\PaidCampaignSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\PrOutreachSpecialist;
@@ -31,6 +33,8 @@ class SpecialistReviewServiceTest extends TestCase
             new GrowthLoopSpecialist,
             new PrOutreachSpecialist,
             new InfluencerSpecialist,
+            new MeasurementPlanSpecialist,
+            new LeadQualitySpecialist,
         );
     }
 

@@ -6,7 +6,9 @@ use App\Domain\AI\Kernel\Agents\Specialists\CustomerJourneySpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\EmailSequenceSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\GrowthLoopSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\InfluencerSpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\LeadQualitySpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\LocalizationSpecialist;
+use App\Domain\AI\Kernel\Agents\Specialists\MeasurementPlanSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\OfferConversionSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\PaidCampaignSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\PrOutreachSpecialist;
@@ -43,6 +45,10 @@ class SpecialistReviewService
 
     public const ASPECT_INFLUENCER = 'influencer';
 
+    public const ASPECT_MEASUREMENT = 'measurement';
+
+    public const ASPECT_LEAD = 'lead';
+
     /** @var array<string, string> اسم بشري لكل جانب. */
     private const NAMES = [
         self::ASPECT_LOCALIZATION => 'صياغة عربية',
@@ -55,6 +61,8 @@ class SpecialistReviewService
         self::ASPECT_GROWTH => 'حلقة النمو',
         self::ASPECT_PR => 'العلاقات العامة',
         self::ASPECT_INFLUENCER => 'المؤثّرون',
+        self::ASPECT_MEASUREMENT => 'القياس المتقدّم',
+        self::ASPECT_LEAD => 'جودة الليدات',
     ];
 
     public function __construct(
@@ -68,6 +76,8 @@ class SpecialistReviewService
         private readonly GrowthLoopSpecialist $growth,
         private readonly PrOutreachSpecialist $pr,
         private readonly InfluencerSpecialist $influencer,
+        private readonly MeasurementPlanSpecialist $measurement,
+        private readonly LeadQualitySpecialist $lead,
     ) {}
 
     /**
@@ -118,6 +128,8 @@ class SpecialistReviewService
             self::ASPECT_GROWTH => $this->growth->analyze($text),
             self::ASPECT_PR => $this->pr->analyze($text),
             self::ASPECT_INFLUENCER => $this->influencer->analyze($text),
+            self::ASPECT_MEASUREMENT => $this->measurement->analyze($text),
+            self::ASPECT_LEAD => $this->lead->analyze($text),
             default => null,
         };
     }
