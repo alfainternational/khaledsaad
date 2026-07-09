@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Application\AI\GenerateTemplateDraftAction;
+use App\Domain\AI\Kernel\Agents\SpecialistReviewService;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\AI\Models\AITemplate;
 use App\Domain\Project\Models\Project;
@@ -48,12 +49,21 @@ class StudioGenerationController extends Controller
             ->with('status', $flash->studioDraftGenerated());
     }
 
-    public function show(Request $request, AIGeneration $aiGeneration): View
-    {
+    public function show(
+        Request $request,
+        AIGeneration $aiGeneration,
+        SpecialistReviewService $specialistReview,
+    ): View {
         $workspace = $this->currentWorkspace($request);
         abort_unless($aiGeneration->workspace_id === $workspace->id, 403);
 
         $aiGeneration->load(['template', 'project.client', 'author', 'workspace']);
+
+        // content_creator + brand_guardian: مراجعة صياغة عربية محلية للمخرَج المولّد.
+        $review = $specialistReview->review(
+            (string) ($aiGeneration->output ?? ''),
+            [SpecialistReviewService::ASPECT_LOCALIZATION],
+        );
 
         $sections = collect(StudioMarkdownSections::split($aiGeneration->output ?? ''))
             ->values()
@@ -73,6 +83,7 @@ class StudioGenerationController extends Controller
         return view('app.studio-generation', [
             'generation' => $aiGeneration,
             'sections' => $sections,
+            'specialistReview' => $review['panels'] === [] ? null : $review,
         ]);
     }
 

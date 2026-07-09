@@ -94,6 +94,35 @@
     @endif
 </section>
 
+@if (! empty($specialistReview['panels']))
+    <section class="card mb-6">
+        <div class="app-section-head">
+            <h3 class="heading-sm">مراجعة الأخصائيين</h3>
+            @if (! is_null($specialistReview['score']))
+                <span class="app-badge">{{ $specialistReview['score'] }}%</span>
+            @endif
+        </div>
+        <div class="specialist-review-body mt-4">
+            @foreach ($specialistReview['panels'] as $panel)
+                @php $tier = $panel['score'] >= 80 ? 'good' : ($panel['score'] >= 50 ? 'warn' : 'low'); @endphp
+                <div class="specialist-panel">
+                    <div class="specialist-panel-head">
+                        <span class="specialist-panel-name">{{ $panel['name'] }}</span>
+                        <span class="specialist-panel-score specialist-tier-{{ $tier }}">{{ $panel['score'] }}%</span>
+                    </div>
+                    @if (! empty($panel['items']))
+                        <ul class="specialist-items">
+                            @foreach (array_slice($panel['items'], 0, 4) as $item)
+                                <li>{{ $item }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </section>
+@endif
+
 @if (!empty($generation->inputs_json['analysis_dossier']['guide_markdown']))
     <details class="card mb-6 studio-context-details" open>
         <summary class="heading-sm studio-context-summary">الدليل التحليلي المرجعي المستخدم قبل التوليد</summary>
