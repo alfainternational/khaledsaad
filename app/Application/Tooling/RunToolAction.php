@@ -10,6 +10,7 @@ use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Domain\WorkspaceData\Models\WorkspaceData;
 use App\Models\User;
+use App\Support\Tooling\CanonicalOutputMapper;
 
 class RunToolAction
 {
@@ -17,6 +18,7 @@ class RunToolAction
         private readonly BuildToolPayloadAction $buildToolPayloadAction,
         private readonly RefreshJourneySnapshotAction $refreshJourneySnapshotAction,
         private readonly CompileWorkspaceIntelligenceAction $compileIntelligence,
+        private readonly CanonicalOutputMapper $canonicalOutputMapper,
     ) {}
 
     /**
@@ -87,6 +89,27 @@ class RunToolAction
                 'value_json' => $payload['source_context'],
             ],
         );
+
+        // طبقة المخرجات القابلة لإعادة الاستخدام (§30): نخزّن الإجابة الفعلية بمفتاح
+        // دلالي معياري (offer/tagline/ideal_customer…) لتقرأه الأدوات والاستوديو لاحقاً.
+        $canonical = $this->canonicalOutputMapper->map($tool->code, $inputs);
+        if ($canonical !== null) {
+            WorkspaceData::query()->updateOrCreate(
+                [
+                    'workspace_id' => $workspace->id,
+                    'project_id' => $project->id,
+                    'key' => $canonical['key'],
+                ],
+                [
+                    'value_json' => [
+                        'value' => $canonical['value'],
+                        'source_tool' => $tool->code,
+                        'last_run_id' => $run->id,
+                        'updated_at' => now()->toDateTimeString(),
+                    ],
+                ],
+            );
+        }
 
         $this->refreshJourneySnapshotAction->handle($project);
 
