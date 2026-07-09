@@ -6953,3 +6953,11 @@ body.rd-dark .text-gradient-light {
     border-radius: 20px;
     box-shadow: var(--shadow-sm);
 }
+
+/* الترويسة: خلفية مموّهة متكيّفة مع الوضع (كانت داكنة ثابتة تُظلم الوضع الفاتح) + التصاق */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+}
