@@ -26,6 +26,7 @@ class BuildProjectReportAction
         private readonly AiGatewayInterface $gateway,
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
         private readonly StrategicDiagnosisBuilder $diagnosisBuilder,
+        private readonly DomainPlansBuilder $domainPlansBuilder,
     ) {}
 
     /**
@@ -120,6 +121,9 @@ class BuildProjectReportAction
         // مستخرَجة من إجابات كل الأدوات — قلب التقرير.
         $diagnosis = $this->diagnosisBuilder->build($runs);
 
+        // خطط المجالات الكاملة (محتوى/ترويج/عرض/رحلة/أداء) مشتقّة من المدخلات.
+        $domainPlans = $this->domainPlansBuilder->build($runs);
+
         $base = [
             'project' => $project->name,
             'client' => $project->client?->name,
@@ -131,6 +135,7 @@ class BuildProjectReportAction
             'gaps' => $gaps,
             'audit' => $audit,
             'diagnosis' => $diagnosis,
+            'domain_plans' => $domainPlans,
         ];
 
         if (count($completedCodes) === 0) {

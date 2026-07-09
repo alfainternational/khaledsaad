@@ -105,6 +105,32 @@
     </section>
     @endif
 
+    {{-- خطط المجالات الكاملة (محتوى/ترويج/عرض/رحلة/أداء) --}}
+    @php $domainPlans = $report['domain_plans'] ?? []; @endphp
+    @if (! empty($domainPlans))
+    <section class="report-block">
+        <h2 class="report-h2">الخطط التفصيلية لكل مجال</h2>
+        <p class="report-muted mb-3">خطة كاملة قابلة للتطبيق لكل مجال، مشتقّة من إجاباتك — كل بند من مدخل حقيقي أو توصية ملموسة.</p>
+        <div class="report-domain-list">
+            @foreach ($domainPlans as $dp)
+                <article class="report-domain">
+                    <div class="report-domain-head">
+                        <h3 class="report-h3">{{ $dp['title'] }}</h3>
+                        <span class="report-domain-by">{{ $dp['by'] }}</span>
+                    </div>
+                    <p class="report-domain-goal">{{ $dp['goal'] }}</p>
+                    @foreach ($dp['sections'] as $sec)
+                        <div class="report-domain-sec">
+                            <strong class="report-domain-sec-h">{{ $sec['heading'] }}</strong>
+                            <ul class="report-ul">@foreach ($sec['items'] as $it)<li>{{ $it }}</li>@endforeach</ul>
+                        </div>
+                    @endforeach
+                </article>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
     {{-- الأقسام حسب المرحلة --}}
     <section class="report-block">
         <h2 class="report-h2">التحليل حسب المراحل</h2>
