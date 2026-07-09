@@ -785,10 +785,9 @@ class ToolBlueprintCatalog
      */
     private function unifyModeKeys(array $modes): array
     {
-        $unified = $this->mergeModesToUnified($modes);
-        $keys = array_keys($modes) ?: ['guided'];
-
-        return array_fill_keys($keys, $unified);
+        // مفتاح واحد فقط ('guided') فلا يرسم العارض تبويبات/أقسام متعدّدة —
+        // تجربة سؤال واحدة موحّدة. 'guided' هو الوضع الاحتياطي المعتمد في كل مكان.
+        return ['guided' => $this->mergeModesToUnified($modes)];
     }
 
     /**

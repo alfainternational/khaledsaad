@@ -13,7 +13,10 @@
     $collapseSwitcher = ! $isDiagnosis && $modeCount > 1;
 @endphp
 
-@if ($collapseSwitcher)
+@if ($modeCount <= 1)
+    {{-- تجربة موحّدة بوضع واحد: لا مبدّل ولا أقسام — فقط قيمة الوضع المخفية. --}}
+    <input type="hidden" name="mode" value="{{ $initialMode }}" data-tool-mode-switcher data-tool-mode-root>
+@elseif ($collapseSwitcher)
     <details class="tool-context-rail tool-mode-rail" data-tool-mode-root>
         <summary class="onb-advanced-summary">
             <span>مستوى الأسئلة — الافتراضي مبسّط</span>
