@@ -41,6 +41,36 @@
         <p class="report-prose">{{ $report['executive_summary'] }}</p>
     </section>
 
+    {{-- التشخيص الاستراتيجي: مشكلة ← سبب فعلي ← حل واقعي (قلب التقرير) --}}
+    @php $diagnosis = $report['diagnosis'] ?? ['problems' => [], 'missing' => []]; @endphp
+    @if (! empty($diagnosis['problems']))
+    <section class="report-block">
+        <h2 class="report-h2">التشخيص: مشاكلك وأسبابها الفعلية وحلولها</h2>
+        <p class="report-muted mb-3">لكل مشكلة سببها الحقيقي المستخرَج من تحليل إجاباتك عبر الأدوات، مع حلّ واقعي قابل للتطبيق.</p>
+        <div class="report-diag-list">
+            @foreach ($diagnosis['problems'] as $item)
+                @php $sev = $item['severity'] ?? 'mid'; @endphp
+                <article class="report-diag report-diag-{{ $sev }}">
+                    <div class="report-diag-head">
+                        <span class="report-diag-sev sev-{{ $sev }}">{{ ['high' => 'حرج', 'mid' => 'متوسط', 'low' => 'منخفض'][$sev] ?? 'متوسط' }}</span>
+                        <strong class="report-diag-problem">{{ $item['problem'] }}</strong>
+                    </div>
+                    <div class="report-diag-body">
+                        <div class="report-diag-row"><span class="report-diag-tag tag-cause">السبب الفعلي</span><p>{{ $item['cause'] }}</p></div>
+                        <div class="report-diag-row"><span class="report-diag-tag tag-fix">الحل الواقعي</span><p>{{ $item['solution'] }}</p></div>
+                        @if (! empty($item['impact']))
+                            <div class="report-diag-impact">الأثر المتوقّع: {{ $item['impact'] }}</div>
+                        @endif
+                    </div>
+                </article>
+            @endforeach
+        </div>
+        @if (! empty($diagnosis['missing']))
+            <p class="report-muted mt-3">لإكمال الصورة، أكمل أدوات: {{ implode('، ', $diagnosis['missing']) }} — بعض الأسباب لا تُحسَم دون إجاباتها.</p>
+        @endif
+    </section>
+    @endif
+
     {{-- الأولويات --}}
     @if (! empty($report['priorities']))
     <section class="report-block">

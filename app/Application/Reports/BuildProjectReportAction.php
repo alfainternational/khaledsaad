@@ -25,6 +25,7 @@ class BuildProjectReportAction
     public function __construct(
         private readonly AiGatewayInterface $gateway,
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
+        private readonly StrategicDiagnosisBuilder $diagnosisBuilder,
     ) {}
 
     /**
@@ -115,6 +116,10 @@ class BuildProjectReportAction
         // دمج التدقيق الذكي (إن وُجد): تشخيص فني مفصّل + درجات + خطة 7/30/90 جاهزة.
         $audit = $this->auditSnapshot($project);
 
+        // التشخيص الاستراتيجي المتقاطع: ثلاثيات (مشكلة ← سبب فعلي ← حل واقعي)
+        // مستخرَجة من إجابات كل الأدوات — قلب التقرير.
+        $diagnosis = $this->diagnosisBuilder->build($runs);
+
         $base = [
             'project' => $project->name,
             'client' => $project->client?->name,
@@ -125,6 +130,7 @@ class BuildProjectReportAction
             'stages' => array_values($stages),
             'gaps' => $gaps,
             'audit' => $audit,
+            'diagnosis' => $diagnosis,
         ];
 
         if (count($completedCodes) === 0) {
