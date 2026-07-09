@@ -816,6 +816,16 @@ class ToolBlueprintCatalog
      */
     private function enrichField(array $field): array
     {
+        // ترقية الحقول المفتوحة إلى textarea متعدّد الأسطر: إدخال أسهل وأغنى للأسئلة
+        // التي تحتاج شرحاً (مشكلة/هدف/عرض/رسالة/رحلة…)، مع إبقاء القصيرة نصّية سطراً.
+        if (($field['type'] ?? 'text') === 'text' && $this->isLongFormField(
+            (string) ($field['key'] ?? ''),
+            (string) ($field['label'] ?? ''),
+            (string) ($field['placeholder'] ?? ''),
+        )) {
+            $field['type'] = 'textarea';
+        }
+
         $tip = $this->answerTipFor(
             (string) ($field['key'] ?? ''),
             (string) ($field['label'] ?? ''),
@@ -826,6 +836,36 @@ class ToolBlueprintCatalog
         return $field + [
             'answer_tip' => $tip,
         ];
+    }
+
+    /** هل الحقل سؤال مفتوح يحتاج شرحاً (فيُعرض كـtextarea)؟ */
+    private function isLongFormField(string $key, string $label, string $placeholder): bool
+    {
+        $haystack = mb_strtolower($key.' '.$label.' '.$placeholder);
+
+        // استثناءات قصيرة صريحة تبقى سطراً واحداً.
+        foreach (['name', 'اسم', 'سعر', 'price', 'موعد', 'deadline', 'تاريخ'] as $short) {
+            if (str_contains($haystack, $short)) {
+                return false;
+            }
+        }
+
+        $longForm = [
+            'problem', 'مشكلة', 'goal', 'هدف', 'result', 'نتيجة', 'offer', 'عرض', 'message', 'رسالة',
+            'story', 'قصة', 'reason', 'سبب', 'لماذا', 'differ', 'تميّز', 'تميز', 'فرق', 'value', 'قيمة',
+            'journey', 'رحلة', 'plan', 'خطة', 'note', 'ملاحظ', 'position', 'تموضع', 'promise', 'وعد',
+            'pain', 'وجع', 'ألم', 'trigger', 'دافع', 'objection', 'اعتراض', 'bottleneck', 'عائق',
+            'strength', 'قوة', 'قوّة', 'gap', 'فجوة', 'opportunity', 'فرصة', 'audience', 'جمهور',
+            'العميل', 'الشريحة', 'describe', 'صف ', 'اشرح', 'وصف', 'متابعة', 'محتوى', 'حملة', 'خدمة',
+        ];
+
+        foreach ($longForm as $needle) {
+            if (str_contains($haystack, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function answerTipFor(string $key, string $label, string $placeholder, string $type): string
