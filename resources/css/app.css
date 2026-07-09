@@ -6850,9 +6850,20 @@ body.rd-dark .text-gradient-light {
 
 @media print {
     .no-print, .app-sidebar, .app-header, .ai-chat-toggle, .ai-chat-panel { display: none !important; }
-    .report-block, .report-stat, .report-tool, .report-plan-col { break-inside: avoid; }
-    .report-shell { gap: 1rem; }
     body, .app-body { background: #fff !important; color: #000 !important; }
+    /* كروم لا يجزّئ عناصر grid/flex عبر صفحات الطباعة، فتُطبع الصفحة الأولى فقط.
+       نُجبر حاويات القالب على التدفّق الكتلي حتى ينساب التقرير كاملاً عبر الصفحات. */
+    html, body { height: auto !important; overflow: visible !important; }
+    .app-body, .app-shell, .app-main, .app-content, .report-shell,
+    .report-diag-list, .report-domain-list {
+        display: block !important; height: auto !important; min-height: 0 !important; overflow: visible !important;
+    }
+    .app-shell { grid-template-columns: 1fr !important; }
+    .app-content { padding: 0 !important; }
+    .report-shell { gap: 1rem; }
+    /* الأقسام الكبيرة تنقسم بحرّية عبر الصفحات؛ نمنع قصّ العناصر الصغيرة فقط. */
+    .report-stat, .report-tool, .report-diag, .report-plan-col, .report-domain-sec { break-inside: avoid; }
+    .report-h2, .report-h3 { break-after: avoid; }
 }
 
 /* ── قدرات الوكلاء (Agent Catalog) — لوحة الآدمن ────────────────────── */
