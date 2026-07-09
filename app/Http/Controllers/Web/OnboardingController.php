@@ -62,7 +62,7 @@ class OnboardingController extends Controller
                 'recommended_path' => PathCatalog::exists($profile['recommended_path'] ?? null)
                     ? (string) $profile['recommended_path']
                     : PathCatalog::recommend($defaultPersona, $defaultPrimaryGoal, $defaultAwarenessLevel),
-                'audience' => (string) ($profile['audience'] ?? 'عملاء مناسبون لخدمتي'),
+                'audience' => (string) ($profile['audience'] ?? ''),
                 'content_locale' => ContentLocaleCatalog::exists($profile['content_locale'] ?? null)
                     ? (string) $profile['content_locale']
                     : 'ar_modern_fusha',
