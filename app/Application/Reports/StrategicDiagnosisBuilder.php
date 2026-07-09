@@ -32,6 +32,7 @@ class StrategicDiagnosisBuilder
         $in = $this->gather($runs);
 
         $problems = array_values(array_filter([
+            $this->goalVsReach($in),
             $this->messageGap($in),
             $this->noRiskReversal($in),
             $this->noRetention($in),
@@ -86,6 +87,19 @@ class StrategicDiagnosisBuilder
         return $this->val($in, $key) !== '';
     }
 
+    /** هل أُنجزت الأداة المصدر فعلاً؟ (وجود ToolRun لها) — لتمييز «حقل فارغ» عن «أداة لم تُملأ». */
+    private function toolDone(array $in, string ...$codes): bool
+    {
+        $tools = (array) ($in['_tools'] ?? []);
+        foreach ($codes as $c) {
+            if (! empty($tools[$c])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** إجابة عامة: قصيرة جداً أو تحتوي حشواً. */
     private function isGeneric(string $value): bool
     {
@@ -116,12 +130,44 @@ class StrategicDiagnosisBuilder
     /**
      * @return array{problem: string, cause: string, solution: string, severity: string, impact: string, evidence: array<int, string>}
      */
-    private function make(string $problem, string $cause, string $solution, string $severity, string $impact, array $evidence): array
+    private function make(string $problem, string $cause, string $solution, string $severity, string $impact, array $evidence, bool $deferred = false): array
     {
-        return compact('problem', 'cause', 'solution', 'severity', 'impact', 'evidence');
+        return compact('problem', 'cause', 'solution', 'severity', 'impact', 'evidence', 'deferred');
     }
 
     // ═══════════ الكواشف المتقاطعة ═══════════
+
+    /**
+     * الهدف مقابل الوصول: هدف طموح (رقم + نمو/اكتساب) فوق قاعدة وصول ضعيفة
+     * (لا قناة مثبتة + خوف انتشار في الضعف/التهديد/العائق). أخطر تناقض في ملف مبتدئ.
+     */
+    private function goalVsReach(array $in): ?array
+    {
+        $goal = $this->val($in, 'goal_now') ?: $this->val($in, 'goal_metric');
+        if ($goal === '' || $this->isGeneric($goal)) {
+            return null;
+        }
+        // هدف طموح: يحوي رقماً + كلمة اكتساب/نمو/مبيعات.
+        if (! preg_match('/\d/u', $goal)
+            || ! $this->containsAny($goal, ['عميل', 'عملاء', 'مبيعات', 'زيادة', 'نمو', '%', '٪', 'إيراد', 'ربح'])) {
+            return null;
+        }
+        $hasChannel = $this->has($in, 'channel_primary') && ! $this->isGeneric($this->val($in, 'channel_primary'));
+        $reachFear = trim($this->val($in, 'weaknesses').' '.$this->val($in, 'threats').' '.$this->val($in, 'goal_obstacle'));
+        $weakReach = $this->containsAny($reachFear, ['انتشار', 'الإنتشار', 'الانتشار', 'يعرف', 'معرف', 'وصول', 'جمهور', 'ظهور', 'زيارات', 'حضور']);
+        if ($hasChannel || ! $weakReach) {
+            return null;
+        }
+
+        return $this->make(
+            'هدفك أكبر من وصولك الحالي — فجوة بين الطموح والواقع.',
+            'حدّدت هدفاً طموحاً: «'.$goal.'». لكن مؤشّراتك تكشف ضعف وصول: «'.$reachFear.'»، وبلا قناة أساسية مثبتة بعد. الهدف الطموح فوق قاعدة وصول ضعيفة يتحوّل إلى إحباط لا نتيجة.',
+            'قبل ملاحقة الرقم الكبير، ثبّت قناة وصول واحدة وابنِ حضوراً أوّلياً: هدف مرحلي أصغر (أول 10 عملاء عبر قناة واحدة خلال 30 يوماً)، ثم توسّع نحو الرقم الأكبر بالبيانات.',
+            'high',
+            'الطموح بلا وصول يستنزف الوقت والميزانية قبل أوّل نتيجة.',
+            ['goal_now (طموح)', 'channel_primary (فارغ)', 'weaknesses/threats (ضعف وصول)'],
+        );
+    }
 
     /** فجوة الرسالة: يعرف ميزته (منافسين) لكن تموضعه/جملته عامة. */
     private function messageGap(array $in): ?array
@@ -175,13 +221,22 @@ class StrategicDiagnosisBuilder
             return null;
         }
 
+        $done = $this->toolDone($in, 'value-ladder', 'follow-up-sequence', 'customer-journey');
+        $solution = 'صمّم سلّم قيمة (عيّنة → منتج أساسي → اشتراك/تجديد) + تسلسل متابعة بعد البيع (شكر → قيمة → عرض تكرار). ابدأ برسالة متابعة واحدة بعد 7 أيام من الشراء.';
+        $impact = 'رفع تكرار الشراء أرخص 5 مرّات من اكتساب عميل جديد.';
+
+        if (! $done) {
+            return $this->make(
+                'لم تُحدِّد بعد آلية للاحتفاظ بالعميل بعد أوّل شراء.',
+                'أدوات سلّم القيمة والمتابعة ورحلة العميل لم تُنجَز بعد، فلا تظهر أي آلية احتفاظ. قد تكون واضحة في ذهنك لكنها غير مُدوّنة — وتركها فارغة يجعل النموّ كلّه متّكئاً على اكتساب جديد مكلف.',
+                $solution, 'mid', $impact, ['أدوات الاحتفاظ لم تُنجَز بعد'], true,
+            );
+        }
+
         return $this->make(
             'تشتري العميل مرة واحدة ثم تفقده.',
-            'أدوات سلّم القيمة والمتابعة ورحلة العميل لا تحتوي أي آلية احتفاظ — لم تُصمَّم أصلاً. كل نموّك يعتمد على اكتساب جديد مكلف بدل تكرار الشراء.',
-            'صمّم سلّم قيمة (عيّنة → منتج أساسي → اشتراك/تجديد) + تسلسل متابعة بعد البيع (شكر → قيمة → عرض تكرار). ابدأ برسالة متابعة واحدة بعد 7 أيام من الشراء.',
-            'mid',
-            'رفع تكرار الشراء أرخص 5 مرّات من اكتساب عميل جديد.',
-            ['ladder_retention/followup (فارغ)'],
+            'أنجزت أدوات سلّم القيمة/المتابعة/رحلة العميل لكن بلا أي آلية احتفاظ فيها. كل نموّك يعتمد على اكتساب جديد مكلف بدل تكرار الشراء.',
+            $solution, 'mid', $impact, ['ladder_retention/followup (فارغ)'],
         );
     }
 
@@ -235,13 +290,22 @@ class StrategicDiagnosisBuilder
             return null;
         }
 
+        $done = $this->toolDone($in, 'marketing-plan');
+        $solution = 'اختر قناة واحدة يتواجد فيها جمهورك أكثر، وجّه إليها الجهد الأكبر حتى تحقّق نتيجة مستقرّة، ثم توسّع.';
+        $impact = 'تجميع الجهد في قناة واحدة يسرّع التعلّم ويخفض تكلفة الاكتساب.';
+
+        if (! $done) {
+            return $this->make(
+                'لم تُحدِّد بعد قناة أساسية تركّز عليها.',
+                'خطتك التسويقية لم تُنجَز بعد، فلا قناة أساسية مُثبتة. توزيع الجهد على قنوات متعددة قبل إتقان واحدة يبعثر الميزانية والتعلّم.',
+                $solution, 'low', $impact, ['قناة أساسية غير محدّدة بعد'], true,
+            );
+        }
+
         return $this->make(
             'لا قناة أساسية واضحة تركّز عليها.',
-            'خطتك التسويقية لا تحدّد قناة أساسية واحدة. توزيع الجهد على قنوات متعددة قبل إتقان واحدة يبعثر الميزانية والتعلّم.',
-            'اختر قناة واحدة يتواجد فيها جمهورك أكثر، ركّز 80% من الجهد عليها حتى تحقّق نتيجة مستقرّة، ثم توسّع.',
-            'low',
-            'التركيز يسرّع التعلّم ويخفض تكلفة الاكتساب.',
-            ['channel_primary (فارغ)'],
+            'خطتك التسويقية لا تحدّد قناة أساسية واحدة رغم إنجازها. توزيع الجهد على قنوات متعددة قبل إتقان واحدة يبعثر الميزانية والتعلّم.',
+            $solution, 'low', $impact, ['channel_primary (فارغ)'],
         );
     }
 
@@ -253,13 +317,22 @@ class StrategicDiagnosisBuilder
             return null;
         }
 
+        $done = $this->toolDone($in, 'kpi-tracker', 'marketing-plan', 'funnel-builder');
+        $solution = 'حدّد مؤشّراً قائداً واحداً (مثل معدّل التحويل) + عتبة إنذار + إجراء عند تجاوزها، وراقبه أسبوعياً على لوحة واحدة.';
+        $impact = 'بلا قياس، الميزانية تُنفَق على الحدس لا على ما ينجح.';
+
+        if (! $done) {
+            return $this->make(
+                'لم تُحدِّد بعد مؤشّراً قائداً تقيس به تقدّمك.',
+                'أدوات المؤشرات/الخطة/القمع لم تُنجَز بعد، فلا يظهر مقياس واحد تراقبه. بلا مقياس محدّد، لن تعرف هل تتقدّم أم تدور.',
+                $solution, 'mid', $impact, ['مؤشّر قائد غير محدّد بعد'], true,
+            );
+        }
+
         return $this->make(
             'تعمل بلا مؤشّر قياس تقود به قراراتك.',
-            'لا يوجد مؤشّر قائد محدّد في أدوات المؤشرات/الخطة/القمع. بلا مقياس واحد تراقبه، لن تعرف هل تتقدّم أم تدور.',
-            'حدّد مؤشّراً قائداً واحداً (مثل معدّل التحويل) + عتبة إنذار + إجراء عند تجاوزها، وراقبه أسبوعياً على لوحة واحدة.',
-            'mid',
-            'بلا قياس، الميزانية تُنفَق على الحدس لا على ما ينجح.',
-            ['kpi_leading/north_metric (فارغ)'],
+            'أنجزت أدوات المؤشرات/الخطة/القمع لكن بلا مؤشّر قائد محدّد فيها. بلا مقياس واحد تراقبه، لن تعرف هل تتقدّم أم تدور.',
+            $solution, 'mid', $impact, ['kpi_leading/north_metric (فارغ)'],
         );
     }
 

@@ -21,7 +21,7 @@
             <strong class="report-stat-value">{{ $report['tools_completed'] }}</strong>
         </div>
         <div class="report-stat">
-            <span class="report-stat-label">متوسط الاكتمال</span>
+            <span class="report-stat-label">متوسط تعبئة الأدوات</span>
             <strong class="report-stat-value">{{ $report['avg_quality'] }}%</strong>
         </div>
         @if (! is_null($report['content_quality'] ?? null))
@@ -57,6 +57,9 @@
                     <div class="report-diag-head">
                         <span class="report-diag-sev sev-{{ $sev }}">{{ ['high' => 'حرج', 'mid' => 'متوسط', 'low' => 'منخفض'][$sev] ?? 'متوسط' }}</span>
                         <strong class="report-diag-problem">{{ $item['problem'] }}</strong>
+                        @if (! empty($item['deferred']))
+                            <span class="report-diag-defer">يتوقّف على إكمال الأداة</span>
+                        @endif
                     </div>
                     <div class="report-diag-body">
                         <div class="report-diag-row"><span class="report-diag-tag tag-cause">السبب الفعلي</span><p>{{ $item['cause'] }}</p></div>
@@ -166,6 +169,9 @@
     @if (! empty($audit) && (! empty($audit['top_problems']) || ! empty($audit['executive_score'])))
     <section class="report-block">
         <h2 class="report-h2">التشخيص الفني (من التدقيق الذكي)</h2>
+        @if (! empty($audit['site_unreachable']))
+            <p class="report-gap">تعذّر الوصول إلى الموقع أثناء التدقيق — الدرجة أدناه مبنية على البيانات المتاحة وقد لا تعكس الموقع الحيّ. تأكّد من إتاحة الموقع ثم أعد التدقيق.</p>
+        @endif
         @if (! empty($audit['executive_score']))
             <p class="report-prose">الدرجة التنفيذية للتدقيق: <strong>{{ $audit['executive_score'] }}%</strong>@if(!empty($audit['completed_at'])) · بتاريخ {{ $audit['completed_at'] }}@endif</p>
         @endif

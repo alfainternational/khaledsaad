@@ -30,6 +30,8 @@
     .diag-row { margin-top: 6px; }
     .diag-tag { font-weight: bold; font-size: 9px; }
     .diag-impact { color: {{ $brand }}; font-size: 9px; font-weight: bold; margin-top: 5px; }
+    .diag-defer { color: #64748b; font-size: 8px; font-weight: bold; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 0 6px; margin-right: 6px; }
+    .audit-caveat { background: #fef3c7; border-right: 3px solid #f59e0b; color: #92400e; font-size: 9px; padding: 6px 9px; margin-bottom: 6px; }
     .plan-tbl { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
     .plan-tbl td { border: 1px solid #e2e8f0; padding: 8px; vertical-align: top; width: 33.3%; }
     .plan-tbl th { background: {{ $brand }}; color: #fff; padding: 6px; font-size: 11px; }
@@ -69,7 +71,7 @@
     @php $sev = $item['severity'] ?? 'mid'; @endphp
     <div class="diag" style="border-right-color: {{ $sevColor[$sev] }};">
         <span class="diag-sev" style="background: {{ $sevColor[$sev] }};">{{ $sevLabel[$sev] }}</span>
-        <span class="diag-p">{{ $item['problem'] }}</span>
+        <span class="diag-p">{{ $item['problem'] }}</span>@if (! empty($item['deferred']))<span class="diag-defer">يتوقّف على إكمال الأداة</span>@endif
         <div class="diag-row"><span class="diag-tag" style="color:#f43f5e;">السبب الفعلي: </span>{{ $item['cause'] }}</div>
         <div class="diag-row"><span class="diag-tag" style="color:#16a34a;">الحل الواقعي: </span>{{ $item['solution'] }}</div>
         @if (! empty($item['impact']))<div class="diag-impact">الأثر المتوقّع: {{ $item['impact'] }}</div>@endif
@@ -119,6 +121,7 @@
 
 @if (! empty($audit['top_problems']))
 <h2>التشخيص الفني للموقع</h2>
+@if (! empty($audit['site_unreachable']))<div class="audit-caveat">تعذّر الوصول إلى الموقع أثناء التدقيق — النتائج مبنية على البيانات المتاحة وقد لا تعكس الموقع الحيّ.</div>@endif
 <ul>@foreach ($audit['top_problems'] as $pr)<li>{{ $pr }}</li>@endforeach</ul>
 @endif
 

@@ -25,7 +25,9 @@ class ProjectReportController extends Controller
         $workspace = $project->workspace;
         abort_unless($workspace !== null && $request->user()?->can('view', $workspace), 404);
 
-        $report = $action->handle($project, $request->boolean('fresh'));
+        // لا نحجب طلب الويب على LLM: يُعرض التقرير المحلي فوراً ويُدفّأ التركيب
+        // الذكي في الخلفية (تفادياً لمهلات المزوّد التي كانت تُنتج خطأ 500).
+        $report = $action->handle($project, $request->boolean('fresh'), allowBlocking: false);
 
         return view('app.reports.project', [
             'project' => $project,
@@ -45,7 +47,8 @@ class ProjectReportController extends Controller
         $workspace = $project->workspace;
         abort_unless($workspace !== null && $request->user()?->can('view', $workspace), 404);
 
-        $report = $action->handle($project, false);
+        // تصدير PDF لا يحجب على LLM أيضاً: يستخدم التركيب المُكاش إن وُجد وإلا محلياً.
+        $report = $action->handle($project, false, allowBlocking: false);
         $branding = $whiteLabel->for($workspace);
 
         $html = view('app.reports.pdf', compact('project', 'report', 'branding'))->render();

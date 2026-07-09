@@ -84,7 +84,7 @@ class DomainPlansBuilder
         $channel = $this->g($in, 'best_channel', 'channel_primary');
         $topics = $this->g($in, 'content_topics');
 
-        return $this->plan('خطة المحتوى', 'content-creator · social-media-manager · seo-specialist',
+        return $this->plan('خطة المحتوى', 'المحتوى · السوشيال ميديا · تحسين الظهور في البحث',
             $this->g($in, 'content_goal') ?: 'إثبات تميّزك وبناء الثقة قبل الطلب — كل قطعة تخدم مرحلة في القمع.',
             [
                 ['heading' => 'ركائز المحتوى', 'items' => array_values(array_filter([
@@ -109,7 +109,7 @@ class DomainPlansBuilder
         $channel = $this->g($in, 'campaign_channel', 'best_channel', 'channel_primary');
         $test = $this->g($in, 'campaign_test');
 
-        return $this->plan('خطة الترويج والإعلان', 'media-buyer · campaign · funnel-architect',
+        return $this->plan('خطة الترويج والإعلان', 'الإعلان المدفوع · إدارة الحملات · بناء القمع',
             'لا نزيد الإنفاق قبل إصلاح الرسالة — نختبر الزاوية أولاً، ثم نوسّع الفائز بالبيانات.',
             [
                 ['heading' => 'الهدف والجمهور', 'items' => array_values(array_filter([
@@ -120,7 +120,7 @@ class DomainPlansBuilder
                 ['heading' => 'بنية الحملة والميزانية', 'items' => [
                     'وزّع الميزانية: ~45% تحويل · 25% وعي · 20% إعادة استهداف (هجر السلة) · 10% مناسبات.',
                     $this->line($test, 'اختبر عنصراً واحداً أولاً: «{v}» بميزانية صغيرة، ثم وسّع الفائز.', 'اختبر 3 زوايا (الميزة/السعر/الهدية) بميزانية صغيرة؛ وسّع الأفضل.'),
-                    'ضع حدّاً أقصى للخسارة لكل إعلان تجريبي (مثلاً 300 ﷼) قبل الإيقاف.',
+                    'ضع حدّاً أقصى للخسارة لكل إعلان تجريبي (مثلاً 300 ريال) قبل الإيقاف.',
                     'راقب ROAS ≥ 3 كشرط للتوسّع.',
                 ]],
             ]);
@@ -135,7 +135,7 @@ class DomainPlansBuilder
         $premium = $this->g($in, 'premium_offer');
         $anchor = $this->g($in, 'pricing_anchor');
 
-        return $this->plan('خطة تطوير العرض والتسعير', 'cro-specialist · offer · value-ladder',
+        return $this->plan('خطة تطوير العرض والتسعير', 'تحسين التحويل · بناء العرض · سلّم القيمة',
             'رفع قوة العرض وتقليل مخاطرة العميل، وبناء سلّم يزيد قيمة العميل عبر الزمن.',
             [
                 ['heading' => 'قوة العرض وعكس المخاطرة', 'items' => array_values(array_filter([
@@ -158,7 +158,7 @@ class DomainPlansBuilder
         $doubt = $this->g($in, 'journey_doubt');
         $retention = $this->g($in, 'journey_retention', 'ladder_retention');
 
-        return $this->plan('خطة رحلة العميل والتحويل', 'journey-orchestrator · cro-specialist',
+        return $this->plan('خطة رحلة العميل والتحويل', 'رحلة العميل · تحسين التحويل',
             'إزالة أكبر نقاط الاحتكاك وبناء الثقة في اللحظات الحاسمة عبر الرحلة.',
             [
                 ['heading' => 'نقاط الاحتكاك والثقة', 'items' => array_values(array_filter([
@@ -179,7 +179,7 @@ class DomainPlansBuilder
         $threshold = $this->g($in, 'kpi_threshold');
         $action = $this->g($in, 'kpi_action');
 
-        return $this->plan('خطة متابعة الأداء', 'analytics-analyst · marketing-scientist · performance-monitor',
+        return $this->plan('خطة متابعة الأداء', 'التحليلات · قياس الأثر · متابعة الأداء',
             'لكل هدف مؤشّر قائد وعتبة إنذار وإجراء عند الانحراف — لا مؤشرات للزينة.',
             [
                 ['heading' => 'المؤشّر القائد والعتبات', 'items' => array_values(array_filter([

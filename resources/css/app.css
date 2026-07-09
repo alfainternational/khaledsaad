@@ -7052,6 +7052,7 @@ body.rd-dark .text-gradient-light {
 .report-diag-sev.sev-high{background:rgba(244,63,94,.15);color:var(--rose)}
 .report-diag-sev.sev-mid{background:rgba(245,158,11,.15);color:var(--gold)}
 .report-diag-sev.sev-low{background:rgba(100,116,139,.15);color:var(--text-muted)}
+.report-diag-defer{font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:999px;flex-shrink:0;background:rgba(100,116,139,.12);color:var(--text-muted);border:1px dashed var(--border)}
 .report-diag-problem{font-size:1rem;font-weight:800}
 .report-diag-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
 .report-diag-row{display:flex;gap:12px;align-items:flex-start}

@@ -7,6 +7,7 @@ use App\Domain\Intelligence\Models\AuditRun;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
 use App\Domain\Tool\Models\ToolRun;
+use App\Jobs\WarmProjectReportSynthesisJob;
 use App\Support\AI\WorkspaceGenerationContextBuilder;
 use App\Support\Dashboard\StageCatalog;
 use Illuminate\Support\Facades\Cache;
@@ -32,7 +33,7 @@ class BuildProjectReportAction
     /**
      * @return array<string, mixed>
      */
-    public function handle(Project $project, bool $fresh = false): array
+    public function handle(Project $project, bool $fresh = false, bool $allowBlocking = true): array
     {
         $runs = ToolRun::query()
             ->where('project_id', $project->id)
@@ -148,19 +149,63 @@ class BuildProjectReportAction
         }
 
         // التركيب الاستراتيجي عبر LLM (نداء واحد، مُكاش، مبني على المخرجات فقط).
+        // قاعدة معمارية: لا يُستدعى LLM بشكل متزامن داخل طلب ويب — فقد يحجب حتى
+        // 90 ثانية عند تعثّر المزوّد فيتجاوز مهلة الخادم وينتج خطأ 500. المسار غير
+        // المحجوب (allowBlocking=false) يعرض تقريراً محلياً حتمياً فوراً، ويُفوّض
+        // التركيب الذكي لطابور الخلفية فيظهر عند التحديث التالي.
         $fingerprint = hash('sha256', json_encode($base['stages'], JSON_UNESCAPED_UNICODE).'|'.$completion);
         $cacheKey = 'project_report:v1:'.$project->id.':'.$fingerprint;
 
-        $synthesis = $fresh
-            ? $this->synthesize($project, $base)
-            : Cache::remember($cacheKey, now()->addHours(12), fn () => $this->synthesize($project, $base));
+        $cached = $fresh ? null : Cache::get($cacheKey);
+        if (is_array($cached)) {
+            return array_merge($base, $cached);
+        }
 
-        return array_merge($base, $synthesis ?? [
+        // مسار محجوب (CLI / Queue / تصدير غير حسّاس للزمن): ولّد التركيب الآن وخزّنه.
+        if ($allowBlocking) {
+            $synthesis = $this->synthesize($project, $base);
+            if ($synthesis !== null) {
+                Cache::put($cacheKey, $synthesis, now()->addHours(12));
+
+                return array_merge($base, $synthesis);
+            }
+
+            return array_merge($base, $this->localSynthesis($completedCodes, $completion, $gaps, $diagnosis));
+        }
+
+        // مسار الويب: لا تحجب. دفّئ الكاش في الخلفية (قفل يمنع تكرار الإرسال) واعرض المحلي.
+        if (Cache::add('project_report:warm:'.$cacheKey, 1, now()->addMinutes(3))) {
+            WarmProjectReportSynthesisJob::dispatch($project->id);
+        }
+
+        return array_merge($base, $this->localSynthesis($completedCodes, $completion, $gaps, $diagnosis));
+    }
+
+    /**
+     * تركيب محلي حتمي — يُستخدم عند غياب أو تأجيل تركيب LLM (بلا أي نداء خارجي).
+     *
+     * @param  array<int, string>  $completedCodes
+     * @param  array<int, string>  $gaps
+     * @param  array<string, mixed>  $diagnosis
+     * @return array<string, mixed>
+     */
+    private function localSynthesis(array $completedCodes, int $completion, array $gaps, array $diagnosis = []): array
+    {
+        // الأولويات من المشاكل المُشخّصة (محتوى متميّز)، لا تكراراً لقائمة الفجوات.
+        $priorities = array_values(array_filter(array_map(
+            fn ($p): string => trim((string) ($p['problem'] ?? '')),
+            array_slice((array) ($diagnosis['problems'] ?? []), 0, 3),
+        )));
+        if ($priorities === []) {
+            $priorities = array_slice($gaps, 0, 3);
+        }
+
+        return [
             'executive_summary' => 'تقرير مبني على '.count($completedCodes).' أداة منجَزة بنسبة تغطية '.$completion.'%. راجع الأقسام أدناه والفجوات لإكمال الصورة.',
-            'priorities' => array_slice($gaps, 0, 3),
+            'priorities' => $priorities,
             'plan' => ['quick_wins_7' => [], 'improvements_30' => [], 'strategic_90' => []],
             'synthesis_source' => 'local',
-        ]);
+        ];
     }
 
     /**
@@ -190,14 +235,54 @@ class BuildProjectReportAction
         $pa = data_get($r, 'priority_actions', data_get($r, 'honest_diagnosis.priority_actions', []));
         $exec = data_get($r, 'executive_scores.executive');
 
+        $topProblems = $strList($problems);
+
+        // إزالة تكرار الإجراءات عبر الآفاق الزمنية: لا يُعاد نفس الإجراء في أفقين.
+        $seen = [];
+        $dedupe = static function (array $items) use (&$seen): array {
+            $out = [];
+            foreach ($items as $it) {
+                $k = mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', (string) $it)));
+                if ($k === '' || isset($seen[$k])) {
+                    continue;
+                }
+                $seen[$k] = true;
+                $out[] = $it;
+            }
+
+            return $out;
+        };
+
+        // كشف تعذّر الوصول للموقع: الدرجة حينها مبنية على البيانات لا الموقع الحيّ.
+        $unreachable = false;
+        foreach ($topProblems as $p) {
+            if ($this->mentionsUnreachable((string) $p)) {
+                $unreachable = true;
+                break;
+            }
+        }
+
         return [
             'executive_score' => $exec !== null ? (int) $exec : null,
-            'top_problems' => $strList($problems),
-            'quick_wins_7' => $strList(data_get($pa, 'quick_wins_7_days', [])),
-            'improvements_30' => $strList(data_get($pa, 'improvements_30_days', [])),
-            'strategic_90' => $strList(data_get($pa, 'strategic_90_days', [])),
+            'site_unreachable' => $unreachable,
+            'top_problems' => $topProblems,
+            'quick_wins_7' => $dedupe($strList(data_get($pa, 'quick_wins_7_days', []))),
+            'improvements_30' => $dedupe($strList(data_get($pa, 'improvements_30_days', []))),
+            'strategic_90' => $dedupe($strList(data_get($pa, 'strategic_90_days', []))),
             'completed_at' => optional($audit->completed_at)->toDateString(),
         ];
+    }
+
+    /** هل يشير نص المشكلة إلى تعذّر الوصول للموقع الحيّ؟ */
+    private function mentionsUnreachable(string $text): bool
+    {
+        foreach (['غير قابل للوصول', 'لا يمكن الوصول', 'تعذّر الوصول', 'تعذر الوصول', 'لم يُفتح', 'لم يفتح', 'inaccessible', 'not accessible', 'unreachable'] as $needle) {
+            if (mb_stripos($text, $needle) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -262,9 +347,16 @@ class BuildProjectReportAction
             (array) $v,
         ), fn (string $x): bool => $x !== ''));
 
+        // إزالة أي أولوية كرّرت نص فجوة حرفياً (يظهر خلاف ذلك مرّتين: أولويات + فجوات).
+        $gapSet = array_map(fn ($g): string => trim((string) $g), (array) ($base['gaps'] ?? []));
+        $priorities = array_values(array_filter(
+            array_slice($list($parsed['priorities'] ?? []), 0, 5),
+            fn (string $p): bool => ! in_array(trim($p), $gapSet, true),
+        ));
+
         return [
             'executive_summary' => Str::limit(trim((string) $parsed['executive_summary']), 1200, '…'),
-            'priorities' => array_slice($list($parsed['priorities'] ?? []), 0, 5),
+            'priorities' => $priorities,
             'plan' => [
                 'quick_wins_7' => array_slice($list(data_get($parsed, 'plan.quick_wins_7', [])), 0, 6),
                 'improvements_30' => array_slice($list(data_get($parsed, 'plan.improvements_30', [])), 0, 6),
