@@ -10,7 +10,8 @@
 
 @php
     $fields = $mode['fields'] ?? [];
-    $chunks = $modeKey === 'guided' ? array_chunk($fields, $chunkSize) : [$fields];
+    // كل الأسئلة دفعة واحدة (لا تقسيم لخطوات): المستخدم يرى النموذج كاملاً ويجيب بحرّية.
+    $chunks = [$fields];
     $totalFields = count($fields);
 @endphp
 
