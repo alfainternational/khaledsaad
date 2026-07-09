@@ -281,8 +281,12 @@
                 </details>
 
                 <div class="app-form-actions">
-                    <button type="submit" class="btn btn-primary btn-lg" data-tool-submit>{{ $uiCopy['submit_label'] ?? 'حفظ المخرج الآن' }}</button>
+                    <button type="submit" class="btn btn-primary btn-lg" data-tool-submit>{{ $latestRun ? 'عدّل واحفظ التحديث' : ($uiCopy['submit_label'] ?? 'حفظ المخرج الآن') }}</button>
                 </div>
+
+                @if ($latestRun)
+                    <p class="tool-edit-hint">لديك إجابات محفوظة معبّأة أعلاه — عدّلها واحفظ في أي وقت؛ كل حفظ يحدّث النتيجة.</p>
+                @endif
 
                 <div class="tool-form-status" data-tool-status hidden></div>
             </form>

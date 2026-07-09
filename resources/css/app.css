@@ -7070,3 +7070,4 @@ body.rd-dark .text-gradient-light {
 .report-domain-goal{font-size:.9rem;color:var(--text-muted);margin:0 0 12px}
 .report-domain-sec{margin-top:12px}
 .report-domain-sec-h{display:block;font-size:.9rem;font-weight:800;color:var(--p);margin-bottom:6px}
+.tool-edit-hint{font-size:.82rem;color:var(--text-muted);margin:8px 0 0;padding:8px 12px;background:var(--p-subtle);border-radius:8px}

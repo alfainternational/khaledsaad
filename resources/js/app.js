@@ -758,11 +758,11 @@ async function submitToolFormAjax(form, options = {}) {
 
             if (statusEl) {
                 statusEl.hidden = false;
-                statusEl.textContent = 'تم الحفظ بنجاح';
+                statusEl.textContent = 'تم الحفظ — يمكنك تعديل إجاباتك أعلاه وإعادة الحفظ في أي وقت لتحديث النتيجة.';
                 statusEl.className = 'tool-form-status tool-form-status-success';
                 setTimeout(() => {
                     statusEl.hidden = true;
-                }, 3000);
+                }, 6000);
             }
         } else {
             const errorMsg = result.error || result.message || 'حدث خطأ أثناء الحفظ.';
