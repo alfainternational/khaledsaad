@@ -21,6 +21,12 @@
             <span class="report-stat-label">متوسط الاكتمال</span>
             <strong class="report-stat-value">{{ $report['avg_quality'] }}%</strong>
         </div>
+        @if (! is_null($report['content_quality'] ?? null))
+            <div class="report-stat">
+                <span class="report-stat-label">جودة المحتوى</span>
+                <strong class="report-stat-value">{{ $report['content_quality'] }}%</strong>
+            </div>
+        @endif
         @if (! empty($report['client']))
             <div class="report-stat">
                 <span class="report-stat-label">العميل</span>

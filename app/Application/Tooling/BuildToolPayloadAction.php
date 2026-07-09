@@ -6,6 +6,7 @@ use App\Domain\AI\Kernel\Agents\SpecialistReviewService;
 use App\Domain\AI\Kernel\Gate\OutputQualityGate;
 use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\AI\Services\AIService;
+use App\Domain\AI\Services\QualityJudge;
 use App\Domain\AI\Web\WebContextEnricher;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
@@ -32,6 +33,7 @@ class BuildToolPayloadAction
         private readonly KnowledgeStore $knowledge,
         private readonly SpecialistReviewService $specialistReview,
         private readonly OutputQualityGate $qualityGate,
+        private readonly QualityJudge $qualityJudge,
     ) {}
 
     /**
@@ -178,6 +180,10 @@ class BuildToolPayloadAction
         // وقوة العرض في أدوات المرحلة الثالثة. محلي بالكامل، يتدهور بأمان.
         $specialistReview = $this->buildSpecialistReview($tool, $inputs);
 
+        // جودة المحتوى (§8 ذكاء مضموني): تقييم *مضمون* الإجابات لا مجرد ملئها،
+        // منفصلاً عن completeness_score. يتدهور بأمان (null بلا LLM).
+        $contentQuality = $this->buildContentQuality($tool, $mode, $inputs);
+
         return [
             'output' => [
                 'headline' => $summary['headline'],
@@ -188,6 +194,7 @@ class BuildToolPayloadAction
                 ])),
                 'next_actions' => $nextActions,
                 'specialist_review' => $specialistReview,
+                'content_quality' => $contentQuality,
                 'brief' => $brief !== '' ? $brief : null,
                 'inputs' => $inputs,
                 'source_context' => $sourceContext,
@@ -537,6 +544,36 @@ class BuildToolPayloadAction
         $review = $this->specialistReview->review($reviewText, $aspects);
 
         return $review['panels'] === [] ? null : $review;
+    }
+
+    /**
+     * درجة جودة *مضمون* الإجابات (لا الاكتمال) عبر QualityJudge. يتدهور بأمان:
+     * يعيد null بلا LLM أو Kill Switch — فلا يُظهر جودة زائفة.
+     *
+     * @param  array<string, mixed>  $inputs
+     * @return array{score: int, note: string}|null
+     */
+    private function buildContentQuality(Tool $tool, string $mode, array $inputs): ?array
+    {
+        $blueprint = $this->toolBlueprintCatalog->for($tool);
+        $labels = $this->fieldLabelsForMode($blueprint, $mode);
+
+        $fields = [];
+        foreach ($inputs as $key => $value) {
+            if ($key === 'brief' || ! is_string($value) || trim($value) === '') {
+                continue;
+            }
+            $fields[] = [
+                'label' => (string) ($labels[$key] ?? $key),
+                'value' => trim($value),
+            ];
+        }
+
+        if ($fields === []) {
+            return null;
+        }
+
+        return $this->qualityJudge->scoreInputs($tool->name ?: $tool->code, $fields);
     }
 
     /**

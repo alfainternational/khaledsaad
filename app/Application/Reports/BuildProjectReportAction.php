@@ -45,6 +45,8 @@ class BuildProjectReportAction
         $completedCodes = [];
         $qualitySum = 0;
         $qualityCount = 0;
+        $contentQualitySum = 0;
+        $contentQualityCount = 0;
 
         foreach ($runs as $run) {
             $tool = $tools->get($run->tool_code);
@@ -69,6 +71,13 @@ class BuildProjectReportAction
             $completedCodes[] = $run->tool_code;
             $qualitySum += $score;
             $qualityCount++;
+
+            // جودة المحتوى الحقيقية (§8): من تقييم QualityJudge المخزَّن، لا الاكتمال.
+            $contentQuality = data_get($run->output_json, 'content_quality.score');
+            if (is_numeric($contentQuality)) {
+                $contentQualitySum += (int) $contentQuality;
+                $contentQualityCount++;
+            }
         }
 
         // التغطية والفجوات لكل مرحلة (من core_tools في StageCatalog).
@@ -99,6 +108,9 @@ class BuildProjectReportAction
 
         $completion = $totalCore > 0 ? (int) round($doneCore / $totalCore * 100) : 0;
         $avgQuality = $qualityCount > 0 ? (int) round($qualitySum / $qualityCount) : 0;
+        $avgContentQuality = $contentQualityCount > 0
+            ? (int) round($contentQualitySum / $contentQualityCount)
+            : null;
 
         // دمج التدقيق الذكي (إن وُجد): تشخيص فني مفصّل + درجات + خطة 7/30/90 جاهزة.
         $audit = $this->auditSnapshot($project);
@@ -108,6 +120,7 @@ class BuildProjectReportAction
             'client' => $project->client?->name,
             'completion' => $completion,
             'avg_quality' => $avgQuality,
+            'content_quality' => $avgContentQuality,
             'tools_completed' => count($completedCodes),
             'stages' => array_values($stages),
             'gaps' => $gaps,
