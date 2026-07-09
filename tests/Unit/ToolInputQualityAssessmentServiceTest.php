@@ -3,6 +3,8 @@
 namespace Tests\Unit;
 
 use App\Contracts\AiGatewayInterface;
+use App\Domain\AI\Services\AiMetrics;
+use App\Domain\AI\Services\QualityJudge;
 use App\Domain\Account\Models\Account;
 use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
@@ -128,6 +130,7 @@ class ToolInputQualityAssessmentServiceTest extends TestCase
                 app(WorkspaceJourneyStore::class),
                 new StudioAnalyticalDossierBuilder($gateway),
             ),
+            new QualityJudge($gateway, app(AiMetrics::class)),
         );
     }
 
