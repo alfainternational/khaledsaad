@@ -190,6 +190,8 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/projects/{project}/recommendations', [RecommendationController::class, 'index'])->name('projects.recommendations.index');
     Route::post('/projects/{project}/recommendations/{recommendation}/package', [RecommendationController::class, 'storePackage'])->name('projects.recommendations.package');
     Route::get('/projects/{project}/report', [ProjectReportController::class, 'show'])->name('projects.report');
+    Route::get('/projects/{project}/report/pdf', [ProjectReportController::class, 'exportPdf'])
+        ->middleware('entitlement:outputs.can_export')->name('projects.report.pdf');
     Route::get('/execution-packages/{executionPackage}', [ExecutionPackageController::class, 'show'])->name('execution-packages.show');
     Route::patch('/execution-packages/{executionPackage}/status', [ExecutionPackageController::class, 'updateStatus'])->name('execution-packages.status');
 

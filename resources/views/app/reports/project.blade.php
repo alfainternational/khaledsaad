@@ -4,7 +4,10 @@
 <div class="report-shell">
 
     <div class="report-toolbar no-print">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">طباعة / حفظ PDF</button>
+        @if (entitlement('outputs.can_export'))
+            <a href="{{ route('projects.report.pdf', $project) }}" class="btn btn-primary btn-sm">تصدير PDF احترافي</a>
+        @endif
+        <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">طباعة سريعة</button>
     </div>
 
     {{-- رأس: المؤشرات --}}
