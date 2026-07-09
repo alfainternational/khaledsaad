@@ -5,7 +5,7 @@
 ])
 
 @php
-    $isAiGenerated = $latestRun && !empty($latestRun->summary_json['headline']) && config('services.gemini.key');
+    $isAiGenerated = $latestRun && ! empty($latestRun->summary_json['ai_generated']);
     $score = $latestRun?->completeness_score ?? 0;
     $circumference = 2 * 3.14159 * 42;
     $dashOffset = $circumference - ($circumference * $score / 100);

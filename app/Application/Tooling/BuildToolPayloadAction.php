@@ -3,6 +3,7 @@
 namespace App\Application\Tooling;
 
 use App\Domain\AI\Kernel\Agents\SpecialistReviewService;
+use App\Domain\AI\Kernel\Gate\OutputQualityGate;
 use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\AI\Services\AIService;
 use App\Domain\AI\Web\WebContextEnricher;
@@ -30,6 +31,7 @@ class BuildToolPayloadAction
         private readonly WebContextEnricher $webEnricher,
         private readonly KnowledgeStore $knowledge,
         private readonly SpecialistReviewService $specialistReview,
+        private readonly OutputQualityGate $qualityGate,
     ) {}
 
     /**
@@ -105,10 +107,22 @@ class BuildToolPayloadAction
             'lessons' => is_array($teachData) ? ($teachData['lessons'] ?? null) : null,
         ]));
 
+        // بوابة الجودة على ملخّص LLM للأداة (كما في الاستوديو): لا نقبل صقلاً
+        // لغوياً ضعيفاً/عاماً فنعرضه كتحليل. عند verdict=warn نُبقي النتيجة المحلية
+        // القوية. يتدهور بأمان: بلا LLM ⇒ verdict=pass ⇒ سلوك كما كان.
         $isAiGenerated = false;
         if ($aiSummary) {
-            $toolSummary = array_merge($toolSummary, $aiSummary);
-            $isAiGenerated = true;
+            $aiText = trim((string) ($aiSummary['headline'] ?? '').' '.(string) ($aiSummary['text'] ?? ''));
+            $verdict = $this->qualityGate->assess(
+                $tool->name ?: $tool->code,
+                $aiText,
+                (string) ($blueprint['outcome'] ?? ''),
+            )['verdict'];
+
+            if ($verdict !== 'warn') {
+                $toolSummary = array_merge($toolSummary, $aiSummary);
+                $isAiGenerated = true;
+            }
         }
 
         $summary = [

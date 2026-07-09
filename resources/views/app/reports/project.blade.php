@@ -18,7 +18,7 @@
             <strong class="report-stat-value">{{ $report['tools_completed'] }}</strong>
         </div>
         <div class="report-stat">
-            <span class="report-stat-label">متوسط الجودة</span>
+            <span class="report-stat-label">متوسط الاكتمال</span>
             <strong class="report-stat-value">{{ $report['avg_quality'] }}%</strong>
         </div>
         @if (! empty($report['client']))
