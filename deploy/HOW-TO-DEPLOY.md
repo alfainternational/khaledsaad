@@ -54,6 +54,7 @@ curl -s -o /dev/null -w '%{http_code}' --max-time 25 https://khaledsaad.net/dash
 
 ## قواعد السلامة
 
+- **بوّابة حالة الأحرف (تلقائية):** سكربت النشر يشغّل `php deploy/check-class-case.php` قبل أي رفع، فيكشف تعارض حالة أحرف الكلاسات/الـ use الذي يعمل على ويندوز ويفشل على Linux (مثل `AICreditService` بينما الملف `AiCreditService.php`). عند وجود تعارض يُلغى النشر. للتخطّي الطارئ: `SKIP_CASE_CHECK=1`.
 - **تحقّق محلياً قبل النشر:** `php -l <file>` لملفات PHP، و`npm run build` ينجح لملفات الأصول.
 - **لا ترفع عملاً نصف مكتمل** لموقع حيّ — ابنِ وتحقّق أولاً.
 - **لا ترفع** ملفات الاختبار (`tests/`) ولا الأسرار (`.env`, `deploy/cpanel.env`, `*.key`).

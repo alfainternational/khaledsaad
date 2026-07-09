@@ -85,7 +85,7 @@ class ToolFormExperienceBuilder
                     ? $briefSuggestion
                     : $this->suggestedValueForField($category, $field, $profile, $project, $latestRun, $upstreamContext),
                 'suggestion_label' => $briefSuggestion !== '' && $briefSuggestion !== null
-                    ? 'اسحب من ملف المشروع'
+                    ? 'جاهز من بيانات مشروعك'
                     : $this->suggestionLabelForPriority($priority),
                 'empty_prompt' => $this->emptyPromptForField($category, $field),
                 'weak_prompt' => $this->weakPromptForField($category, $quality['min_length']),
@@ -97,13 +97,13 @@ class ToolFormExperienceBuilder
         $criticalCount = collect($fields)->filter(fn (array $fieldMeta) => $fieldMeta['priority'] === 'critical')->count();
 
         return [
-            'focus_title' => 'كيف تعبئ هذا الوضع؟',
+            'focus_title' => 'كيف تملأ الحقول؟',
             'focus_note' => $this->modeFocusNote($modeKey, $tool, $profile, $project, $upstreamContext),
             'focus_points' => array_values(array_filter([
-                $project ? 'اربط كل إجابة بمشروع '.$project->name.' لا بوصف عام للمجال.' : null,
-                ! empty($profile['audience']) ? 'الجمهور المرجعي الحالي: '.$profile['audience'] : null,
-                ! empty($profile['primary_goal']) ? 'الهدف الحالي الذي يجب أن تخدمه الإجابات: '.$this->displayPrimaryGoal($profile['primary_goal'] ?? null) : null,
-                $criticalCount > 0 ? 'ابدأ بالحقول الأساسية أولاً ثم انتقل إلى الحقول الداعمة.' : null,
+                $project ? 'اربط كل إجابة بمشروع '.$project->name.' لا بكلام عام عن المجال.' : null,
+                ! empty($profile['audience']) ? 'جمهورك الحالي: '.$profile['audience'] : null,
+                ! empty($profile['primary_goal']) ? 'هدفك الحالي الذي تخدمه الإجابات: '.$this->displayPrimaryGoal($profile['primary_goal'] ?? null) : null,
+                $criticalCount > 0 ? 'ابدأ بالحقول المهمة أولاً ثم أكمل الباقي.' : null,
             ])),
             'critical_count' => $criticalCount,
             'first_critical_label' => $criticalField['priority_label'] ?? null,
@@ -141,17 +141,17 @@ class ToolFormExperienceBuilder
         $stageLabel = StageCatalog::label((int) $tool->stage);
 
         return [
-            'title' => 'مدخلات أذكى لهذه الأداة',
+            'title' => 'املأ هذه الأداة بإجابات أوضح',
             'intro' => $project
-                ? 'المدخلات هنا يجب أن تخدم قراراً عملياً داخل مشروع '.$project->name.' ضمن '.$stageLabel.'.'
-                : 'املأ الحقول بصورة تخدم قراراً عملياً حقيقياً، لا مجرد وصف عام.',
+                ? 'الإجابات هنا تساعدك على قرار عملي في مشروع '.$project->name.' ضمن '.$stageLabel.'.'
+                : 'املأ الحقول بإجابات تساعدك على قرار عملي حقيقي، لا مجرد كلام عام.',
             'bullets' => array_values(array_filter([
-                ! empty($profile['primary_goal']) ? 'اجعل كل إجابة تقرّبك من الهدف الحالي: '.$this->displayPrimaryGoal($profile['primary_goal'] ?? null).'.' : null,
-                ! empty($profile['audience']) ? 'اكتب بلغة مرتبطة بجمهورك الفعلي: '.$profile['audience'].'.' : null,
-                $upstreamHeadline !== '' ? 'استفد من المخرج السابق: '.$upstreamHeadline.'.' : null,
-                $latestHeadline !== '' ? 'آخر مخرج محفوظ لهذه الأداة: '.$latestHeadline.'.' : null,
+                ! empty($profile['primary_goal']) ? 'اجعل كل إجابة تقرّبك من هدفك الحالي: '.$this->displayPrimaryGoal($profile['primary_goal'] ?? null).'.' : null,
+                ! empty($profile['audience']) ? 'اكتب بلغة قريبة من جمهورك الفعلي: '.$profile['audience'].'.' : null,
+                $upstreamHeadline !== '' ? 'استفد مما أنجزته قبل قليل: '.$upstreamHeadline.'.' : null,
+                $latestHeadline !== '' ? 'آخر نتيجة محفوظة لهذه الأداة: '.$latestHeadline.'.' : null,
                 ! empty($toolBriefing['summary']['bullets'][0]) ? (string) $toolBriefing['summary']['bullets'][0] : null,
-                $firstCriticalField ? 'ابدأ بالحقل الأهم أولاً: '.$this->humanizeFieldKey($firstCriticalField['key']).'.' : null,
+                $firstCriticalField ? 'ابدأ بأهم حقل أولاً: '.$this->humanizeFieldKey($firstCriticalField['key']).'.' : null,
             ])),
             'focus_field' => $firstCriticalField['key'] ?? null,
             'focus_label' => $this->humanizeFieldKey($firstCriticalField['key'] ?? null),
@@ -263,28 +263,28 @@ class ToolFormExperienceBuilder
 
         return match ($category) {
             'audience' => $audience !== ''
-                ? 'اكتب الشريحة الأقرب للشراء فعلاً'.$projectLabel.'، والمرجع الحالي في المساحة هو: '.$audience.'.'
+                ? 'اكتب الفئة الأقرب للشراء فعلاً'.$projectLabel.'، وجمهورك الحالي هو: '.$audience.'.'
                 : 'لا تكتب جمهوراً عاماً. حدّد من يشتري أولاً'.$projectLabel.' وما الذي يميّزه.',
             'goal' => $this->goalOutcomeContextHint($fieldLabel, $projectLabel, $goal, $goalDisplay, $audience),
             'goal_rationale' => $this->goalRationaleContextHint($fieldLabel, $projectLabel, $goalDisplay, $goal),
             'result' => $this->measurableResultContextHint($fieldLabel, $projectLabel, $goal, $goalDisplay, $audience),
             'problem' => $upstreamHeadline !== ''
-                ? 'استفد من المخرجات السابقة، خصوصاً: '.$upstreamHeadline.'. صف المشكلة أو العائق من زاوية القرار التالي.'
-                : 'اذكر المشكلة مع أثرها المباشر وما الذي تعطل بسببه'.$projectLabel.'.',
+                ? 'استفد مما أنجزته قبل قليل: '.$upstreamHeadline.'. صف المشكلة أو العائق من زاوية خطوتك التالية.'
+                : 'اذكر المشكلة مع أثرها المباشر وما الذي تعطّل بسببها'.$projectLabel.'.',
             'offer' => $latestHeadline !== ''
-                ? 'احرص أن يكون هذا الحقل متسقاً مع آخر مخرج محفوظ: '.$latestHeadline.'.'
+                ? 'اجعل هذا الحقل متّسقاً مع آخر نتيجة محفوظة: '.$latestHeadline.'.'
                 : 'اكتب ما سيفهمه العميل بسرعة: ماذا سيأخذ، ولماذا يهمه الآن.',
-            'pricing' => 'اجعل الإجابة مرتبطة بقيمة العرض'.$projectLabel.' لا بالتكلفة فقط أو الانطباع العام.',
-            'difference' => 'اذكر فرقاً حقيقياً يمكن شرحه وإثباته، لا مجرد وصف تسويقي متكرر.',
-            'proof' => 'أضف شيئاً يمكن استخدامه كدليل أو عنصر ثقة: نتيجة، خبرة، حالة مشابهة، أو آلية واضحة.',
+            'pricing' => 'اربط الإجابة بقيمة العرض'.$projectLabel.' لا بالتكلفة وحدها أو بانطباع عام.',
+            'difference' => 'اذكر فرقاً حقيقياً يمكن شرحه وإثباته، لا مجرد كلام تسويقي مكرر.',
+            'proof' => 'أضف ما يمكن استخدامه كدليل أو سبب للثقة: نتيجة، خبرة، حالة مشابهة، أو طريقة عمل واضحة.',
             'market' => $country !== ''
-                ? 'اجعل القراءة السوقية مرتبطة بالسوق المرجعي الحالي: '.$country.'.'
-                : 'سمِّ السوق أو الجزء السوقي بوضوح، لا تكتب السوق بشكل واسع ومبهم.',
-            'channel' => 'حدّد قناة أو مساراً قابلاً للتنفيذ فعلاً'.$projectLabel.'، وليس عنواناً عاماً مثل "السوشيال".',
-            'metric' => 'اختر مؤشراً واحداً يمكن مراجعته لاحقاً، لا مجموعة مؤشرات مشتتة.',
-            'risk' => 'اذكر خطراً فعلياً يمكن أن يعطل القرار، لا خوفاً عاماً أو افتراضاً فضفاضاً.',
-            'timing' => 'ضع إطاراً زمنياً يساعد على القرار، مثل أسبوع أو شهر أو 90 يوماً.',
-            default => 'اكتب إجابة يمكن البناء عليها في قرار أو مخرج حقيقي داخل '.$tool->name.'.',
+                ? 'اربط قراءتك للسوق بسوقك الحالي: '.$country.'.'
+                : 'سمِّ السوق أو الجزء الذي تستهدفه بوضوح، لا تكتبه واسعاً ومبهماً.',
+            'channel' => 'حدّد قناة أو مساراً يمكنك تنفيذه فعلاً'.$projectLabel.'، لا عنواناً عاماً مثل "السوشيال".',
+            'metric' => 'اختر مؤشراً واحداً يمكنك مراجعته لاحقاً، لا مجموعة مؤشرات مشتتة.',
+            'risk' => 'اذكر خطراً حقيقياً قد يعطّل خطوتك، لا قلقاً عاماً أو افتراضاً فضفاضاً.',
+            'timing' => 'ضع إطاراً زمنياً يساعدك على الحسم، مثل أسبوع أو شهر أو 90 يوماً.',
+            default => 'اكتب إجابة يمكنك البناء عليها في قرار أو نتيجة حقيقية داخل '.$tool->name.'.',
         };
     }
 
@@ -315,8 +315,8 @@ class ToolFormExperienceBuilder
             'goal_rationale' => $original !== '' ? $original : 'مثال: لأن تحقيقه يثبت أن العرض مطلوب قبل زيادة الإنفاق أو فتح قنوات جديدة.',
             'result' => $this->smartMeasurableResultPlaceholder($field, $original, $project, $audience),
             'market' => $country !== '' ? 'مثال مرتبط بسوقك الحالي: '.$country : $original,
-            'problem' => $upstreamHeadline !== '' ? 'مثال من سياق مشروعك: '.$upstreamHeadline : $original,
-            'offer' => $latestHeadline !== '' ? 'اربط الصياغة بهذا الاتجاه: '.$latestHeadline : $original,
+            'problem' => $upstreamHeadline !== '' ? 'مثال من واقع مشروعك: '.$upstreamHeadline : $original,
+            'offer' => $latestHeadline !== '' ? 'اربط صياغتك بهذا الاتجاه: '.$latestHeadline : $original,
             default => $original !== '' ? $original : ($project ? 'اكتب إجابة مرتبطة بمشروع '.$project->name : ''),
         };
     }
@@ -355,9 +355,9 @@ class ToolFormExperienceBuilder
     private function suggestionLabelForPriority(string $priority): string
     {
         return match ($priority) {
-            'critical' => 'استخدم مرجع المشروع',
+            'critical' => 'استخدم بيانات مشروعك',
             'important' => 'ابدأ بهذه الصياغة',
-            default => 'طبّق اقتراحاً سريعاً',
+            default => 'جرّب اقتراحاً سريعاً',
         };
     }
 
@@ -367,21 +367,21 @@ class ToolFormExperienceBuilder
     private function emptyPromptForField(string $category, array $field): string
     {
         return match ($category) {
-            'audience' => 'هذا الحقل أساسي لأن بقية الرسالة والعرض ستُبنى عليه.',
-            'goal', 'result' => 'بدون هذا الحقل ستبقى الأداة عامة ولن تعرف ما القرار الذي تخدمه.',
-            'goal_rationale' => 'السبب العملي يحوّل الهدف من رغبة إلى قرار: لماذا هذه الأولوية وليس غيرها الآن؟',
+            'audience' => 'هذا الحقل مهم لأن بقية الرسالة والعرض ستُبنى عليه.',
+            'goal', 'result' => 'بدون هذا الحقل ستبقى الأداة عامة ولن تعرف ما الذي تخدمه إجاباتك.',
+            'goal_rationale' => 'السبب العملي يحوّل الهدف من رغبة إلى قرار: لماذا هذه الأولوية الآن وليس غيرها؟',
             'problem' => 'صف المشكلة أو الفجوة قبل الانتقال إلى الحل أو التوصية.',
-            'offer', 'pricing' => 'وضّح هذا الحقل حتى لا يبقى المخرج نظرياً أو غير قابل للبيع.',
-            default => 'أكمل هذا الحقل حتى تصبح الصورة أدق وأكثر قابلية للاستخدام.',
+            'offer', 'pricing' => 'وضّح هذا الحقل حتى لا تبقى نتيجتك نظرية أو صعبة البيع.',
+            default => 'أكمل هذا الحقل لتصبح الصورة أوضح وأسهل في الاستخدام.',
         };
     }
 
     private function weakPromptForField(string $category, int $minLength): string
     {
         return match ($category) {
-            'audience' => 'الإجابة الحالية ما زالت عامة. اجعل الشريحة أوضح وأكثر قرباً من الشراء.',
-            'goal', 'result' => 'اجعل النتيجة أكثر تحديداً، ويفضل أن تتضمن زمناً أو معيار نجاح.',
-            'goal_rationale' => 'اربط السبب بقرار عملي (وقت، تكلفة، مخاطرة) وليس بجملة تحفيزية عامة.',
+            'audience' => 'إجابتك الحالية ما زالت عامة. اجعل الفئة أوضح وأقرب لمن يشتري.',
+            'goal', 'result' => 'اجعل النتيجة أكثر تحديداً، ويفضّل أن تتضمن زمناً أو معيار نجاح.',
+            'goal_rationale' => 'اربط السبب بقرار عملي (وقت، تكلفة، مخاطرة) لا بجملة تحفيزية عامة.',
             'problem' => 'صف المشكلة مع أثرها أو سببها، لا بعنوان مختصر فقط.',
             'offer', 'pricing' => 'اربط الإجابة بالقيمة أو النتيجة، لا بوصف قصير أو عام.',
             default => 'هذه الإجابة تحتاج تحديداً أكثر. حاول أن تكون أوضح من '.$minLength.' أحرف.',
@@ -406,13 +406,13 @@ class ToolFormExperienceBuilder
         $upstreamHeadline = trim((string) ($upstreamContext[0]['headline'] ?? ''));
 
         return match ($modeKey) {
-            'guided' => 'املأ هذا الوضع بسرعة لكن بدقة. ابدأ بالمعلومة التي تغيّر القرار مباشرة في '.$projectName.'.',
+            'guided' => 'املأ هذا الوضع بسرعة لكن بدقة. ابدأ بالمعلومة التي تغيّر قرارك مباشرة في '.$projectName.'.',
             'structured' => 'هذا الوضع يحتاج إجابات أوضح تربط بين السبب والنتيجة والتنفيذ، لا مجرد عناوين.',
-            'expert' => 'استخدم هذا الوضع لكتابة افتراضات أو مقايضات أو مخاطر تؤثر فعلاً على القرار التجاري.',
-            default => 'اكتب إجابات عملية قابلة للاستخدام مباشرة.',
+            'expert' => 'استخدم هذا الوضع لكتابة افتراضات أو مفاضلات أو مخاطر تؤثر فعلاً على قرارك.',
+            default => 'اكتب إجابات عملية يمكن استخدامها مباشرة.',
         }
-        .($audience !== '' ? ' الجمهور المرجعي: '.$audience.'.' : '')
-        .($goal !== '' ? ' الهدف الحالي: '.$goalDisplay.'.' : '')
+        .($audience !== '' ? ' جمهورك الحالي: '.$audience.'.' : '')
+        .($goal !== '' ? ' هدفك الحالي: '.$goalDisplay.'.' : '')
         .($upstreamHeadline !== '' ? ' راجع أيضاً: '.$upstreamHeadline.'.' : '');
     }
 
@@ -433,14 +433,14 @@ class ToolFormExperienceBuilder
         string $goalDisplay,
         string $audience,
     ): string {
-        $lead = $fieldLabel !== '' ? 'حول سؤال «'.$fieldLabel.'»' : 'هنا';
+        $lead = $fieldLabel !== '' ? 'في سؤال «'.$fieldLabel.'»' : 'هنا';
 
         if ($goalRaw !== '' && $audience !== '') {
-            return $lead.' اكتب نتيجة واحدة محددة تخدم اتجاه مساحة عملك («'.$goalDisplay.'») ويمكن ربطها بسلوك حقيقي لجمهور '.$audience.'. تجنّب إعادة اسم الاتجاه فقط دون حدث أو رقم.';
+            return $lead.' اكتب نتيجة واحدة محددة تخدم هدفك («'.$goalDisplay.'») ويمكن ربطها بسلوك حقيقي لجمهور '.$audience.'. تجنّب تكرار اسم الهدف فقط دون حدث أو رقم.';
         }
 
         if ($goalRaw !== '') {
-            return $lead.' صِف حدثاً واحداً أو رقماً واحداً يمكن ملاحظته'.$projectLabel.'، في إطار اتجاه «'.$goalDisplay.'». لا يكفي تكرار اسم الاتجاه؛ اذكر ما الذي سيتحرك فعلياً.';
+            return $lead.' صِف حدثاً واحداً أو رقماً واحداً يمكن ملاحظته'.$projectLabel.'، في إطار هدف «'.$goalDisplay.'». لا يكفي تكرار اسم الهدف؛ اذكر ما الذي سيتحرك فعلياً.';
         }
 
         return $lead.' اذكر نتيجة واحدة قابلة للقياس أو الملاحظة خلال فترة محددة'.$projectLabel.'.';
@@ -455,10 +455,10 @@ class ToolFormExperienceBuilder
         $lead = $fieldLabel !== '' ? 'في «'.$fieldLabel.'»' : 'هنا';
 
         if ($goalRaw !== '') {
-            return $lead.' اشرح السبب التجاري: لماذا هذا الهدف يفتح الخطوة التالية'.$projectLabel.'؟ اربط الإجابة بقرار (وقت، مال، مخاطرة) وليس بعبارة عامة. اتجاه المساحة «'.$goalDisplay.'» هو خلفية فقط — لا تنسخه كإجابة.';
+            return $lead.' اشرح السبب العملي: لماذا هذا الهدف يفتح خطوتك التالية'.$projectLabel.'؟ اربط الإجابة بقرار (وقت، مال، مخاطرة) لا بعبارة عامة. هدفك «'.$goalDisplay.'» خلفية فقط — لا تنسخه كإجابة.';
         }
 
-        return $lead.' اشرح لماذا هذه الأولوية الآن وليست غيرها، وبأي شكل يقلل التخمين أو التشتت'.$projectLabel.'.';
+        return $lead.' اشرح لماذا هذه الأولوية الآن وليست غيرها، وكيف تقلّل التخمين أو التشتت'.$projectLabel.'.';
     }
 
     private function measurableResultContextHint(
@@ -468,14 +468,14 @@ class ToolFormExperienceBuilder
         string $goalDisplay,
         string $audience,
     ): string {
-        $lead = $fieldLabel !== '' ? 'للسؤال «'.$fieldLabel.'»' : 'هنا';
+        $lead = $fieldLabel !== '' ? 'في سؤال «'.$fieldLabel.'»' : 'هنا';
 
         if ($goalRaw !== '' && $audience !== '') {
-            return $lead.' اذكر مخرجاً واحداً يمكن عدّه أو التحقق منه لجمهور '.$audience.'، ويخدم اتجاه «'.$goalDisplay.'» دون أن يكون إعادة لاسم الاتجاه فقط.';
+            return $lead.' اذكر نتيجة واحدة يمكن عدّها أو التحقق منها لجمهور '.$audience.'، وتخدم هدف «'.$goalDisplay.'» دون أن تكون مجرد تكرار لاسم الهدف.';
         }
 
         if ($goalRaw !== '') {
-            return $lead.' ركّز على معيار واحد واضح (رقم، حدث، موعد) في سياق «'.$goalDisplay.'»'.$projectLabel.'.';
+            return $lead.' ركّز على معيار واحد واضح (رقم، حدث، موعد) في إطار «'.$goalDisplay.'»'.$projectLabel.'.';
         }
 
         return $lead.' اذكر نتيجة قابلة للقياس أو الملاحظة بوضوح'.$projectLabel.'.';

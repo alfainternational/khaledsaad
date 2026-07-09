@@ -2,9 +2,11 @@
 
 namespace App\Http\View\Composers;
 
+use App\Application\Intelligence\CompileWorkspaceIntelligenceAction;
 use App\Domain\AI\Kernel\AgentContext;
 use App\Domain\AI\Kernel\Brain;
 use App\Domain\Workspace\Models\Workspace;
+use App\Domain\WorkspaceData\Models\WorkspaceData;
 use Illuminate\View\View;
 
 /**
@@ -28,6 +30,20 @@ class AmbientAdvisorComposer
             return;
         }
 
+        // المسار السريع (HTML-like): اقرأ الـ artifact المُجمَّع مسبقاً — صفر حساب.
+        $snapshot = WorkspaceData::query()
+            ->where('workspace_id', $workspace->getKey())
+            ->whereNull('project_id')
+            ->where('key', CompileWorkspaceIntelligenceAction::SNAPSHOT_KEY)
+            ->value('value_json');
+
+        if (is_array($snapshot) && ! empty($snapshot['headline'])) {
+            $view->with('ambientAdvisor', $snapshot);
+
+            return;
+        }
+
+        // احتياطي: لا artifact بعد (مساحة جديدة) → حساب حيّ خفيف لمرة واحدة.
         $result = $this->brain->think(new AgentContext(
             intent: 'next_step',
             workspace: $workspace,

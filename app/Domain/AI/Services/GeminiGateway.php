@@ -64,6 +64,12 @@ class GeminiGateway implements AiGatewayInterface
                 $options = [
                     'verify' => $verifyTls,
                     'force_ip_resolve' => 'v4',
+                    // اتصال جديد لكل طلب: يمنع خطأ «unable to rewind body» الناتج عن
+                    // إعادة محاولة cURL على اتصال keep-alive غير صالح (يفشل التوليد).
+                    'curl' => [
+                        CURLOPT_FRESH_CONNECT => true,
+                        CURLOPT_FORBID_REUSE => true,
+                    ],
                 ];
 
                 if (! $verifyTls) {
@@ -72,10 +78,8 @@ class GeminiGateway implements AiGatewayInterface
                     if ($ip === $host) {
                         $ip = '142.251.209.170';
                     }
-                    $options['curl'] = [
-                        CURLOPT_RESOLVE => ["{$host}:443:{$ip}"],
-                        CURLOPT_DNS_SERVERS => '8.8.8.8,8.8.4.4',
-                    ];
+                    $options['curl'][CURLOPT_RESOLVE] = ["{$host}:443:{$ip}"];
+                    $options['curl'][CURLOPT_DNS_SERVERS] = '8.8.8.8,8.8.4.4';
                 }
 
                 $response = Http::withOptions($options)

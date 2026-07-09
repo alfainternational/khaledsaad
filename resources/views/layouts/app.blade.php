@@ -173,6 +173,7 @@
         aria-controls="ai-chat-panel"
         aria-label="المستشار الذكي"
         data-chat-url="{{ route('api.ai.chat') }}"
+        data-research-url="{{ route('api.ai.research') }}"
     >
         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -194,11 +195,21 @@
         <div class="ai-chat-messages" id="ai-chat-messages">
             @if (! empty($ambientAdvisor))
                 <div class="ai-chat-msg ai-chat-msg-assistant ai-chat-msg-nextstep">
+                    @if (! empty($ambientAdvisor['insight_headline']))
+                        <p class="ai-chat-insight-line">{{ $ambientAdvisor['insight_headline'] }}</p>
+                    @endif
                     <p><strong>خطوتك التالية:</strong> {{ $ambientAdvisor['headline'] }}</p>
                     @if (! empty($ambientAdvisor['body']))
                         <p>{{ $ambientAdvisor['body'] }}</p>
                     @endif
-                    @foreach ($ambientAdvisor['actions'] as $advisorAction)
+                    @if (! empty($ambientAdvisor['bullets']))
+                        <ul class="ai-chat-capabilities">
+                            @foreach ($ambientAdvisor['bullets'] as $advisorBullet)
+                                <li>{{ $advisorBullet }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+                    @foreach (($ambientAdvisor['actions'] ?? []) as $advisorAction)
                         @if (! empty($advisorAction['route']) && ! empty($advisorAction['label']))
                             <a href="{{ $advisorAction['route'] }}" class="btn btn-secondary btn-sm">{{ $advisorAction['label'] }}</a>
                         @endif
@@ -229,6 +240,9 @@
                 placeholder="اسأل عن أي شيء يخص مشروعك..."
                 aria-label="رسالة للمستشار الذكي"
             ></textarea>
+            <button type="button" class="ai-chat-send ai-chat-research" id="ai-chat-research" aria-label="بحث حيّ في الإنترنت" title="بحث حيّ في الإنترنت">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M21 21l-4.3-4.3"/></svg>
+            </button>
             <button type="button" class="ai-chat-send" id="ai-chat-send" aria-label="إرسال">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>

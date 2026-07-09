@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\AccountManagementController;
 use App\Http\Controllers\Admin\AICreditsController;
+use App\Http\Controllers\Admin\AiControlController;
+use App\Http\Controllers\Admin\AiLabController;
 use App\Http\Controllers\Admin\AIGenerationController;
 use App\Http\Controllers\Admin\AITemplateController;
 use App\Http\Controllers\Admin\AuditLogController;
@@ -39,6 +41,7 @@ use App\Http\Controllers\Web\DashboardController as UserDashboardController;
 use App\Http\Controllers\Web\ExecutionPackageController;
 use App\Http\Controllers\Web\ExperienceController;
 use App\Http\Controllers\Web\GuestDiagnosisController;
+use App\Http\Controllers\Web\ProjectReportController;
 use App\Http\Controllers\Web\RecommendationController;
 use App\Http\Controllers\Web\MarketingWebsiteController;
 use App\Http\Controllers\Web\ImpersonationController;
@@ -104,6 +107,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/ai-credits', [AICreditsController::class, 'index'])->name('ai-credits.index');
     Route::post('/ai-credits', [AICreditsController::class, 'store'])->name('ai-credits.store');
+
+    Route::get('/ai-control', [AiControlController::class, 'index'])->name('ai-control.index');
+    Route::patch('/ai-control', [AiControlController::class, 'update'])->name('ai-control.update');
+    Route::post('/ai-control/learn', [AiControlController::class, 'learn'])->name('ai-control.learn');
+    Route::delete('/ai-control/knowledge', [AiControlController::class, 'forgetKnowledge'])->name('ai-control.knowledge.forget');
+
+    Route::get('/ai-lab', [AiLabController::class, 'index'])->name('ai-lab.index');
+    Route::post('/ai-lab/run', [AiLabController::class, 'run'])->name('ai-lab.run');
+    Route::post('/ai-lab/command', [AiLabController::class, 'command'])->name('ai-lab.command');
+    Route::post('/ai-lab/judge', [AiLabController::class, 'judge'])->name('ai-lab.judge');
+
+    // كتالوج قدرات الوكلاء الـ25 (سطح «الكشف الانتقائي» — للقراءة).
+    Route::get('/agents', [\App\Http\Controllers\Admin\AgentCatalogController::class, 'index'])->name('agents.index');
 
     Route::get('/comments', [CommentModerationController::class, 'index'])->name('comments.index');
     Route::delete('/comments/{comment}', [CommentModerationController::class, 'destroy'])->name('comments.destroy');
@@ -173,6 +189,7 @@ Route::middleware('auth')->group(function (): void {
     // Execution layer (Phase ج): recommendations → execution packages.
     Route::get('/projects/{project}/recommendations', [RecommendationController::class, 'index'])->name('projects.recommendations.index');
     Route::post('/projects/{project}/recommendations/{recommendation}/package', [RecommendationController::class, 'storePackage'])->name('projects.recommendations.package');
+    Route::get('/projects/{project}/report', [ProjectReportController::class, 'show'])->name('projects.report');
     Route::get('/execution-packages/{executionPackage}', [ExecutionPackageController::class, 'show'])->name('execution-packages.show');
     Route::patch('/execution-packages/{executionPackage}/status', [ExecutionPackageController::class, 'updateStatus'])->name('execution-packages.status');
 
@@ -238,6 +255,7 @@ Route::middleware('auth')->prefix('api')->group(function (): void {
     Route::post('/ai/chat', [AiChatController::class, 'chat'])->middleware('throttle:ai-assist')->name('api.ai.chat');
     Route::post('/ai/analyze', [AiChatController::class, 'analyzeToolInputs'])->middleware('throttle:ai-assist')->name('api.ai.analyze');
     Route::post('/ai/suggest', [AiChatController::class, 'suggestFields'])->middleware('throttle:ai-assist')->name('api.ai.suggest');
+    Route::post('/ai/research', [AiChatController::class, 'research'])->middleware('throttle:ai-assist')->name('api.ai.research');
 });
 
 Route::controller(PlatformController::class)->group(function (): void {

@@ -31,6 +31,13 @@ SCPO="-i $KEY -P $PORT -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChe
 BUILD=0; FILES=()
 for a in "$@"; do [ "$a" = "--build" ] && BUILD=1 || FILES+=("$a"); done
 
+# بوّابة ما قبل النشر: كشف تعارض حالة الأحرف (يعمل على ويندوز ويفشل على Linux).
+# تخطٍّ اختياري: SKIP_CASE_CHECK=1
+if [ "${SKIP_CASE_CHECK:-0}" != "1" ] && command -v php >/dev/null 2>&1; then
+  echo "==> فحص حالة أحرف الكلاسات (case)"
+  php deploy/check-class-case.php || { echo "أُلغي النشر: أصلح تعارضات الحالة أعلاه أولاً."; exit 1; }
+fi
+
 if [ "$BUILD" = "1" ]; then
   echo "==> بناء الأصول (vite)"; npm run build; FILES+=("public/build")
 fi

@@ -80,6 +80,7 @@
         <div class="app-inline-actions">
             <a href="{{ route('projects.edit', $project) }}" class="btn btn-secondary btn-sm">تحديث البيانات</a>
             <a href="{{ route('projects.recommendations.index', $project) }}" class="btn btn-secondary btn-sm">التوصيات والتنفيذ</a>
+            <a href="{{ route('projects.report', $project) }}" class="btn btn-primary btn-sm">التقرير الشامل</a>
             <form method="POST" action="{{ route('projects.audit.run', $project) }}">
                 @csrf
                 <button type="submit" class="btn btn-primary btn-sm">تشغيل التحليل الآن</button>

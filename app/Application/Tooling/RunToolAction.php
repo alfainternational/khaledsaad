@@ -2,6 +2,7 @@
 
 namespace App\Application\Tooling;
 
+use App\Application\Intelligence\CompileWorkspaceIntelligenceAction;
 use App\Application\Workspace\RefreshJourneySnapshotAction;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
@@ -15,6 +16,7 @@ class RunToolAction
     public function __construct(
         private readonly BuildToolPayloadAction $buildToolPayloadAction,
         private readonly RefreshJourneySnapshotAction $refreshJourneySnapshotAction,
+        private readonly CompileWorkspaceIntelligenceAction $compileIntelligence,
     ) {}
 
     /**
@@ -87,6 +89,11 @@ class RunToolAction
         );
 
         $this->refreshJourneySnapshotAction->handle($project);
+
+        // Compile-Ahead: نحسب الذكاء الآن (وقت الكتابة) ونخزّنه ثابتاً،
+        // فيُخدَم لاحقاً كقراءة ملف بسرعة HTML بلا أي حساب وقت الطلب.
+        $this->compileIntelligence->handle($workspace, $project);
+        $this->compileIntelligence->handle($workspace);
 
         return $run;
     }

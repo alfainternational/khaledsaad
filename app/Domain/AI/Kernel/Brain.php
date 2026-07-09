@@ -2,6 +2,7 @@
 
 namespace App\Domain\AI\Kernel;
 
+use App\Domain\AI\Kernel\Cognition\CascadeEscalator;
 use App\Domain\AI\Kernel\Memory\MemoryScanner;
 use Illuminate\Support\Facades\Cache;
 
@@ -21,6 +22,7 @@ class Brain
     public function __construct(
         private readonly SkillRegistry $skills,
         private readonly MemoryScanner $memory,
+        private readonly CascadeEscalator $cascade,
     ) {}
 
     public function think(AgentContext $context): SkillResult
@@ -34,10 +36,16 @@ class Brain
 
         $cacheKey = $this->cacheKey($context, $skill->code());
 
-        /** @var SkillResult $result */
-        $result = Cache::remember($cacheKey, now()->addMinutes(30), fn (): SkillResult => $skill->run($context));
+        // نخزّن مصفوفة (لا كائناً) لتفادي هشاشة فك تسلسل الكائنات عبر العمليات.
+        // Cascade: المحلي أولاً، ثم تصعيد للـ LLM فقط عند ثقة منخفضة — والناتج
+        // (المُصعَّد) يُخزَّن فلا يتكرر نداء LLM لنفس السياق.
+        $data = Cache::remember(
+            $cacheKey,
+            now()->addMinutes(30),
+            fn (): array => $this->cascade->maybeEscalate($context, $skill->run($context))->toArray(),
+        );
 
-        return $result;
+        return SkillResult::fromArray(is_array($data) ? $data : []);
     }
 
     private function cacheKey(AgentContext $context, string $skillCode): string

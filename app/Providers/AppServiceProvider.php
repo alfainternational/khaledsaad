@@ -8,9 +8,19 @@ use App\Contracts\CloudClientContract;
 use App\Domain\Integration\Services\CloudIntegrationGate;
 use App\Domain\Integration\Services\HttpCloudClient;
 use App\Domain\Integration\Services\NullCloudClient;
+use App\Contracts\WebSearchGateway;
+use App\Domain\AI\Kernel\Agents\AgentCatalog;
 use App\Domain\AI\Kernel\SkillRegistry;
+use App\Domain\AI\Kernel\Skills\InsightSkill;
 use App\Domain\AI\Kernel\Skills\NextStepSkill;
+use App\Domain\AI\Kernel\Skills\ToolAnalysisSkill;
+use App\Domain\AI\Kernel\Skills\WebResearchSkill;
+use App\Domain\AI\Services\AiMetrics;
+use App\Domain\AI\Services\NullAiGateway;
+use App\Domain\AI\Web\DuckDuckGoSearchGateway;
+use App\Domain\AI\Web\NullWebSearchGateway;
 use App\Http\View\Composers\AmbientAdvisorComposer;
+use App\Support\Settings\SettingsStore;
 use App\Domain\AI\Services\CachingAiGateway;
 use App\Domain\AI\Services\FallbackAiGateway;
 use App\Domain\AI\Services\GeminiGateway;
@@ -46,10 +56,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(SettingsStore::class);
         $this->app->singleton(EntitlementResolver::class);
         $this->app->singleton(FeatureFlagService::class);
         $this->app->singleton(AuditLogger::class);
-        $this->app->singleton(AiGatewayInterface::class, function () {
+        $this->app->singleton(AiGatewayInterface::class, function ($app) {
+            // Kill Switch: إيقاف فوري لكل نداءات LLM من لوحة الآدمن.
+            if ((bool) config('services.ai.kill_switch', false)) {
+                return new NullAiGateway;
+            }
+
             $provider = config('services.ai.provider', 'gemini');
 
             $gateway = match ($provider) {
@@ -66,6 +82,7 @@ class AppServiceProvider extends ServiceProvider
                 $gateway = new CachingAiGateway(
                     $gateway,
                     (int) config('services.ai.cache_ttl_minutes', 1440),
+                    $app->make(AiMetrics::class),
                 );
             }
 
@@ -84,8 +101,28 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CloudIntegrationService::class);
 
         // نواة الوكيل المحلي (Agent Kernel): سجلّ المهارات يُبنى مرة واحدة لكل طلب.
+        // مزوّد البحث الحيّ (مجرّد): الافتراضي DuckDuckGo بلا مفتاح؛ يمكن استبداله
+        // بمزوّد بمفتاح من الإعداد لاحقاً دون لمس بقية النظام.
+        $this->app->bind(WebSearchGateway::class, function ($app) {
+            if ((bool) config('services.ai.kill_switch', false)) {
+                return new NullWebSearchGateway;
+            }
+
+            return match (config('services.web_search.provider', 'duckduckgo')) {
+                default => $app->make(DuckDuckGoSearchGateway::class),
+            };
+        });
+
+        // كتالوج قدرات الوكلاء الـ25: المصدر الوحيد لـ«الكشف الانتقائي». مفرد
+        // لأنه يقرأ config مرة ويخزّن التعريفات المبنية طوال الطلب.
+        $this->app->singleton(AgentCatalog::class);
+
         $this->app->singleton(SkillRegistry::class, function ($app): SkillRegistry {
             $registry = new SkillRegistry($app);
+            // الترتيب مهم: المهارات المحدّدة أولاً، ثم الاحتياطية العامة أخيراً.
+            $registry->register(ToolAnalysisSkill::class);
+            $registry->register(WebResearchSkill::class);
+            $registry->register(InsightSkill::class);
             $registry->register(NextStepSkill::class);
 
             return $registry;
@@ -99,6 +136,23 @@ class AppServiceProvider extends ServiceProvider
     {
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+        }
+
+        // إعدادات الذكاء من الآدمن تُطبَّق فوق config() (الدستور §32): تلتقطها كل
+        // المستهلكات (البوابة، الكاش، الرصيد، البحث) دون إعادة ربط. ملفّية بلا migration.
+        try {
+            foreach ($this->app->make(SettingsStore::class)->all() as $key => $value) {
+                if (is_string($key) && (
+                    str_starts_with($key, 'services.ai.')
+                    || str_starts_with($key, 'services.web_search.')
+                    || str_starts_with($key, 'services.nvidia.')
+                    || str_starts_with($key, 'services.gemini.')
+                )) {
+                    config([$key => $value]);
+                }
+            }
+        } catch (\Throwable) {
+            // لا تُسقط الإقلاع إن تعذّر قراءة الإعدادات؛ تُستخدم قيم config الافتراضية.
         }
 
         Gate::policy(Workspace::class, WorkspacePolicy::class);

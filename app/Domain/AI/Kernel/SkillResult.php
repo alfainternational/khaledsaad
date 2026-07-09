@@ -35,6 +35,25 @@ final class SkillResult
         return new self(code: $code, headline: '', source: self::SOURCE_NONE);
     }
 
+    /**
+     * إعادة بناء النتيجة من مصفوفة (للكاش) — نخزّن مصفوفات لا كائنات لمتانة أعلى.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            code: (string) ($data['code'] ?? 'none'),
+            headline: (string) ($data['headline'] ?? ''),
+            body: (string) ($data['body'] ?? ''),
+            bullets: (array) ($data['bullets'] ?? []),
+            confidence: (int) ($data['confidence'] ?? 0),
+            source: (string) ($data['source'] ?? self::SOURCE_NONE),
+            actions: (array) ($data['actions'] ?? []),
+            meta: (array) ($data['meta'] ?? []),
+        );
+    }
+
     public function isEmpty(): bool
     {
         return $this->source === self::SOURCE_NONE && $this->headline === '';

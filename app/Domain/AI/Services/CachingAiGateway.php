@@ -17,6 +17,7 @@ class CachingAiGateway implements AiGatewayInterface
     public function __construct(
         private readonly AiGatewayInterface $inner,
         private readonly int $ttlMinutes = 1440,
+        private readonly ?AiMetrics $metrics = null,
     ) {}
 
     public function requestContent(string $prompt, ?string $systemPrompt = null): ?array
@@ -34,9 +35,12 @@ class CachingAiGateway implements AiGatewayInterface
         $key = 'ai:'.$kind.':'.hash('sha256', ($systemPrompt ?? '').'|'.$prompt);
 
         if (Cache::has($key)) {
+            $this->metrics?->incr('cache.hit');
+
             return Cache::get($key);
         }
 
+        $this->metrics?->incr('cache.miss');
         $result = $callback();
 
         if ($result !== null) {

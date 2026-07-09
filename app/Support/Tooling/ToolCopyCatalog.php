@@ -8,7 +8,7 @@ class ToolCopyCatalog
 {
     public function submitLabel(): string
     {
-        return 'حفظ المخرج الآن';
+        return 'احفظ النتيجة الآن';
     }
 
     public function modeLockedMessage(): string
@@ -20,6 +20,6 @@ class ToolCopyCatalog
     {
         $name = $tool->name ?: $tool->code;
 
-        return 'تم حفظ مخرج أداة "'.$name.'" بنجاح. راجع الخلاصة ثم أكمل الخطوة التالية.';
+        return 'حفظنا نتيجة أداة "'.$name.'". راجع الخلاصة ثم أكمل خطوتك التالية.';
     }
 }

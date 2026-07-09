@@ -2,7 +2,9 @@
 
 namespace App\Application\Tooling;
 
+use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\AI\Services\AIService;
+use App\Domain\AI\Web\WebContextEnricher;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
 use App\Domain\Workspace\Models\Workspace;
@@ -24,6 +26,8 @@ class BuildToolPayloadAction
         private readonly WorkspaceJourneyStore $journeyStore,
         private readonly ToolBlueprintCatalog $toolBlueprintCatalog,
         private readonly AIService $aiService,
+        private readonly WebContextEnricher $webEnricher,
+        private readonly KnowledgeStore $knowledge,
     ) {}
 
     /**
@@ -63,13 +67,41 @@ class BuildToolPayloadAction
             ! empty($journeySnapshot['current_step']) ? 'الخطوة الحالية في الرحلة: '.$journeySnapshot['current_step'].'.' : null,
         ]));
 
+        // البحث الحيّ كوقود للتحليل: إشارات سوق حقيقية للأدوات المعتمدة على بيانات السوق.
+        $webContext = $this->webEnricher->enrich($tool->code, $inputs, $profile, $project->name);
+        if (is_array($webContext)) {
+            $insights[] = 'إشارة سوق حيّة: '.$webContext['summary'];
+            foreach (array_slice($webContext['findings'], 0, 2) as $finding) {
+                $insights[] = 'من الإنترنت ['.$finding['category'].']: '.$finding['title'];
+            }
+        }
+
+        // المعرفة المقطّرة (Distillation): playbook محلي للأداة يُغذّي التحليل بلا نداء LLM.
+        $playbook = $this->knowledge->recall('playbook.'.$tool->code);
+        $playbookData = is_array($playbook) ? ($playbook['data'] ?? null) : null;
+
+        // حلقة التعليم (Teacher Loop): دروس استخلصها LLM في الخلفية من مخرجات النظام
+        // المحلي السابقة — يستهلكها النظام المحلي الآن ليحسّن نفسه بلا نداء LLM.
+        $teach = $this->knowledge->recall('teach.'.$tool->code);
+        $teachData = is_array($teach) ? ($teach['data'] ?? null) : null;
+        if (is_array($teachData) && ! empty($teachData['lessons'])) {
+            foreach (array_slice((array) $teachData['lessons'], 0, 2) as $lesson) {
+                if (is_string($lesson) && trim($lesson) !== '') {
+                    $insights[] = 'درس متعلَّم: '.trim($lesson);
+                }
+            }
+        }
+
         $toolSummary = $this->buildToolSummary($tool->code, $inputs, $project->name, $mode);
 
-        $aiSummary = $this->tryAiSummary($workspace, $project, $tool, $inputs, [
+        $aiSummary = $this->tryAiSummary($workspace, $project, $tool, $inputs, array_filter([
             'workspace_profile' => $profile,
             'journey_snapshot' => $journeySnapshot,
             'readiness_snapshot' => $readiness,
-        ]);
+            'web_signals' => $webContext,
+            'playbook' => $playbookData,
+            'lessons' => is_array($teachData) ? ($teachData['lessons'] ?? null) : null,
+        ]));
 
         $isAiGenerated = false;
         if ($aiSummary) {
@@ -112,6 +144,7 @@ class BuildToolPayloadAction
                 'outcome' => $blueprint['outcome'] ?? null,
                 'ai_role' => $blueprint['ai_role'] ?? null,
             ],
+            'web_signals' => $webContext,
         ];
 
         $completenessScore = min(

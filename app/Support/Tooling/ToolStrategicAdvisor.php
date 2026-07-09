@@ -54,11 +54,11 @@ class ToolStrategicAdvisor
             'field_suggestions' => $fieldSuggestions,
             'summary' => [
                 'headline' => $readyScore >= 70
-                    ? 'هذه الأداة تملك سياقاً كافياً لتخرج بمادة أقرب للتنفيذ.'
-                    : 'الأداة ستستفيد أكثر إذا أغلقت الفجوات التالية قبل التشغيل الكامل.',
-                'text' => 'يجري ربط '.$projectName.' بهذه الأداة عبر ملف المشروع والنتائج السابقة، حتى لا تبدأ من شاشة فارغة في كل مرة.',
+                    ? 'هذه الأداة معها ما يكفي عن مشروعك لتخرج بنتيجة أقرب للتنفيذ.'
+                    : 'هذه الأداة ستنفعك أكثر إذا أكملت النواقص التالية قبل تشغيلها كاملاً.',
+                'text' => 'نربط '.$projectName.' بهذه الأداة عبر ملف مشروعك ونتائجك السابقة، حتى لا تبدأ من صفحة فارغة في كل مرة.',
                 'bullets' => array_values(array_filter([
-                    $knownSignals !== [] ? 'الإشارات الجاهزة الآن: '.implode('، ', array_column($knownSignals, 'label')).'.' : null,
+                    $knownSignals !== [] ? 'المعلومات الجاهزة الآن: '.implode('، ', array_column($knownSignals, 'label')).'.' : null,
                     $missingSignals !== [] ? 'أهم ما ينقص هذه الأداة: '.implode('، ', array_slice($missingSignals, 0, 3)).'.' : null,
                     $nextAction['reason'] ?? null,
                 ])),
@@ -106,47 +106,47 @@ class ToolStrategicAdvisor
     {
         return match ($toolCode) {
             'diagnosis' => [
-                'goal' => 'الهدف الحالي',
-                'priority' => 'أكبر ما يعطلك الآن',
+                'goal' => 'هدفك الآن',
+                'priority' => 'أكبر ما يعطّلك الآن',
                 'audience' => 'الجمهور المرجعي',
             ],
             'ideal-customer' => [
                 'audience' => 'صورة العميل',
-                'pain' => 'ألم الجمهور',
-                'goal' => 'الهدف التجاري',
+                'pain' => 'مشكلة عميلك',
+                'goal' => 'هدفك التجاري',
                 'channel' => 'القنوات الحالية',
             ],
             'positioning' => [
-                'offer' => 'العرض الحالي',
+                'offer' => 'عرضك الحالي',
                 'audience' => 'الجمهور',
                 'positioning' => 'ميزة تميّزك',
                 'market_gap' => 'فجوة السوق',
             ],
             'offer-builder' => [
-                'offer' => 'العرض الأساسي',
-                'audience' => 'الشريحة المستهدفة',
+                'offer' => 'عرضك الأساسي',
+                'audience' => 'العميل الذي تستهدفه',
                 'promise' => 'الوعد أو النتيجة',
-                'positioning' => 'الفرق عن البدائل',
-                'next_asset' => 'المخرج المتوقع من العرض',
+                'positioning' => 'ما يميّزك عن غيرك',
+                'next_asset' => 'ما تتوقع أن يخرج به العرض',
             ],
             'marketing-plan' => [
-                'goal' => 'الهدف الحالي',
-                'audience' => 'الشريحة المقصودة',
+                'goal' => 'هدفك الآن',
+                'audience' => 'العميل الذي تقصده',
                 'channel' => 'القناة الحالية',
-                'priority' => 'الأولوية التنفيذية',
-                'offer' => 'العرض أو الرسالة',
+                'priority' => 'أولويتك في التنفيذ',
+                'offer' => 'عرضك أو رسالتك',
             ],
             'content-plan' => [
                 'goal' => 'هدف المحتوى',
-                'audience' => 'الشريحة المستهدفة',
+                'audience' => 'العميل الذي تستهدفه',
                 'channel' => 'القناة الأساسية',
-                'voice' => 'صوت العلامة',
-                'next_asset' => 'المخرج أو الموضوع الأقرب',
+                'voice' => 'صوت علامتك',
+                'next_asset' => 'أقرب موضوع تريد إنتاجه',
             ],
             default => [
-                'goal' => 'الهدف',
+                'goal' => 'هدفك',
                 'audience' => 'الجمهور',
-                'offer' => 'العرض',
+                'offer' => 'عرضك',
             ],
         };
     }
@@ -226,7 +226,7 @@ class ToolStrategicAdvisor
                 'action_type' => 'current_tool',
                 'recommended_tool_code' => null,
                 'recommended_tool_label' => null,
-                'reason' => 'يمكنك تشغيل هذه الأداة الآن والاعتماد على الملف الحالي بدل إعادة جمع نفس المعلومات يدوياً.',
+                'reason' => 'تقدر تشغّل هذه الأداة الآن وتعتمد على ملف مشروعك، بدل إعادة كتابة نفس المعلومات يدوياً.',
             ];
         }
 
@@ -235,7 +235,7 @@ class ToolStrategicAdvisor
                 'action_type' => 'tool',
                 'recommended_tool_code' => 'ideal-customer',
                 'recommended_tool_label' => 'العميل المثالي',
-                'reason' => 'الجمهور ما زال غير ثابت بما يكفي، والأفضل سد هذه الفجوة قبل البناء فوقها.',
+                'reason' => 'لم يتّضح جمهورك بما يكفي بعد، والأفضل أن تحدّده أولاً قبل أن تبني فوقه.',
             ];
         }
 
@@ -243,8 +243,8 @@ class ToolStrategicAdvisor
             return [
                 'action_type' => 'tool',
                 'recommended_tool_code' => $toolCode === 'positioning' ? null : 'positioning',
-                'recommended_tool_label' => $toolCode === 'positioning' ? 'تحرير ملف المشروع' : 'تميّز المشروع',
-                'reason' => 'الرسالة أو العرض سيبقيان عامين حتى يثبت الفرق الحقيقي الذي يجب أن يراه السوق.',
+                'recommended_tool_label' => $toolCode === 'positioning' ? 'تعديل ملف مشروعك' : 'تميّز مشروعك',
+                'reason' => 'ستبقى رسالتك أو عرضك عامّين حتى تحدّد الفرق الحقيقي الذي يجب أن يراه عملاؤك.',
             ];
         }
 
@@ -252,16 +252,16 @@ class ToolStrategicAdvisor
             return [
                 'action_type' => 'brief',
                 'recommended_tool_code' => null,
-                'recommended_tool_label' => 'تحرير ملف المشروع',
-                'reason' => 'هذه الأداة تحتاج معرفة القناة أو المسار الحالي كي لا تنتهي بتوصيات عامة أو غير قابلة للتنفيذ.',
+                'recommended_tool_label' => 'تعديل ملف مشروعك',
+                'reason' => 'تحتاج هذه الأداة معرفة قناتك الحالية حتى لا تخرج بتوصيات عامة يصعب تنفيذها.',
             ];
         }
 
         return [
             'action_type' => 'brief',
             'recommended_tool_code' => null,
-            'recommended_tool_label' => 'تحرير ملف المشروع',
-            'reason' => 'إغلاق الفجوات المتبقية في ملف المشروع سيرفع جودة هذه الأداة مباشرة ويقلل التكرار على المستخدم.',
+            'recommended_tool_label' => 'تعديل ملف مشروعك',
+            'reason' => 'إكمال النواقص في ملف مشروعك يرفع جودة هذه الأداة مباشرة ويوفّر عليك التكرار.',
         ];
     }
 }

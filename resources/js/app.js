@@ -1669,14 +1669,17 @@ function wireToolAiSuggestions() {
                     let applied = 0;
                     Object.entries(result.suggestions).forEach(([key, value]) => {
                         const field = form.querySelector(`[name="inputs[${key}]"]`);
-                        const currentValue = field?.tagName === 'SELECT'
-                            ? field.value.trim()
-                            : field?.value.trim();
+                        if (!field || !value) return;
 
-                        if (field && currentValue === '' && value && setToolFieldValue(field, value)) {
+                        const newVal = String(value).trim();
+                        const currentValue = (field.tagName === 'SELECT' ? field.value : field.value).trim();
+
+                        // يطبّق على الفارغ (تعبئة) والممتلئ (استبدال بصياغة أقوى)، ويتجاهل المطابق.
+                        if (newVal === '' || newVal === currentValue) return;
+
+                        if (setToolFieldValue(field, newVal)) {
                             field.classList.add('ai-suggested');
                             applied++;
-
                             setTimeout(() => field.classList.remove('ai-suggested'), 3000);
                         }
                     });
@@ -2150,6 +2153,67 @@ function wireAiChatWidget() {
             input.focus();
         }
     };
+
+    const researchBtn = document.getElementById('ai-chat-research');
+
+    const appendResearch = (data) => {
+        const div = document.createElement('div');
+        div.className = 'ai-chat-msg ai-chat-msg-assistant';
+        const findings = Array.isArray(data.findings) ? data.findings : [];
+        const head = `<p><strong>بحث حيّ:</strong> ${escapeHtml(data.summary || '')}</p>`;
+        const list = findings.slice(0, 5).map((f) => {
+            const cat = f.category ? `<span class="ai-chat-source-cat">[${escapeHtml(f.category)}]</span>` : '';
+            const snippet = f.snippet ? `<small>${escapeHtml(String(f.snippet).slice(0, 140))}</small>` : '';
+            return `<li><a class="ai-chat-source" href="${escapeHtml(f.url)}" target="_blank" rel="noopener noreferrer">${cat}${escapeHtml(f.title || f.url)}<br>${snippet}</a></li>`;
+        }).join('');
+        div.innerHTML = head + (list ? `<ul class="ai-chat-sources">${list}</ul>` : '');
+        messagesContainer.appendChild(div);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    };
+
+    const runResearch = async () => {
+        const query = input.value.trim();
+        if (!query) {
+            input.focus();
+            return;
+        }
+
+        input.value = '';
+        hideSuggestions();
+        appendMessage('user', `ابحث حيّاً: ${query}`);
+
+        if (researchBtn) researchBtn.disabled = true;
+        sendBtn.disabled = true;
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'ai-chat-msg ai-chat-msg-loading';
+        loadingDiv.innerHTML = '<span class="btn-spinner"></span> أبحث في الإنترنت...';
+        messagesContainer.appendChild(loadingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        try {
+            const researchUrl = toggle.dataset.researchUrl || '/api/ai/research';
+            const response = await fetchPost(researchUrl, { query });
+            const result = await response.json();
+            loadingDiv.remove();
+
+            if (result.research) {
+                appendResearch(result.research);
+            } else {
+                appendMessage('assistant', result.error || 'تعذّر البحث الحيّ الآن.');
+            }
+        } catch (err) {
+            loadingDiv.remove();
+            appendMessage('assistant', 'حدث خطأ في الاتصال أثناء البحث. حاول مرة أخرى.');
+        } finally {
+            if (researchBtn) researchBtn.disabled = false;
+            sendBtn.disabled = false;
+            input.focus();
+        }
+    };
+
+    if (researchBtn) {
+        researchBtn.addEventListener('click', () => runResearch());
+    }
 
     sendBtn.addEventListener('click', () => sendMessage());
     input.addEventListener('keydown', (e) => {

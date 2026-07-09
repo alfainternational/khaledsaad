@@ -10,6 +10,7 @@ class ToolInputQualityAssessmentService
     public function __construct(
         private readonly ToolBlueprintCatalog $blueprints,
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
+        private readonly \App\Domain\AI\Services\QualityJudge $judge,
     ) {}
 
     /**
@@ -29,10 +30,34 @@ class ToolInputQualityAssessmentService
         $fields = $this->resolveFields($blueprint, $mode, $inputs);
         $fieldAssessments = $this->assessFields($fields, $inputs, $context);
 
+        // تقييم كل حقل دلالياً عبر Gemini بنداء واحد (مُكاش): يحكم هل تُجيب الإجابة
+        // *هذا السؤال تحديداً* وهل محدّدة — لا الطول ولا الكلمات. يستبدل الدرجات
+        // المحلية التقريبية بدرجات دقيقة تكشف الإجابة خارج الموضوع أو غير المطابقة للسؤال.
+        $valueNote = 'هل إجاباتك تجيب الأسئلة فعلاً وتكون محددة؟';
+        $valueSource = 'local';
+        $perField = $this->judgeFields($fields, $inputs, $toolName);
+        if ($perField !== null) {
+            $valueSource = 'gemini';
+            $fieldAssessments = $fieldAssessments->map(function (array $a, string $key) use ($perField): array {
+                if (isset($perField[$key]) && is_array($perField[$key])) {
+                    $score = max(0, min(100, (int) ($perField[$key]['score'] ?? $a['score'])));
+                    $a['score'] = $score;
+                    $a['status'] = $score >= 75 ? 'strong' : ($score >= 45 ? 'mid' : 'weak');
+                    $note = trim((string) ($perField[$key]['note'] ?? ''));
+                    if ($note !== '') {
+                        $a['note'] = $note;
+                    }
+                }
+
+                return $a;
+            });
+        }
+
         $completeness = $this->completenessScore($fields, $inputs);
         $value = $this->valueScore($fieldAssessments);
         $coherence = $this->coherenceScore($inputs, $fieldAssessments);
         $contextAlignment = $this->contextAlignmentScore($inputs, $context, $fieldAssessments);
+
         $overall = (int) round(($completeness * 0.25) + ($value * 0.35) + ($coherence * 0.2) + ($contextAlignment * 0.2));
 
         return [
@@ -41,27 +66,28 @@ class ToolInputQualityAssessmentService
             'dimensions' => [
                 [
                     'key' => 'completeness',
-                    'label' => 'الاكتمال',
+                    'label' => 'هل أكملت إجاباتك؟',
                     'score' => $completeness,
-                    'note' => 'هل الحقول الأساسية مكتملة بما يكفي للانتقال للخطوة التالية؟',
+                    'note' => 'هل عبّأت الحقول المهمة بما يكفي لتنتقل للخطوة التالية؟',
                 ],
                 [
                     'key' => 'value',
-                    'label' => 'قيمة المدخلات',
+                    'label' => 'هل إجاباتك واضحة؟',
                     'score' => $value,
-                    'note' => 'هل الإجابات محددة وقابلة للبناء عليها أم ما زالت عامة؟',
+                    'note' => $valueNote,
+                    'source' => $valueSource,
                 ],
                 [
                     'key' => 'coherence',
-                    'label' => 'المنطق والترابط',
+                    'label' => 'هل إجاباتك متّسقة؟',
                     'score' => $coherence,
-                    'note' => 'هل الحقول تدعم بعضها أم تعيد نفس الفكرة أو تتناقض؟',
+                    'note' => 'هل تكمّل إجاباتك بعضها، أم تكرّر الفكرة نفسها أو تتعارض؟',
                 ],
                 [
                     'key' => 'context_alignment',
-                    'label' => 'الانسجام مع السياق',
+                    'label' => 'هل تناسب مشروعك؟',
                     'score' => $contextAlignment,
-                    'note' => 'هل الإجابات منسجمة مع بيانات المشروع والأدوات السابقة؟',
+                    'note' => 'هل تناسب إجاباتك ما يخص مشروعك وما أنجزته من أدوات سابقة؟',
                 ],
             ],
             'strengths' => $this->strengths($fieldAssessments, $completeness, $contextAlignment),
@@ -118,39 +144,38 @@ class ToolInputQualityAssessmentService
         return $fields->mapWithKeys(function (array $field, string $key) use ($inputs, $context): array {
             $value = trim((string) ($inputs[$key] ?? ''));
             $label = (string) ($field['label'] ?? $key);
-            $tip = trim((string) ($field['answer_tip'] ?? 'أجب بمعلومة محددة يمكن البناء عليها.'));
+            $tip = trim((string) ($field['answer_tip'] ?? 'اكتب معلومة واضحة يمكن البناء عليها.'));
 
             if ($value === '') {
                 return [$key => [
                     'label' => $label,
                     'score' => 0,
                     'status' => 'empty',
-                    'note' => 'الحقل ما زال فارغاً. '.$tip,
+                    'note' => 'لم تكتب شيئاً هنا بعد. '.$tip,
                 ]];
             }
 
-            $score = 35;
+            // التقييم على الجودة لا الطول: نقطة انطلاق محايدة، ثم إشارات مضمون.
+            $score = 50;
             $wordCount = $this->wordCount($value);
             $genericHits = $this->genericPhraseHits($value);
 
-            if (mb_strlen($value) >= 18) {
-                $score += 10;
+            // صلة الإجابة بما يطلبه الحقل فعلاً (تعليماته) — جوهر الجودة.
+            $score += $this->instructionRelevance($field, $value);
+
+            // إشارات تحديد ملموسة (أرقام/زمن فقط — لا أسماء كيانات تظهر في الحشو).
+            if (preg_match('/\d|%|ريال|دولار|خلال|أسبوع|شهر|يوم/u', $value)) {
+                $score += 12;
             }
 
-            if (mb_strlen($value) >= 40) {
-                $score += 10;
-            }
-
-            if ($wordCount >= 4) {
-                $score += 10;
-            }
-
-            if (preg_match('/\d|خلال|أول|أسبوع|شهر|يوم|مبيعات|طلبات|عملاء|حجوزات/u', $value)) {
-                $score += 10;
-            }
-
+            // عقوبة الحشو العام (المشكلة الحقيقية، لا قِصَر النص).
             if ($genericHits > 0) {
-                $score -= min(25, $genericHits * 8);
+                $score -= min(40, $genericHits * 14);
+            }
+
+            // مجهود صفري حقيقي: كلمة واحدة أو تكرار حرفي لعنوان الحقل.
+            if ($wordCount <= 1 || $this->echoesLabel($label, $value)) {
+                $score -= 18;
             }
 
             $score += $this->labelSpecificAdjustment($field, $value);
@@ -279,18 +304,18 @@ class ToolInputQualityAssessmentService
         $items = [];
 
         if ($completeness >= 70) {
-            $items[] = 'أغلب الحقول الأساسية مكتملة، وهذا يوفّر أرضية جيدة لبناء مخرج أوضح.';
+            $items[] = 'أكملت معظم الحقول المهمة، وهذا يعطيك أساساً جيداً لنتيجة أوضح.';
         }
 
         if ($contextAlignment >= 65) {
-            $items[] = 'المدخلات الحالية تبدو منسجمة إلى حد جيد مع سياق المشروع السابق، ما يقلل خطر التشتت.';
+            $items[] = 'إجاباتك تناسب ما يخص مشروعك سابقاً بشكل جيد، وهذا يبقي شغلك مركّزاً.';
         }
 
         $fieldAssessments
             ->filter(fn (array $assessment): bool => $assessment['status'] === 'strong')
             ->take(2)
             ->each(function (array $assessment) use (&$items): void {
-                $items[] = 'إجابة "'.$assessment['label'].'" فيها قدر جيد من التحديد ويمكن البناء عليها مباشرة.';
+                $items[] = 'إجابتك في "'.$assessment['label'].'" واضحة ومحددة، ويمكن البناء عليها مباشرة.';
             });
 
         return array_values(array_unique($items));
@@ -305,26 +330,26 @@ class ToolInputQualityAssessmentService
         $items = [];
 
         if ($completeness < 60) {
-            $items[] = 'المدخلات ما زالت ناقصة في حقول أساسية، وهذا يضعف جودة أي مخرج لاحق حتى لو كانت بعض الإجابات جيدة.';
+            $items[] = 'ما زلت لم تكمل حقولاً مهمة، وهذا يضعف النتيجة حتى لو كانت بعض إجاباتك جيدة.';
         }
 
         if ($value < 60) {
-            $items[] = 'بعض الإجابات ما زالت عامة أو وصفية، ولا تقدّم مادة كافية يمكن الاعتماد عليها في القرار.';
+            $items[] = 'بعض إجاباتك ما زالت عامة، ولا تعطيك مادة كافية لتبني عليها قرارك.';
         }
 
         if ($coherence < 60) {
-            $items[] = 'هناك ضعف في الترابط بين الحقول، وبعض الإجابات تعيد الفكرة نفسها أو تترك فجوات منطقية بين السبب والهدف والنتيجة.';
+            $items[] = 'إجاباتك ليست متّسقة بما يكفي؛ بعضها يكرّر الفكرة نفسها أو يترك فجوة بين السبب والهدف والنتيجة.';
         }
 
         if ($contextAlignment < 60) {
-            $items[] = 'المدخلات الحالية لا تستفيد بما يكفي من سياق المشروع والأدوات السابقة، ما يهدد بتكرار عمل سبق إنجازه أو تجاهل معطيات مهمة.';
+            $items[] = 'إجاباتك لا تستفيد بما يكفي مما يخص مشروعك وأدواتك السابقة، وقد تكرّر شغلاً أنجزته أو تتجاهل معلومات مهمة.';
         }
 
         $fieldAssessments
             ->filter(fn (array $assessment): bool => $assessment['status'] === 'weak')
             ->take(3)
             ->each(function (array $assessment) use (&$items): void {
-                $items[] = 'حقل "'.$assessment['label'].'" ما زال ضعيف القيمة أو قليل التحديد.';
+                $items[] = 'إجابتك في "'.$assessment['label'].'" ما زالت عامة أو قليلة التفاصيل.';
             });
 
         return array_values(array_unique($items));
@@ -343,23 +368,23 @@ class ToolInputQualityAssessmentService
 
         $firstWeak = $fieldAssessments->first(fn (array $assessment): bool => $assessment['status'] === 'weak');
         if (is_array($firstWeak)) {
-            $items[] = 'ابدأ بتحسين حقل "'.$firstWeak['label'].'" أولاً، لأنه حالياً لا يعطي الفريق أو الذكاء الاصطناعي مادة كافية للبناء.';
+            $items[] = 'ابدأ بتحسين إجابتك في "'.$firstWeak['label'].'"، فهي حالياً لا تعطي مادة كافية للبناء عليها.';
         }
 
         $emptyField = $fields->first(function (array $field, string $key) use ($inputs): bool {
             return trim((string) ($inputs[$key] ?? '')) === '';
         });
         if (is_array($emptyField)) {
-            $items[] = 'أكمل سؤال "'.$emptyField['label'].'" بإجابة محددة، لأنه من الحقول التي تغيّر القرار فعلياً في هذه الأداة.';
+            $items[] = 'أكمل سؤال "'.$emptyField['label'].'" بإجابة واضحة، فهو من الأسئلة التي تغيّر النتيجة فعلاً في هذه الأداة.';
         }
 
         $profileAudience = trim((string) (($context['workspace_profile']['audience'] ?? '')));
         if ($profileAudience !== '') {
-            $items[] = 'اربط إجاباتك بالشريحة المحفوظة في المشروع: '.$profileAudience.'، أو اذكر بوضوح لماذا تختلف هذه الأداة عن ذلك السياق.';
+            $items[] = 'اربط إجاباتك بالعميل المحفوظ في مشروعك: '.$profileAudience.'، أو وضّح لماذا تختلف هذه الأداة عن ذلك.';
         }
 
         if ($items === []) {
-            $items[] = 'استمر في هذا المستوى من التحديد، ثم راجع هل كل إجابة تضيف قراراً أو دليلاً أو قيداً عملياً لا مجرد وصف عام.';
+            $items[] = 'استمر بهذا الوضوح، وراجع هل كل إجابة تضيف فعلاً قراراً أو دليلاً أو شيئاً عملياً، لا مجرد وصف عام.';
         }
 
         return array_slice(array_values(array_unique($items)), 0, 3);
@@ -375,16 +400,16 @@ class ToolInputQualityAssessmentService
         $projectBit = $projectName !== '' ? 'لمشروع «'.$projectName.'»' : 'لهذا المشروع';
 
         if ($value < 60) {
-            return 'قبل الاعتماد على مخرج «'.$toolName.'» '.$projectBit.'، ارفع دقة الإجابات؛ إلا فسيصبح الناتج عاماً وغير قابل للتنفيذ.';
+            return 'قبل أن تعتمد على نتيجة «'.$toolName.'» '.$projectBit.'، اجعل إجاباتك أدق؛ وإلا ستخرج النتيجة عامة ويصعب تنفيذها.';
         }
 
         if ($contextAlignment < 60) {
-            $goalBit = $goal !== '' ? 'بهدف «'.$goal.'»' : 'بالأهداف المحفوظة للمشروع';
+            $goalBit = $goal !== '' ? 'بهدف «'.$goal.'»' : 'بأهداف مشروعك المحفوظة';
 
-            return 'الحقول مملوءة لكنها ضعيفة الارتباط بما سبق؛ صِل «'.$toolName.'» '.$goalBit.' وبخلاصات الأدوات السابقة حتى لا تكرر عملاً أو تتجاهل وقائع المشروع.';
+            return 'أكملت الحقول لكنها بعيدة عمّا أنجزته سابقاً؛ اربط «'.$toolName.'» '.$goalBit.' وبما خرجت به من أدوات سابقة حتى لا تكرّر شغلك أو تتجاهل واقع مشروعك.';
         }
 
-        return 'المدخلات جيدة كأساس عملي؛ حافظ على نفس التحديد عند الحفظ حتى يبقى المخرج متسقاً '.$projectBit.'.';
+        return 'إجاباتك أساس عملي جيد؛ حافظ على نفس الوضوح عند الحفظ حتى تبقى النتيجة متّسقة '.$projectBit.'.';
     }
 
     /**
@@ -394,14 +419,14 @@ class ToolInputQualityAssessmentService
     private function fieldNoteFor(array $field, string $value, int $score, array $context): string
     {
         $label = (string) ($field['label'] ?? $field['key'] ?? 'هذا الحقل');
-        $tip = trim((string) ($field['answer_tip'] ?? 'أضف معلومة محددة ومباشرة.'));
+        $tip = trim((string) ($field['answer_tip'] ?? 'أضف معلومة واضحة ومباشرة.'));
 
         if ($score >= 75) {
-            return 'إجابة جيدة في "'.$label.'". حافظ على هذا المستوى من التحديد والوضوح.';
+            return 'إجابة جيدة في "'.$label.'". حافظ على هذا الوضوح والتحديد.';
         }
 
         if ($this->genericPhraseHits($value) > 0) {
-            return 'الإجابة الحالية في "'.$label.'" ما زالت عامة. '.$tip;
+            return 'إجابتك في "'.$label.'" ما زالت عامة. '.$tip;
         }
 
         if ($this->looksGenericAudience($value) && $this->isAudienceField($field)) {
@@ -409,19 +434,19 @@ class ToolInputQualityAssessmentService
         }
 
         if ($this->isGoalLikeField($field) && ! preg_match('/\d|خلال|أول|أسبوع|شهر|طلبات|عملاء|مبيعات|حجوزات/u', $value)) {
-            return 'اجعل الإجابة في "'.$label.'" أقرب لنتيجة قابلة للملاحظة أو القياس، وليس اتجاهاً عاماً فقط.';
+            return 'اجعل إجابتك في "'.$label.'" أقرب لنتيجة تلاحظها أو تقيسها، لا مجرد اتجاه عام.';
         }
 
         if ($this->isProblemLikeField($field) && ! preg_match('/لأن|بسبب|يؤدي|يمنع|يؤخر|يكلف/u', $value)) {
-            return 'اذكر سبب المشكلة أو أثرها المباشر حتى لا تبقى الإجابة عنواناً عاماً فقط.';
+            return 'اذكر سبب المشكلة أو أثرها المباشر حتى لا تبقى إجابتك عنواناً عاماً فقط.';
         }
 
         $profileAudience = trim((string) (($context['workspace_profile']['audience'] ?? '')));
         if ($profileAudience !== '' && $this->isAudienceField($field) && ! $this->sharesKeyword($value, $profileAudience)) {
-            return 'الإجابة في "'.$label.'" تبدو بعيدة عن الشريحة المحفوظة سابقاً. إن كنت تقصد شريحة أخرى فاذكر سبب هذا التغيير بوضوح.';
+            return 'إجابتك في "'.$label.'" تبدو بعيدة عن العميل المحفوظ سابقاً. إن كنت تقصد عميلاً آخر فوضّح سبب هذا التغيير.';
         }
 
-        return 'الإجابة في "'.$label.'" مقبولة كبداية لكنها تحتاج مزيداً من التحديد أو المثال العملي. '.$tip;
+        return 'إجابتك في "'.$label.'" مقبولة كبداية لكنها تحتاج مزيداً من التحديد أو مثالاً عملياً. '.$tip;
     }
 
     /**
@@ -526,6 +551,10 @@ class ToolInputQualityAssessmentService
             '/الأفضل|مميز|احترافي/u',
             '/شراكة\s+نمو/u',
             '/إدارة\s+محتوى\s+شهرية/u',
+            // حشو تسويقي عام شائع (يقلّل الجودة بغضّ النظر عن الطول):
+            '/مبتكر|متميّ?ز|عالي[ةه]?\s*الجودة|الجودة\s*العالية|الكرام|رائد[ةه]?/u',
+            '/في\s*كل\s*مكان|بإذن\s*الله|دائم[اًا]*\s*وأبد|على\s*أعلى\s*مستوى/u',
+            '/نخدم\s*الجميع|جميع\s*(?:العملاء|الناس)|لكل\s*(?:الناس|الفئات)/u',
         ];
 
         $hits = 0;
@@ -534,6 +563,71 @@ class ToolInputQualityAssessmentService
         }
 
         return $hits;
+    }
+
+    /**
+     * تقييم جودة الاستمارة عبر قاضي Gemini (نداء واحد، مُكاش). يعيد null عند
+     * التعطيل/غياب LLM أو قلّة المدخلات، فيتدهور التقييم للقاعدة المحلية بأمان.
+     *
+     * @param  Collection<string, array<string, mixed>>  $fields
+     * @param  array<string, mixed>  $inputs
+     * @return array{score: int, note: string}|null
+     */
+    private function judgeFields(Collection $fields, array $inputs, string $toolName): ?array
+    {
+        if (! $this->judge->enabled()) {
+            return null;
+        }
+
+        $items = [];
+        foreach ($fields as $key => $field) {
+            $value = trim((string) ($inputs[$key] ?? ''));
+            if ($value !== '') {
+                $items[] = [
+                    'key' => (string) $key,
+                    'question' => (string) ($field['label'] ?? $key),
+                    'value' => $value,
+                ];
+            }
+        }
+
+        // لا نزعج المستخدم بنداء LLM قبل أن يكتب ما يكفي للحكم على الجودة.
+        if (count($items) < 1) {
+            return null;
+        }
+
+        return $this->judge->scoreFields($toolName, $items);
+    }
+
+    /**
+     * صلة الإجابة بتعليمات الحقل (answer_tip + label): قياس جودة لا طول.
+     * يعالج الكلمات الدالة في "ما هو مطلوب" مقابل ما كتبه المستخدم.
+     *
+     * @param  array<string, mixed>  $field
+     * @return int  0..20
+     */
+    private function instructionRelevance(array $field, string $value): int
+    {
+        $instruction = trim((string) ($field['answer_tip'] ?? '')).' '.(string) ($field['label'] ?? '');
+        $instruction = trim($instruction);
+        if ($instruction === '') {
+            return 8;
+        }
+
+        // نتجاهل أمثلة "مثال: ..." حتى لا نكافئ نسخ المثال حرفياً.
+        $instruction = preg_replace('/مثال\s*:.*/u', '', $instruction) ?? $instruction;
+
+        $overlap = $this->keywordOverlap($value, $instruction);
+
+        return max(0, min(20, $overlap * 7));
+    }
+
+    private function echoesLabel(string $label, string $value): bool
+    {
+        $l = trim(mb_strtolower($label));
+        $v = trim(mb_strtolower($value));
+
+        return $l !== '' && ($v === $l || $v === rtrim($l, '؟?.'));
     }
 
     private function wordCount(string $text): int
@@ -584,25 +678,25 @@ class ToolInputQualityAssessmentService
     private function verdictFor(int $overall, int $completeness, int $value, int $coherence, int $contextAlignment): string
     {
         if ($overall >= 80) {
-            return 'المدخلات قوية وقابلة للبناء عليها، مع ترابط جيد وسياق واضح.';
+            return 'إجاباتك قوية ويمكن البناء عليها، متّسقة فيما بينها وتناسب مشروعك.';
         }
 
         if ($value < 55) {
-            return 'الحقول قد تكون ممتلئة جزئياً، لكن قيمة الإجابات ما زالت ضعيفة أو عامة.';
+            return 'ربما عبّأت بعض الحقول، لكن إجاباتك ما زالت ضعيفة أو عامة.';
         }
 
         if ($contextAlignment < 55) {
-            return 'الإجابات الحالية تحتاج ربطاً أوضح بما سبق في المشروع حتى لا يخرج الناتج منفصلاً عن الواقع.';
+            return 'إجاباتك تحتاج ربطاً أوضح بما أنجزته في مشروعك حتى لا تخرج النتيجة بعيدة عن واقعك.';
         }
 
         if ($completeness < 60) {
-            return 'هناك بداية جيدة، لكن نقص بعض الحقول الأساسية ما زال يمنع تكوين صورة قوية ومتسقة.';
+            return 'بداية جيدة، لكن نقص بعض الحقول المهمة ما زال يمنعك من تكوين صورة قوية ومتّسقة.';
         }
 
         if ($coherence < 60) {
-            return 'الإجابات تحتوي مواد واعدة، لكن الترابط بينها ما زال يحتاج صقلاً حتى تخدم قراراً واحداً واضحاً.';
+            return 'إجاباتك فيها مادة واعدة، لكنها تحتاج صقلاً حتى تتّسق وتخدم قراراً واحداً واضحاً.';
         }
 
-        return 'المدخلات مقبولة كبداية، لكنها تحتاج مزيداً من التحديد والربط حتى تصبح وقوداً قوياً للمخرجات.';
+        return 'إجاباتك مقبولة كبداية، لكنها تحتاج مزيداً من الوضوح والترابط حتى تخرج نتيجة قوية.';
     }
 }

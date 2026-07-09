@@ -42,6 +42,10 @@ class NvidiaNimGateway implements AiGatewayInterface
 
         try {
             $response = Http::withToken($apiKey)
+                ->withOptions(['curl' => [
+                    CURLOPT_FRESH_CONNECT => true,
+                    CURLOPT_FORBID_REUSE => true,
+                ]])
                 ->connectTimeout(30)
                 ->timeout(90)
                 ->acceptJson()

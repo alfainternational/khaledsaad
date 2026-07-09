@@ -56,6 +56,9 @@
                     <a href="{{ route('admin.tool-runs.index') }}" class="app-nav-link {{ request()->routeIs('admin.tool-runs.*') ? 'active' : '' }}"><span>سجل الأدوات</span></a>
                     <a href="{{ route('admin.ai-generations.index') }}" class="app-nav-link {{ request()->routeIs('admin.ai-generations.*') ? 'active' : '' }}"><span>مخرجات AI</span></a>
                     <a href="{{ route('admin.ai-credits.index') }}" class="app-nav-link {{ request()->routeIs('admin.ai-credits.*') ? 'active' : '' }}"><span>رصيد AI</span></a>
+                    <a href="{{ route('admin.ai-control.index') }}" class="app-nav-link {{ request()->routeIs('admin.ai-control.*') ? 'active' : '' }}"><span>مركز تحكم الذكاء</span></a>
+                    <a href="{{ route('admin.ai-lab.index') }}" class="app-nav-link {{ request()->routeIs('admin.ai-lab.*') ? 'active' : '' }}"><span>مختبر الذكاء (تطوير)</span></a>
+                    <a href="{{ route('admin.agents.index') }}" class="app-nav-link {{ request()->routeIs('admin.agents.*') ? 'active' : '' }}"><span>قدرات الوكلاء</span></a>
                     <a href="{{ route('admin.comments.index') }}" class="app-nav-link {{ request()->routeIs('admin.comments.*') ? 'active' : '' }}"><span>التعليقات</span></a>
                     <a href="{{ route('admin.audit-logs.index') }}" class="app-nav-link {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}"><span>سجل التدقيق</span></a>
                 </nav>

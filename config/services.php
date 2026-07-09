@@ -51,6 +51,23 @@ return [
          | عن الحسابات قبل تهيئة الأرصدة؛ الاستهلاك يُسجَّل دائماً في ai_credits_ledger.
          */
         'enforce_credits' => env('AI_ENFORCE_CREDITS', false),
+        /* مفتاح إيقاف فوري لكل نداءات الذكاء الخارجية (يُدار من لوحة الآدمن). */
+        'kill_switch' => env('AI_KILL_SWITCH', false),
+        /* Cascade: تصعيد للـ LLM فقط عند ثقة محلية أقل من العتبة. */
+        'cascade' => env('AI_CASCADE', true),
+        'cascade_threshold' => env('AI_CASCADE_THRESHOLD', 60),
+        /* قاضي الجودة (Gemini): تقييم جودة المضمون لا الطول للحقول الحدّية. */
+        'quality_judge' => env('AI_QUALITY_JUDGE', true),
+    ],
+
+    /*
+    | البحث الحيّ في الإنترنت. الافتراضي DuckDuckGo بلا مفتاح؛ غيّره لمزوّد
+    | بمفتاح (brave/serpapi) لاحقاً عبر AI_SEARCH_PROVIDER دون لمس الكود.
+    */
+    'web_search' => [
+        'provider' => env('AI_SEARCH_PROVIDER', 'duckduckgo'),
+        /* حقن إشارات سوق حيّة داخل تحليل الأدوات المعتمدة على بيانات السوق. */
+        'enrich_tools' => env('AI_SEARCH_ENRICH_TOOLS', true),
     ],
 
     /*
@@ -72,7 +89,8 @@ return [
     'nvidia' => [
         'key' => env('NVIDIA_API_KEY'),
         'base_url' => env('NVIDIA_API_BASE_URL', 'https://integrate.api.nvidia.com/v1'),
-        'model' => env('NVIDIA_MODEL', 'meta/llama-3.1-8b-instruct'),
+        /* نموذج قوي وسريع كاحتياطي موثوق (بُرهن: off_topic صحيح في ~1.6s). */
+        'model' => env('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct'),
         'temperature' => env('NVIDIA_TEMPERATURE', 0.7),
         'max_tokens' => env('NVIDIA_MAX_TOKENS', 8192),
     ],

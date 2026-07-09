@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Domain\AI\Services\AICreditService;
+use App\Domain\AI\Services\AiCreditService;
 use App\Domain\AI\Services\AIService;
+use App\Domain\AI\Web\WebResearchService;
 use App\Domain\Workspace\Models\Workspace;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\Concerns\InteractsWithWorkspaceContext;
@@ -23,7 +24,7 @@ class AiChatController extends Controller
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
         private readonly ToolInputQualityAssessmentService $toolInputQualityAssessmentService,
         private readonly ToolBlueprintCatalog $toolBlueprints,
-        private readonly AICreditService $credits,
+        private readonly AiCreditService $credits,
     ) {}
 
     /**
@@ -199,6 +200,36 @@ class AiChatController extends Controller
         }
 
         return $rows;
+    }
+
+    public function research(Request $request, WebResearchService $research): JsonResponse
+    {
+        $request->validate([
+            'query' => 'required|string|min:2|max:200',
+            'depth' => 'nullable|integer|min:1|max:5',
+        ]);
+
+        $workspace = $this->currentWorkspace($request);
+
+        if ($guard = $this->creditGuard($workspace)) {
+            return $guard;
+        }
+
+        $data = $research->research(
+            $request->string('query')->toString(),
+            (int) $request->integer('depth', 3),
+        );
+
+        if (empty($data['findings'])) {
+            return response()->json([
+                'error' => $data['summary'] ?? 'تعذّر البحث الحيّ الآن.',
+                'code' => 'WEB_RESEARCH_EMPTY',
+            ], 503);
+        }
+
+        $this->chargeCredits($workspace, 1, 'ai.web_research');
+
+        return response()->json(['research' => $data]);
     }
 
     public function suggestFields(Request $request): JsonResponse

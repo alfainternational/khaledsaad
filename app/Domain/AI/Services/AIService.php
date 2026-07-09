@@ -393,10 +393,13 @@ class AIService
             $contextBlock = 'لا توجد بيانات سابقة لهذا المشروع.';
         }
 
+        // حدّ أعلى للحقول الفارغة المقترَحة دفعةً واحدة: يمنع قصّ JSON عند الإخراج
+        // الطويل (maxOutputTokens) ويبقي الاقتراحات مركّزة وقابلة للتحليل.
         $emptyKeys = collect($currentInputs)
             ->filter(fn ($v) => ! is_string($v) || trim($v) === '')
             ->keys()
             ->values()
+            ->take(12)
             ->all();
 
         $outcomeLine = $toolOutcomeHint !== null && trim($toolOutcomeHint) !== ''
@@ -420,49 +423,73 @@ class AIService
             $filledBlock = '(لا توجد حقول مملوءة بعد)';
         }
 
-        $emptyFieldsBlock = collect($emptyKeys)->map(function (string $k) use ($fieldLabelMap): string {
+        // الأهداف: الحقول الفارغة (إنشاء) + الممتلئة (تحسين/استبدال)، بأولوية الفارغة، بحدّ 12.
+        $filledKeys = collect($currentInputs)
+            ->filter(fn ($v) => is_string($v) && trim($v) !== '')
+            ->keys()
+            ->filter(fn ($k) => $k !== 'brief')
+            ->values()
+            ->all();
+        $targetKeys = array_values(array_slice(
+            array_merge($emptyKeys, array_values(array_diff($filledKeys, $emptyKeys))),
+            0,
+            12,
+        ));
+
+        if ($targetKeys === []) {
+            return ['success' => false, 'error' => 'لا توجد حقول لاقتراح قيم لها.'];
+        }
+
+        $targetFieldsBlock = collect($targetKeys)->map(function (string $k) use ($fieldLabelMap, $currentInputs): string {
             $meta = $fieldLabelMap[$k] ?? null;
             $label = is_array($meta) ? ($meta['label'] ?? $k) : $k;
             $tip = is_array($meta) ? trim((string) ($meta['answer_tip'] ?? '')) : '';
+            $cur = is_string($currentInputs[$k] ?? null) ? trim((string) $currentInputs[$k]) : '';
             $line = '- المفتاح الحرفي `'.$k.'` — السؤال: '.$label;
             if ($tip !== '') {
                 $line .= ' — توجيه: '.$tip;
             }
+            $line .= $cur !== ''
+                ? "\n  الإجابة الحالية (حسّنها لتكون أدقّ وأقرب لمن يشتري؛ إن كانت ممتازة أبقها): ".$cur
+                : "\n  (فارغ — اكتب إجابة قوية محدّدة)";
 
             return $line;
         })->implode("\n");
 
-        if (trim($emptyFieldsBlock) === '') {
-            return ['success' => false, 'error' => 'لا توجد حقول فارغة لاقتراح قيم لها.'];
-        }
-
-        $keysJsonList = implode('، ', array_map(fn (string $k): string => '"'.$k.'"', $emptyKeys));
+        $keysJsonList = implode('، ', array_map(fn (string $k): string => '"'.$k.'"', $targetKeys));
 
         $prompt = <<<PROMPT
-        أنت مستشار تسويق واستراتيجية، بأسلوب قريب من المستخدم (بلغة «أنت») ودون حشو. مهمتك ملء أداة "{$toolName}" (الكود التقني: {$toolCode}).
+        أنت مستشار تسويق واستراتيجية، بأسلوب قريب من المستخدم (بلغة «أنت») ودون حشو. مهمتك تعبئة وتحسين إجابات أداة "{$toolName}" (الكود التقني: {$toolCode}).
 
         {$contextBlock}
 
         {$outcomeLine}
         {$modeLine}
 
-        ما هو مملوء الآن:
+        ما هو مملوء الآن (للسياق):
         {$filledBlock}
 
-        الحقول الفارغة التي نحتاج اقتراح قيم لها (استخدم **المفتاح التقني** كما هو بين المزدوجين فقط):
-        {$emptyFieldsBlock}
+        الحقول المطلوب اقتراح/تحسين قيمها (استخدم **المفتاح التقني** كما هو بين المزدوجين فقط):
+        {$targetFieldsBlock}
 
         === قواعد صارمة ===
         1) أعد JSON فقط، بدون نص قبله أو بعده، بدون ```markdown
         2) مفاتيح كائن "suggestions" يجب أن تطابق **حرفياً** هذه المفاتيح فقط: {$keysJsonList}
-        3) لا تخترع أرقاماً أو أسماء عملاء أو نتائج لا يظهر أصلها في السياق أعلاه
-        4) اجعل كل اقتراح جملة أو جملتين عمليتين تناسب سؤال الحقل، وليس تعريفاً عاماً
-        5) "insight": جملة أو جملتان تربط هذه الأداة بمرحلة المشروع أو الهدف الظاهر في السياق (اذكر اسم المشروع إن وُجد)
+        3) **ممنوع منعاً باتاً** إعادة صياغة السؤال أو نسخ التوجيه، وممنوع أن تبدأ القيمة بكلمة «مثل» أو «مثال»، وممنوع أن تحتوي علامة استفهام. اكتب **الإجابة المباشرة فقط** كأنك المستخدم يجيب.
+        4) للحقل المملوء: أعد صياغته أقوى وأكثر تحديداً (فئة دقيقة، سلوك، مكان، رقم/زمن) وتخلّص من العموميات؛ للفارغ: اكتب إجابة قوية محدّدة
+        5) لا تخترع أرقاماً أو أسماء عملاء أو نتائج لا يظهر أصلها في السياق أعلاه
+        6) اجعل كل قيمة جملة أو جملتين عمليتين تناسب سؤال الحقل تحديداً، ولا تكرّر إجابة حقل آخر
+        7) "insight": جملة أو جملتان تربط هذه الأداة بمرحلة المشروع أو الهدف الظاهر في السياق (اذكر اسم المشروع إن وُجد)
+
+        مثال على الفرق:
+        السؤال: «نجاح هدفك يعتمد على ماذا؟» — توجيه: «مثل بناء قاعدة عملاء».
+        قيمة سيئة مرفوضة: «نجاح هدفك يعتمد على ماذا؟ مثل بناء قاعدة عملاء».
+        قيمة جيدة: «الوصول إلى 50 عميلاً متكرراً خلال 90 يوماً بمعدل احتفاظ 60%».
 
         الصيغة:
         {
             "suggestions": {
-                "...المفتاح_الحرفي_فقط...": "اقتراح نصي محدد"
+                "...المفتاح_الحرفي_فقط...": "قيمة محدّدة ومحسّنة"
             },
             "insight": "ربط استراتيجي مختصر"
         }
@@ -474,27 +501,38 @@ class AIService
             return ['success' => false, 'error' => 'تعذر توليد الاقتراحات حالياً.'];
         }
 
-        $cleaned = trim($text);
-        $cleaned = preg_replace('/^```(?:json)?\s*/i', '', $cleaned);
-        $cleaned = preg_replace('/\s*```$/', '', $cleaned);
-
-        $parsed = json_decode($cleaned, true);
+        $parsed = $this->looseJsonDecode($text);
 
         if (! is_array($parsed)) {
+            \Illuminate\Support\Facades\Log::warning('AI field suggestions: JSON parse failed', [
+                'tool' => $toolCode,
+                'raw' => mb_substr($text, 0, 600),
+            ]);
+
             return ['success' => false, 'error' => 'تعذر تحليل الاقتراحات.'];
         }
 
         $rawSuggestions = $parsed['suggestions'] ?? [];
         $suggestions = [];
         if (is_array($rawSuggestions)) {
-            foreach ($emptyKeys as $key) {
+            foreach ($targetKeys as $key) {
                 if (! isset($rawSuggestions[$key]) || ! is_string($rawSuggestions[$key])) {
                     continue;
                 }
                 $trimmed = trim($rawSuggestions[$key]);
-                if ($trimmed !== '') {
-                    $suggestions[$key] = $trimmed;
+                if ($trimmed === '') {
+                    continue;
                 }
+
+                // رفض الاقتراح الغبي: إعادة نص السؤال أو التوجيه (مثل ...) بدل إجابة فعلية.
+                $meta = $fieldLabelMap[$key] ?? null;
+                $label = is_array($meta) ? (string) ($meta['label'] ?? '') : '';
+                $tip = is_array($meta) ? (string) ($meta['answer_tip'] ?? '') : '';
+                if ($this->isEchoSuggestion($trimmed, $label, $tip)) {
+                    continue;
+                }
+
+                $suggestions[$key] = $trimmed;
             }
         }
 
@@ -640,6 +678,83 @@ class AIService
         ];
     }
 
+    /**
+     * يكشف الاقتراح "الغبي" الذي يعيد صياغة السؤال أو يبدأ بمثال التوجيه بدل إجابة فعلية.
+     */
+    private function isEchoSuggestion(string $suggestion, string $label, string $tip): bool
+    {
+        $s = $this->normalizeForCompare($suggestion);
+        $l = $this->normalizeForCompare($label);
+
+        if ($s === '') {
+            return true;
+        }
+
+        // يبدأ بمثال أو "مثل ..." = نسخ التوجيه لا إجابة.
+        if (preg_match('/^(?:مثل|مثال|على سبيل المثال)\b/u', trim($suggestion)) === 1) {
+            return true;
+        }
+
+        // يطابق السؤال أو يبدأ به (إعادة صياغة السؤال).
+        if ($l !== '' && mb_strlen($l) >= 6 && ($s === $l || str_starts_with($s, $l))) {
+            return true;
+        }
+
+        // يحتوي نص السؤال كاملاً + علامة استفهام (السؤال مدسوس داخل "الإجابة").
+        if ($l !== '' && mb_strlen($l) >= 6 && str_contains($s, $l) && str_contains($suggestion, '؟')) {
+            return true;
+        }
+
+        // يطابق مثال التوجيه نفسه (answer_tip) دون إضافة.
+        $tipExample = trim((string) preg_replace('/^.*?مثل\s*:?\s*/u', '', $tip));
+        if ($tipExample !== '' && mb_strlen($tipExample) >= 6 && $this->normalizeForCompare($tipExample) === $s) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function normalizeForCompare(string $text): string
+    {
+        $t = mb_strtolower(trim($text));
+
+        return trim((string) preg_replace('/[\s؟?.،,:!]+/u', ' ', $t));
+    }
+
+    /**
+     * فكّ JSON متين من ردّ LLM: يزيل أسوار ```، ويستخرج الكائن من أول { إلى آخر }
+     * إن أحاط النموذج الـ JSON بنصّ. يعالج السبب الأشيع لـ "تعذر تحليل الاقتراحات".
+     *
+     * @return array<mixed>|null
+     */
+    private function looseJsonDecode(?string $text): ?array
+    {
+        if ($text === null || trim($text) === '') {
+            return null;
+        }
+
+        $cleaned = trim($text);
+        $cleaned = preg_replace('/^```(?:json)?\s*/i', '', $cleaned) ?? $cleaned;
+        $cleaned = preg_replace('/\s*```$/', '', $cleaned) ?? $cleaned;
+
+        $decoded = json_decode($cleaned, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        // النموذج أحاط الـ JSON بنصّ — استخرج من أول { إلى آخر }.
+        $start = strpos($cleaned, '{');
+        $end = strrpos($cleaned, '}');
+        if ($start !== false && $end !== false && $end > $start) {
+            $decoded = json_decode(substr($cleaned, $start, $end - $start + 1), true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return null;
+    }
+
     private function isAiGatewayConfigured(): bool
     {
         return (bool) (config('services.gemini.key') || config('services.nvidia.key'));
@@ -720,6 +835,47 @@ class AIService
         $client = $sourceContext['client'] ?? [];
         if (is_array($client) && is_string($client['name'] ?? null) && trim($client['name']) !== '') {
             $parts[] = 'العميل المرتبط: '.$client['name'];
+        }
+
+        $playbook = $sourceContext['playbook'] ?? [];
+        if (is_array($playbook) && ! empty($playbook['principles'])) {
+            $pbLines = ['دليل خبرة مقطّر لهذه الأداة (استرشد به):'];
+            foreach (array_slice((array) $playbook['principles'], 0, 3) as $principle) {
+                $pbLines[] = '- مبدأ: '.(string) $principle;
+            }
+            if (! empty($playbook['quick_win'])) {
+                $pbLines[] = '- أسرع مكسب: '.(string) $playbook['quick_win'];
+            }
+            $parts[] = implode("\n", $pbLines);
+        }
+
+        $lessons = $sourceContext['lessons'] ?? [];
+        if (is_array($lessons) && $lessons !== []) {
+            $lessonLines = ['دروس متعلَّمة لهذه الأداة (التزم بها لرفع الجودة):'];
+            foreach (array_slice($lessons, 0, 3) as $lesson) {
+                if (is_string($lesson) && trim($lesson) !== '') {
+                    $lessonLines[] = '- '.trim($lesson);
+                }
+            }
+            if (count($lessonLines) > 1) {
+                $parts[] = implode("\n", $lessonLines);
+            }
+        }
+
+        $web = $sourceContext['web_signals'] ?? [];
+        if (is_array($web) && ! empty($web['findings'])) {
+            $lines = ['إشارات حيّة من الإنترنت (استخدمها كمرجع واقعي، ولا تخترع أرقاماً):'];
+            if (! empty($web['summary'])) {
+                $lines[] = '- '.$web['summary'];
+            }
+            foreach (array_slice((array) $web['findings'], 0, 3) as $finding) {
+                $title = trim((string) ($finding['title'] ?? ''));
+                $snippet = trim((string) ($finding['snippet'] ?? ''));
+                if ($title !== '') {
+                    $lines[] = '- ['.($finding['category'] ?? 'عام').'] '.$title.($snippet !== '' ? ' — '.$snippet : '');
+                }
+            }
+            $parts[] = implode("\n", $lines);
         }
 
         return $parts === []

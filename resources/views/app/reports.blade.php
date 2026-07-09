@@ -183,7 +183,10 @@
                         <small>{{ $nextAction['reason'] }}</small>
                     @endif
                 </div>
-                <span class="app-badge">{{ $nextAction['recommended_tool_label'] ?? 'جاهز' }}</span>
+                <div class="app-list-item-actions">
+                    <span class="app-badge">{{ $nextAction['recommended_tool_label'] ?? 'جاهز' }}</span>
+                    <a href="{{ route('projects.report', $item['project']) }}" class="btn btn-secondary btn-sm">التقرير الشامل</a>
+                </div>
             </div>
         @empty
             <p class="app-empty">لا توجد مشاريع يمكن اقتراح خطوة تالية لها بعد.</p>
