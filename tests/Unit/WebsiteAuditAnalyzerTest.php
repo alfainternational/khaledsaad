@@ -34,14 +34,14 @@ class WebsiteAuditAnalyzerTest extends TestCase
         $titles = collect($result['findings'])->pluck('title')->all();
 
         $this->assertFalse($result['snapshot']['ok'] === false);
-        $this->assertContains('عنوان الصفحة الأساسية ضعيف أو ناقص', $titles);
-        $this->assertContains('الوصف التعريفي غير كافٍ', $titles);
-        $this->assertContains('الصفحة الأساسية بلا H1 واضح', $titles);
-        $this->assertContains('توافق الجوال غير مضمون', $titles);
-        $this->assertContains('لا يوجد CTA واضح في المحتوى الظاهر', $titles);
-        $this->assertContains('عمق صفحات الخدمات محدود', $titles);
+        $this->assertContains('عنوان صفحتك الرئيسية ضعيف أو ناقص', $titles);
+        $this->assertContains('الوصف التعريفي للصفحة غير كافٍ', $titles);
+        $this->assertContains('صفحتك الرئيسية بلا عنوان رئيسي واضح', $titles);
+        $this->assertContains('عرض الموقع على الجوال غير مضمون', $titles);
+        $this->assertContains('لا يوجد زر إجراء واضح في الصفحة', $titles);
+        $this->assertContains('صفحات خدماتك قليلة التفصيل', $titles);
         $this->assertContains('وسائل التواصل غير واضحة بما يكفي', $titles);
-        $this->assertContains('إمكانية الوصول تحتاج تحسيناً', $titles);
+        $this->assertContains('سهولة الاستخدام تحتاج تحسيناً', $titles);
     }
 
     #[Test]

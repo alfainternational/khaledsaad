@@ -23,7 +23,7 @@ class SocialAuditAnalyzerTest extends TestCase
         $this->assertSame(1, $result['analysis_meta']['requested_profiles']);
         $this->assertSame(0, $result['analysis_meta']['accessible_profiles']);
         $this->assertSame(1, $result['analysis_meta']['failed_profiles']);
-        $this->assertSame('تعذر قراءة صفحة Instagram العامة', $result['findings'][0]['title']);
+        $this->assertSame('تعذّرت قراءة صفحة Instagram العامة', $result['findings'][0]['title']);
         $this->assertSame(0.45, $result['findings'][0]['confidence']);
     }
 

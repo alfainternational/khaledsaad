@@ -116,7 +116,7 @@ class AIServiceContextTest extends TestCase
         );
 
         $this->assertNotNull($result);
-        $this->assertStringContainsString('## الملف التحليلي المرجعي', $gateway->lastPrompt);
+        $this->assertStringContainsString('الملف التحليلي المرجعي الإلزامي', $gateway->lastPrompt);
         $this->assertStringContainsString('عرض يحتاج توضيح الضمان', $gateway->lastPrompt);
         $this->assertStringContainsString('لا يحب الكلام الإنشائي.', $gateway->lastPrompt);
         $this->assertStringContainsString('راجع الضمان قبل اعتماد العرض.', $gateway->lastPrompt);

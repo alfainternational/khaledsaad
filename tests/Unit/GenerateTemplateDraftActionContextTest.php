@@ -178,7 +178,7 @@ TXT;
         $this->assertNotEmpty($gateway->calls);
         $generationPrompt = $gateway->calls[1]['prompt'] ?? $gateway->calls[0]['prompt'];
 
-        $this->assertStringContainsString('## الملف التحليلي المرجعي', $generationPrompt);
+        $this->assertStringContainsString('الملف التحليلي المرجعي الإلزامي', $generationPrompt);
         $this->assertStringContainsString('العيادة لا تريد وعوداً فضفاضة.', $generationPrompt);
         $this->assertStringContainsString('راجع الرسائل قبل التسليم النهائي.', $generationPrompt);
         $this->assertStringContainsString('خفف اللغة العامة في بداية الملف.', $generationPrompt);

@@ -168,7 +168,7 @@ class ToolFormExperienceBuilderTest extends TestCase
         $experience = $builder->build($tool, $blueprint, $profile, null, null, []);
 
         $this->assertSame('goal_rationale', data_get($experience, 'modes.guided.fields.goal_reason.category'));
-        $this->assertStringContainsString('السبب التجاري', (string) data_get($experience, 'modes.guided.fields.goal_reason.context_hint'));
+        $this->assertStringContainsString('السبب العملي', (string) data_get($experience, 'modes.guided.fields.goal_reason.context_hint'));
         $this->assertNotNull(data_get($experience, 'modes.guided.fields.goal_reason.suggested_value'));
     }
 }

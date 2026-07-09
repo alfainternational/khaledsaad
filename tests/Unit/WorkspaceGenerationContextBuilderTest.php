@@ -43,7 +43,7 @@ class WorkspaceGenerationContextBuilderTest extends TestCase
 
         $promptBlock = $context['prompt_block'];
 
-        $this->assertStringContainsString('## الملف التحليلي المرجعي', $promptBlock);
+        $this->assertStringContainsString('الملف التحليلي المرجعي الإلزامي', $promptBlock);
         $this->assertStringContainsString('لهجة خليجية (مبسطة للمحتوى)', $promptBlock);
         $this->assertStringContainsString('عرض قوي يحتاج اعتراضات أدق', $promptBlock);
         $this->assertStringContainsString('لا يحب الوعود المبالغ فيها.', $promptBlock);
