@@ -29,6 +29,7 @@ class BuildProjectReportAction
         private readonly StrategicDiagnosisBuilder $diagnosisBuilder,
         private readonly DomainPlansBuilder $domainPlansBuilder,
         private readonly ProjectDossierBuilder $dossierBuilder,
+        private readonly \App\Domain\AI\Knowledge\MarketingKnowledgeBase $knowledge,
     ) {}
 
     /**
@@ -298,11 +299,29 @@ class BuildProjectReportAction
         // المجمّعة حتمياً) بدل ملخّصات مضغوطة — فيحلّل المادة الكاملة ويربطها.
         $dossierMarkdown = $this->dossierBuilder->build($project)['markdown'];
 
+        // تأريض دور «التطوير» الخارجي بمعرفة محلية: أطر + معايير قطاعية + أنماط
+        // ذات صلة بمشاكل المشروع — فيستند LLM إلى معرفتنا لا إلى عمومياته.
+        $knowledgeQuery = trim(implode(' ', array_merge(
+            array_map(
+                fn (array $p): string => (string) ($p['problem'] ?? ''),
+                array_slice((array) ($base['diagnosis']['problems'] ?? []), 0, 3),
+            ),
+            (array) ($base['gaps'] ?? []),
+        )));
+        $knowledgeBlock = $this->knowledge->promptBlock(
+            $knowledgeQuery !== '' ? $knowledgeQuery : (string) $base['project'],
+            $project->sector,
+            4,
+        );
+
         $prompt = implode("\n", [
             'أنت مستشار استراتيجي. بين يديك «دليل المشروع» كاملاً — كل إجابات صاحب المشروع الخام عبر كل الأدوات، مجمّعةً ومرتّبةً حسب المراحل.',
             'اقرأ الدليل بالكامل واكتب تقريراً استراتيجياً **مترابطاً** يربط القطع ببعضها (لا تكرار حرفي للإجابات)، مبنياً على ما ورد فيه فقط دون اختراع أرقام أو حقائق.',
             '',
             $context !== '' ? $context : '',
+            '',
+            '=== معرفة تسويقية مرجعية (استند إليها ولا تخترع أرقاماً خارجها) ===',
+            $knowledgeBlock,
             '',
             '=== دليل المشروع (الإجابات الخام الكاملة) ===',
             $dossierMarkdown,

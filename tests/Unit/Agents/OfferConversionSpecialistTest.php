@@ -3,6 +3,9 @@
 namespace Tests\Unit\Agents;
 
 use App\Domain\AI\Kernel\Agents\Specialists\OfferConversionSpecialist;
+use App\Domain\AI\Semantic\ArabicNormalizer;
+use App\Domain\AI\Semantic\ConceptLexicon;
+use App\Domain\AI\Semantic\LexicalSemanticMatcher;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +16,9 @@ class OfferConversionSpecialistTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->cro = new OfferConversionSpecialist;
+        $this->cro = new OfferConversionSpecialist(
+            new LexicalSemanticMatcher(new ArabicNormalizer, new ConceptLexicon),
+        );
     }
 
     #[Test]

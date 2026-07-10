@@ -89,6 +89,12 @@ class AppServiceProvider extends ServiceProvider
             return $gateway;
         });
 
+        // طبقة الفهم الدلالي المحلية: تُربط عبر عقد قابل للترقية لاحقاً لمحرّك تضمينات.
+        $this->app->singleton(
+            \App\Domain\AI\Semantic\SemanticMatcher::class,
+            \App\Domain\AI\Semantic\LexicalSemanticMatcher::class,
+        );
+
         $this->app->singleton(HttpCloudClient::class);
 
         $this->app->singleton(CloudClientContract::class, function ($app) {

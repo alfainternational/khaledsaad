@@ -2,6 +2,8 @@
 
 namespace App\Domain\AI\Kernel\Agents\Specialists;
 
+use App\Domain\AI\Semantic\SemanticMatcher;
+
 /**
  * أخصائي العرض والتحويل — التجسيد المحلي لوكيل cro-specialist.
  *
@@ -9,18 +11,14 @@ namespace App\Domain\AI\Kernel\Agents\Specialists;
  * دعوة فعل، وضوح الجمهور، منفعة لا خاصية)، ويعيد درجة + نقاط ضعف + اقتراحات
  * قابلة للتنفيذ. لا نداء خارجي — heuristics حتمية تعمل «في كل الأوقات».
  *
- * السطح: يُحقن في أدوات المرحلة 3 (العرض/التسعير) بعد التشغيل.
+ * الفهم دلالي (SemanticMatcher) لا معجمي: يتعرّف على «تدفع لو رضيت» كعكس مخاطرة
+ * رغم غياب كلمة «ضمان». السطح: يُحقن في أدوات المرحلة 3 (العرض/التسعير).
  */
 class OfferConversionSpecialist
 {
-    /** كلمات تدلّ على ضمان/عكس مخاطرة. */
-    private const RISK_REVERSAL = ['ضمان', 'استرجاع', 'استرداد', 'مجاناً', 'بدون مخاطرة', 'جرّب', 'تجربة', 'بلا التزام'];
-
-    /** كلمات تدلّ على دعوة فعل واضحة. */
-    private const CTA = ['ابدأ', 'اطلب', 'احجز', 'سجّل', 'اشترك', 'حمّل', 'تواصل', 'اشترِ', 'انضم', 'جرّب الآن'];
-
-    /** حشو عام يضعف الرسالة (يُعاقَب). */
-    private const FILLER = ['حلول مبتكرة', 'جودة عالية', 'الأفضل', 'رائد', 'رائدة', 'جميع العملاء', 'أفضل الأسعار', 'خدمة متميزة'];
+    public function __construct(
+        private readonly SemanticMatcher $matcher,
+    ) {}
 
     /**
      * تحليل قوة العرض محلياً.
@@ -49,8 +47,8 @@ class OfferConversionSpecialist
             $findings[] = ['code' => 'no_numbers', 'label' => 'العرض بلا أرقام ملموسة', 'severity' => 'medium', 'hint' => 'أضف رقماً: سعراً، مدة، أو نتيجة متوقّعة.'];
         }
 
-        // 2) عكس المخاطرة / الضمان.
-        if ($this->containsAny($offer, self::RISK_REVERSAL)) {
+        // 2) عكس المخاطرة / الضمان (دلالياً: يلتقط «تدفع لو رضيت» بلا كلمة «ضمان»).
+        if ($this->matcher->expresses($offer, 'risk_reversal')) {
             $score += 15;
             $strengths[] = 'يقلّل مخاطرة العميل (ضمان/تجربة).';
         } else {
@@ -58,21 +56,18 @@ class OfferConversionSpecialist
         }
 
         // 3) دعوة فعل واضحة.
-        if ($this->containsAny($offer, self::CTA)) {
+        if ($this->matcher->expresses($offer, 'cta')) {
             $score += 12;
             $strengths[] = 'يحوي دعوة فعل واضحة.';
         } else {
             $findings[] = ['code' => 'no_cta', 'label' => 'دعوة الفعل غير واضحة', 'severity' => 'high', 'hint' => 'أنهِ العرض بفعل واحد واضح: «ابدأ الآن»، «احجز مكانك».'];
         }
 
-        // 4) الحشو العام يضعف الرسالة.
-        $filler = 0;
-        foreach (self::FILLER as $phrase) {
-            $filler += mb_substr_count($offer, $phrase);
-        }
-        if ($filler > 0) {
-            $score -= min(24, $filler * 8);
-            $findings[] = ['code' => 'filler', 'label' => 'عبارات عامة تُضعف العرض', 'severity' => 'medium', 'hint' => 'استبدل «'.$this->firstFiller($offer).'» بمنفعة محدّدة وملموسة.'];
+        // 4) الحشو العام يضعف الرسالة (قوّة التعبير تحدّد شدّة العقوبة).
+        $fillerStrength = $this->matcher->strength($offer, 'filler');
+        if ($fillerStrength > 0.0) {
+            $score -= (int) round(min(24, $fillerStrength * 24));
+            $findings[] = ['code' => 'filler', 'label' => 'عبارات عامة تُضعف العرض', 'severity' => 'medium', 'hint' => 'استبدل العبارات العامة بمنفعة محدّدة وملموسة (رقم، فئة، نتيجة).'];
         }
 
         // 5) الطول العملي: قصير جداً أو مترهّل.
@@ -87,27 +82,5 @@ class OfferConversionSpecialist
             'strengths' => $strengths,
             'findings' => $findings,
         ];
-    }
-
-    private function containsAny(string $haystack, array $needles): bool
-    {
-        foreach ($needles as $needle) {
-            if (mb_stripos($haystack, $needle) !== false) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function firstFiller(string $offer): string
-    {
-        foreach (self::FILLER as $phrase) {
-            if (mb_stripos($offer, $phrase) !== false) {
-                return $phrase;
-            }
-        }
-
-        return 'عبارة عامة';
     }
 }

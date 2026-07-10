@@ -58,6 +58,18 @@ return [
         'cascade_threshold' => env('AI_CASCADE_THRESHOLD', 60),
         /* قاضي الجودة (Gemini): تقييم جودة المضمون لا الطول للحقول الحدّية. */
         'quality_judge' => env('AI_QUALITY_JUDGE', true),
+
+        /*
+        | حوكمة الذكاء الخارجي — مصدر الحقيقة الواحد لحدّه.
+        | المبدأ: الفهم والتحليل والاستنباط تُنجَز *محلياً* (Semantic + Reasoning +
+        | Knowledge). الذكاء الخارجي محصور في ثلاثة أدوار فقط، لا يُنتج حقائق بنيوية:
+        |   - knowledge_fetch : جلب معرفة/إشارات سوق حيّة (WebResearch).
+        |   - enrichment      : تطوير وصياغة فوق الأساس المحلي (synthesize/cascade/studio).
+        |   - review          : مراجعة الجودة قبل التقديم النهائي (QualityJudge/OutputQualityGate).
+        | أي دور خارج هذه الثلاثة مرفوض معمارياً.
+        */
+        'external_roles' => ['knowledge_fetch', 'enrichment', 'review'],
+        'local_first' => env('AI_LOCAL_FIRST', true),
     ],
 
     /*

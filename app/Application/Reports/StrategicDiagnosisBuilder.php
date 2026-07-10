@@ -2,6 +2,10 @@
 
 namespace App\Application\Reports;
 
+use App\Domain\AI\Semantic\ArabicNormalizer;
+use App\Domain\AI\Semantic\ConceptLexicon;
+use App\Domain\AI\Semantic\LexicalSemanticMatcher;
+use App\Domain\AI\Semantic\SemanticMatcher;
 use App\Domain\Tool\Models\ToolRun;
 use Illuminate\Support\Collection;
 
@@ -22,6 +26,17 @@ class StrategicDiagnosisBuilder
         'جودة عالية', 'حلول مبتكرة', 'الأفضل', 'خدمة متميزة', 'أسعار منافسة',
         'جميع العملاء', 'الجميع', 'كل الناس', 'متميز', 'رائد', 'احترافية عالية',
     ];
+
+    private readonly SemanticMatcher $matcher;
+
+    /**
+     * الفهم الدلالي يُضاف فوق المطابقة المعجمية (لا يستبدلها) — توسّع الاستدعاء
+     * دون تراجع. اختياري بقيمة افتراضية ليبقى الباني قابلاً للإنشاء بـ new.
+     */
+    public function __construct(?SemanticMatcher $matcher = null)
+    {
+        $this->matcher = $matcher ?? new LexicalSemanticMatcher(new ArabicNormalizer, new ConceptLexicon);
+    }
 
     /**
      * @param  Collection<int, ToolRun>  $runs  آخر تشغيل لكل أداة (unique tool_code)
@@ -100,7 +115,7 @@ class StrategicDiagnosisBuilder
         return false;
     }
 
-    /** إجابة عامة: قصيرة جداً أو تحتوي حشواً. */
+    /** إجابة عامة: قصيرة جداً أو تحتوي حشواً (معجمياً أو دلالياً). */
     private function isGeneric(string $value): bool
     {
         $value = trim($value);
@@ -111,6 +126,10 @@ class StrategicDiagnosisBuilder
             if (mb_stripos($value, $f) !== false) {
                 return true;
             }
+        }
+        // فهم دلالي: يلتقط الحشو ولو بصياغة غير مقنّنة في القائمة أعلاه.
+        if ($this->matcher->expresses($value, 'filler')) {
+            return true;
         }
 
         return mb_strlen($value) < 12 || count(preg_split('/\s+/u', $value) ?: []) <= 2;
@@ -199,7 +218,9 @@ class StrategicDiagnosisBuilder
             return null;
         }
         $hesitation = $this->val($in, 'journey_doubt').' '.$this->val($in, 'journey_trust').' '.$this->val($in, 'main_objection').' '.$this->val($in, 'funnel_blocker');
-        if (trim($hesitation) === '' || ! $this->containsAny($hesitation, ['ثقة', 'تردد', 'تردّد', 'شك', 'خوف', 'سعر', 'مخاطرة', 'ضمان', 'دفع'])) {
+        $hasHesitation = $this->containsAny($hesitation, ['ثقة', 'تردد', 'تردّد', 'شك', 'خوف', 'سعر', 'مخاطرة', 'ضمان', 'دفع'])
+            || $this->matcher->expresses($hesitation, 'hesitation');
+        if (trim($hesitation) === '' || ! $hasHesitation) {
             return null;
         }
 

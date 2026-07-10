@@ -15,6 +15,9 @@ use App\Domain\AI\Kernel\Agents\Specialists\PrOutreachSpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\SearchVisibilitySpecialist;
 use App\Domain\AI\Kernel\Agents\Specialists\SocialContentSpecialist;
 use App\Domain\AI\Kernel\Agents\SpecialistReviewService;
+use App\Domain\AI\Semantic\ArabicNormalizer;
+use App\Domain\AI\Semantic\ConceptLexicon;
+use App\Domain\AI\Semantic\LexicalSemanticMatcher;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -22,9 +25,11 @@ class SpecialistReviewServiceTest extends TestCase
 {
     private function service(): SpecialistReviewService
     {
+        $matcher = new LexicalSemanticMatcher(new ArabicNormalizer, new ConceptLexicon);
+
         return new SpecialistReviewService(
             new LocalizationSpecialist,
-            new OfferConversionSpecialist,
+            new OfferConversionSpecialist($matcher),
             new SearchVisibilitySpecialist,
             new EmailSequenceSpecialist,
             new SocialContentSpecialist,
