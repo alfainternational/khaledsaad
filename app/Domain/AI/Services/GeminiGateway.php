@@ -83,8 +83,8 @@ class GeminiGateway implements AiGatewayInterface
                 }
 
                 $response = Http::withOptions($options)
-                    ->connectTimeout(30)
-                    ->timeout(90)
+                    ->connectTimeout((int) config('services.gemini.connect_timeout', 15))
+                    ->timeout((int) config('services.gemini.timeout', 45))
                     ->post($url, $payload);
 
                 if ($response->successful()) {

@@ -96,6 +96,9 @@ return [
         'max_output_tokens' => env('GEMINI_MAX_OUTPUT_TOKENS', 1024),
         /* الأمان: أبقِه true في الإنتاج. false فقط لتطوير محلي به مشاكل DNS/CA. */
         'verify_tls' => env('GEMINI_VERIFY_TLS', true),
+        /* مهلات قابلة للضبط من الآدمن — fail-fast بدل حجب طويل. */
+        'connect_timeout' => env('GEMINI_CONNECT_TIMEOUT', 15),
+        'timeout' => env('GEMINI_TIMEOUT', 45),
     ],
 
     'nvidia' => [
@@ -105,6 +108,13 @@ return [
         'model' => env('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct'),
         'temperature' => env('NVIDIA_TEMPERATURE', 0.7),
         'max_tokens' => env('NVIDIA_MAX_TOKENS', 8192),
+        /*
+        | معالجة البطء: NVIDIA يتجاوز أحياناً مهلة طويلة (0 بايت)، فتُحجب العملية.
+        | مهلة أقصر (افتراضي 45ث) + اتصال أسرع = فشل سريع يسقط للاحتياطي/المحلي بدل
+        | الحجب 90ث. النموذج الأخفّ (8b) أسرع من 70b — قابل للاختيار من الآدمن.
+        */
+        'connect_timeout' => env('NVIDIA_CONNECT_TIMEOUT', 15),
+        'timeout' => env('NVIDIA_TIMEOUT', 45),
     ],
 
     /*

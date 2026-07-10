@@ -46,8 +46,8 @@ class NvidiaNimGateway implements AiGatewayInterface
                     CURLOPT_FRESH_CONNECT => true,
                     CURLOPT_FORBID_REUSE => true,
                 ]])
-                ->connectTimeout(30)
-                ->timeout(90)
+                ->connectTimeout((int) config('services.nvidia.connect_timeout', 15))
+                ->timeout((int) config('services.nvidia.timeout', 45))
                 ->acceptJson()
                 ->post($url, $payload);
 

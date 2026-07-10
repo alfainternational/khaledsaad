@@ -171,6 +171,51 @@
     </form>
 </section>
 
+{{-- المزوّدات والمفاتيح والسرعة --}}
+<section class="admin-panel panel-modern mb-6">
+    <div class="admin-panel-head"><h2>المزوّدات والمفاتيح والسرعة</h2></div>
+    <form method="POST" action="{{ route('admin.ai-control.providers') }}" class="admin-form-stack">
+        @csrf
+        @method('PATCH')
+
+        <h3 class="admin-subhead">Gemini (Google)</h3>
+        <label class="admin-field">
+            <span>مفتاح Gemini <small>(الحالي: {{ $status['gemini_key_hint'] }} — اتركه فارغاً للإبقاء)</small></span>
+            <input type="password" name="gemini_key" class="admin-input" autocomplete="off" placeholder="أدخل مفتاحاً جديداً لتغييره">
+        </label>
+        <label class="admin-field">
+            <span>نموذج Gemini</span>
+            <input type="text" name="gemini_model" class="admin-input" value="{{ $status['gemini_model'] }}" required>
+        </label>
+        <label class="admin-field">
+            <span>مهلة Gemini (ثانية — الأقل = فشل أسرع)</span>
+            <input type="number" name="gemini_timeout" class="admin-input" value="{{ $status['gemini_timeout'] }}" min="10" max="120" required>
+        </label>
+
+        <h3 class="admin-subhead">NVIDIA NIM</h3>
+        <label class="admin-field">
+            <span>مفتاح NVIDIA <small>(الحالي: {{ $status['nvidia_key_hint'] }} — اتركه فارغاً للإبقاء)</small></span>
+            <input type="password" name="nvidia_key" class="admin-input" autocomplete="off" placeholder="أدخل مفتاحاً جديداً لتغييره">
+        </label>
+        <label class="admin-field">
+            <span>نموذج NVIDIA <small>(8b أسرع · 70b أدقّ — للسرعة استخدم meta/llama-3.1-8b-instruct)</small></span>
+            <input type="text" name="nvidia_model" class="admin-input" value="{{ $status['nvidia_model'] }}" required>
+        </label>
+        <label class="admin-field">
+            <span>حدّ التوليد NVIDIA (max tokens — الأقل = أسرع)</span>
+            <input type="number" name="nvidia_max_tokens" class="admin-input" value="{{ $status['nvidia_max_tokens'] }}" min="256" max="16384" required>
+        </label>
+        <label class="admin-field">
+            <span>مهلة NVIDIA (ثانية — عالجنا البطء: الأقل يمنع الحجب الطويل)</span>
+            <input type="number" name="nvidia_timeout" class="admin-input" value="{{ $status['nvidia_timeout'] }}" min="10" max="120" required>
+        </label>
+
+        <div class="admin-form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">حفظ المزوّدات والمفاتيح</button>
+        </div>
+    </form>
+</section>
+
 {{-- التعلّم --}}
 <section class="admin-panel panel-modern mb-6">
     <div class="admin-panel-head">

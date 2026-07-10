@@ -66,6 +66,13 @@ class AiControlController extends Controller
                 'enrich_tools' => (bool) config('services.web_search.enrich_tools', true),
                 'gemini_ready' => (bool) config('services.gemini.key'),
                 'nvidia_ready' => (bool) config('services.nvidia.key'),
+                'gemini_key_hint' => $this->maskKey(config('services.gemini.key')),
+                'nvidia_key_hint' => $this->maskKey(config('services.nvidia.key')),
+                'gemini_model' => (string) config('services.gemini.model'),
+                'nvidia_model' => (string) config('services.nvidia.model'),
+                'nvidia_max_tokens' => (int) config('services.nvidia.max_tokens', 8192),
+                'nvidia_timeout' => (int) config('services.nvidia.timeout', 45),
+                'gemini_timeout' => (int) config('services.gemini.timeout', 45),
                 'verify_tls' => (bool) config('services.gemini.verify_tls', true),
                 'kill_switch' => (bool) config('services.ai.kill_switch', false),
                 'cascade' => (bool) config('services.ai.cascade', true),
@@ -115,6 +122,72 @@ class AiControlController extends Controller
         );
 
         return back()->with('success', 'تم تحديث إعدادات الذكاء.');
+    }
+
+    /**
+     * إدارة المزوّدات والمفاتيح والسرعة من الآدمن (تُخزَّن في SettingsStore فوق config).
+     * المفاتيح أسرار: «اتركه فارغاً للإبقاء»، ولا تُسجَّل قيمتها في التدقيق أبداً.
+     */
+    public function updateProviders(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'gemini_key' => 'nullable|string|max:400',
+            'gemini_model' => 'required|string|max:120',
+            'gemini_timeout' => 'required|integer|min:10|max:120',
+            'nvidia_key' => 'nullable|string|max:400',
+            'nvidia_model' => 'required|string|max:160',
+            'nvidia_max_tokens' => 'required|integer|min:256|max:16384',
+            'nvidia_timeout' => 'required|integer|min:10|max:120',
+        ]);
+
+        $set = [
+            'services.gemini.model' => trim($validated['gemini_model']),
+            'services.gemini.timeout' => (int) $validated['gemini_timeout'],
+            'services.nvidia.model' => trim($validated['nvidia_model']),
+            'services.nvidia.max_tokens' => (int) $validated['nvidia_max_tokens'],
+            'services.nvidia.timeout' => (int) $validated['nvidia_timeout'],
+        ];
+
+        // أسرار: تُكتب فقط عند إدخال قيمة جديدة (فارغ = إبقاء الحالي).
+        $geminiKeyChanged = filled($validated['gemini_key'] ?? null);
+        $nvidiaKeyChanged = filled($validated['nvidia_key'] ?? null);
+        if ($geminiKeyChanged) {
+            $set['services.gemini.key'] = trim((string) $validated['gemini_key']);
+        }
+        if ($nvidiaKeyChanged) {
+            $set['services.nvidia.key'] = trim((string) $validated['nvidia_key']);
+        }
+
+        $this->settings->setMany($set);
+
+        // تدقيق بلا كشف الأسرار: نسجّل التغيّر لا القيمة.
+        $this->auditLogger->record(
+            action: 'admin.ai_control.providers_updated',
+            targetType: 'ai_settings',
+            actor: $request->user(),
+            meta: [
+                'gemini_model' => $set['services.gemini.model'],
+                'nvidia_model' => $set['services.nvidia.model'],
+                'nvidia_max_tokens' => $set['services.nvidia.max_tokens'],
+                'nvidia_timeout' => $set['services.nvidia.timeout'],
+                'gemini_timeout' => $set['services.gemini.timeout'],
+                'gemini_key_changed' => $geminiKeyChanged,
+                'nvidia_key_changed' => $nvidiaKeyChanged,
+            ],
+        );
+
+        return back()->with('success', 'تم تحديث المزوّدات والمفاتيح والسرعة.');
+    }
+
+    /** إخفاء المفتاح للعرض: لا يُكشف كاملاً في الواجهة أبداً. */
+    private function maskKey(mixed $key): string
+    {
+        $key = (string) $key;
+        if ($key === '') {
+            return 'غير مضبوط';
+        }
+
+        return mb_strlen($key) <= 4 ? '••••' : '••••'.mb_substr($key, -4);
     }
 
     public function learn(Request $request): RedirectResponse

@@ -111,6 +111,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/ai-control', [AiControlController::class, 'index'])->name('ai-control.index');
     Route::patch('/ai-control', [AiControlController::class, 'update'])->name('ai-control.update');
+    Route::patch('/ai-control/providers', [AiControlController::class, 'updateProviders'])->name('ai-control.providers');
     Route::post('/ai-control/learn', [AiControlController::class, 'learn'])->name('ai-control.learn');
     Route::delete('/ai-control/knowledge', [AiControlController::class, 'forgetKnowledge'])->name('ai-control.knowledge.forget');
 
