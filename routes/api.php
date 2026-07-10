@@ -1,11 +1,30 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AdminFeatureFlagController;
+use App\Http\Controllers\Api\V1\AgencyBrandingController;
+use App\Http\Controllers\Api\V1\AiAssistController;
+use App\Http\Controllers\Api\V1\ApprovalController;
+use App\Http\Controllers\Api\V1\BillingController;
+use App\Http\Controllers\Api\V1\ClientController;
+use App\Http\Controllers\Api\V1\ExecutionPackageController;
+use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\MeController;
+use App\Http\Controllers\Api\V1\OnboardingController;
+use App\Http\Controllers\Api\V1\PasswordController;
 use App\Http\Controllers\Api\V1\PingController;
+use App\Http\Controllers\Api\V1\ProjectAuditController;
+use App\Http\Controllers\Api\V1\ProjectBriefController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\ProjectRecommendationController;
+use App\Http\Controllers\Api\V1\ProjectReportController;
+use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\StudioGenerationController;
+use App\Http\Controllers\Api\V1\StudioTemplateController;
+use App\Http\Controllers\Api\V1\TeamController;
+use App\Http\Controllers\Api\V1\ToolIndexController;
 use App\Http\Controllers\Api\V1\TokenController;
+use App\Http\Controllers\Api\V1\WorkspaceDashboardController;
 use App\Http\Controllers\Api\V1\WorkspaceIndexController;
 use App\Http\Controllers\Api\V1\WorkspaceToolController;
 use Illuminate\Support\Facades\Route;
@@ -27,8 +46,21 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/tokens', [TokenController::class, 'store'])
         ->middleware('throttle:5,1');
 
+    Route::post('/register', [RegisterController::class, 'store'])
+        ->middleware('throttle:5,1');
+
+    Route::post('/password/forgot', [PasswordController::class, 'forgot'])
+        ->middleware('throttle:5,1');
+    Route::post('/password/reset', [PasswordController::class, 'reset'])
+        ->middleware('throttle:5,1');
+
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function (): void {
         Route::get('/me', MeController::class);
+        Route::post('/logout', [LogoutController::class, 'store']);
+
+        // أجهزة الإشعارات (B5)
+        Route::post('/devices', [\App\Http\Controllers\Api\V1\DeviceTokenController::class, 'store']);
+        Route::delete('/devices', [\App\Http\Controllers\Api\V1\DeviceTokenController::class, 'destroy']);
         Route::get('/workspaces', [WorkspaceIndexController::class, 'index']);
 
         Route::middleware('api.super_admin')->prefix('admin')->group(function (): void {
@@ -37,17 +69,101 @@ Route::prefix('v1')->group(function (): void {
         });
 
         Route::middleware('api.workspace')->prefix('workspaces/{workspace_public_id}')->group(function (): void {
+            Route::get('/tools', [ToolIndexController::class, 'index']);
             Route::get('/projects', [ProjectController::class, 'index']);
             Route::post('/projects', [ProjectController::class, 'store'])->middleware('idempotency:projects');
 
             Route::middleware('api.project')->prefix('projects/{project_public_id}')->group(function (): void {
+                Route::get('/', [ProjectController::class, 'show']);
+                Route::put('/', [ProjectController::class, 'update']);
+                Route::delete('/', [ProjectController::class, 'destroy']);
+
                 Route::get('/tools/{tcode}', [WorkspaceToolController::class, 'load']);
                 Route::post('/tools/{tcode}/run', [WorkspaceToolController::class, 'run'])
                     ->middleware('idempotency:tool_run');
+
+                // دورة المشروع الكاملة (B3)
+                Route::get('/brief', [ProjectBriefController::class, 'show']);
+                Route::put('/brief', [ProjectBriefController::class, 'update']);
+                Route::post('/audit', [ProjectAuditController::class, 'store']);
+                Route::get('/audit/status', [ProjectAuditController::class, 'status']);
+                Route::get('/recommendations', [ProjectRecommendationController::class, 'index']);
+                Route::post('/recommendations/{recommendationPublicId}/package', [ProjectRecommendationController::class, 'storePackage']);
+                Route::get('/report', [ProjectReportController::class, 'report']);
+                Route::get('/report/pdf', [ProjectReportController::class, 'reportPdf'])
+                    ->middleware('entitlement:outputs.can_export');
+                Route::get('/dossier', [ProjectReportController::class, 'dossier']);
+                Route::get('/dossier/pdf', [ProjectReportController::class, 'dossierPdf'])
+                    ->middleware('entitlement:outputs.can_export');
+
+                Route::post('/approvals', [ApprovalController::class, 'store']);
             });
 
+            // حزم التنفيذ
+            Route::get('/execution-packages/{packagePublicId}', [ExecutionPackageController::class, 'show']);
+            Route::patch('/execution-packages/{packagePublicId}/status', [ExecutionPackageController::class, 'updateStatus']);
+
+            // الاستوديو الذكي
+            Route::get('/templates', [StudioTemplateController::class, 'index']);
+            Route::get('/studio/generations', [StudioGenerationController::class, 'index']);
             Route::post('/studio/generations', [StudioGenerationController::class, 'store'])
                 ->middleware('idempotency:studio');
+            Route::get('/studio/generations/{generationPublicId}', [StudioGenerationController::class, 'show']);
+            Route::get('/studio/generations/{generationPublicId}/export/{format}', [StudioGenerationController::class, 'export'])
+                ->where('format', 'md|markdown|html|pdf')
+                ->middleware('entitlement:outputs.can_export');
+            Route::delete('/studio/generations/{generationPublicId}', [StudioGenerationController::class, 'destroy']);
+
+            // مساعد الذكاء (chat/analyze/suggest/research)
+            Route::middleware('throttle:ai-assist')->prefix('ai')->group(function (): void {
+                Route::post('/chat', [AiAssistController::class, 'chat']);
+                Route::post('/analyze', [AiAssistController::class, 'analyze']);
+                Route::post('/suggest', [AiAssistController::class, 'suggest']);
+                Route::post('/research', [AiAssistController::class, 'research']);
+            });
+
+            // الداشبورد والإعداد الأولي (B4)
+            Route::get('/dashboard', [WorkspaceDashboardController::class, 'show']);
+            Route::get('/onboarding', [OnboardingController::class, 'show']);
+            Route::post('/onboarding', [OnboardingController::class, 'store']);
+
+            // الحساب
+            Route::get('/account', [AccountController::class, 'show']);
+            Route::patch('/account', [AccountController::class, 'update']);
+
+            // الفريق
+            Route::get('/team', [TeamController::class, 'index']);
+            Route::post('/team/invitations', [TeamController::class, 'invite']);
+            Route::delete('/team/members/{memberId}', [TeamController::class, 'destroyMember'])
+                ->whereNumber('memberId');
+            Route::delete('/team/invitations/{invitationId}', [TeamController::class, 'destroyInvitation'])
+                ->whereNumber('invitationId');
+
+            // الموافقات
+            Route::get('/approvals', [ApprovalController::class, 'index']);
+            Route::patch('/approvals/{approvalId}', [ApprovalController::class, 'update'])
+                ->whereNumber('approvalId');
+
+            // عملاء الوكالة
+            Route::get('/clients', [ClientController::class, 'index']);
+            Route::post('/clients', [ClientController::class, 'store']);
+            Route::put('/clients/{clientPublicId}', [ClientController::class, 'update']);
+            Route::delete('/clients/{clientPublicId}', [ClientController::class, 'destroy']);
+
+            // علامة الوكالة (white-label)
+            Route::middleware('entitlement:white_label')->group(function (): void {
+                Route::get('/agency/branding', [AgencyBrandingController::class, 'show']);
+                Route::patch('/agency/branding', [AgencyBrandingController::class, 'update']);
+            });
+
+            // الفوترة (B5)
+            Route::get('/billing', [BillingController::class, 'show']);
+            Route::post('/billing/subscribe', [BillingController::class, 'subscribe']);
+            Route::post('/billing/paypal/callback', [BillingController::class, 'callback']);
+            Route::post('/billing/cancel', [BillingController::class, 'cancel']);
         });
+
+        // قبول دعوة فريق (خارج نطاق مساحة محددة — الرمز يحدد المساحة)
+        Route::post('/team/invitations/{token}/accept', [TeamController::class, 'accept']);
     });
 });

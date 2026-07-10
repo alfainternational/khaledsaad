@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Workspace\Models\Workspace;
-use Illuminate\Http\JsonResponse;
+use App\Http\Resources\V1\WorkspaceSummaryResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class WorkspaceIndexController
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
         $user = $request->user();
 
@@ -17,15 +18,8 @@ class WorkspaceIndexController
                 $query->where('user_id', $user->id)->where('status', 'active');
             })
             ->orderBy('name')
-            ->get(['public_id', 'name', 'type', 'status']);
+            ->get(['id', 'public_id', 'name', 'type', 'status']);
 
-        return response()->json([
-            'data' => $rows->map(fn (Workspace $w): array => [
-                'public_id' => $w->public_id,
-                'name' => $w->name,
-                'type' => $w->type,
-                'status' => $w->status,
-            ])->values()->all(),
-        ]);
+        return WorkspaceSummaryResource::collection($rows);
     }
 }

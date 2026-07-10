@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Api\ApiExceptionRenderer;
 use App\Http\Middleware\CheckEntitlement;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureApiProjectInWorkspace;
@@ -48,5 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (Throwable $e, Request $request) {
+            return ApiExceptionRenderer::render($e, $request);
+        });
     })->create();

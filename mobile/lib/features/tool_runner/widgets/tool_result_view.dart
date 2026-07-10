@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+
+import '../../../data/models/tool_run_model.dart';
+
+/// يعرض نتيجة تشغيل الأداة: نسبة الاكتمال، الملخّص، المخرجات، والخطوات التالية.
+class ToolResultView extends StatelessWidget {
+  const ToolResultView({super.key, required this.result});
+
+  final ToolRunResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.check_circle, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text('النتيجة',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800)),
+                const Spacer(),
+                if (result.completenessScore != null)
+                  _CompletenessBadge(score: result.completenessScore!),
+              ],
+            ),
+            if (result.aiGenerated) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(Icons.auto_awesome,
+                      size: 14, color: theme.colorScheme.tertiary),
+                  const SizedBox(width: 4),
+                  Text('نُقّح بالذكاء الاصطناعي',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.tertiary)),
+                ],
+              ),
+            ],
+            const Divider(height: 24),
+            ..._renderSummary(theme),
+            ..._renderOutput(theme),
+            ..._renderNextActions(theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _renderSummary(ThemeData theme) {
+    final summary = result.summary;
+    final widgets = <Widget>[];
+    final headline = summary['headline']?.toString();
+    final text = summary['text']?.toString();
+    if (headline != null && headline.isNotEmpty) {
+      widgets.add(Text(headline,
+          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)));
+      widgets.add(const SizedBox(height: 4));
+    }
+    if (text != null && text.isNotEmpty) {
+      widgets.add(Text(text, style: theme.textTheme.bodyMedium));
+      widgets.add(const SizedBox(height: 12));
+    }
+    return widgets;
+  }
+
+  List<Widget> _renderOutput(ThemeData theme) {
+    final output = result.output;
+    if (output.isEmpty) return const [];
+    final widgets = <Widget>[];
+    output.forEach((key, value) {
+      final rendered = _stringifyValue(value);
+      if (rendered.trim().isEmpty) return;
+      widgets.add(Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(_humanizeKey(key),
+                style: theme.textTheme.labelLarge
+                    ?.copyWith(color: theme.colorScheme.primary)),
+            const SizedBox(height: 2),
+            Text(rendered, style: theme.textTheme.bodyMedium),
+          ],
+        ),
+      ));
+    });
+    return widgets;
+  }
+
+  List<Widget> _renderNextActions(ThemeData theme) {
+    final actions = result.nextActions;
+    if (actions.isEmpty) return const [];
+    return [
+      const Divider(height: 24),
+      Text('الخطوات التالية',
+          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+      const SizedBox(height: 8),
+      ...actions.map((a) {
+        final label = a is Map
+            ? (a['label'] ?? a['title'] ?? a['text'] ?? '').toString()
+            : a.toString();
+        if (label.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.arrow_left, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 4),
+              Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+            ],
+          ),
+        );
+      }),
+    ];
+  }
+
+  String _stringifyValue(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    if (value is num || value is bool) return value.toString();
+    if (value is List) {
+      return value.map((e) => '• ${_stringifyValue(e)}').join('\n');
+    }
+    if (value is Map) {
+      return value.entries
+          .map((e) => '${_humanizeKey(e.key.toString())}: ${_stringifyValue(e.value)}')
+          .join('\n');
+    }
+    return value.toString();
+  }
+
+  String _humanizeKey(String key) => key.replaceAll('_', ' ');
+}
+
+class _CompletenessBadge extends StatelessWidget {
+  const _CompletenessBadge({required this.score});
+
+  final int score;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = score >= 70
+        ? const Color(0xFF16A34A)
+        : score >= 40
+            ? const Color(0xFFD97706)
+            : const Color(0xFFDC2626);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text('الاكتمال $score%',
+          style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+    );
+  }
+}

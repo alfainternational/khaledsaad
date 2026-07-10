@@ -142,6 +142,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 Route::post('/paypal/webhook', [PayPalWebhookController::class, 'handle'])->name('paypal.webhook');
 
+// جسر عودة الدفع للموبايل: PayPal يعيد المتصفح هنا، ونقفز فوراً إلى deep link التطبيق.
+// عام بلا مصادقة — لا يمرّر سوى معاملات الاستعلام كما هي، والتحقق الفعلي يتم في API callback.
+Route::get('/billing/mobile/return', function () {
+    return redirect()->away('ksgrowth://billing/return?'.http_build_query(request()->query()));
+})->name('billing.mobile.return');
+Route::get('/billing/mobile/cancelled', function () {
+    return redirect()->away('ksgrowth://billing/cancelled');
+})->name('billing.mobile.cancelled');
+
 // Public pre-registration diagnosis funnel (Phase أ) — open to guests and logged-in users.
 Route::prefix('diagnose')->name('diagnose.')->group(function (): void {
     Route::get('/', [GuestDiagnosisController::class, 'form'])->name('form');
