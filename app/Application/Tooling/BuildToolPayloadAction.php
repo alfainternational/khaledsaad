@@ -493,6 +493,19 @@ class BuildToolPayloadAction
                     $has('performance_next') ? 'الإجراء التالي: '.$g('performance_next') : 'اتخذ قراراً واحداً بناءً على هذه البيانات — لا تؤجل',
                 ]),
             ),
+            'agency-audit' => $this->makeSummary(
+                'تقييم الوكالة — '.$projectName,
+                $has('agency_reported_results')
+                    ? 'النتائج المرسلة من الوكالة: '.$g('agency_reported_results').' — لا تحكم عليها قبل ربطها بالهدف والتتبع والميزانية.'
+                    : 'ابدأ من التقرير الفعلي للوكالة: ماذا صرفوا؟ ماذا وصل؟ وما الرقم الذي يثبت قيمة العمل؟',
+                array_filter([
+                    $has('agency_promise') ? 'الوعد المتفق عليه: '.$g('agency_promise').' — حوّله إلى مؤشر قياس واضح' : 'اطلب من الوكالة صياغة النتيجة المتوقعة كمؤشر لا ككلام عام',
+                    $has('agency_tracking') ? 'طريقة القياس الحالية: '.$g('agency_tracking').' — تأكد أنها تقيس عميل/مبيعات لا تفاعل فقط' : 'اطلب منهم Pixel أو UTM أو طريقة إسناد واضحة قبل زيادة الميزانية',
+                    $has('agency_concern') ? 'نقطة القلق: '.$g('agency_concern').' — اجعلها سؤالاً مباشراً في الاجتماع القادم' : null,
+                    $has('agency_questions') ? 'أسئلة جاهزة للوكالة: '.$g('agency_questions') : 'اسأل: ما CAC؟ ما ROAS أو تكلفة الليد المؤهل؟ ما اختبار A/B القادم؟',
+                    $has('agency_decision') ? 'قرارك الحالي: '.$g('agency_decision').' — لا تنفذه قبل مراجعة الدليل خلال فترة قياس قصيرة' : null,
+                ]),
+            ),
             'smart-recommendations' => $this->makeSummary(
                 'التوصيات الذكية — '.$projectName,
                 $has('recommendation_priority')

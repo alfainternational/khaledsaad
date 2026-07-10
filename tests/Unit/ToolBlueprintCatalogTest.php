@@ -36,6 +36,7 @@ class ToolBlueprintCatalogTest extends TestCase
             'kpi-tracker',
             'execution-plan',
             'performance-review',
+            'agency-audit',
             'smart-recommendations',
             'growth-priorities',
         ];
