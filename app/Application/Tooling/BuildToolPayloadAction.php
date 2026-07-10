@@ -99,6 +99,17 @@ class BuildToolPayloadAction
         }
 
         $toolSummary = $this->buildToolSummary($tool->code, $inputs, $project->name, $mode);
+        $agencyVerdict = $tool->code === 'agency-audit'
+            ? $this->buildAgencyVerdict($inputs)
+            : null;
+
+        if ($agencyVerdict !== null) {
+            $toolSummary['agency_verdict'] = $agencyVerdict;
+            $toolSummary['bullets'] = array_values(array_unique([
+                ...$agencyVerdict['summary_lines'],
+                ...($toolSummary['bullets'] ?? []),
+            ]));
+        }
 
         $aiSummary = $this->tryAiSummary($workspace, $project, $tool, $inputs, array_filter([
             'workspace_profile' => $profile,
@@ -137,6 +148,10 @@ class BuildToolPayloadAction
             'bullets' => $toolSummary['bullets'] ?? [],
             'ai_generated' => $isAiGenerated,
         ];
+
+        if ($agencyVerdict !== null) {
+            $summary['agency_verdict'] = $agencyVerdict;
+        }
 
         $nextActions = $tool->next_actions_json ?: [
             'راجع الخلاصة وتأكد أنها تعكس واقع مشروعك فعلاً.',
@@ -195,6 +210,7 @@ class BuildToolPayloadAction
                 'next_actions' => $nextActions,
                 'specialist_review' => $specialistReview,
                 'content_quality' => $contentQuality,
+                'agency_verdict' => $agencyVerdict,
                 'brief' => $brief !== '' ? $brief : null,
                 'inputs' => $inputs,
                 'source_context' => $sourceContext,
@@ -599,6 +615,80 @@ class BuildToolPayloadAction
             'headline' => $headline,
             'text' => str_replace(['...', '.. '], ['غير محدد بعد', 'غير محدد بعد '], $text),
             'bullets' => array_values(array_filter($rawBullets)),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $inputs
+     * @return array<string, mixed>
+     */
+    private function buildAgencyVerdict(array $inputs): array
+    {
+        $g = fn (string $key): string => trim((string) ($inputs[$key] ?? ''));
+        $haystack = mb_strtolower(implode(' ', array_map(
+            fn (mixed $value): string => is_string($value) ? $value : '',
+            $inputs,
+        )));
+
+        $score = 75;
+        $flags = [];
+
+        if ($g('agency_tracking') === '' || str_contains($haystack, 'لا يوجد pixel') || str_contains($haystack, 'لا يوجد utm') || str_contains($haystack, 'بدون تتبع')) {
+            $score -= 18;
+            $flags[] = 'التتبع غير واضح أو غير مكتمل.';
+        }
+
+        if (str_contains($haystack, 'تفاعل فقط') || str_contains($haystack, 'بدون مبيعات') || str_contains($haystack, 'لا توجد مبيعات')) {
+            $score -= 12;
+            $flags[] = 'التقرير يركز على أرقام سطحية أكثر من نتائج أعمال.';
+        }
+
+        if (str_contains($g('agency_promise'), 'زيادة المبيعات') && ! preg_match('/\d|%|ريال|عميل|طلب/u', $g('agency_promise'))) {
+            $score -= 7;
+            $flags[] = 'وعد الوكالة عام ويحتاج تحويله إلى رقم قابل للقياس.';
+        }
+
+        $score = max(0, min(100, $score));
+        $riskLevel = match (true) {
+            $score < 50 => 'مرتفع',
+            $score < 75 => 'متوسط',
+            default => 'منخفض',
+        };
+        $decision = match ($riskLevel) {
+            'مرتفع' => 'لا توسّع أو تجدّد قبل تصحيح القياس',
+            'متوسط' => 'استمر فقط بفترة اختبار قصيرة ومؤشرات مكتوبة',
+            default => 'يمكن الاستمرار مع مراجعة أسبوعية للأرقام',
+        };
+
+        $demands = array_values(array_unique(array_filter([
+            'تقرير CAC أو تكلفة العميل المحتمل المؤهل',
+            'توضيح مصدر كل نتيجة عبر Pixel أو UTM أو CRM',
+            'فصل نتائج الوعي عن نتائج المبيعات أو العملاء المحتملين',
+            $g('agency_budget') !== '' ? 'توزيع الميزانية حسب الحملة والقناة والهدف' : null,
+            $g('agency_promise') !== '' ? 'تحويل الوعد إلى KPI مكتوب قبل الاجتماع القادم' : null,
+        ])));
+
+        $questions = array_values(array_unique(array_filter([
+            $g('agency_questions') !== '' ? $g('agency_questions') : null,
+            'ما تكلفة العميل المحتمل المؤهل وليس مجرد النقرة؟',
+            'ما الاختبار القادم الذي سيحسن التحويل؟',
+            'ما الذي ستوقفونه إذا لم يتحسن الرقم خلال أسبوعين؟',
+        ])));
+
+        return [
+            'score' => $score,
+            'risk_level' => $riskLevel,
+            'decision' => $decision,
+            'flags' => $flags,
+            'demands' => $demands,
+            'questions' => $questions,
+            'summary_lines' => array_values(array_filter([
+                'الحكم: '.$decision,
+                'درجة وضوح عمل الوكالة: '.$score.'/100',
+                'مستوى المخاطرة: '.$riskLevel,
+                ! empty($demands[0]) ? 'اطلب من الوكالة: '.$demands[0] : null,
+                ! empty($questions[0]) ? 'سؤال الاجتماع القادم: '.$questions[0] : null,
+            ])),
         ];
     }
 

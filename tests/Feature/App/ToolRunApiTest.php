@@ -111,13 +111,50 @@ class ToolRunApiTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('ملخص تحليل مشروعك')
+            ->assertSee('لمحة تحليل مشروعك')
             ->assertSee('تحليل مبني على مصادر فعلية')
             ->assertSee('حسّن زر الإجراء الرئيسي قبل توسيع العرض')
             ->assertSee('data-upstream-context-root', false)
             ->assertSee('data-project-brief-root', false)
             ->assertSee('data-tool-briefing-root', false)
             ->assertSee('كيف تستفيد هذه الأداة من ملف المشروع؟');
+    }
+
+    #[Test]
+    public function agency_audit_returns_a_clear_operational_verdict(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $response = $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة إعلانات ميتا مع محتوى أسبوعي',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => 'صرفنا 3000 ريال وجبنا 9000 ظهور و120 نقرة',
+                    'agency_budget' => '3000 ريال',
+                    'agency_tracking' => 'لا يوجد Pixel أو UTM واضح',
+                    'agency_concern' => 'يرسلون أرقام تفاعل فقط بدون مبيعات',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                    'agency_decision' => 'لا أريد التجديد قبل وضوح النتائج',
+                ],
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.summary.headline', 'تقييم الوكالة — API Project')
+            ->assertJsonPath('data.summary.agency_verdict.risk_level', 'مرتفع')
+            ->assertJsonPath('data.summary.agency_verdict.decision', 'لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertJsonPath('data.output.agency_verdict.score', 38);
+
+        $bullets = $response->json('data.summary.bullets');
+        $this->assertContains('الحكم: لا توسّع أو تجدّد قبل تصحيح القياس', $bullets);
+        $this->assertContains('اطلب من الوكالة: تقرير CAC أو تكلفة العميل المحتمل المؤهل', $bullets);
+        $this->assertContains('سؤال الاجتماع القادم: ما تكلفة العميل المحتمل المؤهل؟', $bullets);
     }
 
     /**
