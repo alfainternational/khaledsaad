@@ -3,6 +3,7 @@
 namespace App\Application\Reports;
 
 use App\Contracts\AiGatewayInterface;
+use App\Domain\AI\Support\LlmJsonParser;
 use App\Domain\Intelligence\Models\AuditRun;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
@@ -340,21 +341,10 @@ class BuildProjectReportAction
 
         $system = 'أنت مستشار استراتيجي خبير. تربط مخرجات الأدوات في خطة واحدة مترابطة مبنية على المعطيات فقط. أعد JSON صالحاً فقط بلا أي نص حوله.';
 
-        $text = $this->gateway->generateText($prompt, $system);
-        if (! $text) {
-            return null;
-        }
-
-        $clean = preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($text));
-        $parsed = json_decode((string) $clean, true);
-        if (! is_array($parsed)) {
-            $start = strpos((string) $clean, '{');
-            $end = strrpos((string) $clean, '}');
-            if ($start !== false && $end !== false && $end > $start) {
-                $parsed = json_decode(substr((string) $clean, $start, $end - $start + 1), true);
-            }
-        }
-        if (! is_array($parsed) || empty($parsed['executive_summary'])) {
+        // ضمان الجودة: محلّل JSON صارم + إعادة محاولة واحدة عند فشل التحليل —
+        // يرفع نسبة نجاح التركيب مع النماذج المتفاوتة ويقلّل التدهور للمحلي.
+        $parsed = $this->generateJson($prompt, $system, ['executive_summary']);
+        if ($parsed === null) {
             return null;
         }
 
@@ -380,5 +370,26 @@ class BuildProjectReportAction
             ],
             'synthesis_source' => 'llm',
         ];
+    }
+
+    /**
+     * توليد JSON من LLM مع تحليل صارم وإعادة محاولة واحدة (ضمان الجودة).
+     *
+     * @param  array<int, string>  $requiredKeys
+     * @return array<string, mixed>|null
+     */
+    private function generateJson(string $prompt, string $system, array $requiredKeys): ?array
+    {
+        $text = $this->gateway->generateText($prompt, $system);
+        $parsed = LlmJsonParser::parse($text, $requiredKeys);
+        if ($parsed !== null) {
+            return $parsed;
+        }
+
+        // محاولة ثانية بتذكير صارم — يعالج تفاوت النماذج الأصغر في صيغة JSON.
+        $retryPrompt = $prompt."\n\nمهم: أعد **JSON صالحاً فقط** يبدأ بـ { وينتهي بـ } بلا أي نص أو أسوار حوله.";
+        $retryText = $this->gateway->generateText($retryPrompt, $system);
+
+        return LlmJsonParser::parse($retryText, $requiredKeys);
     }
 }

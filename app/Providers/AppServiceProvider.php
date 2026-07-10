@@ -67,9 +67,16 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $provider = config('services.ai.provider', 'gemini');
+            $factory = new \App\Domain\AI\Services\AiGatewayFactory;
 
             $gateway = match ($provider) {
+                // سلسلة مزوّدات مرتّبة (Groq→Cerebras→NVIDIA…) — الصمود والجودة.
+                'chain' => $factory->chain(array_filter(array_map(
+                    'trim',
+                    explode(',', (string) config('services.ai.chain', 'groq,cerebras,nvidia')),
+                ))),
                 'nvidia' => new NvidiaNimGateway,
+                'groq', 'cerebras', 'openrouter' => $factory->make($provider) ?? new GeminiGateway,
                 'fallback' => new FallbackAiGateway(
                     new GeminiGateway,
                     new NvidiaNimGateway,

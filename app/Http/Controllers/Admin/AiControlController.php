@@ -73,6 +73,13 @@ class AiControlController extends Controller
                 'nvidia_max_tokens' => (int) config('services.nvidia.max_tokens', 8192),
                 'nvidia_timeout' => (int) config('services.nvidia.timeout', 45),
                 'gemini_timeout' => (int) config('services.gemini.timeout', 45),
+                'chain' => (string) config('services.ai.chain', 'groq,cerebras,nvidia'),
+                'groq_key_hint' => $this->maskKey(config('services.ai.providers.groq.key')),
+                'groq_model' => (string) config('services.ai.providers.groq.model'),
+                'cerebras_key_hint' => $this->maskKey(config('services.ai.providers.cerebras.key')),
+                'cerebras_model' => (string) config('services.ai.providers.cerebras.model'),
+                'openrouter_key_hint' => $this->maskKey(config('services.ai.providers.openrouter.key')),
+                'openrouter_model' => (string) config('services.ai.providers.openrouter.model'),
                 'verify_tls' => (bool) config('services.gemini.verify_tls', true),
                 'kill_switch' => (bool) config('services.ai.kill_switch', false),
                 'cascade' => (bool) config('services.ai.cascade', true),
@@ -91,7 +98,7 @@ class AiControlController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'provider' => 'required|in:gemini,nvidia,fallback',
+            'provider' => 'required|in:gemini,nvidia,fallback,chain,groq,cerebras,openrouter',
             'search_provider' => 'required|in:duckduckgo',
             'cache' => 'required|boolean',
             'enforce_credits' => 'required|boolean',
@@ -131,6 +138,7 @@ class AiControlController extends Controller
     public function updateProviders(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'chain' => 'required|string|max:120',
             'gemini_key' => 'nullable|string|max:400',
             'gemini_model' => 'required|string|max:120',
             'gemini_timeout' => 'required|integer|min:10|max:120',
@@ -138,24 +146,39 @@ class AiControlController extends Controller
             'nvidia_model' => 'required|string|max:160',
             'nvidia_max_tokens' => 'required|integer|min:256|max:16384',
             'nvidia_timeout' => 'required|integer|min:10|max:120',
+            'groq_key' => 'nullable|string|max:400',
+            'groq_model' => 'required|string|max:160',
+            'cerebras_key' => 'nullable|string|max:400',
+            'cerebras_model' => 'required|string|max:160',
+            'openrouter_key' => 'nullable|string|max:400',
+            'openrouter_model' => 'required|string|max:200',
         ]);
 
         $set = [
+            'services.ai.chain' => $this->sanitizeChain($validated['chain']),
             'services.gemini.model' => trim($validated['gemini_model']),
             'services.gemini.timeout' => (int) $validated['gemini_timeout'],
             'services.nvidia.model' => trim($validated['nvidia_model']),
             'services.nvidia.max_tokens' => (int) $validated['nvidia_max_tokens'],
             'services.nvidia.timeout' => (int) $validated['nvidia_timeout'],
+            'services.ai.providers.groq.model' => trim($validated['groq_model']),
+            'services.ai.providers.cerebras.model' => trim($validated['cerebras_model']),
+            'services.ai.providers.openrouter.model' => trim($validated['openrouter_model']),
         ];
 
         // أسرار: تُكتب فقط عند إدخال قيمة جديدة (فارغ = إبقاء الحالي).
-        $geminiKeyChanged = filled($validated['gemini_key'] ?? null);
-        $nvidiaKeyChanged = filled($validated['nvidia_key'] ?? null);
-        if ($geminiKeyChanged) {
-            $set['services.gemini.key'] = trim((string) $validated['gemini_key']);
-        }
-        if ($nvidiaKeyChanged) {
-            $set['services.nvidia.key'] = trim((string) $validated['nvidia_key']);
+        $changed = [];
+        foreach ([
+            'gemini_key' => 'services.gemini.key',
+            'nvidia_key' => 'services.nvidia.key',
+            'groq_key' => 'services.ai.providers.groq.key',
+            'cerebras_key' => 'services.ai.providers.cerebras.key',
+            'openrouter_key' => 'services.ai.providers.openrouter.key',
+        ] as $field => $settingKey) {
+            $changed[$field] = filled($validated[$field] ?? null);
+            if ($changed[$field]) {
+                $set[$settingKey] = trim((string) $validated[$field]);
+            }
         }
 
         $this->settings->setMany($set);
@@ -166,17 +189,29 @@ class AiControlController extends Controller
             targetType: 'ai_settings',
             actor: $request->user(),
             meta: [
+                'chain' => $set['services.ai.chain'],
                 'gemini_model' => $set['services.gemini.model'],
                 'nvidia_model' => $set['services.nvidia.model'],
-                'nvidia_max_tokens' => $set['services.nvidia.max_tokens'],
-                'nvidia_timeout' => $set['services.nvidia.timeout'],
-                'gemini_timeout' => $set['services.gemini.timeout'],
-                'gemini_key_changed' => $geminiKeyChanged,
-                'nvidia_key_changed' => $nvidiaKeyChanged,
+                'groq_model' => $set['services.ai.providers.groq.model'],
+                'cerebras_model' => $set['services.ai.providers.cerebras.model'],
+                'openrouter_model' => $set['services.ai.providers.openrouter.model'],
+                'keys_changed' => array_keys(array_filter($changed)),
             ],
         );
 
         return back()->with('success', 'تم تحديث المزوّدات والمفاتيح والسرعة.');
+    }
+
+    /** تنقية سلسلة المزوّدات: أسماء معروفة فقط، مرتّبة، بلا تكرار. */
+    private function sanitizeChain(string $chain): string
+    {
+        $allowed = ['groq', 'cerebras', 'openrouter', 'nvidia', 'gemini'];
+        $names = array_values(array_unique(array_filter(
+            array_map('trim', explode(',', $chain)),
+            fn (string $n): bool => in_array($n, $allowed, true),
+        )));
+
+        return implode(',', $names !== [] ? $names : ['groq', 'cerebras', 'nvidia']);
     }
 
     /** إخفاء المفتاح للعرض: لا يُكشف كاملاً في الواجهة أبداً. */

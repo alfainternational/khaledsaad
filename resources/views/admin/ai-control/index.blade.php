@@ -108,7 +108,15 @@
         <label class="admin-field">
             <span>مزوّد LLM</span>
             <select name="provider" class="admin-input">
-                @foreach (['gemini' => 'Gemini (Google)', 'nvidia' => 'NVIDIA NIM', 'fallback' => 'هجين (Gemini ثم NVIDIA)'] as $val => $label)
+                @foreach ([
+                    'chain' => 'سلسلة مزوّدات (موصى — حسب الترتيب أدناه)',
+                    'groq' => 'Groq (سريع · Llama 3.3 70B)',
+                    'cerebras' => 'Cerebras (سريع)',
+                    'openrouter' => 'OpenRouter (نماذج مجانية متنوّعة)',
+                    'nvidia' => 'NVIDIA NIM',
+                    'gemini' => 'Gemini (Google)',
+                    'fallback' => 'هجين (Gemini ثم NVIDIA)',
+                ] as $val => $label)
                     <option value="{{ $val }}" @selected($status['provider'] === $val)>{{ $label }}</option>
                 @endforeach
             </select>
@@ -177,6 +185,47 @@
     <form method="POST" action="{{ route('admin.ai-control.providers') }}" class="admin-form-stack">
         @csrf
         @method('PATCH')
+
+        <p class="report-muted">
+            بدائل مجانية ممتازة لـGemini (بلا بطاقة): Groq (console.groq.com) · Cerebras (cloud.cerebras.ai) ·
+            OpenRouter (openrouter.ai). أنشئ حساباً مجانياً، انسخ المفتاح، والصقه هنا. اختر «سلسلة مزوّدات»
+            في الأعلى ليُجرَّبوا بالترتيب تلقائياً.
+        </p>
+
+        <label class="admin-field">
+            <span>ترتيب السلسلة (أسماء مفصولة بفواصل — يُجرَّب الأول فالأول)</span>
+            <input type="text" name="chain" class="admin-input" value="{{ $status['chain'] }}" placeholder="groq,cerebras,nvidia" required>
+        </label>
+
+        <h3 class="admin-subhead">Groq <small>(موصى — سريع + Llama 3.3 70B)</small></h3>
+        <label class="admin-field">
+            <span>مفتاح Groq <small>(الحالي: {{ $status['groq_key_hint'] }} — اتركه فارغاً للإبقاء)</small></span>
+            <input type="password" name="groq_key" class="admin-input" autocomplete="off" placeholder="gsk_… — من console.groq.com">
+        </label>
+        <label class="admin-field">
+            <span>نموذج Groq</span>
+            <input type="text" name="groq_model" class="admin-input" value="{{ $status['groq_model'] }}" required>
+        </label>
+
+        <h3 class="admin-subhead">Cerebras <small>(سريع + سعة كبيرة)</small></h3>
+        <label class="admin-field">
+            <span>مفتاح Cerebras <small>(الحالي: {{ $status['cerebras_key_hint'] }} — اتركه فارغاً للإبقاء)</small></span>
+            <input type="password" name="cerebras_key" class="admin-input" autocomplete="off" placeholder="csk-… — من cloud.cerebras.ai">
+        </label>
+        <label class="admin-field">
+            <span>نموذج Cerebras</span>
+            <input type="text" name="cerebras_model" class="admin-input" value="{{ $status['cerebras_model'] }}" required>
+        </label>
+
+        <h3 class="admin-subhead">OpenRouter <small>(نماذج مجانية متنوّعة)</small></h3>
+        <label class="admin-field">
+            <span>مفتاح OpenRouter <small>(الحالي: {{ $status['openrouter_key_hint'] }} — اتركه فارغاً للإبقاء)</small></span>
+            <input type="password" name="openrouter_key" class="admin-input" autocomplete="off" placeholder="sk-or-… — من openrouter.ai">
+        </label>
+        <label class="admin-field">
+            <span>نموذج OpenRouter</span>
+            <input type="text" name="openrouter_model" class="admin-input" value="{{ $status['openrouter_model'] }}" required>
+        </label>
 
         <h3 class="admin-subhead">Gemini (Google)</h3>
         <label class="admin-field">

@@ -70,6 +70,49 @@ return [
         */
         'external_roles' => ['knowledge_fetch', 'enrichment', 'review'],
         'local_first' => env('AI_LOCAL_FIRST', true),
+
+        /*
+        | سلسلة المزوّدات (provider=chain): يجرّبها بالترتيب حتى ينجح أحدهم.
+        | يُدار من الآدمن. الافتراض: Groq (سريع + Llama 3.3 70B) ثم Cerebras ثم
+        | NVIDIA كاحتياط. المزوّد بلا مفتاح يُتخطّى تلقائياً.
+        */
+        'chain' => env('AI_CHAIN', 'groq,cerebras,nvidia'),
+
+        /*
+        | ملفات المزوّدات المتوافقة مع OpenAI (Groq/Cerebras/OpenRouter) — بدائل
+        | مجانية ممتازة لـGemini. المفاتيح تُدخَل من لوحة الآدمن (SettingsStore).
+        | التسجيل المجاني (بلا بطاقة): Groq=console.groq.com · Cerebras=cloud.cerebras.ai
+        | · OpenRouter=openrouter.ai. كلها Chat Completions قياسية.
+        */
+        'providers' => [
+            'groq' => [
+                'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
+                'key' => env('GROQ_API_KEY'),
+                'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+                'temperature' => env('GROQ_TEMPERATURE', 0.4),
+                'max_tokens' => env('GROQ_MAX_TOKENS', 2048),
+                'connect_timeout' => env('GROQ_CONNECT_TIMEOUT', 15),
+                'timeout' => env('GROQ_TIMEOUT', 45),
+            ],
+            'cerebras' => [
+                'base_url' => env('CEREBRAS_BASE_URL', 'https://api.cerebras.ai/v1'),
+                'key' => env('CEREBRAS_API_KEY'),
+                'model' => env('CEREBRAS_MODEL', 'llama-3.3-70b'),
+                'temperature' => env('CEREBRAS_TEMPERATURE', 0.4),
+                'max_tokens' => env('CEREBRAS_MAX_TOKENS', 2048),
+                'connect_timeout' => env('CEREBRAS_CONNECT_TIMEOUT', 15),
+                'timeout' => env('CEREBRAS_TIMEOUT', 45),
+            ],
+            'openrouter' => [
+                'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
+                'key' => env('OPENROUTER_API_KEY'),
+                'model' => env('OPENROUTER_MODEL', 'meta-llama/llama-3.3-70b-instruct:free'),
+                'temperature' => env('OPENROUTER_TEMPERATURE', 0.4),
+                'max_tokens' => env('OPENROUTER_MAX_TOKENS', 2048),
+                'connect_timeout' => env('OPENROUTER_CONNECT_TIMEOUT', 15),
+                'timeout' => env('OPENROUTER_TIMEOUT', 45),
+            ],
+        ],
     ],
 
     /*

@@ -20,15 +20,16 @@ class AiProviderKeysTest extends TestCase
         $admin = User::query()->where('is_super_admin', true)->firstOrFail();
 
         $this->actingAs($admin)
-            ->patch(route('admin.ai-control.providers'), [
+            ->patch(route('admin.ai-control.providers'), $this->payload([
                 'gemini_key' => 'AIza-NEW-GEMINI-KEY',
-                'gemini_model' => 'gemini-2.5-flash',
-                'gemini_timeout' => 40,
                 'nvidia_key' => 'nvapi-NEW-KEY',
                 'nvidia_model' => 'meta/llama-3.1-8b-instruct',
                 'nvidia_max_tokens' => 2048,
                 'nvidia_timeout' => 30,
-            ])
+                'gemini_timeout' => 40,
+                'groq_key' => 'gsk-NEW-GROQ',
+                'chain' => 'groq,cerebras,nvidia',
+            ]))
             ->assertRedirect();
 
         $settings = app(SettingsStore::class);
@@ -38,6 +39,48 @@ class AiProviderKeysTest extends TestCase
         $this->assertSame(2048, $settings->get('services.nvidia.max_tokens'));
         $this->assertSame(30, $settings->get('services.nvidia.timeout'));
         $this->assertSame(40, $settings->get('services.gemini.timeout'));
+        $this->assertSame('gsk-NEW-GROQ', $settings->get('services.ai.providers.groq.key'));
+        $this->assertSame('groq,cerebras,nvidia', $settings->get('services.ai.chain'));
+    }
+
+    #[Test]
+    public function chain_is_sanitized_to_known_providers_only(): void
+    {
+        $this->seed(PlatformBootstrapSeeder::class);
+        $admin = User::query()->where('is_super_admin', true)->firstOrFail();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.ai-control.providers'), $this->payload([
+                'chain' => 'groq, evil-provider , nvidia, groq',
+            ]))
+            ->assertRedirect();
+
+        // أسماء معروفة فقط، بلا تكرار، مرتّبة.
+        $this->assertSame('groq,nvidia', app(SettingsStore::class)->get('services.ai.chain'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function payload(array $overrides = []): array
+    {
+        return array_merge([
+            'chain' => 'groq,cerebras,nvidia',
+            'gemini_key' => '',
+            'gemini_model' => 'gemini-2.5-flash',
+            'gemini_timeout' => 45,
+            'nvidia_key' => '',
+            'nvidia_model' => 'meta/llama-3.1-70b-instruct',
+            'nvidia_max_tokens' => 2048,
+            'nvidia_timeout' => 45,
+            'groq_key' => '',
+            'groq_model' => 'llama-3.3-70b-versatile',
+            'cerebras_key' => '',
+            'cerebras_model' => 'llama-3.3-70b',
+            'openrouter_key' => '',
+            'openrouter_model' => 'meta-llama/llama-3.3-70b-instruct:free',
+        ], $overrides);
     }
 
     #[Test]
@@ -48,15 +91,7 @@ class AiProviderKeysTest extends TestCase
         app(SettingsStore::class)->set('services.gemini.key', 'EXISTING-KEY');
 
         $this->actingAs($admin)
-            ->patch(route('admin.ai-control.providers'), [
-                'gemini_key' => '', // فارغ = إبقاء
-                'gemini_model' => 'gemini-2.5-flash',
-                'gemini_timeout' => 45,
-                'nvidia_key' => '',
-                'nvidia_model' => 'meta/llama-3.1-70b-instruct',
-                'nvidia_max_tokens' => 4096,
-                'nvidia_timeout' => 45,
-            ])
+            ->patch(route('admin.ai-control.providers'), $this->payload(['gemini_key' => ''])) // فارغ = إبقاء
             ->assertRedirect();
 
         $this->assertSame('EXISTING-KEY', app(SettingsStore::class)->get('services.gemini.key'));
@@ -83,15 +118,10 @@ class AiProviderKeysTest extends TestCase
         $this->seed(PlatformBootstrapSeeder::class);
         $admin = User::query()->where('is_super_admin', true)->firstOrFail();
 
-        $this->actingAs($admin)->patch(route('admin.ai-control.providers'), [
-            'gemini_key' => 'TOP-SECRET-VALUE',
-            'gemini_model' => 'gemini-2.5-flash',
-            'gemini_timeout' => 45,
-            'nvidia_key' => '',
-            'nvidia_model' => 'meta/llama-3.1-70b-instruct',
-            'nvidia_max_tokens' => 4096,
-            'nvidia_timeout' => 45,
-        ]);
+        $this->actingAs($admin)->patch(
+            route('admin.ai-control.providers'),
+            $this->payload(['gemini_key' => 'TOP-SECRET-VALUE']),
+        );
 
         $this->assertDatabaseHas('audit_logs', ['action' => 'admin.ai_control.providers_updated']);
         $this->assertDatabaseMissing('audit_logs', ['meta' => 'TOP-SECRET-VALUE']);
