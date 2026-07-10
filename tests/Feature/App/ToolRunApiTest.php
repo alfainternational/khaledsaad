@@ -149,6 +149,7 @@ class ToolRunApiTest extends TestCase
             ->assertJsonPath('data.summary.headline', 'تقييم الوكالة — API Project')
             ->assertJsonPath('data.summary.agency_verdict.risk_level', 'مرتفع')
             ->assertJsonPath('data.summary.agency_verdict.decision', 'لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertJsonPath('data.summary.agency_verdict.meeting_brief', "مرحباً، راجعنا أداء الحملات ونحتاج قبل أي توسعة أو تجديد إلى تصحيح القياس وربط النتائج بأهداف العمل.\nقرارنا الحالي: لا توسّع أو تجدّد قبل تصحيح القياس.\nالطلب الأول: تقرير CAC أو تكلفة العميل المحتمل المؤهل.\nالطلب الثاني: توضيح مصدر كل نتيجة عبر Pixel أو UTM أو CRM.\nسؤال الاجتماع: ما تكلفة العميل المحتمل المؤهل؟\nنحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية أو تثبيت الخطة القادمة.")
             ->assertJsonPath('data.output.agency_verdict.score', 38);
 
         $bullets = $response->json('data.summary.bullets');
@@ -194,6 +195,8 @@ class ToolRunApiTest extends TestCase
             ->assertSee('مطالب من الوكالة')
             ->assertSee('أسئلة الاجتماع القادم')
             ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل')
+            ->assertSee('رسالة الاجتماع مع الوكالة')
+            ->assertSee('راجعنا أداء الحملات ونحتاج قبل أي توسعة أو تجديد')
             ->assertSee('خطوات المتابعة')
             ->assertSee('اتفق على فترة قياس قصيرة قبل أي زيادة ميزانية أو تجديد.');
     }
@@ -261,6 +264,8 @@ class ToolRunApiTest extends TestCase
             ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس')
             ->assertSee('مرتفع')
             ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل')
+            ->assertSee('رسالة الاجتماع مع الوكالة')
+            ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية')
             ->assertSee('فتح تقييم الوكالة');
     }
 

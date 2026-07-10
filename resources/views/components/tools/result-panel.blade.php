@@ -87,6 +87,13 @@
                         </ul>
                     </div>
                 @endif
+
+                @if (! empty($agencyVerdict['meeting_brief']))
+                    <div class="agency-verdict-list">
+                        <strong>رسالة الاجتماع مع الوكالة</strong>
+                        <p>{!! nl2br(e($agencyVerdict['meeting_brief'])) !!}</p>
+                    </div>
+                @endif
             </section>
         @endif
 

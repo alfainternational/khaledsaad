@@ -1271,6 +1271,7 @@ function renderAgencyVerdictCard(resultBody, verdict, textNode) {
     const riskLevel = verdict.risk_level || 'غير محدد';
     const decision = verdict.decision || 'راجع القياس قبل القرار.';
     const firstDemand = demands[0] || 'اطلب أرقاماً قابلة للقياس.';
+    const meetingBrief = typeof verdict.meeting_brief === 'string' ? verdict.meeting_brief.trim() : '';
 
     const cardHtml = `
         <section class="agency-verdict-card" aria-label="حكم تشغيل الوكالة">
@@ -1299,6 +1300,12 @@ function renderAgencyVerdictCard(resultBody, verdict, textNode) {
                 <div class="agency-verdict-list">
                     <strong>أسئلة الاجتماع القادم</strong>
                     <ul>${questions.map(question => `<li>${escapeHtml(question)}</li>`).join('')}</ul>
+                </div>
+            ` : ''}
+            ${meetingBrief ? `
+                <div class="agency-verdict-list">
+                    <strong>رسالة الاجتماع مع الوكالة</strong>
+                    <p>${escapeHtml(meetingBrief).replace(/\n/g, '<br>')}</p>
                 </div>
             ` : ''}
         </section>

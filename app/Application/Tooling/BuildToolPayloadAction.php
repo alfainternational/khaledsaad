@@ -677,6 +677,15 @@ class BuildToolPayloadAction
             'ما الذي ستوقفونه إذا لم يتحسن الرقم خلال أسبوعين؟',
         ])));
 
+        $meetingBrief = implode("\n", array_values(array_filter([
+            'مرحباً، راجعنا أداء الحملات ونحتاج قبل أي توسعة أو تجديد إلى تصحيح القياس وربط النتائج بأهداف العمل.',
+            'قرارنا الحالي: '.$decision.'.',
+            ! empty($demands[0]) ? 'الطلب الأول: '.$demands[0].'.' : null,
+            ! empty($demands[1]) ? 'الطلب الثاني: '.$demands[1].'.' : null,
+            ! empty($questions[0]) ? 'سؤال الاجتماع: '.$questions[0] : null,
+            'نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية أو تثبيت الخطة القادمة.',
+        ])));
+
         return [
             'score' => $score,
             'risk_level' => $riskLevel,
@@ -684,6 +693,7 @@ class BuildToolPayloadAction
             'flags' => $flags,
             'demands' => $demands,
             'questions' => $questions,
+            'meeting_brief' => $meetingBrief,
             'summary_lines' => array_values(array_filter([
                 'الحكم: '.$decision,
                 'درجة وضوح عمل الوكالة: '.$score.'/100',

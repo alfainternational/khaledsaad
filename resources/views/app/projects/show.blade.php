@@ -136,6 +136,17 @@
                 @endforeach
             </div>
         @endif
+
+        @if (! empty($agencyVerdict['meeting_brief']))
+            <div class="app-list mt-4">
+                <div class="app-list-item">
+                    <div>
+                        <strong>رسالة الاجتماع مع الوكالة</strong>
+                        <small>{!! nl2br(e($agencyVerdict['meeting_brief'])) !!}</small>
+                    </div>
+                </div>
+            </div>
+        @endif
     </section>
 @endif
 
