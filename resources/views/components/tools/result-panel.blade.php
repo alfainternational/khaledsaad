@@ -6,6 +6,7 @@
 
 @php
     $isAiGenerated = $latestRun && ! empty($latestRun->summary_json['ai_generated']);
+    $agencyVerdict = $latestRun?->summary_json['agency_verdict'] ?? null;
     $score = $latestRun?->completeness_score ?? 0;
     $circumference = 2 * 3.14159 * 42;
     $dashOffset = $circumference - ($circumference * $score / 100);
@@ -43,6 +44,50 @@
         <p class="tool-result-analysis" {{ $isDiagnosis ? 'data-diagnosis-text' : 'data-tool-preview-text' }}>
             {{ $latestRun->summary_json['text'] ?? ($isDiagnosis ? 'ستظهر قراءة مختصرة لحالة المشروع.' : $blueprint['intro']) }}
         </p>
+
+        @if (! empty($agencyVerdict))
+            <section class="agency-verdict-card" aria-label="حكم تشغيل الوكالة">
+                <div class="agency-verdict-head">
+                    <span>حكم تشغيل الوكالة</span>
+                    <strong>{{ $agencyVerdict['score'] ?? 0 }}/100</strong>
+                </div>
+
+                <p class="agency-verdict-decision">{{ $agencyVerdict['decision'] ?? 'راجع القياس قبل القرار.' }}</p>
+
+                <div class="agency-verdict-meta">
+                    <div>
+                        <span>مستوى المخاطرة</span>
+                        <strong>{{ $agencyVerdict['risk_level'] ?? 'غير محدد' }}</strong>
+                    </div>
+                    <div>
+                        <span>أول طلب</span>
+                        <strong>{{ $agencyVerdict['demands'][0] ?? 'اطلب أرقاماً قابلة للقياس.' }}</strong>
+                    </div>
+                </div>
+
+                @if (! empty($agencyVerdict['demands']))
+                    <div class="agency-verdict-list">
+                        <strong>مطالب من الوكالة</strong>
+                        <ul>
+                            @foreach (array_slice($agencyVerdict['demands'], 0, 3) as $demand)
+                                <li>{{ $demand }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if (! empty($agencyVerdict['questions']))
+                    <div class="agency-verdict-list">
+                        <strong>أسئلة الاجتماع القادم</strong>
+                        <ul>
+                            @foreach (array_slice($agencyVerdict['questions'], 0, 3) as $question)
+                                <li>{{ $question }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </section>
+        @endif
 
         @if ($isAiGenerated && !empty($latestRun?->summary_json['bullets']))
             <div class="tool-result-recs-label">

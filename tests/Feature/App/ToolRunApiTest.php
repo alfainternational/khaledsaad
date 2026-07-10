@@ -157,6 +157,40 @@ class ToolRunApiTest extends TestCase
         $this->assertContains('سؤال الاجتماع القادم: ما تكلفة العميل المحتمل المؤهل؟', $bullets);
     }
 
+    #[Test]
+    public function agency_audit_result_panel_renders_the_operational_verdict(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة حملات ميتا',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => '120 نقرة وظهور كثير بدون مبيعات',
+                    'agency_tracking' => 'لا يوجد UTM واضح',
+                    'agency_concern' => 'أرقام تفاعل فقط',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                ],
+            ])
+            ->assertOk();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('tools.show', $tool))
+            ->assertOk()
+            ->assertSee('حكم تشغيل الوكالة', false)
+            ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertSee('مستوى المخاطرة')
+            ->assertSee('مطالب من الوكالة')
+            ->assertSee('أسئلة الاجتماع القادم')
+            ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل');
+    }
+
     /**
      * @return array{0: User, 1: Workspace, 2: Project, 3: Tool}
      */

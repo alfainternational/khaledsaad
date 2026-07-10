@@ -3198,6 +3198,81 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
     line-height: 1.8;
 }
 
+.agency-verdict-card {
+    display: grid;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid color-mix(in srgb, var(--p-base) 24%, var(--card-border));
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--p-base) 8%, var(--surface));
+}
+
+.agency-verdict-head,
+.agency-verdict-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+}
+
+.agency-verdict-head span,
+.agency-verdict-meta span {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 800;
+}
+
+.agency-verdict-head strong {
+    color: var(--p-light);
+    font-size: var(--fs-xl);
+}
+
+.agency-verdict-decision {
+    margin: 0;
+    color: var(--text);
+    font-weight: 800;
+    line-height: 1.65;
+}
+
+.agency-verdict-meta {
+    align-items: stretch;
+}
+
+.agency-verdict-meta div {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+    padding: var(--sp-3);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.agency-verdict-meta strong {
+    color: var(--text);
+    font-size: var(--fs-sm);
+    line-height: 1.55;
+}
+
+.agency-verdict-list {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+.agency-verdict-list > strong {
+    color: var(--text);
+    font-size: var(--fs-sm);
+}
+
+.agency-verdict-list ul {
+    margin: 0;
+    padding-inline-start: 1.1rem;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    line-height: 1.75;
+}
+
 .tool-ui-header {
     display: flex;
     align-items: flex-start;
