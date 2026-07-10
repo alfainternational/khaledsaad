@@ -7,6 +7,7 @@
 @php
     $isAiGenerated = $latestRun && ! empty($latestRun->summary_json['ai_generated']);
     $agencyVerdict = $latestRun?->summary_json['agency_verdict'] ?? null;
+    $nextActions = $latestRun?->next_actions_json ?? [];
     $score = $latestRun?->completeness_score ?? 0;
     $circumference = 2 * 3.14159 * 42;
     $dashOffset = $circumference - ($circumference * $score / 100);
@@ -105,6 +106,15 @@
                 <li>{{ $isDiagnosis ? 'ستظهر الأولوية التالية بعد ملء المدخلات.' : 'املأ الحقول لتظهر التوصيات.' }}</li>
             @endif
         </ul>
+
+        <section class="tool-next-actions-card" data-tool-next-actions-card @if (empty($nextActions)) hidden @endif>
+            <strong>خطوات المتابعة</strong>
+            <ol data-tool-next-actions-list>
+                @foreach (array_slice($nextActions, 0, 4) as $action)
+                    <li>{{ $action }}</li>
+                @endforeach
+            </ol>
+        </section>
 
         @php $specialistReview = $latestRun?->output_json['specialist_review'] ?? null; @endphp
         @if (! empty($specialistReview['panels']))

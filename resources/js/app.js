@@ -1313,6 +1313,19 @@ function renderAgencyVerdictCard(resultBody, verdict, textNode) {
     }
 }
 
+function renderToolNextActions(container, actions) {
+    const card = container.querySelector('[data-tool-next-actions-card]');
+    if (!card) return;
+
+    const list = card.querySelector('[data-tool-next-actions-list]');
+    const nextActions = Array.isArray(actions) ? actions.filter(Boolean).slice(0, 4) : [];
+
+    card.hidden = nextActions.length === 0;
+    if (list) {
+        list.innerHTML = nextActions.map(action => `<li>${escapeHtml(action)}</li>`).join('');
+    }
+}
+
 function renderToolResult(container, data) {
     const summary = data.summary || {};
     const score = data.completeness_score || 0;
@@ -1332,6 +1345,7 @@ function renderToolResult(container, data) {
     if (headlineNode) headlineNode.textContent = headline;
     if (textNode) textNode.textContent = text;
     renderAgencyVerdictCard(resultBody, agencyVerdict, textNode);
+    renderToolNextActions(container, data.next_actions);
     if (bulletsNode) {
         bulletsNode.innerHTML = bullets
             .filter(b => b && b.trim() !== '')

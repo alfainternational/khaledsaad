@@ -193,7 +193,9 @@ class ToolRunApiTest extends TestCase
             ->assertSee('مستوى المخاطرة')
             ->assertSee('مطالب من الوكالة')
             ->assertSee('أسئلة الاجتماع القادم')
-            ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل');
+            ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل')
+            ->assertSee('خطوات المتابعة')
+            ->assertSee('اتفق على فترة قياس قصيرة قبل أي زيادة ميزانية أو تجديد.');
     }
 
     /**
