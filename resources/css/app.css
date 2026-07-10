@@ -6844,6 +6844,20 @@ body.rd-dark .text-gradient-light {
 .report-gap { color: #b45309; font-size: var(--fs-sm); margin-top: var(--sp-2); }
 .report-source { text-align: end; margin-top: var(--sp-2); }
 
+/* دليل المشروع — الإجابات الخام (سؤال ← جواب) */
+.dossier-tool-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); flex-wrap: wrap; }
+.dossier-tool-meta { font-size: var(--fs-xs); color: var(--text-muted, var(--p-light)); flex-shrink: 0; }
+.dossier-qa { margin: var(--sp-2) 0 0; display: grid; gap: var(--sp-2); }
+.dossier-q { font-weight: 700; color: var(--text); font-size: var(--fs-sm); }
+.dossier-a {
+    margin: 0.15rem 0 0;
+    color: var(--text);
+    line-height: 1.85;
+    white-space: pre-line;
+    padding-inline-start: 0.7rem;
+    border-inline-start: 2px solid var(--border);
+}
+
 .app-list-item-actions { display: flex; align-items: center; gap: var(--sp-2); flex-shrink: 0; }
 
 .report-toolbar { display: flex; justify-content: flex-end; }

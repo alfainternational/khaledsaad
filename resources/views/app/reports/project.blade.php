@@ -4,6 +4,7 @@
 <div class="report-shell">
 
     <div class="report-toolbar no-print">
+        <a href="{{ route('projects.dossier', $project) }}" class="btn btn-secondary btn-sm">دليل الإجابات الخام</a>
         @if (entitlement('outputs.can_export'))
             <a href="{{ route('projects.report.pdf', $project) }}" class="btn btn-primary btn-sm">تصدير PDF احترافي</a>
         @endif

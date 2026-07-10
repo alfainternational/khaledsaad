@@ -28,6 +28,7 @@ class BuildProjectReportAction
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
         private readonly StrategicDiagnosisBuilder $diagnosisBuilder,
         private readonly DomainPlansBuilder $domainPlansBuilder,
+        private readonly ProjectDossierBuilder $dossierBuilder,
     ) {}
 
     /**
@@ -293,22 +294,18 @@ class BuildProjectReportAction
     {
         $context = $this->contextBuilder->promptBlockForIds($project->workspace_id, $project->id);
 
-        $stagesBlock = collect($base['stages'])->map(function (array $st): string {
-            $items = collect($st['items'] ?? [])->map(
-                fn (array $i): string => '  • '.$i['tool_name'].': '.$i['headline'].($i['points'] ? ' — '.implode('؛ ', $i['points']) : '')
-            )->implode("\n");
-
-            return 'مرحلة «'.$st['label'].'»:'."\n".($items !== '' ? $items : '  (لا أدوات منجَزة)');
-        })->implode("\n\n");
+        // النظام الهجين: نُغذّي الـLLM «دليل المشروع» كاملاً (كل الإجابات الخام
+        // المجمّعة حتمياً) بدل ملخّصات مضغوطة — فيحلّل المادة الكاملة ويربطها.
+        $dossierMarkdown = $this->dossierBuilder->build($project)['markdown'];
 
         $prompt = implode("\n", [
-            'أنت مستشار استراتيجي. لديك مخرجات أدوات منجَزة لمشروع «'.$base['project'].'».',
-            'اكتب تقريراً استراتيجياً **مترابطاً** يربط القطع ببعضها (لا تكرار للمخرجات)، مبنياً على ما هو موجود فقط دون اختراع أرقام أو حقائق.',
+            'أنت مستشار استراتيجي. بين يديك «دليل المشروع» كاملاً — كل إجابات صاحب المشروع الخام عبر كل الأدوات، مجمّعةً ومرتّبةً حسب المراحل.',
+            'اقرأ الدليل بالكامل واكتب تقريراً استراتيجياً **مترابطاً** يربط القطع ببعضها (لا تكرار حرفي للإجابات)، مبنياً على ما ورد فيه فقط دون اختراع أرقام أو حقائق.',
             '',
             $context !== '' ? $context : '',
             '',
-            '=== مخرجات الأدوات حسب المرحلة ===',
-            $stagesBlock,
+            '=== دليل المشروع (الإجابات الخام الكاملة) ===',
+            $dossierMarkdown,
             '',
             ! empty($base['audit']['top_problems'])
                 ? '=== تشخيص فني من التدقيق الذكي (ادمجه) ===' . "\n" . '- ' . implode("\n- ", $base['audit']['top_problems'])

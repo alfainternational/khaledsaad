@@ -41,6 +41,7 @@ use App\Http\Controllers\Web\DashboardController as UserDashboardController;
 use App\Http\Controllers\Web\ExecutionPackageController;
 use App\Http\Controllers\Web\ExperienceController;
 use App\Http\Controllers\Web\GuestDiagnosisController;
+use App\Http\Controllers\Web\ProjectDossierController;
 use App\Http\Controllers\Web\ProjectReportController;
 use App\Http\Controllers\Web\RecommendationController;
 use App\Http\Controllers\Web\MarketingWebsiteController;
@@ -192,6 +193,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/projects/{project}/report', [ProjectReportController::class, 'show'])->name('projects.report');
     Route::get('/projects/{project}/report/pdf', [ProjectReportController::class, 'exportPdf'])
         ->middleware('entitlement:outputs.can_export')->name('projects.report.pdf');
+    // دليل المشروع: الإجابات الخام مجمّعة كوثيقة قابلة للطباعة (خطوة مستقلة).
+    Route::get('/projects/{project}/dossier', [ProjectDossierController::class, 'show'])->name('projects.dossier');
+    Route::get('/projects/{project}/dossier/pdf', [ProjectDossierController::class, 'exportPdf'])
+        ->middleware('entitlement:outputs.can_export')->name('projects.dossier.pdf');
     Route::get('/execution-packages/{executionPackage}', [ExecutionPackageController::class, 'show'])->name('execution-packages.show');
     Route::patch('/execution-packages/{executionPackage}/status', [ExecutionPackageController::class, 'updateStatus'])->name('execution-packages.status');
 
