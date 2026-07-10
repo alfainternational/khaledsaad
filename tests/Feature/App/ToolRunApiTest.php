@@ -198,6 +198,37 @@ class ToolRunApiTest extends TestCase
             ->assertSee('اتفق على فترة قياس قصيرة قبل أي زيادة ميزانية أو تجديد.');
     }
 
+    #[Test]
+    public function project_page_shows_the_latest_tool_run_next_action(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة حملات ميتا',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => '120 نقرة وظهور كثير بدون مبيعات',
+                    'agency_tracking' => 'لا يوجد UTM واضح',
+                    'agency_concern' => 'أرقام تفاعل فقط',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                ],
+            ])
+            ->assertOk();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('projects.show', $project))
+            ->assertOk()
+            ->assertSee('آخر تشغيلات الأدوات')
+            ->assertSee('خطوة هذا التشغيل')
+            ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس');
+    }
+
     /**
      * @return array{0: User, 1: Workspace, 2: Project, 3: Tool}
      */

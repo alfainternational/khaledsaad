@@ -451,6 +451,9 @@
                     <div>
                         <strong>{{ $run->tool?->name ?: $run->tool_code }}</strong>
                         <small>{{ $run->created_at?->diffForHumans() }} · {{ $run->mode }}</small>
+                        @if (! empty($run->next_actions_json[0]))
+                            <small>خطوة هذا التشغيل: {{ $run->next_actions_json[0] }}</small>
+                        @endif
                     </div>
                     <div class="app-inline-actions">
                         <span class="app-badge">{{ $run->summary_json['headline'] ?? $run->output_json['headline'] ?? 'output' }}</span>
