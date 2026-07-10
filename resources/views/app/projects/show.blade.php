@@ -69,6 +69,41 @@
     </article>
 </section>
 
+@if ($topExecutionRecommendations->isNotEmpty())
+    @php($impactLabels = ['high' => 'أثر عالٍ', 'medium' => 'أثر متوسط', 'low' => 'أثر منخفض'])
+    <section class="project-priority-panel mb-8" aria-labelledby="project-priority-title">
+        <div class="project-priority-head">
+            <div>
+                <p class="section-kicker">ابدأ من هنا</p>
+                <h3 id="project-priority-title" class="heading-sm">أولويات التنفيذ الآن</h3>
+                <p class="text-muted">أقصر قائمة عمل مستخرجة من توصيات التحليل، حتى تعرف ماذا تفعل قبل قراءة التقرير الطويل.</p>
+            </div>
+            <a href="{{ route('projects.recommendations.index', $project) }}" class="btn btn-primary btn-sm">فتح التوصيات والتنفيذ</a>
+        </div>
+
+        <div class="project-priority-list">
+            @foreach ($topExecutionRecommendations as $index => $recommendation)
+                @php($package = $recommendation->executionPackages->first())
+                <article class="project-priority-item" data-project-priority-title="{{ $recommendation->title }}">
+                    <span class="exec-rank">{{ $index + 1 }}</span>
+                    <div class="project-priority-copy">
+                        <h4>{{ $recommendation->title }}</h4>
+                        <p>{{ $recommendation->rationale ?: ($recommendation->evidence ?: 'حوّل هذه الأولوية إلى حزمة تنفيذ لتحديد الخطوة التالية.') }}</p>
+                        <small>{{ $impactLabels[$recommendation->estimated_impact] ?? $recommendation->estimated_impact }} · ثقة {{ round($recommendation->confidence * 100) }}%</small>
+                    </div>
+                    <div class="project-priority-action">
+                        @if ($package)
+                            <a href="{{ route('execution-packages.show', $package) }}" class="btn btn-secondary btn-sm">عرض التنفيذ</a>
+                        @else
+                            <a href="{{ route('projects.recommendations.index', $project) }}" class="btn btn-secondary btn-sm">تجهيز التنفيذ</a>
+                        @endif
+                    </div>
+                </article>
+            @endforeach
+        </div>
+    </section>
+@endif
+
 <section class="card mb-8">
     @php($analysisIntegrity = $latestAuditReport['analysis_integrity'] ?? [])
 

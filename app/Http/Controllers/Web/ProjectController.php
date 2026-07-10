@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Domain\AI\Models\AIGeneration;
+use App\Domain\Execution\Models\Recommendation;
 use App\Domain\Intelligence\Models\AuditRun;
 use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
@@ -119,6 +120,13 @@ class ProjectController extends Controller
             'project' => $project
                 ->load('client')
                 ->loadCount(['toolRuns', 'approvals']),
+            'topExecutionRecommendations' => Recommendation::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('project_id', $project->id)
+                ->with('executionPackages')
+                ->orderBy('priority')
+                ->limit(3)
+                ->get(),
             'journeySnapshot' => $journeySnapshot,
             'readiness' => $readiness,
             'brief' => $brief,

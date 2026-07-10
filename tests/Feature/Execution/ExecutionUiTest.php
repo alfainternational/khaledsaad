@@ -85,6 +85,41 @@ class ExecutionUiTest extends TestCase
     }
 
     #[Test]
+    public function project_page_surfaces_top_execution_priorities(): void
+    {
+        [$owner, $workspace, $project] = $this->scenario();
+
+        foreach ([2, 3, 4] as $index) {
+            Recommendation::query()->create([
+                'public_id' => (string) Str::ulid(),
+                'workspace_id' => $workspace->id,
+                'project_id' => $project->id,
+                'area' => 'conversion',
+                'title' => "أولوية مشروع {$index}",
+                'priority' => $index * 10,
+                'severity' => 'medium',
+                'evidence' => "دليل مشروع {$index}",
+                'rationale' => "إجراء مشروع {$index}",
+                'estimated_impact' => 'medium',
+                'confidence' => 0.8,
+                'status' => 'proposed',
+            ]);
+        }
+
+        $response = $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('projects.show', $project))
+            ->assertOk()
+            ->assertSee('أولويات التنفيذ الآن', false)
+            ->assertSee('الموقع غير آمن (HTTP)')
+            ->assertSee('أولوية مشروع 3')
+            ->assertSee('فتح التوصيات والتنفيذ', false);
+
+        $this->assertSame(3, substr_count($response->getContent(), 'class="project-priority-item"'));
+        $this->assertStringNotContainsString('data-project-priority-title="أولوية مشروع 4"', $response->getContent());
+    }
+
+    #[Test]
     public function a_member_of_another_workspace_cannot_view_the_package(): void
     {
         [, , , $recommendation] = $this->scenario();
