@@ -22,6 +22,49 @@
         <p><a href="{{ route('projects.show', $project) }}" class="btn btn-primary">اذهب لتشغيل التحليل</a></p>
     </div>
 @else
+    <section class="exec-priority-summary" aria-labelledby="exec-priority-summary-title">
+        <div class="exec-priority-summary-head">
+            <div>
+                <p class="section-kicker">ملخص القرار</p>
+                <h3 id="exec-priority-summary-title" class="heading-md">ابدأ بهذه الأولويات الثلاث</h3>
+                <p class="text-muted">هذه ليست كل التفاصيل، لكنها أقصر طريق لتحويل التشخيص إلى فعل واضح وقابل للقياس.</p>
+            </div>
+            <span class="exec-priority-count">{{ $recommendations->take(3)->count() }} إجراءات</span>
+        </div>
+
+        <div class="exec-priority-grid">
+            @foreach ($recommendations->take(3) as $summaryIndex => $rec)
+                @php($pkg = $rec->executionPackages->first())
+                <article class="exec-priority-card" data-priority-summary-title="{{ $rec->title }}">
+                    <div class="exec-priority-card-head">
+                        <span class="exec-rank">{{ $summaryIndex + 1 }}</span>
+                        <div>
+                            <p class="exec-priority-label">المشكلة</p>
+                            <h4>{{ $rec->title }}</h4>
+                        </div>
+                    </div>
+
+                    <div class="exec-priority-body">
+                        <p><strong>الدليل:</strong> {{ $rec->evidence ?: 'لا يوجد دليل تفصيلي بعد، راجع نتيجة التدقيق الأصلية قبل التنفيذ.' }}</p>
+                        <p><strong>الإجراء العملي:</strong> {{ $rec->rationale ?: 'حوّل هذه الأولوية إلى حزمة تنفيذ لتحديد الخطوات المطلوبة.' }}</p>
+                        <p><strong>الأثر المتوقع:</strong> {{ $impactLabels[$rec->estimated_impact] ?? $rec->estimated_impact }} · ثقة {{ round($rec->confidence * 100) }}%</p>
+                    </div>
+
+                    <div class="exec-priority-foot">
+                        @if ($pkg)
+                            <a href="{{ route('execution-packages.show', $pkg) }}" class="btn btn-primary btn-sm">عرض التنفيذ</a>
+                        @else
+                            <form method="POST" action="{{ route('projects.recommendations.package', [$project, $rec]) }}">
+                                @csrf
+                                <button type="submit" class="btn btn-primary btn-sm">ابدأ التنفيذ</button>
+                            </form>
+                        @endif
+                    </div>
+                </article>
+            @endforeach
+        </div>
+    </section>
+
     <div class="exec-list">
         @foreach ($recommendations as $i => $rec)
             @php($pkg = $rec->executionPackages->first())

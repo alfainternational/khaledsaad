@@ -50,6 +50,41 @@ class ExecutionUiTest extends TestCase
     }
 
     #[Test]
+    public function recommendations_page_highlights_only_the_top_three_priorities(): void
+    {
+        [$owner, $workspace, $project] = $this->scenario();
+
+        foreach ([2, 3, 4] as $index) {
+            Recommendation::query()->create([
+                'public_id' => (string) Str::ulid(),
+                'workspace_id' => $workspace->id,
+                'project_id' => $project->id,
+                'area' => 'growth',
+                'title' => "أولوية إضافية {$index}",
+                'priority' => $index * 10,
+                'severity' => $index === 4 ? 'low' : 'medium',
+                'evidence' => "دليل الأولوية {$index}",
+                'rationale' => "نفّذ الإجراء {$index}",
+                'estimated_impact' => $index === 4 ? 'low' : 'medium',
+                'confidence' => 0.75,
+                'status' => 'proposed',
+            ]);
+        }
+
+        $response = $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('projects.recommendations.index', $project))
+            ->assertOk()
+            ->assertSee('ابدأ بهذه الأولويات الثلاث', false)
+            ->assertSee('المشكلة', false)
+            ->assertSee('الإجراء العملي', false)
+            ->assertSee('أولوية إضافية 3');
+
+        $this->assertSame(3, substr_count($response->getContent(), 'class="exec-priority-card"'));
+        $this->assertStringNotContainsString('data-priority-summary-title="أولوية إضافية 4"', $response->getContent());
+    }
+
+    #[Test]
     public function a_member_of_another_workspace_cannot_view_the_package(): void
     {
         [, , , $recommendation] = $this->scenario();
