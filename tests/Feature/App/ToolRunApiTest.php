@@ -155,6 +155,11 @@ class ToolRunApiTest extends TestCase
         $this->assertContains('الحكم: لا توسّع أو تجدّد قبل تصحيح القياس', $bullets);
         $this->assertContains('اطلب من الوكالة: تقرير CAC أو تكلفة العميل المحتمل المؤهل', $bullets);
         $this->assertContains('سؤال الاجتماع القادم: ما تكلفة العميل المحتمل المؤهل؟', $bullets);
+
+        $nextActions = $response->json('data.next_actions');
+        $this->assertContains('لا توسّع أو تجدّد قبل تصحيح القياس', $nextActions);
+        $this->assertContains('اطلب من الوكالة: تقرير CAC أو تكلفة العميل المحتمل المؤهل', $nextActions);
+        $this->assertContains('اسأل في الاجتماع القادم: ما تكلفة العميل المحتمل المؤهل؟', $nextActions);
     }
 
     #[Test]

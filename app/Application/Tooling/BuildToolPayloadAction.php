@@ -153,11 +153,13 @@ class BuildToolPayloadAction
             $summary['agency_verdict'] = $agencyVerdict;
         }
 
-        $nextActions = $tool->next_actions_json ?: [
+        $nextActions = $agencyVerdict !== null
+            ? $this->agencyNextActions($agencyVerdict)
+            : ($tool->next_actions_json ?: [
             'راجع الخلاصة وتأكد أنها تعكس واقع مشروعك فعلاً.',
             'انقل أهم نقطة منها إلى تنفيذ أو قرار قريب.',
             'انتقل بعدها إلى الأداة التالية في الرحلة.',
-        ];
+        ]);
 
         $sourceContext = [
             'workspace_profile' => $profile,
@@ -690,6 +692,23 @@ class BuildToolPayloadAction
                 ! empty($questions[0]) ? 'سؤال الاجتماع القادم: '.$questions[0] : null,
             ])),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $agencyVerdict
+     * @return array<int, string>
+     */
+    private function agencyNextActions(array $agencyVerdict): array
+    {
+        $demands = array_values(array_filter((array) ($agencyVerdict['demands'] ?? []), 'is_string'));
+        $questions = array_values(array_filter((array) ($agencyVerdict['questions'] ?? []), 'is_string'));
+
+        return array_values(array_filter([
+            (string) ($agencyVerdict['decision'] ?? 'راجع قرارك مع الوكالة بناءً على القياس.'),
+            isset($demands[0]) ? 'اطلب من الوكالة: '.$demands[0] : null,
+            isset($questions[0]) ? 'اسأل في الاجتماع القادم: '.$questions[0] : null,
+            'اتفق على فترة قياس قصيرة قبل أي زيادة ميزانية أو تجديد.',
+        ]));
     }
 
 
