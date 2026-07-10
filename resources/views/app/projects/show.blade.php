@@ -104,6 +104,41 @@
     </section>
 @endif
 
+@php($agencyVerdict = $latestAgencyAuditRun?->summary_json['agency_verdict'] ?? [])
+@if (! empty($agencyVerdict))
+    <section class="card mb-8">
+        <div class="app-section-head">
+            <div>
+                <p class="section-kicker">مراقبة الوكالة</p>
+                <h3 class="heading-sm">حكم الوكالة الحالي</h3>
+                <p class="text-caption">مختصر آخر تقييم لعمل الوكالة حتى تعرف هل تطلب تصحيحاً أم تتابع بثقة.</p>
+            </div>
+            @if ($latestAgencyAuditRun?->tool)
+                <a href="{{ route('tools.show', $latestAgencyAuditRun->tool) }}" class="btn btn-secondary btn-sm">فتح تقييم الوكالة</a>
+            @endif
+        </div>
+
+        <div class="app-meta-grid mb-4">
+            <div><span>القرار</span><strong>{{ $agencyVerdict['decision'] ?? 'راجع التفاصيل' }}</strong></div>
+            <div><span>مستوى المخاطرة</span><strong>{{ $agencyVerdict['risk_level'] ?? 'غير محدد' }}</strong></div>
+            <div><span>درجة التشغيل</span><strong>{{ $agencyVerdict['score'] ?? '--' }}%</strong></div>
+        </div>
+
+        @if (! empty($agencyVerdict['demands']))
+            <div class="app-list">
+                @foreach (array_slice($agencyVerdict['demands'], 0, 3) as $demand)
+                    <div class="app-list-item">
+                        <div>
+                            <strong>اطلب من الوكالة</strong>
+                            <small>{{ $demand }}</small>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </section>
+@endif
+
 <section class="card mb-8">
     @php($analysisIntegrity = $latestAuditReport['analysis_integrity'] ?? [])
 

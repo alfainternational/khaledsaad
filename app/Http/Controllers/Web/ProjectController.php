@@ -152,6 +152,12 @@ class ProjectController extends Controller
                 ->latest()
                 ->limit(6)
                 ->get(),
+            'latestAgencyAuditRun' => ToolRun::query()
+                ->where('project_id', $project->id)
+                ->where('tool_code', 'agency-audit')
+                ->with('tool')
+                ->latest()
+                ->first(),
             'recentGenerations' => AIGeneration::query()
                 ->where('project_id', $project->id)
                 ->with('template')

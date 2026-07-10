@@ -231,6 +231,39 @@ class ToolRunApiTest extends TestCase
             ->assertSee(route('tools.show', $tool), false);
     }
 
+    #[Test]
+    public function project_page_surfaces_the_latest_agency_audit_verdict(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة حملات ميتا',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => '120 نقرة وظهور كثير بدون مبيعات',
+                    'agency_tracking' => 'لا يوجد UTM واضح',
+                    'agency_concern' => 'أرقام تفاعل فقط',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                ],
+            ])
+            ->assertOk();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('projects.show', $project))
+            ->assertOk()
+            ->assertSee('حكم الوكالة الحالي')
+            ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertSee('مرتفع')
+            ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل')
+            ->assertSee('فتح تقييم الوكالة');
+    }
+
     /**
      * @return array{0: User, 1: Workspace, 2: Project, 3: Tool}
      */
