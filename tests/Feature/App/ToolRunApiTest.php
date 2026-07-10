@@ -226,7 +226,9 @@ class ToolRunApiTest extends TestCase
             ->assertOk()
             ->assertSee('آخر تشغيلات الأدوات')
             ->assertSee('خطوة هذا التشغيل')
-            ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس');
+            ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertSee('فتح النتيجة')
+            ->assertSee(route('tools.show', $tool), false);
     }
 
     /**

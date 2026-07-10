@@ -458,6 +458,9 @@
                     <div class="app-inline-actions">
                         <span class="app-badge">{{ $run->summary_json['headline'] ?? $run->output_json['headline'] ?? 'output' }}</span>
                         <span class="app-badge">{{ $run->completeness_score }}%</span>
+                        @if ($run->tool)
+                            <a href="{{ route('tools.show', $run->tool) }}" class="btn btn-secondary btn-sm">فتح النتيجة</a>
+                        @endif
                         <form method="POST" action="{{ route('projects.approvals.store', $project) }}">
                             @csrf
                             <input type="hidden" name="item_type" value="tool_run">
