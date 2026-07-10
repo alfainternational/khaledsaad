@@ -2,19 +2,25 @@
 
 namespace App\Console\Commands;
 
-use App\Application\Tooling\RunToolAction;
+use App\Application\Intelligence\CompileWorkspaceIntelligenceAction;
+use App\Application\Tooling\BuildToolPayloadAction;
+use App\Application\Workspace\RefreshJourneySnapshotAction;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Domain\WorkspaceData\Models\WorkspaceData;
 use App\Models\User;
+use App\Support\Tooling\CanonicalOutputMapper;
 use Illuminate\Console\Command;
 
 /**
- * تعبئة كل أدوات المراحل الخمس لمشروع «جِيب لي» بمدخلات واقعية، عبر المسار الحقيقي
- * (RunToolAction) فتُبنى الملخّصات والاكتمال وworkspace_data بأمانة — لعرض التقرير
+ * تعبئة كل أدوات المراحل الخمس لمشروع «جِيب لي» بمدخلات واقعية — لعرض التقرير
  * الاستراتيجي الكامل الفعلي. محلي بالكامل (لا LLM ولا HTTP). idempotent مع --fresh.
+ *
+ * نبني كل تشغيل عبر BuildToolPayloadAction (الملخّص/الاكتمال) ونكتب ToolRun +
+ * workspace_data مباشرةً، ثم نُجمّع الذكاء *مرّة واحدة* في النهاية بدل 52 نداءً
+ * (المسار عبر RunToolAction كان يُجمّع لكل أداة فيبطئ الاستضافة المشتركة جداً).
  */
 class SeedJeeblayReportCommand extends Command
 {
@@ -22,12 +28,18 @@ class SeedJeeblayReportCommand extends Command
         {--email=khaledaasaaad@gmail.com : بريد المالك/الفاعل}
         {--workspace= : معرّف مساحة عمل محدّد (اختياري)}
         {--project=جِيب لي : اسم المشروع}
-        {--fresh : امسح تشغيلات المشروع السابقة قبل التعبئة}';
+        {--fresh : امسح تشغيلات المشروع السابقة قبل التعبئة}
+        {--compile : جمّع الذكاء ولقطة الرحلة في النهاية (بطيء؛ غير مطلوب للتقرير)}
+        {--from-json= : استيراد حمولات محسوبة مسبقاً من ملف JSON (سريع، بلا BuildToolPayloadAction)}';
 
     protected $description = 'تعبئة كل الأدوات لمشروع «جِيب لي» لعرض التقرير الكامل الفعلي';
 
-    public function handle(RunToolAction $runTool): int
-    {
+    public function handle(
+        BuildToolPayloadAction $buildPayload,
+        CanonicalOutputMapper $canonicalMapper,
+        CompileWorkspaceIntelligenceAction $compileIntelligence,
+        RefreshJourneySnapshotAction $refreshJourney,
+    ): int {
         $user = User::query()->where('email', $this->option('email'))->first()
             ?? User::query()->orderBy('id')->first();
         if ($user === null) {
@@ -53,9 +65,12 @@ class SeedJeeblayReportCommand extends Command
 
         if ($this->option('fresh')) {
             ToolRun::query()->where('project_id', $project->id)->forceDelete();
-            WorkspaceData::query()->where('project_id', $project->id)->delete();
+            WorkspaceData::query()->where('project_id', $project->id)->forceDelete();
             $this->line('مُسحت تشغيلات المشروع السابقة.');
         }
+
+        // حِمل خريطة الحمولات المحسوبة مسبقاً (إن وُجدت) للاستيراد السريع.
+        $preloaded = $this->loadPreloaded();
 
         $done = 0;
         foreach ($inputs as $code => $data) {
@@ -65,9 +80,61 @@ class SeedJeeblayReportCommand extends Command
 
                 continue;
             }
-            $runTool->handle($workspace, $project, $tool, $user, 'guided', $data);
+
+            // استئناف آمن: تخطَّ أداة لها تشغيل بالفعل (بلا --fresh) — يجعل الأمر
+            // idempotent وقابلاً للتكرار حتى يكتمل دون حذف أو تسابق.
+            if (! $this->option('fresh')
+                && ToolRun::query()->where('project_id', $project->id)->where('tool_code', $tool->code)->exists()) {
+                $this->line('  • '.$code.' (موجود — تخطٍّ)');
+
+                continue;
+            }
+
+            // مسار سريع: حمولة محسوبة مسبقاً من JSON (بلا BuildToolPayloadAction).
+            if ($preloaded !== null) {
+                $pre = $preloaded[$code] ?? null;
+                if ($pre === null) {
+                    $this->warn('لا حمولة محسوبة للأداة: '.$code);
+
+                    continue;
+                }
+                $payload = [
+                    'output' => $pre['output_json'] ?? [],
+                    'summary' => $pre['summary_json'] ?? [],
+                    'next_actions' => $pre['next_actions_json'] ?? [],
+                    'source_context' => $pre['source_context_json'] ?? [],
+                    'completeness_score' => (int) ($pre['completeness_score'] ?? 0),
+                ];
+            } else {
+                $payload = $buildPayload->handle($workspace, $project, $tool, 'guided', $data);
+            }
+
+            $run = ToolRun::query()->create([
+                'workspace_id' => $workspace->id,
+                'project_id' => $project->id,
+                'tool_code' => $tool->code,
+                'mode' => 'guided',
+                'inputs_json' => $data,
+                'output_json' => $payload['output'],
+                'summary_json' => $payload['summary'],
+                'next_actions_json' => $payload['next_actions'],
+                'source_context_json' => $payload['source_context'],
+                'completeness_score' => $payload['completeness_score'],
+                'created_by' => $user->id,
+            ]);
+
+            $this->writeWorkspaceData($workspace, $project, $tool, $payload, $run->id, $data, $canonicalMapper);
             $done++;
             $this->line('  ✓ '.$code);
+        }
+
+        // التقرير يقرأ ToolRun فقط؛ تجميع الذكاء/الرحلة (لِلوحة والاستوديو) بطيء
+        // على الاستضافة المشتركة فنجعله اختيارياً بـ --compile.
+        if ($this->option('compile')) {
+            $this->line('تجميع الذكاء ولقطة الرحلة (مرّة واحدة)…');
+            $refreshJourney->handle($project);
+            $compileIntelligence->handle($workspace, $project);
+            $compileIntelligence->handle($workspace);
         }
 
         $this->newLine();
@@ -76,6 +143,91 @@ class SeedJeeblayReportCommand extends Command
         $this->info("رابط التقرير: /projects/{$project->id}/report");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * يكتب workspace_data كما يفعل RunToolAction (ملخّص + سياق + مخرج معياري) بلا تجميع.
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  array<string, string>  $inputs
+     */
+    private function writeWorkspaceData(
+        Workspace $workspace,
+        Project $project,
+        Tool $tool,
+        array $payload,
+        int $runId,
+        array $inputs,
+        CanonicalOutputMapper $canonicalMapper,
+    ): void {
+        WorkspaceData::query()->updateOrCreate(
+            ['workspace_id' => $workspace->id, 'project_id' => $project->id, 'key' => 'tools.'.$tool->code],
+            ['value_json' => [
+                'tool_code' => $tool->code,
+                'tool_name' => $tool->name ?: $tool->code,
+                'mode' => 'guided',
+                'summary' => $payload['summary']['text'],
+                'headline' => $payload['summary']['headline'],
+                'last_run_id' => $runId,
+                'last_run_at' => now()->toDateTimeString(),
+                'completeness_score' => $payload['completeness_score'],
+            ]],
+        );
+
+        WorkspaceData::query()->updateOrCreate(
+            ['workspace_id' => $workspace->id, 'project_id' => $project->id, 'key' => 'tool.summary.'.$tool->code],
+            ['value_json' => $payload['summary']],
+        );
+
+        WorkspaceData::query()->updateOrCreate(
+            ['workspace_id' => $workspace->id, 'project_id' => $project->id, 'key' => 'tool.context.'.$tool->code],
+            ['value_json' => $payload['source_context']],
+        );
+
+        $canonical = $canonicalMapper->map($tool->code, $inputs);
+        if ($canonical !== null) {
+            WorkspaceData::query()->updateOrCreate(
+                ['workspace_id' => $workspace->id, 'project_id' => $project->id, 'key' => $canonical['key']],
+                ['value_json' => [
+                    'value' => $canonical['value'],
+                    'source_tool' => $tool->code,
+                    'last_run_id' => $runId,
+                    'updated_at' => now()->toDateTimeString(),
+                ]],
+            );
+        }
+    }
+
+    /**
+     * يحمّل خريطة الحمولات المحسوبة مسبقاً من ملف JSON (tool_code ⇒ حمولة).
+     *
+     * @return array<string, array<string, mixed>>|null
+     */
+    private function loadPreloaded(): ?array
+    {
+        $path = (string) $this->option('from-json');
+        if ($path === '') {
+            return null;
+        }
+        if (! is_file($path)) {
+            $path = storage_path('app/'.ltrim($path, '/'));
+        }
+        $raw = @file_get_contents($path);
+        $data = $raw ? json_decode($raw, true) : null;
+        if (! is_array($data)) {
+            $this->warn('تعذّرت قراءة ملف الحمولات: '.$path.' — سيُستخدم المسار العادي.');
+
+            return null;
+        }
+        $map = [];
+        foreach ($data as $row) {
+            if (isset($row['tool_code'])) {
+                $map[(string) $row['tool_code']] = $row;
+            }
+        }
+        $this->line('حُمّلت '.count($map).' حمولة محسوبة مسبقاً من JSON.');
+
+        return $map;
     }
 
     private function resolveWorkspace(User $user): ?Workspace
