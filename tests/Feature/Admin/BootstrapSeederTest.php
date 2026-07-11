@@ -28,7 +28,7 @@ class BootstrapSeederTest extends TestCase
         ]);
         $this->assertSame(6, Plan::query()->count());
         $this->assertSame(4, FeatureFlag::query()->count());
-        $this->assertSame(26, Tool::query()->count());
+        $this->assertSame(27, Tool::query()->count());
         $this->assertSame(10, AITemplate::query()->count());
     }
 

@@ -9,6 +9,7 @@ use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Execution\Models\Recommendation;
 use App\Domain\Project\Models\Project;
+use App\Domain\Tool\Models\Tool;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Domain\Workspace\Models\WorkspaceMember;
@@ -180,7 +181,7 @@ class ApiV1BackboneTest extends TestCase
         $token = $owner->createToken('test')->plainTextToken;
         $base = '/api/v1/workspaces/'.$workspace->public_id;
 
-        \App\Domain\Tool\Models\Tool::query()
+        Tool::query()
             ->where('code', 'ideal-customer')
             ->update(['name' => 'Ideal Customer']);
 
@@ -195,7 +196,7 @@ class ApiV1BackboneTest extends TestCase
             ]);
 
         // مشروع لتحميل أداة عليه.
-        $project = \App\Domain\Project\Models\Project::query()->create([
+        $project = Project::query()->create([
             'workspace_id' => $workspace->id,
             'name' => 'مشروع الأداة',
             'stage' => 4,
@@ -277,7 +278,7 @@ class ApiV1BackboneTest extends TestCase
         $token = $owner->createToken('test')->plainTextToken;
         $base = '/api/v1/workspaces/'.$workspace->public_id;
 
-        $project = \App\Domain\Project\Models\Project::query()->create([
+        $project = Project::query()->create([
             'workspace_id' => $workspace->id,
             'name' => 'مشروع الدورة',
             'stage' => 2,
@@ -574,14 +575,17 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.note', 'ملاحظة مهمة قبل الاعتماد.')
             ->assertJsonPath('data.item.title', 'تقييم الوكالة يحتاج قياساً أوضح');
 
-        $auth()
+        $approvalIndex = $auth()
             ->getJson($base.'/approvals')
-            ->assertOk()
-            ->assertJsonPath('data.0.item.public_id', $run->public_id)
-            ->assertJsonPath('data.0.item.title', 'تقييم الوكالة يحتاج قياساً أوضح')
-            ->assertJsonPath('data.0.project.name', 'مشروع الاعتماد')
-            ->assertJsonPath('data.0.status_label', 'معتمد')
-            ->assertJsonPath('data.0.available_actions', []);
+            ->assertOk();
+        $reviewedRun = collect($approvalIndex->json('data'))
+            ->firstWhere('item.public_id', $run->public_id);
+
+        $this->assertIsArray($reviewedRun);
+        $this->assertSame('تقييم الوكالة يحتاج قياساً أوضح', data_get($reviewedRun, 'item.title'));
+        $this->assertSame('مشروع الاعتماد', data_get($reviewedRun, 'project.name'));
+        $this->assertSame('معتمد', $reviewedRun['status_label']);
+        $this->assertSame([], $reviewedRun['available_actions']);
 
         $this->assertDatabaseHas('approvals', [
             'id' => $approval->id,
