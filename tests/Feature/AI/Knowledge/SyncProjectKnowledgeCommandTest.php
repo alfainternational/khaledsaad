@@ -79,7 +79,8 @@ class SyncProjectKnowledgeCommandTest extends TestCase
         });
 
         $this->artisan('knowledge:sync-projects', ['--project' => $project->id])
-            ->expectsOutputToContain('Project knowledge synchronization failed.')
+            ->expectsOutputToContain('Project '.$project->id.' could not be synchronized.')
+            ->expectsOutputToContain('Synced: 0; unchanged: 0; failed: 1')
             ->assertFailed();
     }
 
@@ -104,8 +105,37 @@ class SyncProjectKnowledgeCommandTest extends TestCase
 
         $this->artisan('knowledge:sync-projects')
             ->expectsOutputToContain('Synced: 1; unchanged: 0; failed: 1')
-            ->assertSuccessful();
+            ->assertFailed();
         $this->assertDatabaseCount('knowledge_sources', 1);
+    }
+
+    #[Test]
+    public function unexpected_failure_in_one_project_is_reported_and_does_not_stop_later_projects(): void
+    {
+        $broken = $this->project('Broken', 'تقنية');
+        $valid = $this->project('Later', 'تجارة');
+        $this->app->instance(ProjectKnowledgeSnapshotBuilder::class, new class($broken->id) extends ProjectKnowledgeSnapshotBuilder
+        {
+            public function __construct(private readonly int $brokenId) {}
+
+            public function build(Project $project): array
+            {
+                if ($project->id === $this->brokenId) {
+                    throw new RuntimeException('sensitive failure detail');
+                }
+
+                return parent::build($project);
+            }
+        });
+
+        $this->artisan('knowledge:sync-projects')
+            ->expectsOutputToContain('Project '.$broken->id.' could not be synchronized.')
+            ->doesntExpectOutputToContain('sensitive failure detail')
+            ->expectsOutputToContain('Synced: 1; unchanged: 0; failed: 1')
+            ->assertFailed();
+
+        $this->assertDatabaseHas('knowledge_sources', ['project_id' => $valid->id]);
+        $this->assertDatabaseMissing('knowledge_sources', ['project_id' => $broken->id]);
     }
 
     private function project(string $suffix, ?string $sector): Project

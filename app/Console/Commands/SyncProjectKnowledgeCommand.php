@@ -7,6 +7,7 @@ use App\Domain\AI\Knowledge\ProjectKnowledgeSnapshotBuilder;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use App\Domain\Project\Models\Project;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 use UnexpectedValueException;
 
@@ -73,8 +74,12 @@ class SyncProjectKnowledgeCommand extends Command
                         } else {
                             $synced++;
                         }
-                    } catch (UnexpectedValueException $exception) {
-                        report($exception);
+                    } catch (Throwable $exception) {
+                        Log::error('Project knowledge synchronization failed.', [
+                            'project_id' => $project->id,
+                            'exception_type' => $exception::class,
+                        ]);
+                        $this->warn('Project '.$project->id.' could not be synchronized.');
                         $failed++;
                     }
                 }
@@ -82,6 +87,6 @@ class SyncProjectKnowledgeCommand extends Command
 
         $this->line("Synced: {$synced}; unchanged: {$unchanged}; failed: {$failed}");
 
-        return self::SUCCESS;
+        return $failed === 0 ? self::SUCCESS : self::FAILURE;
     }
 }

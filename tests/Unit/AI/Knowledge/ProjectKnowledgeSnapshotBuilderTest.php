@@ -69,6 +69,11 @@ class ProjectKnowledgeSnapshotBuilderTest extends TestCase
         $this->assertSame(['Project', 'Market', 'Channels', 'Competitors', 'Goals'], array_column($snapshot['chunks'], 'heading'));
         $this->assertSame(['project', 'market', 'channels', 'competitors', 'goals'], array_column(array_column($snapshot['chunks'], 'locator'), 'field'));
         $this->assertStringContainsString('التقنية', $snapshot['content']);
+        $this->assertStringContainsString('السعودية', $snapshot['content']);
+        $this->assertStringContainsString('example.sa', $snapshot['content']);
+        $this->assertStringContainsString('@example', $snapshot['content']);
+        $this->assertStringContainsString('منافس أ', $snapshot['content']);
+        $this->assertStringContainsString('زيادة المبيعات', $snapshot['content']);
         $this->assertStringContainsString('حل آمن', $snapshot['content']);
         $this->assertStringContainsString('فرصة نمو واضحة', $snapshot['content']);
         $this->assertStringNotContainsString('SECRET-123', $snapshot['content']);
