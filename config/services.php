@@ -143,6 +143,14 @@ return [
         'test_mirror_read_signal_path' => null,
     ],
 
+    'private_worker' => [
+        'enabled' => env('AI_PRIVATE_WORKER_ENABLED', false),
+        'clock_drift_seconds' => (int) env('AI_PRIVATE_WORKER_CLOCK_DRIFT_SECONDS', 300),
+        'nonce_ttl_seconds' => (int) env('AI_PRIVATE_WORKER_NONCE_TTL_SECONDS', 600),
+        'lease_seconds' => (int) env('AI_PRIVATE_WORKER_LEASE_SECONDS', 120),
+        'max_result_bytes' => (int) env('AI_PRIVATE_WORKER_MAX_RESULT_BYTES', 1048576),
+    ],
+
     /*
     | تقييم مدخلات الأدوات: طبقة اختيارية لصقل الحكم والملاحظة الاستراتيجية عبر LLM (الأرقام تبقى من المحرك المنظم).
     */

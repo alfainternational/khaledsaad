@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\PasswordController;
 use App\Http\Controllers\Api\V1\PingController;
+use App\Http\Controllers\Api\V1\PrivateWorkerController;
 use App\Http\Controllers\Api\V1\ProjectAuditController;
 use App\Http\Controllers\Api\V1\ProjectBriefController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -43,6 +44,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->group(function (): void {
+    Route::middleware(['private.worker', 'throttle:120,1'])
+        ->prefix('private-worker')
+        ->group(function (): void {
+            Route::post('/lease', [PrivateWorkerController::class, 'lease']);
+        });
+
     Route::get('/ping', PingController::class)->middleware('throttle:60,1');
 
     Route::post('/tokens', [TokenController::class, 'store'])
