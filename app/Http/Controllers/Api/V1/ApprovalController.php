@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Approval\Models\Approval;
+use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Tool\Models\ToolRun;
 use App\Http\Api\ApiException;
 use App\Http\Controllers\Api\V1\Concerns\ResolvesCurrentProject;
@@ -35,7 +36,7 @@ class ApprovalController extends Controller
 
         $approvals = Approval::query()
             ->where('workspace_id', $workspace->id)
-            ->with(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template'])
+            ->with(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template', 'executionPackage'])
             ->when(
                 $request->string('status')->isNotEmpty(),
                 fn ($query) => $query->where('status', $request->string('status')->value())
@@ -86,7 +87,7 @@ class ApprovalController extends Controller
             'note' => $data['note'] ?? null,
         ]);
 
-        return (new ApprovalResource($approval->load(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template'])))
+        return (new ApprovalResource($approval->load(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template', 'executionPackage'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -110,7 +111,7 @@ class ApprovalController extends Controller
             'reviewer_id' => $request->user()->id,
         ]);
 
-        return new ApprovalResource($approval->load(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template']));
+        return new ApprovalResource($approval->load(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template', 'executionPackage']));
     }
 
     private function itemBelongsToProject(int $workspaceId, int $projectId, string $itemType, int $itemId): bool
@@ -122,6 +123,11 @@ class ApprovalController extends Controller
                 ->whereKey($itemId)
                 ->exists(),
             'ai_generation' => AIGeneration::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('project_id', $projectId)
+                ->whereKey($itemId)
+                ->exists(),
+            'execution_package' => ExecutionPackage::query()
                 ->where('workspace_id', $workspaceId)
                 ->where('project_id', $projectId)
                 ->whereKey($itemId)

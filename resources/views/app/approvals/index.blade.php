@@ -44,19 +44,24 @@
             @php
                 $toolRun = $approval->item_type === 'tool_run' ? $approval->toolRun : null;
                 $generation = $approval->item_type === 'ai_generation' ? $approval->aiGeneration : null;
+                $executionPackage = $approval->item_type === 'execution_package' ? $approval->executionPackage : null;
                 $itemTitle = $toolRun?->summary_json['headline']
                     ?? $toolRun?->tool?->name
                     ?? $generation?->headline
                     ?? $generation?->template?->name
+                    ?? $executionPackage?->title
                     ?? 'عنصر يحتاج مراجعة';
                 $itemKind = match ($approval->item_type) {
                     'tool_run' => 'تشغيل أداة',
                     'ai_generation' => 'مخرج استوديو',
+                    'execution_package' => 'حزمة تنفيذ',
                     default => $approval->item_type,
                 };
                 $sourceUrl = $toolRun?->tool
                     ? route('tools.show', $toolRun->tool)
-                    : ($generation ? route('studio.generations.show', $generation) : null);
+                    : ($generation
+                        ? route('studio.generations.show', $generation)
+                        : ($executionPackage ? route('execution-packages.show', $executionPackage) : null));
             @endphp
             <div class="app-list-item app-approval-item">
                 <div>

@@ -444,6 +444,21 @@ class ApiV1BackboneTest extends TestCase
             'output_json' => ['meeting_brief' => 'ناقشوا قياس تكلفة العميل.'],
             'created_by' => $owner->id,
         ]);
+        $recommendation = Recommendation::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'area' => 'conversion',
+            'title' => 'أضف إثبات ثقة قبل نموذج التواصل',
+            'priority' => 10,
+            'severity' => 'high',
+            'evidence' => 'الدليل ناقص.',
+            'rationale' => 'أضف شهادة عميل واضحة.',
+            'estimated_impact' => 'high',
+            'confidence' => 0.9,
+            'status' => 'proposed',
+            'created_by' => $owner->id,
+        ]);
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
 
         $payload = [
             'item_type' => 'tool_run',
@@ -463,6 +478,19 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.item.public_id', $run->public_id)
             ->assertJsonPath('data.item.title', 'تقييم الوكالة يحتاج قياساً أوضح')
             ->assertJsonPath('data.item.tool_code', 'agency-audit');
+
+        $auth()
+            ->postJson($base.'/projects/'.$project->public_id.'/approvals', [
+                'item_type' => 'execution_package',
+                'item_public_id' => $package->public_id,
+                'note' => 'اعتماد حزمة التنفيذ قبل التسليم.',
+            ])
+            ->assertStatus(201)
+            ->assertJsonPath('data.item.kind', 'execution_package')
+            ->assertJsonPath('data.item.kind_label', 'حزمة تنفيذ')
+            ->assertJsonPath('data.item.public_id', $package->public_id)
+            ->assertJsonPath('data.item.title', $package->title)
+            ->assertJsonPath('data.item.status', 'proposed');
 
         $auth()
             ->postJson($base.'/projects/'.$project->public_id.'/approvals', $payload)

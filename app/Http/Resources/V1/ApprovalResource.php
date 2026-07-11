@@ -92,6 +92,18 @@ class ApprovalResource extends JsonResource
             ];
         }
 
+        if ($this->item_type === 'execution_package') {
+            $package = $this->relationLoaded('executionPackage') ? $this->executionPackage : null;
+
+            return [
+                'kind' => 'execution_package',
+                'kind_label' => 'حزمة تنفيذ',
+                'public_id' => $package?->public_id,
+                'title' => $package?->title ?? 'حزمة تنفيذ تحتاج مراجعة',
+                'status' => $package?->status,
+            ];
+        }
+
         return [
             'kind' => $this->item_type,
             'kind_label' => $this->item_type,

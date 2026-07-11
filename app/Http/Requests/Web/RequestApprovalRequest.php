@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Web;
 
 use App\Domain\AI\Models\AIGeneration;
+use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use Illuminate\Foundation\Http\FormRequest;
@@ -41,6 +42,10 @@ class RequestApprovalRequest extends FormRequest
                 ->where('workspace_id', $workspace->id)
                 ->where('public_id', $publicId)
                 ->value('id'),
+            'execution_package' => ExecutionPackage::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('public_id', $publicId)
+                ->value('id'),
             default => null,
         };
 
@@ -55,7 +60,7 @@ class RequestApprovalRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'item_type' => ['required', 'string', Rule::in(['tool_run', 'ai_generation', 'workspace_data'])],
+            'item_type' => ['required', 'string', Rule::in(['tool_run', 'ai_generation', 'workspace_data', 'execution_package'])],
             'item_id' => ['required', 'integer'],
             'note' => ['nullable', 'string', 'max:1000'],
         ];

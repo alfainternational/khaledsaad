@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Approval\Models\Approval;
+use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\ToolRun;
 use App\Http\Controllers\Controller;
@@ -31,7 +32,7 @@ class ApprovalController extends Controller
 
         $approvals = Approval::query()
             ->where('workspace_id', $workspace->id)
-            ->with(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template'])
+            ->with(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template', 'executionPackage'])
             ->when(
                 $request->string('status')->isNotEmpty(),
                 fn ($query) => $query->where('status', $request->string('status')->value())
@@ -102,6 +103,11 @@ class ApprovalController extends Controller
                 ->whereKey($itemId)
                 ->exists(),
             'ai_generation' => AIGeneration::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('project_id', $projectId)
+                ->whereKey($itemId)
+                ->exists(),
+            'execution_package' => ExecutionPackage::query()
                 ->where('workspace_id', $workspaceId)
                 ->where('project_id', $projectId)
                 ->whereKey($itemId)

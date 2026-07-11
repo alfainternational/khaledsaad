@@ -193,5 +193,12 @@
             <button type="submit" class="btn {{ $nextPackageAction['style'] }}">{{ $nextPackageAction['label'] }}</button>
         </form>
     @endif
+    <form method="POST" action="{{ route('projects.approvals.store', $package->project) }}">
+        @csrf
+        <input type="hidden" name="item_type" value="execution_package">
+        <input type="hidden" name="item_id" value="{{ $package->id }}">
+        <input type="hidden" name="note" value="مراجعة واعتماد حزمة التنفيذ: {{ $package->title }}">
+        <button type="submit" class="btn btn-secondary">طلب اعتماد الحزمة</button>
+    </form>
 </section>
 @endsection

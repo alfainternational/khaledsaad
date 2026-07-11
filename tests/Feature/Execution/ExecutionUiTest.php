@@ -201,7 +201,32 @@ class ExecutionUiTest extends TestCase
             ->withSession(['current_workspace_id' => $workspace->id])
             ->get(route('execution-packages.show', $package))
             ->assertOk()
-            ->assertSee('اعتماد الحزمة', false);
+            ->assertSee('اعتماد الحزمة', false)
+            ->assertSee('طلب اعتماد الحزمة', false);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->post(route('projects.approvals.store', $project), [
+                'item_type' => 'execution_package',
+                'item_id' => $package->id,
+                'note' => 'مراجعة واعتماد حزمة التنفيذ: '.$package->title,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('approvals', [
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'item_type' => 'execution_package',
+            'item_id' => $package->id,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('approvals.index'))
+            ->assertOk()
+            ->assertSee('حزمة تنفيذ', false)
+            ->assertSee($package->title, false);
 
         foreach ([
             'approved' => 'بدء التنفيذ',
@@ -226,8 +251,7 @@ class ExecutionUiTest extends TestCase
             if ($nextButton) {
                 $response->assertSee($nextButton, false);
             } else {
-                $response->assertDontSee('اعتماد الحزمة', false)
-                    ->assertDontSee('بدء التنفيذ', false)
+                $response->assertDontSee('بدء التنفيذ', false)
                     ->assertDontSee('تأكيد التنفيذ', false)
                     ->assertDontSee('بدء القياس', false);
             }
