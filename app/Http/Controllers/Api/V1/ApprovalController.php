@@ -35,7 +35,7 @@ class ApprovalController extends Controller
 
         $approvals = Approval::query()
             ->where('workspace_id', $workspace->id)
-            ->with(['project.client', 'reviewer'])
+            ->with(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template'])
             ->when(
                 $request->string('status')->isNotEmpty(),
                 fn ($query) => $query->where('status', $request->string('status')->value())
@@ -86,7 +86,7 @@ class ApprovalController extends Controller
             'note' => $data['note'] ?? null,
         ]);
 
-        return (new ApprovalResource($approval->load(['project', 'reviewer'])))
+        return (new ApprovalResource($approval->load(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -110,7 +110,7 @@ class ApprovalController extends Controller
             'reviewer_id' => $request->user()->id,
         ]);
 
-        return new ApprovalResource($approval->load(['project', 'reviewer']));
+        return new ApprovalResource($approval->load(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template']));
     }
 
     private function itemBelongsToProject(int $workspaceId, int $projectId, string $itemType, int $itemId): bool
