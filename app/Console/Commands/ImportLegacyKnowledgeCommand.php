@@ -23,7 +23,8 @@ class ImportLegacyKnowledgeCommand extends Command
         try {
             return $this->importFiles($repository);
         } catch (Throwable $exception) {
-            $this->error('Legacy knowledge import failed: '.$exception::class);
+            report($exception);
+            $this->error('Legacy knowledge import failed.');
 
             return self::FAILURE;
         }
@@ -154,14 +155,9 @@ class ImportLegacyKnowledgeCommand extends Command
 
     private function serializeScalar(mixed $value): string
     {
-        if ($value === null) {
-            return 'null';
-        }
-
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        return (string) $value;
+        return json_encode(
+            $value,
+            JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR,
+        );
     }
 }

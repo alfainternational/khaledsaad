@@ -5,10 +5,12 @@ namespace Tests\Feature\AI\Knowledge;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\Models\KnowledgeDocument;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Tests\TestCase;
@@ -60,9 +62,9 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
         $expected = implode("\n", [
             'enabled: true',
             'optional: null',
-            'principles.0: اربط الوعد بدليل',
-            'principles.1: اجعل النتيجة قابلة للقياس',
-            'quick_win: أضف الدليل بجانب الدعوة للإجراء',
+            'principles.0: "اربط الوعد بدليل"',
+            'principles.1: "اجعل النتيجة قابلة للقياس"',
+            'quick_win: "أضف الدليل بجانب الدعوة للإجراء"',
         ]);
 
         $this->assertSame($expected, $document->content);
@@ -153,8 +155,8 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
 
         $lines = explode("\n", KnowledgeDocument::query()->sole()->content);
         $this->assertSame([
-            'a~1b: dotted',
-            'empty_value: ',
+            'a~1b: "dotted"',
+            'empty_value: ""',
             'false_value: false',
             'items.0: 0',
             'items.1: 1',
@@ -169,8 +171,8 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
             'items.10: 10',
             'items.11: 11',
             'items.12: 12',
-            'line~u000Akey: controlled',
-            '~0u000A: literal escape marker',
+            'line~u000Akey: "controlled"',
+            '~0u000A: "literal escape marker"',
         ], $lines);
     }
 
@@ -230,15 +232,55 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
             'learned_at' => '2026-07-01T03:00:00+03:00',
         ]));
 
-        $this->app->instance(StructuredKnowledgeRepository::class, new class extends StructuredKnowledgeRepository
+        $failure = new RuntimeException('Database password: super-secret-value');
+        $handler = Mockery::mock(ExceptionHandler::class);
+        $handler->shouldReceive('report')->once()->with($failure);
+        $this->app->instance(ExceptionHandler::class, $handler);
+        $this->app->instance(StructuredKnowledgeRepository::class, new class($failure) extends StructuredKnowledgeRepository
         {
+            public function __construct(private readonly RuntimeException $failure) {}
+
             public function latestDocument(KnowledgeScope $scope, string $kind, string $canonicalUri): ?KnowledgeDocument
             {
-                throw new RuntimeException('Persistence unavailable.');
+                throw $this->failure;
             }
         });
 
-        $this->artisan('knowledge:import-legacy')->assertFailed();
+        $this->artisan('knowledge:import-legacy')
+            ->expectsOutput('Legacy knowledge import failed.')
+            ->doesntExpectOutputToContain('super-secret-value')
+            ->doesntExpectOutputToContain(RuntimeException::class)
+            ->assertFailed();
         $this->assertDatabaseCount('knowledge_documents', 0);
+    }
+
+    #[Test]
+    public function canonical_scalar_json_prevents_structural_and_type_collisions(): void
+    {
+        Storage::fake('local');
+        $disk = Storage::disk('local');
+        $learnedAt = '2026-07-01T03:00:00+03:00';
+        $cases = [
+            'multiline' => [['a' => "x\nb: y"], ['a' => 'x', 'b' => 'y']],
+            'null-type' => [['value' => 'null'], ['value' => null]],
+            'number-type' => [['value' => '1'], ['value' => 1]],
+        ];
+
+        foreach ($cases as $key => [$first, $second]) {
+            $path = 'ai-knowledge/'.$key.'.json';
+            $disk->put($path, json_encode(['key' => $key, 'data' => $first, 'learned_at' => $learnedAt]));
+            $this->artisan('knowledge:import-legacy')->assertSuccessful();
+            $disk->put($path, json_encode(['key' => $key, 'data' => $second, 'learned_at' => $learnedAt]));
+            $this->artisan('knowledge:import-legacy')->assertSuccessful();
+        }
+
+        $this->assertDatabaseCount('knowledge_sources', 3);
+        $this->assertDatabaseCount('knowledge_documents', 6);
+        $contents = KnowledgeDocument::query()->pluck('content')->all();
+        $this->assertContains('a: "x\\nb: y"', $contents);
+        $this->assertContains('value: "null"', $contents);
+        $this->assertContains('value: null', $contents);
+        $this->assertContains('value: "1"', $contents);
+        $this->assertContains('value: 1', $contents);
     }
 }
