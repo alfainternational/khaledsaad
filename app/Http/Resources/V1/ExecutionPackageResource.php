@@ -29,9 +29,13 @@ class ExecutionPackageResource extends JsonResource
             'available_actions' => $this->availableActions(),
             'deadline' => optional($this->deadline)->toDateString(),
             'tasks' => $this->whenLoaded('tasks', fn () => $this->tasks->map(fn ($task) => [
+                'public_id' => $task->public_id,
                 'title' => $task->title,
                 'description' => $task->description,
                 'status' => $task->status,
+                'status_label' => $this->taskStatusLabel((string) $task->status),
+                'assigned_to' => $task->assigned_to,
+                'due_date' => optional($task->due_date)->toDateString(),
                 'order_index' => $task->order_index,
             ])->values()),
             'assets' => $this->whenLoaded('assets', fn () => $this->assets->map(fn ($asset) => [
@@ -86,6 +90,16 @@ class ExecutionPackageResource extends JsonResource
             'in_progress' => ['mark_executed'],
             'executed' => ['start_measuring'],
             default => [],
+        };
+    }
+
+    private function taskStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'pending' => 'لم تبدأ',
+            'in_progress' => 'قيد التنفيذ',
+            'done' => 'منجزة',
+            default => $status,
         };
     }
 }

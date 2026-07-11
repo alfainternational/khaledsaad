@@ -448,6 +448,12 @@ class ApiV1BackboneTest extends TestCase
 
         $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
         $package->tasks()->take(2)->get()->each->update(['status' => 'done']);
+        $firstTask = $package->tasks()->orderBy('order_index')->firstOrFail();
+        $dueDate = now()->addDays(7)->toDateString();
+        $firstTask->update([
+            'assigned_to' => $owner->id,
+            'due_date' => $dueDate,
+        ]);
 
         $auth()
             ->getJson($base.'/execution-packages/'.$package->public_id)
@@ -457,7 +463,12 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.available_actions.0', 'approve')
             ->assertJsonPath('data.progress.total_tasks', 4)
             ->assertJsonPath('data.progress.done_tasks', 2)
-            ->assertJsonPath('data.progress.percent', 50);
+            ->assertJsonPath('data.progress.percent', 50)
+            ->assertJsonPath('data.tasks.0.public_id', $firstTask->public_id)
+            ->assertJsonPath('data.tasks.0.status', 'done')
+            ->assertJsonPath('data.tasks.0.status_label', 'منجزة')
+            ->assertJsonPath('data.tasks.0.assigned_to', $owner->id)
+            ->assertJsonPath('data.tasks.0.due_date', $dueDate);
 
         $auth()
             ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [
