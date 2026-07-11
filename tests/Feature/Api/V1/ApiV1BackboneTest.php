@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Api\V1;
 
+use App\Application\Execution\BuildExecutionPackageAction;
 use App\Domain\Account\Models\Account;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
+use App\Domain\Execution\Models\Recommendation;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
@@ -411,6 +413,61 @@ class ApiV1BackboneTest extends TestCase
             'status' => 'approved',
             'note' => 'ملاحظة مهمة قبل الاعتماد.',
         ]);
+    }
+
+    #[Test]
+    public function api_execution_package_exposes_progress_labels_and_next_actions(): void
+    {
+        [$owner, $workspace] = $this->makeWorkspace();
+        $token = $owner->createToken('test')->plainTextToken;
+        $base = '/api/v1/workspaces/'.$workspace->public_id;
+        $auth = fn () => $this->withHeader('Authorization', 'Bearer '.$token);
+
+        $project = Project::query()->create([
+            'workspace_id' => $workspace->id,
+            'name' => 'مشروع التنفيذ',
+            'stage' => 5,
+            'status' => 'active',
+            'sector' => 'services',
+        ]);
+
+        $recommendation = Recommendation::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'area' => 'conversion',
+            'title' => 'أضف إثبات ثقة قبل نموذج التواصل',
+            'priority' => 10,
+            'severity' => 'high',
+            'evidence' => 'الصفحة تطلب التواصل قبل عرض أي دليل ثقة.',
+            'rationale' => 'ضع شهادة عميل مختصرة وضماناً واضحاً بجانب نموذج التواصل.',
+            'estimated_impact' => 'high',
+            'confidence' => 0.9,
+            'status' => 'proposed',
+            'created_by' => $owner->id,
+        ]);
+
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $package->tasks()->take(2)->get()->each->update(['status' => 'done']);
+
+        $auth()
+            ->getJson($base.'/execution-packages/'.$package->public_id)
+            ->assertOk()
+            ->assertJsonPath('data.status', 'proposed')
+            ->assertJsonPath('data.status_label', 'مقترحة')
+            ->assertJsonPath('data.available_actions.0', 'approve')
+            ->assertJsonPath('data.progress.total_tasks', 4)
+            ->assertJsonPath('data.progress.done_tasks', 2)
+            ->assertJsonPath('data.progress.percent', 50);
+
+        $auth()
+            ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [
+                'status' => 'approved',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved')
+            ->assertJsonPath('data.status_label', 'معتمدة')
+            ->assertJsonPath('data.available_actions.0', 'start_execution')
+            ->assertJsonPath('data.progress.percent', 50);
     }
 
     #[Test]

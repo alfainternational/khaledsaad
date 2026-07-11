@@ -24,6 +24,9 @@ class ExecutionPackageResource extends JsonResource
             'decision' => $this->decision,
             'measurement_plan' => $this->measurement_plan,
             'status' => $this->status,
+            'status_label' => $this->statusLabel(),
+            'progress' => $this->progress(),
+            'available_actions' => $this->availableActions(),
             'deadline' => optional($this->deadline)->toDateString(),
             'tasks' => $this->whenLoaded('tasks', fn () => $this->tasks->map(fn ($task) => [
                 'title' => $task->title,
@@ -38,5 +41,51 @@ class ExecutionPackageResource extends JsonResource
             ])->values()),
             'created_at' => optional($this->created_at)->toIso8601String(),
         ];
+    }
+
+    private function statusLabel(): string
+    {
+        return match ($this->status) {
+            'proposed' => 'مقترحة',
+            'in_review' => 'قيد المراجعة',
+            'approved' => 'معتمدة',
+            'in_progress' => 'قيد التنفيذ',
+            'executed' => 'منفّذة',
+            'measuring' => 'تحت القياس',
+            default => (string) $this->status,
+        };
+    }
+
+    /**
+     * @return array{total_tasks: int, done_tasks: int, percent: int}
+     */
+    private function progress(): array
+    {
+        if (! $this->relationLoaded('tasks')) {
+            return ['total_tasks' => 0, 'done_tasks' => 0, 'percent' => 0];
+        }
+
+        $total = $this->tasks->count();
+        $done = $this->tasks->where('status', 'done')->count();
+
+        return [
+            'total_tasks' => $total,
+            'done_tasks' => $done,
+            'percent' => $total > 0 ? (int) round(($done / $total) * 100) : 0,
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function availableActions(): array
+    {
+        return match ($this->status) {
+            'proposed' => ['approve'],
+            'approved' => ['start_execution'],
+            'in_progress' => ['mark_executed'],
+            'executed' => ['start_measuring'],
+            default => [],
+        };
     }
 }
