@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Application\Execution\AdvanceExecutionPackageStatusAction;
 use App\Application\Execution\CreateExecutionReportAction;
+use App\Application\Execution\UpdateExecutionTaskDetailsAction;
 use App\Application\Execution\UpdateExecutionTaskStatusAction;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionReport;
@@ -14,6 +15,7 @@ use App\Support\Agency\WhiteLabelResolver;
 use App\Support\Ui\FlashMessageCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ExecutionPackageController extends Controller
@@ -31,6 +33,11 @@ class ExecutionPackageController extends Controller
         return view('app.execution-packages.show', [
             'package' => $executionPackage,
             'brand' => $whiteLabel->for($workspace),
+            'activeMembers' => $workspace->members()
+                ->with('user')
+                ->where('status', 'active')
+                ->get()
+                ->sortBy(fn ($member) => $member->user?->name ?? ''),
         ]);
     }
 
@@ -76,6 +83,43 @@ class ExecutionPackageController extends Controller
         return redirect()
             ->route('execution-packages.show', $executionPackage)
             ->with('status', $flash->statusUpdated('مهمة التنفيذ'));
+    }
+
+    public function updateTaskDetails(
+        Request $request,
+        ExecutionPackage $executionPackage,
+        ExecutionTask $executionTask,
+        FlashMessageCatalog $flash,
+        UpdateExecutionTaskDetailsAction $updateExecutionTaskDetails,
+    ): RedirectResponse {
+        $workspace = $this->currentWorkspace($request);
+        abort_unless($executionPackage->workspace_id === $workspace->id, 404);
+        abort_unless($executionTask->execution_package_id === $executionPackage->id, 404);
+        $this->authorize('update', $executionPackage->project);
+
+        $validated = $request->validate([
+            'assigned_to' => ['nullable', 'integer'],
+            'due_date' => ['nullable', 'date'],
+        ]);
+
+        if (($validated['assigned_to'] ?? null) !== null) {
+            $isMember = $workspace->members()
+                ->where('user_id', (int) $validated['assigned_to'])
+                ->where('status', 'active')
+                ->exists();
+
+            if (! $isMember) {
+                throw ValidationException::withMessages([
+                    'assigned_to' => ['المستخدم المحدد ليس عضواً نشطاً في مساحة العمل.'],
+                ]);
+            }
+        }
+
+        $updateExecutionTaskDetails->handle($executionTask, $validated);
+
+        return redirect()
+            ->route('execution-packages.show', $executionPackage)
+            ->with('status', $flash->updated('تفاصيل مهمة التنفيذ'));
     }
 
     public function storeReport(

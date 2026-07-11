@@ -126,6 +126,27 @@
                         </form>
                     @endif
                 </span>
+                @if ($canUpdateTasks)
+                    <form method="POST" action="{{ route('execution-packages.tasks.details', [$package, $task]) }}" class="exec-report-form">
+                        @csrf @method('PATCH')
+                        <label>
+                            <span>المسؤول</span>
+                            <select name="assigned_to">
+                                <option value="">بدون مسؤول</option>
+                                @foreach ($activeMembers as $member)
+                                    @if ($member->user)
+                                        <option value="{{ $member->user_id }}" @selected((int) old('assigned_to', $task->assigned_to) === $member->user_id)>{{ $member->user->name }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>
+                            <span>تاريخ الاستحقاق</span>
+                            <input type="date" name="due_date" value="{{ old('due_date', $task->due_date?->format('Y-m-d')) }}">
+                        </label>
+                        <button type="submit" class="btn btn-secondary btn-sm">تحديث تفاصيل المهمة</button>
+                    </form>
+                @endif
             </li>
         @endforeach
     </ul>

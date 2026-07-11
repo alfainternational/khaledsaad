@@ -230,6 +230,62 @@ class ExecutionUiTest extends TestCase
     }
 
     #[Test]
+    public function owner_can_update_execution_task_assignee_and_due_date_from_package_page(): void
+    {
+        [$owner, $workspace, , $recommendation] = $this->scenario();
+        $member = User::factory()->create();
+        WorkspaceMember::query()->create([
+            'workspace_id' => $workspace->id,
+            'user_id' => $member->id,
+            'role' => 'member',
+            'status' => 'active',
+            'invited_at' => now(),
+        ]);
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $package->update(['status' => 'in_progress']);
+        $task = $package->tasks()->orderBy('order_index')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('تحديث تفاصيل المهمة', false)
+            ->assertSee($member->name, false);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.tasks.details', [$package, $task]), [
+                'assigned_to' => $member->id,
+                'due_date' => now()->addDays(7)->toDateString(),
+            ])
+            ->assertRedirectToRoute('execution-packages.show', $package);
+
+        $task->refresh();
+        $this->assertSame($member->id, $task->assigned_to);
+        $this->assertSame(now()->addDays(7)->toDateString(), $task->due_date->format('Y-m-d'));
+    }
+
+    #[Test]
+    public function owner_cannot_update_execution_task_details_after_package_is_executed(): void
+    {
+        [$owner, $workspace, , $recommendation] = $this->scenario();
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $package->update(['status' => 'executed']);
+        $task = $package->tasks()->orderBy('order_index')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.tasks.details', [$package, $task]), [
+                'assigned_to' => $owner->id,
+                'due_date' => now()->addDays(7)->toDateString(),
+            ])
+            ->assertSessionHasErrors('task');
+
+        $this->assertNull($task->fresh()->assigned_to);
+        $this->assertNull($task->fresh()->due_date);
+    }
+
+    #[Test]
     public function owner_can_advance_execution_package_status_from_package_page(): void
     {
         [$owner, $workspace, $project, $recommendation] = $this->scenario();
