@@ -59,8 +59,7 @@ class WorkspaceGenerationContextBuilderTest extends TestCase
     {
         config()->set('services.knowledge.retrieval', true);
         ['workspace' => $workspace, 'project' => $project] = $this->makeWorkspaceScenario();
-        $project->update(['name' => 'مشروع الفيروز']);
-        $content = $project->name.' يعتمد مؤشر الفيروز وقيمته 91 وفق الملف المرفق.';
+        $content = 'الدليل يعتمد مؤشر الفيروز وقيمته 91 وفق الملف المرفق.';
         app(StructuredKnowledgeRepository::class)->storeDocument(
             KnowledgeScope::forProject((int) $workspace->account_id, $workspace->id, $project->id),
             'uploaded_file',
@@ -72,10 +71,10 @@ class WorkspaceGenerationContextBuilderTest extends TestCase
         );
         $this->assertCount(1, app(KnowledgeRetriever::class)->retrieve(
             KnowledgeScope::forProject((int) $workspace->account_id, $workspace->id, $project->id),
-            $project->name,
+            'مؤشر الفيروز',
         ));
 
-        $context = $this->makeContextBuilder()->build($workspace, $project);
+        $context = $this->makeContextBuilder()->build($workspace, $project, 'ما قيمة مؤشر الفيروز؟');
 
         $this->assertCount(1, $context['knowledge_evidence']);
         $this->assertStringContainsString('ملف دليل الفيروز', $context['prompt_block']);

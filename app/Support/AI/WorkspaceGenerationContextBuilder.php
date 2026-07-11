@@ -144,10 +144,9 @@ class WorkspaceGenerationContextBuilder
         if ($project && (bool) config('services.knowledge.retrieval', false)) {
             $knowledge = $this->knowledgePromptContext->forProject(
                 $project,
-                trim(implode(' ', array_filter([
-                    $knowledgeQuery,
-                    $this->knowledgeQuery($project, $projectBrief),
-                ]))),
+                is_string($knowledgeQuery) && trim($knowledgeQuery) !== ''
+                    ? trim($knowledgeQuery)
+                    : $this->knowledgeQuery($project, $projectBrief),
             );
             $context['knowledge_evidence'] = $knowledge['evidence'];
             $context['knowledge_evidence_prompt'] = $knowledge['prompt_block'];
