@@ -23,8 +23,41 @@ class ExecutionPackageController extends Controller
         $this->authorize('view', $package->project);
 
         return new ExecutionPackageResource(
-            $package->load(['tasks.assignee', 'assets', 'reports', 'recommendation'])
+            $package->load(['owner', 'tasks.assignee', 'assets', 'reports', 'recommendation'])
         );
+    }
+
+    public function update(Request $request): ExecutionPackageResource
+    {
+        $package = $this->resolve((string) $request->route('packagePublicId'));
+        $this->authorize('update', $package->project);
+
+        if (in_array($package->status, ['executed', 'measuring'], true)) {
+            throw ValidationException::withMessages([
+                'package' => ['لا يمكن تعديل تفاصيل الحزمة بعد تأكيد التنفيذ.'],
+            ]);
+        }
+
+        $validated = $request->validate([
+            'owner_user_id' => ['sometimes', 'nullable', 'integer'],
+            'owner_public_id' => ['sometimes', 'nullable', 'string'],
+            'deadline' => ['sometimes', 'nullable', 'date'],
+        ]);
+
+        if (array_key_exists('owner_public_id', $validated)) {
+            $validated['owner_user_id'] = $validated['owner_public_id'] === null
+                ? null
+                : $this->resolveWorkspaceOwnerId((string) $validated['owner_public_id']);
+            unset($validated['owner_public_id']);
+        }
+
+        if (array_key_exists('owner_user_id', $validated) && $validated['owner_user_id'] !== null) {
+            $this->ensureUserBelongsToWorkspace((int) $validated['owner_user_id'], 'owner_user_id');
+        }
+
+        $package->update($validated);
+
+        return new ExecutionPackageResource($package->fresh()->load(['owner', 'tasks.assignee', 'assets', 'reports']));
     }
 
     public function updateStatus(
@@ -41,7 +74,7 @@ class ExecutionPackageController extends Controller
 
         $package = $advanceExecutionPackageStatus->handle($package, $validated['status']);
 
-        return new ExecutionPackageResource($package->load(['tasks.assignee', 'assets', 'reports']));
+        return new ExecutionPackageResource($package->load(['owner', 'tasks.assignee', 'assets', 'reports']));
     }
 
     public function storeReport(
@@ -82,7 +115,7 @@ class ExecutionPackageController extends Controller
             'metrics_json' => $metrics,
         ]);
 
-        return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
+        return new ExecutionPackageResource($package->fresh()->load(['owner', 'tasks.assignee', 'assets', 'reports']));
     }
 
     public function updateTaskStatus(
@@ -100,7 +133,7 @@ class ExecutionPackageController extends Controller
 
         $updateExecutionTaskStatus->handle($task, $validated['status']);
 
-        return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
+        return new ExecutionPackageResource($package->fresh()->load(['owner', 'tasks.assignee', 'assets', 'reports']));
     }
 
     public function updateTask(
@@ -128,7 +161,7 @@ class ExecutionPackageController extends Controller
         }
 
         if (array_key_exists('assigned_to', $validated) && $validated['assigned_to'] !== null) {
-            $this->ensureAssigneeBelongsToWorkspace((int) $validated['assigned_to']);
+            $this->ensureUserBelongsToWorkspace((int) $validated['assigned_to'], 'assigned_to');
         }
 
         if (array_key_exists('status', $validated)) {
@@ -138,7 +171,7 @@ class ExecutionPackageController extends Controller
 
         $updateExecutionTaskDetails->handle($task, $validated);
 
-        return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
+        return new ExecutionPackageResource($package->fresh()->load(['owner', 'tasks.assignee', 'assets', 'reports']));
     }
 
     /**
@@ -167,7 +200,7 @@ class ExecutionPackageController extends Controller
             ->firstOrFail();
     }
 
-    private function ensureAssigneeBelongsToWorkspace(int $userId): void
+    private function ensureUserBelongsToWorkspace(int $userId, string $field): void
     {
         /** @var \App\Domain\Workspace\Models\Workspace $workspace */
         $workspace = app('currentWorkspace');
@@ -179,9 +212,30 @@ class ExecutionPackageController extends Controller
 
         if (! $isMember) {
             throw ValidationException::withMessages([
-                'assigned_to' => ['المستخدم المحدد ليس عضواً نشطاً في مساحة العمل.'],
+                $field => ['المستخدم المحدد ليس عضواً نشطاً في مساحة العمل.'],
             ]);
         }
+    }
+
+    private function resolveWorkspaceOwnerId(string $publicId): int
+    {
+        /** @var \App\Domain\Workspace\Models\Workspace $workspace */
+        $workspace = app('currentWorkspace');
+
+        $userId = User::query()
+            ->where('public_id', $publicId)
+            ->whereHas('workspaceMemberships', fn ($query) => $query
+                ->where('workspace_id', $workspace->id)
+                ->where('status', 'active'))
+            ->value('id');
+
+        if ($userId === null) {
+            throw ValidationException::withMessages([
+                'owner_public_id' => ['المستخدم المحدد ليس عضواً نشطاً في مساحة العمل.'],
+            ]);
+        }
+
+        return (int) $userId;
     }
 
     private function resolveWorkspaceAssigneeId(string $publicId): int

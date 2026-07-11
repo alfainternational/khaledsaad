@@ -25,6 +25,12 @@ class ExecutionPackageResource extends JsonResource
             'measurement_plan' => $this->measurement_plan,
             'status' => $this->status,
             'status_label' => $this->statusLabel(),
+            'owner_user_id' => $this->owner_user_id,
+            'owner' => $this->relationLoaded('owner') && $this->owner ? [
+                'public_id' => $this->owner->public_id,
+                'name' => $this->owner->name,
+                'email' => $this->owner->email,
+            ] : null,
             'progress' => $this->progress(),
             'measurement_summary' => $this->whenLoaded('reports', fn () => $this->measurementSummary()),
             'available_actions' => $this->availableActions(),

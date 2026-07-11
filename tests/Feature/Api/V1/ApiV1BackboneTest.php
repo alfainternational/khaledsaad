@@ -611,6 +611,8 @@ class ApiV1BackboneTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', 'proposed')
             ->assertJsonPath('data.status_label', 'مقترحة')
+            ->assertJsonPath('data.owner.public_id', $owner->public_id)
+            ->assertJsonPath('data.owner.name', $owner->name)
             ->assertJsonPath('data.available_actions.0', 'request_approval')
             ->assertJsonPath('data.progress.total_tasks', 4)
             ->assertJsonPath('data.progress.done_tasks', 2)
@@ -674,6 +676,16 @@ class ApiV1BackboneTest extends TestCase
         $this->assertSame(1, $package->reports()->count());
 
         $package->update(['status' => 'approved']);
+        $packageDeadline = now()->addDays(12)->toDateString();
+
+        $auth()
+            ->patchJson($base.'/execution-packages/'.$package->public_id, [
+                'owner_public_id' => $owner->public_id,
+                'deadline' => $packageDeadline,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.owner.public_id', $owner->public_id)
+            ->assertJsonPath('data.deadline', $packageDeadline);
 
         $auth()
             ->getJson($base.'/execution-packages/'.$package->public_id)
@@ -786,6 +798,14 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.available_actions.0', 'start_measuring')
             ->assertJsonPath('data.tasks.0.available_actions', [])
             ->assertJsonPath('data.progress.percent', 100);
+
+        $auth()
+            ->patchJson($base.'/execution-packages/'.$package->public_id, [
+                'owner_public_id' => $owner->public_id,
+                'deadline' => now()->addDays(20)->toDateString(),
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['package']);
 
         $auth()
             ->patchJson($base.'/execution-tasks/'.$firstTask->public_id.'/status', [
