@@ -1,6 +1,10 @@
 @extends('layouts.app', ['title' => 'الاعتمادات', 'pageTitle' => 'المراجعات والاعتمادات', 'pageKicker' => 'Approvals'])
 
 @section('content')
+@php
+    $statusLabels = ['pending' => 'قيد المراجعة', 'approved' => 'معتمد', 'rejected' => 'مرفوض'];
+@endphp
+
 <section class="app-stat-grid mb-8">
     <article class="card stat-card-modern">
         <span class="app-stat-label">قيد المراجعة</span>
@@ -23,7 +27,7 @@
             <select class="app-input" name="status">
                 <option value="">كل الحالات</option>
                 @foreach (['pending', 'approved', 'rejected'] as $status)
-                    <option value="{{ $status }}" @selected(request('status') === $status)>{{ $status }}</option>
+                    <option value="{{ $status }}" @selected(request('status') === $status)>{{ $statusLabels[$status] ?? $status }}</option>
                 @endforeach
             </select>
         </label>
@@ -67,7 +71,7 @@
                     @endif
                 </div>
                 <div class="app-inline-actions">
-                    <span class="app-badge">{{ $approval->status }}</span>
+                    <span class="app-badge">{{ $statusLabels[$approval->status] ?? $approval->status }}</span>
                     @if ($sourceUrl)
                         <a href="{{ $sourceUrl }}" class="btn btn-secondary btn-sm">فتح المصدر</a>
                     @endif
