@@ -99,6 +99,17 @@ class BuildToolPayloadAction
         }
 
         $toolSummary = $this->buildToolSummary($tool->code, $inputs, $project->name, $mode);
+        $agencyVerdict = $tool->code === 'agency-audit'
+            ? $this->buildAgencyVerdict($inputs)
+            : null;
+
+        if ($agencyVerdict !== null) {
+            $toolSummary['agency_verdict'] = $agencyVerdict;
+            $toolSummary['bullets'] = array_values(array_unique([
+                ...$agencyVerdict['summary_lines'],
+                ...($toolSummary['bullets'] ?? []),
+            ]));
+        }
 
         $aiSummary = $this->tryAiSummary($workspace, $project, $tool, $inputs, array_filter([
             'workspace_profile' => $profile,
@@ -138,11 +149,17 @@ class BuildToolPayloadAction
             'ai_generated' => $isAiGenerated,
         ];
 
-        $nextActions = $tool->next_actions_json ?: [
+        if ($agencyVerdict !== null) {
+            $summary['agency_verdict'] = $agencyVerdict;
+        }
+
+        $nextActions = $agencyVerdict !== null
+            ? $this->agencyNextActions($agencyVerdict)
+            : ($tool->next_actions_json ?: [
             'راجع الخلاصة وتأكد أنها تعكس واقع مشروعك فعلاً.',
             'انقل أهم نقطة منها إلى تنفيذ أو قرار قريب.',
             'انتقل بعدها إلى الأداة التالية في الرحلة.',
-        ];
+        ]);
 
         $sourceContext = [
             'workspace_profile' => $profile,
@@ -195,6 +212,7 @@ class BuildToolPayloadAction
                 'next_actions' => $nextActions,
                 'specialist_review' => $specialistReview,
                 'content_quality' => $contentQuality,
+                'agency_verdict' => $agencyVerdict,
                 'brief' => $brief !== '' ? $brief : null,
                 'inputs' => $inputs,
                 'source_context' => $sourceContext,
@@ -493,6 +511,19 @@ class BuildToolPayloadAction
                     $has('performance_next') ? 'الإجراء التالي: '.$g('performance_next') : 'اتخذ قراراً واحداً بناءً على هذه البيانات — لا تؤجل',
                 ]),
             ),
+            'agency-audit' => $this->makeSummary(
+                'تقييم الوكالة — '.$projectName,
+                $has('agency_reported_results')
+                    ? 'النتائج المرسلة من الوكالة: '.$g('agency_reported_results').' — لا تحكم عليها قبل ربطها بالهدف والتتبع والميزانية.'
+                    : 'ابدأ من التقرير الفعلي للوكالة: ماذا صرفوا؟ ماذا وصل؟ وما الرقم الذي يثبت قيمة العمل؟',
+                array_filter([
+                    $has('agency_promise') ? 'الوعد المتفق عليه: '.$g('agency_promise').' — حوّله إلى مؤشر قياس واضح' : 'اطلب من الوكالة صياغة النتيجة المتوقعة كمؤشر لا ككلام عام',
+                    $has('agency_tracking') ? 'طريقة القياس الحالية: '.$g('agency_tracking').' — تأكد أنها تقيس عميل/مبيعات لا تفاعل فقط' : 'اطلب منهم Pixel أو UTM أو طريقة إسناد واضحة قبل زيادة الميزانية',
+                    $has('agency_concern') ? 'نقطة القلق: '.$g('agency_concern').' — اجعلها سؤالاً مباشراً في الاجتماع القادم' : null,
+                    $has('agency_questions') ? 'أسئلة جاهزة للوكالة: '.$g('agency_questions') : 'اسأل: ما CAC؟ ما ROAS أو تكلفة الليد المؤهل؟ ما اختبار A/B القادم؟',
+                    $has('agency_decision') ? 'قرارك الحالي: '.$g('agency_decision').' — لا تنفذه قبل مراجعة الدليل خلال فترة قياس قصيرة' : null,
+                ]),
+            ),
             'smart-recommendations' => $this->makeSummary(
                 'التوصيات الذكية — '.$projectName,
                 $has('recommendation_priority')
@@ -587,6 +618,107 @@ class BuildToolPayloadAction
             'text' => str_replace(['...', '.. '], ['غير محدد بعد', 'غير محدد بعد '], $text),
             'bullets' => array_values(array_filter($rawBullets)),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $inputs
+     * @return array<string, mixed>
+     */
+    private function buildAgencyVerdict(array $inputs): array
+    {
+        $g = fn (string $key): string => trim((string) ($inputs[$key] ?? ''));
+        $haystack = mb_strtolower(implode(' ', array_map(
+            fn (mixed $value): string => is_string($value) ? $value : '',
+            $inputs,
+        )));
+
+        $score = 75;
+        $flags = [];
+
+        if ($g('agency_tracking') === '' || str_contains($haystack, 'لا يوجد pixel') || str_contains($haystack, 'لا يوجد utm') || str_contains($haystack, 'بدون تتبع')) {
+            $score -= 18;
+            $flags[] = 'التتبع غير واضح أو غير مكتمل.';
+        }
+
+        if (str_contains($haystack, 'تفاعل فقط') || str_contains($haystack, 'بدون مبيعات') || str_contains($haystack, 'لا توجد مبيعات')) {
+            $score -= 12;
+            $flags[] = 'التقرير يركز على أرقام سطحية أكثر من نتائج أعمال.';
+        }
+
+        if (str_contains($g('agency_promise'), 'زيادة المبيعات') && ! preg_match('/\d|%|ريال|عميل|طلب/u', $g('agency_promise'))) {
+            $score -= 7;
+            $flags[] = 'وعد الوكالة عام ويحتاج تحويله إلى رقم قابل للقياس.';
+        }
+
+        $score = max(0, min(100, $score));
+        $riskLevel = match (true) {
+            $score < 50 => 'مرتفع',
+            $score < 75 => 'متوسط',
+            default => 'منخفض',
+        };
+        $decision = match ($riskLevel) {
+            'مرتفع' => 'لا توسّع أو تجدّد قبل تصحيح القياس',
+            'متوسط' => 'استمر فقط بفترة اختبار قصيرة ومؤشرات مكتوبة',
+            default => 'يمكن الاستمرار مع مراجعة أسبوعية للأرقام',
+        };
+
+        $demands = array_values(array_unique(array_filter([
+            'تقرير CAC أو تكلفة العميل المحتمل المؤهل',
+            'توضيح مصدر كل نتيجة عبر Pixel أو UTM أو CRM',
+            'فصل نتائج الوعي عن نتائج المبيعات أو العملاء المحتملين',
+            $g('agency_budget') !== '' ? 'توزيع الميزانية حسب الحملة والقناة والهدف' : null,
+            $g('agency_promise') !== '' ? 'تحويل الوعد إلى KPI مكتوب قبل الاجتماع القادم' : null,
+        ])));
+
+        $questions = array_values(array_unique(array_filter([
+            $g('agency_questions') !== '' ? $g('agency_questions') : null,
+            'ما تكلفة العميل المحتمل المؤهل وليس مجرد النقرة؟',
+            'ما الاختبار القادم الذي سيحسن التحويل؟',
+            'ما الذي ستوقفونه إذا لم يتحسن الرقم خلال أسبوعين؟',
+        ])));
+
+        $meetingBrief = implode("\n", array_values(array_filter([
+            'مرحباً، راجعنا أداء الحملات ونحتاج قبل أي توسعة أو تجديد إلى تصحيح القياس وربط النتائج بأهداف العمل.',
+            'قرارنا الحالي: '.$decision.'.',
+            ! empty($demands[0]) ? 'الطلب الأول: '.$demands[0].'.' : null,
+            ! empty($demands[1]) ? 'الطلب الثاني: '.$demands[1].'.' : null,
+            ! empty($questions[0]) ? 'سؤال الاجتماع: '.$questions[0] : null,
+            'نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية أو تثبيت الخطة القادمة.',
+        ])));
+
+        return [
+            'score' => $score,
+            'risk_level' => $riskLevel,
+            'decision' => $decision,
+            'flags' => $flags,
+            'demands' => $demands,
+            'questions' => $questions,
+            'meeting_brief' => $meetingBrief,
+            'summary_lines' => array_values(array_filter([
+                'الحكم: '.$decision,
+                'درجة وضوح عمل الوكالة: '.$score.'/100',
+                'مستوى المخاطرة: '.$riskLevel,
+                ! empty($demands[0]) ? 'اطلب من الوكالة: '.$demands[0] : null,
+                ! empty($questions[0]) ? 'سؤال الاجتماع القادم: '.$questions[0] : null,
+            ])),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $agencyVerdict
+     * @return array<int, string>
+     */
+    private function agencyNextActions(array $agencyVerdict): array
+    {
+        $demands = array_values(array_filter((array) ($agencyVerdict['demands'] ?? []), 'is_string'));
+        $questions = array_values(array_filter((array) ($agencyVerdict['questions'] ?? []), 'is_string'));
+
+        return array_values(array_filter([
+            (string) ($agencyVerdict['decision'] ?? 'راجع قرارك مع الوكالة بناءً على القياس.'),
+            isset($demands[0]) ? 'اطلب من الوكالة: '.$demands[0] : null,
+            isset($questions[0]) ? 'اسأل في الاجتماع القادم: '.$questions[0] : null,
+            'اتفق على فترة قياس قصيرة قبل أي زيادة ميزانية أو تجديد.',
+        ]));
     }
 
 

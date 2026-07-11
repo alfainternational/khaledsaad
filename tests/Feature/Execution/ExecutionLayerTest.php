@@ -61,6 +61,12 @@ class ExecutionLayerTest extends TestCase
         $this->assertCount(4, $package->tasks);
         $this->assertCount(1, $package->assets);
         $this->assertSame('pending', $package->tasks->first()->status);
+        $asset = $package->assets->first();
+        $this->assertNotEmpty($asset->body);
+        $this->assertStringContainsString($recommendation->title, $asset->body);
+        $this->assertStringContainsString($recommendation->evidence, $asset->body);
+        $this->assertStringContainsString($recommendation->rationale, $asset->body);
+        $this->assertStringContainsString('مؤشر القياس', $asset->body);
 
         // The recommendation is marked accepted once packaged.
         $this->assertSame('accepted', $recommendation->fresh()->status);

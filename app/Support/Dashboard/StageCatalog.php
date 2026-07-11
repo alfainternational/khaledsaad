@@ -38,7 +38,7 @@ class StageCatalog
                 'key' => 'scale',
                 'label' => 'قِس وكبّر',
                 'description' => 'اعرف ما الذي ينجح، وخطّط لتنمو أكثر.',
-                'core_tools' => ['kpi-tracker', 'execution-plan', 'performance-review', 'smart-recommendations', 'growth-priorities'],
+                'core_tools' => ['kpi-tracker', 'execution-plan', 'performance-review', 'agency-audit', 'smart-recommendations', 'growth-priorities'],
             ],
         ];
     }

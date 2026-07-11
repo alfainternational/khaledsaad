@@ -69,6 +69,219 @@
     </article>
 </section>
 
+@php($performance = $latestPerformanceSnapshot?->value_json ?? [])
+<section class="card mb-8">
+    <div class="app-section-head">
+        <div>
+            <p class="section-kicker">قياس الأداء السريع</p>
+            <h3 class="heading-sm">أرقام التسويق الحالية</h3>
+            <p class="text-caption">أدخل أرقام آخر فترة حتى يعرف النظام هل المشكلة في الوصول، التحويل، أو العائد.</p>
+        </div>
+        @if (! empty($performance['captured_at']))
+            <span class="app-badge">آخر تحديث {{ \Illuminate\Support\Carbon::parse($performance['captured_at'])->diffForHumans() }}</span>
+        @endif
+    </div>
+
+    @if ($performance !== [])
+        <div class="app-meta-grid mb-6">
+            <div><span>الإنفاق</span><strong>{{ number_format((float) ($performance['spend'] ?? 0), 2) }}</strong></div>
+            <div><span>العملاء المحتملون</span><strong>{{ (int) ($performance['leads'] ?? 0) }}</strong></div>
+            <div><span>المبيعات</span><strong>{{ (int) ($performance['sales'] ?? 0) }}</strong></div>
+            <div><span>الإيراد</span><strong>{{ number_format((float) ($performance['revenue'] ?? 0), 2) }}</strong></div>
+            <div><span>تكلفة العميل المحتمل</span><strong>{{ is_null($performance['cpl'] ?? null) ? '--' : number_format((float) $performance['cpl'], 2) }}</strong></div>
+            <div><span>ROAS</span><strong>{{ is_null($performance['roas'] ?? null) ? '--' : number_format((float) $performance['roas'], 2).'x' }}</strong></div>
+            <div><span>معدل التحويل</span><strong>{{ is_null($performance['conversion_rate'] ?? null) ? '--' : number_format((float) $performance['conversion_rate'], 2).'%' }}</strong></div>
+        </div>
+
+        @if (! empty($performance['notes']))
+            <p class="app-empty mb-6">{{ $performance['notes'] }}</p>
+        @endif
+    @endif
+
+    <form method="POST" action="{{ route('projects.performance.store', $project) }}" class="app-form-grid cols-2">
+        @csrf
+        <label class="app-field">
+            <span>من تاريخ</span>
+            <input class="app-input" type="date" name="period_start" value="{{ old('period_start', $performance['period_start'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>إلى تاريخ</span>
+            <input class="app-input" type="date" name="period_end" value="{{ old('period_end', $performance['period_end'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>الإنفاق</span>
+            <input class="app-input" type="number" min="0" step="0.01" name="spend" value="{{ old('spend', $performance['spend'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>العملاء المحتملون</span>
+            <input class="app-input" type="number" min="0" step="1" name="leads" value="{{ old('leads', $performance['leads'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>المبيعات</span>
+            <input class="app-input" type="number" min="0" step="1" name="sales" value="{{ old('sales', $performance['sales'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>الإيراد</span>
+            <input class="app-input" type="number" min="0" step="0.01" name="revenue" value="{{ old('revenue', $performance['revenue'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>ملاحظة مختصرة</span>
+            <textarea class="app-input" name="notes" rows="2">{{ old('notes', $performance['notes'] ?? '') }}</textarea>
+        </label>
+        <div class="app-form-actions">
+            <button type="submit" class="btn btn-primary btn-sm">حفظ لقطة الأداء</button>
+        </div>
+    </form>
+</section>
+
+@if ($topExecutionRecommendations->isNotEmpty())
+    @php($impactLabels = ['high' => 'أثر عالٍ', 'medium' => 'أثر متوسط', 'low' => 'أثر منخفض'])
+    <section class="project-priority-panel mb-8" aria-labelledby="project-priority-title">
+        <div class="project-priority-head">
+            <div>
+                <p class="section-kicker">ابدأ من هنا</p>
+                <h3 id="project-priority-title" class="heading-sm">أولويات التنفيذ الآن</h3>
+                <p class="text-muted">أقصر قائمة عمل مستخرجة من توصيات التحليل، حتى تعرف ماذا تفعل قبل قراءة التقرير الطويل.</p>
+            </div>
+            <a href="{{ route('projects.recommendations.index', $project) }}" class="btn btn-primary btn-sm">فتح التوصيات والتنفيذ</a>
+        </div>
+
+        <div class="project-priority-list">
+            @foreach ($topExecutionRecommendations as $index => $recommendation)
+                @php($package = $recommendation->executionPackages->first())
+                <article class="project-priority-item" data-project-priority-title="{{ $recommendation->title }}">
+                    <span class="exec-rank">{{ $index + 1 }}</span>
+                    <div class="project-priority-copy">
+                        <h4>{{ $recommendation->title }}</h4>
+                        <p>{{ $recommendation->rationale ?: ($recommendation->evidence ?: 'حوّل هذه الأولوية إلى حزمة تنفيذ لتحديد الخطوة التالية.') }}</p>
+                        <small>{{ $impactLabels[$recommendation->estimated_impact] ?? $recommendation->estimated_impact }} · ثقة {{ round($recommendation->confidence * 100) }}%</small>
+                    </div>
+                    <div class="project-priority-action">
+                        @if ($package)
+                            <a href="{{ route('execution-packages.show', $package) }}" class="btn btn-secondary btn-sm">عرض التنفيذ</a>
+                        @else
+                            <a href="{{ route('projects.recommendations.index', $project) }}" class="btn btn-secondary btn-sm">تجهيز التنفيذ</a>
+                        @endif
+                    </div>
+                </article>
+            @endforeach
+        </div>
+    </section>
+@endif
+
+@if ($recentExecutionPackages->isNotEmpty())
+    @php($packageStatusLabels = [
+        'proposed' => 'مقترحة',
+        'in_review' => 'قيد المراجعة',
+        'approved' => 'معتمدة',
+        'in_progress' => 'قيد التنفيذ',
+        'executed' => 'منفّذة',
+        'measuring' => 'تحت القياس',
+    ])
+    @php($reportPhaseLabels = ['discovery' => 'اكتشاف', 'planning' => 'تخطيط', 'execution' => 'تنفيذ', 'validation' => 'تحقق'])
+    <section class="card mb-8">
+        <div class="app-section-head">
+            <div>
+                <p class="section-kicker">متابعة التنفيذ</p>
+                <h3 class="heading-sm">حالة التنفيذ والقياس</h3>
+                <p class="text-caption">آخر حزم العمل لهذا المشروع، مع تقدم المهام وآخر قياس محفوظ.</p>
+            </div>
+            <a href="{{ route('projects.recommendations.index', $project) }}" class="btn btn-secondary btn-sm">فتح مركز التنفيذ</a>
+        </div>
+
+        <div class="app-list">
+            @foreach ($recentExecutionPackages as $package)
+                @php($totalTasks = $package->tasks->count())
+                @php($doneTasks = $package->tasks->where('status', 'done')->count())
+                @php($latestReport = $package->reports->first())
+                @php($latestMetric = $latestReport ? collect($latestReport->metrics_json ?? [])->first() : null)
+                <div class="app-list-item">
+                    <div>
+                        <strong>{{ $package->title }}</strong>
+                        <small>
+                            {{ $packageStatusLabels[$package->status] ?? $package->status }}
+                            · المهام {{ $doneTasks }}/{{ $totalTasks }}
+                            @if ($latestReport)
+                                · آخر قياس {{ $reportPhaseLabels[$latestReport->phase] ?? $latestReport->phase }} {{ $latestReport->progress }}%
+                            @else
+                                · لا يوجد قياس بعد
+                            @endif
+                        </small>
+                        <small>
+                            مالك الحزمة: {{ $package->owner?->name ?? 'غير محدد' }}
+                            @if ($package->deadline)
+                                · الموعد النهائي: {{ $package->deadline->format('Y-m-d') }}
+                            @else
+                                · الموعد النهائي: غير محدد
+                            @endif
+                        </small>
+                        @if ($latestMetric)
+                            <small>{{ $latestMetric['name'] ?? 'مؤشر' }}: {{ $latestMetric['value'] ?? '-' }}</small>
+                        @endif
+                    </div>
+                    <div class="app-inline-actions">
+                        <span class="app-badge">{{ $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : 0 }}%</span>
+                        <a href="{{ route('execution-packages.show', $package) }}" class="btn btn-secondary btn-sm">فتح الحزمة</a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </section>
+@endif
+
+@php($agencyVerdict = $latestAgencyAuditRun?->summary_json['agency_verdict'] ?? [])
+@if (! empty($agencyVerdict))
+    <section class="card mb-8">
+        <div class="app-section-head">
+            <div>
+                <p class="section-kicker">مراقبة الوكالة</p>
+                <h3 class="heading-sm">حكم الوكالة الحالي</h3>
+                <p class="text-caption">مختصر آخر تقييم لعمل الوكالة حتى تعرف هل تطلب تصحيحاً أم تتابع بثقة.</p>
+            </div>
+            @if ($latestAgencyAuditRun?->tool)
+                <a href="{{ route('tools.show', $latestAgencyAuditRun->tool) }}" class="btn btn-secondary btn-sm">فتح تقييم الوكالة</a>
+            @endif
+        </div>
+
+        <div class="app-meta-grid mb-4">
+            <div><span>القرار</span><strong>{{ $agencyVerdict['decision'] ?? 'راجع التفاصيل' }}</strong></div>
+            <div><span>مستوى المخاطرة</span><strong>{{ $agencyVerdict['risk_level'] ?? 'غير محدد' }}</strong></div>
+            <div><span>درجة التشغيل</span><strong>{{ $agencyVerdict['score'] ?? '--' }}%</strong></div>
+        </div>
+
+        @if (! empty($agencyVerdict['demands']))
+            <div class="app-list">
+                @foreach (array_slice($agencyVerdict['demands'], 0, 3) as $demand)
+                    <div class="app-list-item">
+                        <div>
+                            <strong>اطلب من الوكالة</strong>
+                            <small>{{ $demand }}</small>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
+        @if (! empty($agencyVerdict['meeting_brief']))
+            <div class="app-list mt-4">
+                <div class="app-list-item">
+                    <div>
+                        <strong>رسالة الاجتماع مع الوكالة</strong>
+                        <small>{!! nl2br(e($agencyVerdict['meeting_brief'])) !!}</small>
+                    </div>
+                    <form method="POST" action="{{ route('projects.approvals.store', $project) }}">
+                        @csrf
+                        <input type="hidden" name="item_type" value="tool_run">
+                        <input type="hidden" name="item_id" value="{{ $latestAgencyAuditRun->id }}">
+                        <input type="hidden" name="note" value="{{ $agencyVerdict['meeting_brief'] }}">
+                        <button type="submit" class="btn btn-primary btn-sm">طلب اعتماد مطالب الوكالة</button>
+                    </form>
+                </div>
+            </div>
+        @endif
+    </section>
+@endif
+
 <section class="card mb-8">
     @php($analysisIntegrity = $latestAuditReport['analysis_integrity'] ?? [])
 
@@ -416,10 +629,16 @@
                     <div>
                         <strong>{{ $run->tool?->name ?: $run->tool_code }}</strong>
                         <small>{{ $run->created_at?->diffForHumans() }} · {{ $run->mode }}</small>
+                        @if (! empty($run->next_actions_json[0]))
+                            <small>خطوة هذا التشغيل: {{ $run->next_actions_json[0] }}</small>
+                        @endif
                     </div>
                     <div class="app-inline-actions">
                         <span class="app-badge">{{ $run->summary_json['headline'] ?? $run->output_json['headline'] ?? 'output' }}</span>
                         <span class="app-badge">{{ $run->completeness_score }}%</span>
+                        @if ($run->tool)
+                            <a href="{{ route('tools.show', $run->tool) }}" class="btn btn-secondary btn-sm">فتح النتيجة</a>
+                        @endif
                         <form method="POST" action="{{ route('projects.approvals.store', $project) }}">
                             @csrf
                             <input type="hidden" name="item_type" value="tool_run">

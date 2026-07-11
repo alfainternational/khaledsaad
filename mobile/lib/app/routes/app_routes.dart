@@ -1,0 +1,26 @@
+/// أسماء المسارات في التطبيق.
+abstract class Routes {
+  static const splash = '/';
+  static const login = '/login';
+  static const register = '/register';
+  static const forgotPassword = '/forgot-password';
+  static const onboarding = '/onboarding';
+  static const dashboard = '/dashboard';
+  static const projects = '/projects';
+  static const projectDetail = '/projects/detail';
+  static const projectTools = '/projects/tools';
+  static const projectBrief = '/projects/brief';
+  static const projectIntelligence = '/projects/intelligence';
+  static const projectReports = '/projects/reports';
+  static const executionPackage = '/execution-packages/detail';
+  static const toolRunner = '/tools/runner';
+  static const studio = '/studio';
+  static const studioGeneration = '/studio/generation';
+  static const reports = '/reports';
+  static const team = '/team';
+  static const account = '/account';
+  static const billing = '/billing';
+  static const approvals = '/approvals';
+  static const clients = '/clients';
+  static const agencyBranding = '/agency/branding';
+}

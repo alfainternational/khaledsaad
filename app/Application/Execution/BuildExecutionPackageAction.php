@@ -57,7 +57,7 @@ class BuildExecutionPackageAction
                 'execution_package_id' => $package->id,
                 'type' => $this->assetTypeForArea((string) $recommendation->area),
                 'title' => 'مخرج جاهز للتعديل',
-                'body' => '',
+                'body' => $this->assetBodyFor($recommendation, $package->measurement_plan),
             ]);
 
             $recommendation->update(['status' => 'accepted']);
@@ -74,5 +74,35 @@ class BuildExecutionPackageAction
             'social', 'content' => 'copy',
             default => 'copy',
         };
+    }
+
+    private function assetBodyFor(Recommendation $recommendation, string $measurementPlan): string
+    {
+        $output = match ($this->assetTypeForArea((string) $recommendation->area)) {
+            'dev_brief' => [
+                'نوع المخرج: موجز تعديل للموقع أو صفحة الهبوط.',
+                'ما يسلّم للمطور/المصمم: عدّل موضع الإجراء الرئيسي، الرسالة، أو عنصر الثقة المرتبط بهذه التوصية.',
+                'نص مقترح للاستخدام: '.$recommendation->rationale,
+            ],
+            default => [
+                'نوع المخرج: نسخة تسويقية قابلة للتعديل.',
+                'ما يسلّم للمسوّق/المحتوى: حوّل القرار إلى نص قصير يظهر في الموقع أو الإعلان أو السوشيال.',
+                'نص مقترح للاستخدام: '.$recommendation->rationale,
+            ],
+        };
+
+        return implode("\n\n", [
+            '# '.$recommendation->title,
+            "## المشكلة\n".$recommendation->title,
+            "## الدليل\n".$recommendation->evidence,
+            "## القرار\n".$recommendation->rationale,
+            "## المخرج الجاهز للتعديل\n".implode("\n", array_map(fn (string $line): string => '- '.$line, $output)),
+            "## مؤشر القياس\n".$measurementPlan,
+            "## قائمة تسليم مختصرة\n".implode("\n", [
+                '- راجع النص أو التعديل مع صاحب القرار.',
+                '- نفّذ النسخة الأولى بدون توسيع النطاق.',
+                '- قارن النتيجة قبل وبعد خلال فترة القياس.',
+            ]),
+        ]);
     }
 }

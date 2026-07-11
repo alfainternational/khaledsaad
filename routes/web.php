@@ -142,6 +142,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 Route::post('/paypal/webhook', [PayPalWebhookController::class, 'handle'])->name('paypal.webhook');
 
+// جسر عودة الدفع للموبايل: PayPal يعيد المتصفح هنا، ونقفز فوراً إلى deep link التطبيق.
+// عام بلا مصادقة — لا يمرّر سوى معاملات الاستعلام كما هي، والتحقق الفعلي يتم في API callback.
+Route::get('/billing/mobile/return', function () {
+    return redirect()->away('ksgrowth://billing/return?'.http_build_query(request()->query()));
+})->name('billing.mobile.return');
+Route::get('/billing/mobile/cancelled', function () {
+    return redirect()->away('ksgrowth://billing/cancelled');
+})->name('billing.mobile.cancelled');
+
 // Public pre-registration diagnosis funnel (Phase أ) — open to guests and logged-in users.
 Route::prefix('diagnose')->name('diagnose.')->group(function (): void {
     Route::get('/', [GuestDiagnosisController::class, 'form'])->name('form');
@@ -182,6 +191,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::post('/projects/{project}/performance', [ProjectController::class, 'storePerformance'])->name('projects.performance.store');
     Route::post('/projects/{project}/audit', [ProjectController::class, 'runAudit'])->name('projects.audit.run');
     Route::get('/projects/{project}/audit/status', [ProjectController::class, 'auditStatus'])->name('projects.audit.status');
     Route::get('/projects/{project}/brief', [ProjectMarketingBriefController::class, 'edit'])->name('projects.brief.edit');
@@ -199,7 +209,11 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/projects/{project}/dossier/pdf', [ProjectDossierController::class, 'exportPdf'])
         ->middleware('entitlement:outputs.can_export')->name('projects.dossier.pdf');
     Route::get('/execution-packages/{executionPackage}', [ExecutionPackageController::class, 'show'])->name('execution-packages.show');
+    Route::patch('/execution-packages/{executionPackage}/details', [ExecutionPackageController::class, 'updateDetails'])->name('execution-packages.details');
     Route::patch('/execution-packages/{executionPackage}/status', [ExecutionPackageController::class, 'updateStatus'])->name('execution-packages.status');
+    Route::patch('/execution-packages/{executionPackage}/tasks/{executionTask}/details', [ExecutionPackageController::class, 'updateTaskDetails'])->name('execution-packages.tasks.details');
+    Route::patch('/execution-packages/{executionPackage}/tasks/{executionTask}/status', [ExecutionPackageController::class, 'updateTaskStatus'])->name('execution-packages.tasks.status');
+    Route::post('/execution-packages/{executionPackage}/reports', [ExecutionPackageController::class, 'storeReport'])->name('execution-packages.reports.store');
 
     // Agency white-label settings (Phase د) — gated by the white_label entitlement.
     Route::get('/agency/branding', [AgencyBrandingController::class, 'edit'])

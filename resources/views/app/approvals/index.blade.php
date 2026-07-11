@@ -1,6 +1,11 @@
 @extends('layouts.app', ['title' => 'الاعتمادات', 'pageTitle' => 'المراجعات والاعتمادات', 'pageKicker' => 'Approvals'])
 
 @section('content')
+@php
+    $statusLabels = ['pending' => 'قيد المراجعة', 'approved' => 'معتمد', 'rejected' => 'مرفوض'];
+    $statusBadgeClasses = ['pending' => 'app-badge-warning', 'approved' => 'app-badge-success', 'rejected' => 'app-badge-danger'];
+@endphp
+
 <section class="app-stat-grid mb-8">
     <article class="card stat-card-modern">
         <span class="app-stat-label">قيد المراجعة</span>
@@ -23,7 +28,7 @@
             <select class="app-input" name="status">
                 <option value="">كل الحالات</option>
                 @foreach (['pending', 'approved', 'rejected'] as $status)
-                    <option value="{{ $status }}" @selected(request('status') === $status)>{{ $status }}</option>
+                    <option value="{{ $status }}" @selected(request('status') === $status)>{{ $statusLabels[$status] ?? $status }}</option>
                 @endforeach
             </select>
         </label>
@@ -36,11 +41,34 @@
 <section class="card">
     <div class="app-list">
         @forelse ($approvals as $approval)
+            @php
+                $toolRun = $approval->item_type === 'tool_run' ? $approval->toolRun : null;
+                $generation = $approval->item_type === 'ai_generation' ? $approval->aiGeneration : null;
+                $executionPackage = $approval->item_type === 'execution_package' ? $approval->executionPackage : null;
+                $itemTitle = $toolRun?->summary_json['headline']
+                    ?? $toolRun?->tool?->name
+                    ?? $generation?->headline
+                    ?? $generation?->template?->name
+                    ?? $executionPackage?->title
+                    ?? 'عنصر يحتاج مراجعة';
+                $itemKind = match ($approval->item_type) {
+                    'tool_run' => 'تشغيل أداة',
+                    'ai_generation' => 'مخرج استوديو',
+                    'execution_package' => 'حزمة تنفيذ',
+                    default => $approval->item_type,
+                };
+                $sourceUrl = $toolRun?->tool
+                    ? route('tools.show', $toolRun->tool)
+                    : ($generation
+                        ? route('studio.generations.show', $generation)
+                        : ($executionPackage ? route('execution-packages.show', $executionPackage) : null));
+            @endphp
             <div class="app-list-item app-approval-item">
                 <div>
-                    <strong>{{ $approval->project?->name ?? 'عنصر بدون مشروع' }}</strong>
+                    <strong>{{ $itemTitle }}</strong>
                     <small>
-                        {{ $approval->item_type }} ·
+                        {{ $itemKind }} ·
+                        {{ $approval->project?->name ?? 'عنصر بدون مشروع' }} ·
                         {{ $approval->project?->client?->name ?? 'بدون عميل' }} ·
                         {{ $approval->reviewer?->name ?? 'بدون مراجع' }}
                     </small>
@@ -49,19 +77,24 @@
                     @endif
                 </div>
                 <div class="app-inline-actions">
-                    <span class="app-badge">{{ $approval->status }}</span>
-                    <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="approved">
-                        <button type="submit" class="btn btn-secondary btn-sm">اعتماد</button>
-                    </form>
-                    <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="rejected">
-                        <button type="submit" class="btn btn-ghost btn-sm">رفض</button>
-                    </form>
+                    <span class="app-badge {{ $statusBadgeClasses[$approval->status] ?? '' }}">{{ $statusLabels[$approval->status] ?? $approval->status }}</span>
+                    @if ($sourceUrl)
+                        <a href="{{ $sourceUrl }}" class="btn btn-secondary btn-sm">فتح المصدر</a>
+                    @endif
+                    @if ($approval->status === 'pending')
+                        <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="approved">
+                            <button type="submit" class="btn btn-secondary btn-sm">اعتماد</button>
+                        </form>
+                        <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="rejected">
+                            <button type="submit" class="btn btn-ghost btn-sm">رفض</button>
+                        </form>
+                    @endif
                 </div>
             </div>
         @empty

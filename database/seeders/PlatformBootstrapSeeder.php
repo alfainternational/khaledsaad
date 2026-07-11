@@ -371,6 +371,7 @@ class PlatformBootstrapSeeder extends Seeder
             ['code' => 'kpi-tracker', 'name' => 'KPIs', 'description' => 'تحديد المؤشرات الأساسية لقراءة الأداء.', 'module' => 'modules.stage_5', 'stage' => 5, 'sort_order' => 10, 'status' => 'published'],
             ['code' => 'execution-plan', 'name' => 'الخطة التنفيذية', 'description' => 'تحويل الرؤية إلى مهام ومواعيد ومسؤوليات.', 'module' => 'modules.stage_5', 'stage' => 5, 'sort_order' => 20, 'status' => 'published'],
             ['code' => 'performance-review', 'name' => 'قراءة الأداء', 'description' => 'قراءة النتائج الحالية وفهم ما نجح وما تعثر.', 'module' => 'modules.stage_5', 'stage' => 5, 'sort_order' => 30, 'status' => 'published'],
+            ['code' => 'agency-audit', 'name' => 'تقييم عمل الوكالة', 'description' => 'مراجعة وعود الوكالة وتقاريرها وتحويلها إلى مطالب واضحة قابلة للقياس.', 'module' => 'modules.stage_5', 'stage' => 5, 'sort_order' => 35, 'status' => 'published'],
             ['code' => 'smart-recommendations', 'name' => 'التوصيات الذكية', 'description' => 'اقتراح الخطوات التحسينية بناء على البيانات الحالية.', 'module' => 'modules.stage_5', 'stage' => 5, 'sort_order' => 40, 'status' => 'published'],
             ['code' => 'growth-priorities', 'name' => 'أولويات التوسع', 'description' => 'ترتيب مسارات النمو الأقرب أثرًا والأوضح مخاطرة.', 'module' => 'modules.stage_5', 'stage' => 5, 'sort_order' => 50, 'status' => 'published'],
         ])->map(function (array $tool): array {

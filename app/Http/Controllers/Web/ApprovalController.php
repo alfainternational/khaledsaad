@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Application\Approval\SyncExecutionPackageApprovalStateAction;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Approval\Models\Approval;
+use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\ToolRun;
 use App\Http\Controllers\Controller;
@@ -31,7 +33,7 @@ class ApprovalController extends Controller
 
         $approvals = Approval::query()
             ->where('workspace_id', $workspace->id)
-            ->with(['project.client', 'reviewer'])
+            ->with(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template', 'executionPackage'])
             ->when(
                 $request->string('status')->isNotEmpty(),
                 fn ($query) => $query->where('status', $request->string('status')->value())
@@ -49,7 +51,12 @@ class ApprovalController extends Controller
         ]);
     }
 
-    public function store(RequestApprovalRequest $request, Project $project, FlashMessageCatalog $flash): RedirectResponse
+    public function store(
+        RequestApprovalRequest $request,
+        Project $project,
+        FlashMessageCatalog $flash,
+        SyncExecutionPackageApprovalStateAction $syncExecutionPackageApprovalState,
+    ): RedirectResponse
     {
         $workspace = $this->currentWorkspace($request);
         $this->authorize('requestApprovals', $workspace);
@@ -62,30 +69,42 @@ class ApprovalController extends Controller
 
         abort_unless($this->itemBelongsToProject($workspace->id, $project->id, $itemType, $itemId), 422);
 
-        Approval::query()->create([
+        $approval = Approval::query()->updateOrCreate([
             'workspace_id' => $workspace->id,
             'project_id' => $project->id,
             'item_type' => $itemType,
             'item_id' => $itemId,
             'status' => 'pending',
+        ], [
             'reviewer_id' => $request->user()->id,
             'note' => $data['note'] ?? null,
         ]);
 
+        $syncExecutionPackageApprovalState->markRequested($approval);
+
         return back()->with('status', $flash->approvalSubmitted());
     }
 
-    public function update(ReviewApprovalRequest $request, Approval $approval, FlashMessageCatalog $flash): RedirectResponse
+    public function update(
+        ReviewApprovalRequest $request,
+        Approval $approval,
+        FlashMessageCatalog $flash,
+        SyncExecutionPackageApprovalStateAction $syncExecutionPackageApprovalState,
+    ): RedirectResponse
     {
         $workspace = $this->currentWorkspace($request);
         $this->authorize('review', $approval);
         abort_unless($approval->workspace_id === $workspace->id, 404);
 
+        $data = $request->validated();
+
         $approval->update([
             'status' => $request->validated('status'),
-            'note' => $request->validated('note'),
+            'note' => array_key_exists('note', $data) ? $data['note'] : $approval->note,
             'reviewer_id' => $request->user()->id,
         ]);
+
+        $syncExecutionPackageApprovalState->applyDecision($approval);
 
         return back()->with('status', $flash->approvalUpdated());
     }
@@ -99,6 +118,11 @@ class ApprovalController extends Controller
                 ->whereKey($itemId)
                 ->exists(),
             'ai_generation' => AIGeneration::query()
+                ->where('workspace_id', $workspaceId)
+                ->where('project_id', $projectId)
+                ->whereKey($itemId)
+                ->exists(),
+            'execution_package' => ExecutionPackage::query()
                 ->where('workspace_id', $workspaceId)
                 ->where('project_id', $projectId)
                 ->whereKey($itemId)

@@ -197,4 +197,14 @@ return [
         ],
     ],
 
+    /*
+    | إشعارات push للموبايل عبر FCM HTTP v1.
+    | project_id: معرف مشروع Firebase. credentials: مسار ملف service-account JSON.
+    | بدون هذين الإعدادين تعمل PushGateway كـ no-op آمن.
+    */
+    'fcm' => [
+        'project_id' => env('FCM_PROJECT_ID'),
+        'credentials' => env('FCM_CREDENTIALS_PATH'),
+    ],
+
 ];

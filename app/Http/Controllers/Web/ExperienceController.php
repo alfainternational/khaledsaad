@@ -131,7 +131,6 @@ class ExperienceController extends Controller
     public function studio(
         Request $request,
         EntitlementResolver $resolver,
-        FeatureFlagService $flags,
         WorkspaceProfileStore $profileStore,
         WorkspaceJourneyStore $journeyStore,
         ProjectMarketingBriefStore $briefStore,
@@ -143,7 +142,6 @@ class ExperienceController extends Controller
         }
 
         $workspace = $this->currentWorkspace($request);
-        $context = $this->workspaceContext($request);
 
         $projects = Project::query()
             ->where('workspace_id', $workspace->id)
@@ -189,7 +187,6 @@ class ExperienceController extends Controller
             'workspace' => $workspace,
             'profile' => $profileStore->get($workspace),
             'studioEnabled' => $resolver->boolean('modules.ai_studio', $workspace),
-            'newTemplatesEnabled' => $flags->isEnabled('ai_studio.new_templates', $context),
             'templates' => AITemplate::query()->where('status', 'published')->orderBy('credit_cost')->get(),
             'projects' => $projects,
             'projectBriefs' => $projects

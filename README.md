@@ -1,58 +1,110 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# KhaledSaad Marketing Intelligence Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+منصة Laravel عربية تساعد صاحب المشروع أو الوكالة على الانتقال من التخمين إلى قرار تسويقي واضح: تشخيص، أولويات، مخرجات قابلة للتنفيذ، ثم قياس.
 
-## About Laravel
+## المنتج باختصار
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+المنصة ليست مولد محتوى عام. هي نظام تشخيص وتنفيذ تسويقي:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- يبدأ بتشخيص مجاني قبل التسجيل عبر `/diagnose`.
+- يحول التشخيص بعد التسجيل إلى مشروع داخل Workspace.
+- يبني ملف مشروع تسويقي حي يجمع الجمهور، العرض، الهدف، القنوات، المنافسين، والميزانية.
+- يقدم 26 أداة استراتيجية على خمس مراحل.
+- يولد تقريراً استراتيجياً شاملاً وخطة 7/30/90.
+- يحول توصيات التدقيق إلى Execution Packages فيها مهام وأصل تنفيذ قابل للتعديل.
+- يدعم AI Studio بقوالب تسليم عملية للإعلانات، صفحات الهبوط، واتساب، البريد، والبراند.
+- يجهز مسار وكالة/White Label لإدارة عدة عملاء وإثبات القيمة.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## الرحلة الأساسية
 
-## Learning Laravel
+1. الزائر يدخل رابط موقعه أو اسم النشاط وهدفه.
+2. النظام يحلل الموقع/الحسابات/المنافس ويعرض نتيجة جزئية بعد البريد.
+3. عند التسجيل، تتحول الحالة إلى مشروع محفوظ.
+4. المستخدم يكمل ملف المشروع التسويقي.
+5. الأدوات تبني وضوح الفكرة، العميل، السوق، العرض، الخطة، والقياس.
+6. التقرير يجمع المخرجات في تشخيص وأولويات وخطة.
+7. التوصيات تتحول إلى حزم تنفيذ قابلة للمراجعة والاعتماد.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## البنية التقنية
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Backend: Laravel 13 / PHP 8.3
+- Auth: Laravel session + Sanctum API
+- Frontend build: Vite + Tailwind CSS
+- PDF: mPDF
+- AI gateways: Gemini / NVIDIA / OpenAI-compatible fallback حسب الإعدادات
+- Domain structure: `app/Domain`, `app/Application`, `app/Support`, `app/Http`
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## أهم المسارات
 
-## Agentic Development
+- `/diagnose` التشخيص المجاني قبل التسجيل
+- `/dashboard` لوحة المستخدم
+- `/projects` إدارة المشاريع
+- `/tools` الأدوات الاستراتيجية
+- `/studio` AI Studio
+- `/reports` التقارير
+- `/agency` واجهة الوكالة
+- `/admin` لوحة الإدارة
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## أهم الملفات
+
+- `routes/web.php` مسارات الويب والتدفقات الأساسية
+- `app/Support/Intelligence/GuestDiagnosisService.php` تحليل التشخيص المجاني
+- `app/Support/Tooling/ToolBlueprintCatalog.php` تعريف أسئلة ومخرجات الأدوات
+- `app/Application/Tooling/RunToolAction.php` تشغيل الأداة وحفظ المخرجات
+- `app/Application/Reports/BuildProjectReportAction.php` بناء التقرير الشامل
+- `app/Application/Execution/BuildExecutionPackageAction.php` تحويل التوصية إلى حزمة تنفيذ
+- `app/Support/AI/StudioTemplateCatalog.php` قوالب AI Studio وعقود الجودة
+- `config/agent_registry.php` سجل قدرات الوكلاء
+
+## التشغيل المحلي
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+npm install --ignore-scripts
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm run build
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+للتطوير المستمر:
 
-## Contributing
+```bash
+composer run dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## الاختبارات
 
-## Code of Conduct
+```bash
+php artisan test
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+اختبارات مركزة مفيدة أثناء تطوير المنتج:
 
-## Security Vulnerabilities
+```bash
+php artisan test tests/Unit/ToolBlueprintCatalogTest.php
+php artisan test tests/Feature/App/GuestDiagnosisFunnelTest.php
+php artisan test tests/Feature/Execution/ExecutionLayerTest.php
+php artisan test tests/Unit/Reports
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## النشر
 
-## License
+راجع ملفات `deploy/` و`DEPLOYMENT.md` قبل أي رفع. مسار النشر الحالي يعتمد على:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- ضبط `.env.production` أو متغيرات الاستضافة.
+- بناء أصول الواجهة عبر `npm run build`.
+- رفع ملفات Laravel مع `vendor` أو تشغيل `composer install --no-dev` على الخادم.
+- تشغيل `php artisan migrate --force`.
+- تنظيف وإعادة بناء الكاش: `config:cache`, `route:cache`, `view:cache`.
+- تشغيل queue/scheduler إن كانت الاستضافة تدعمهما.
+
+## أولويات المنتج القادمة
+
+- بناء Agency Audit لتقييم خطط وتقارير الوكالات وإعطاء صاحب المشروع أسئلة واضحة يطلبها من الوكالة.
+- ربط Execution Packages بقوالب AI Studio حتى لا تبقى الحزمة مجرد توصية، بل تسليم جاهز.
+- إضافة Performance Intake يدوي: الإنفاق، العملاء المحتملون، المبيعات، CAC، ROAS، CTR، CPL.
+- تبسيط واجهة صاحب المشروع إلى Top 3 priorities قبل عرض التقارير التفصيلية.
+- معالجة تحذيرات `npm audit` وتثبيت CI للـ build والاختبارات.
+

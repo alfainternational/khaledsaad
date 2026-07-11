@@ -3,6 +3,7 @@
 namespace Tests\Feature\App;
 
 use App\Domain\Account\Models\Account;
+use App\Domain\Approval\Models\Approval;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Client\Models\Client;
@@ -111,13 +112,264 @@ class ToolRunApiTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('ملخص تحليل مشروعك')
+            ->assertSee('لمحة تحليل مشروعك')
             ->assertSee('تحليل مبني على مصادر فعلية')
             ->assertSee('حسّن زر الإجراء الرئيسي قبل توسيع العرض')
             ->assertSee('data-upstream-context-root', false)
             ->assertSee('data-project-brief-root', false)
             ->assertSee('data-tool-briefing-root', false)
             ->assertSee('كيف تستفيد هذه الأداة من ملف المشروع؟');
+    }
+
+    #[Test]
+    public function agency_audit_returns_a_clear_operational_verdict(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $response = $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة إعلانات ميتا مع محتوى أسبوعي',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => 'صرفنا 3000 ريال وجبنا 9000 ظهور و120 نقرة',
+                    'agency_budget' => '3000 ريال',
+                    'agency_tracking' => 'لا يوجد Pixel أو UTM واضح',
+                    'agency_concern' => 'يرسلون أرقام تفاعل فقط بدون مبيعات',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                    'agency_decision' => 'لا أريد التجديد قبل وضوح النتائج',
+                ],
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.summary.headline', 'تقييم الوكالة — API Project')
+            ->assertJsonPath('data.summary.agency_verdict.risk_level', 'مرتفع')
+            ->assertJsonPath('data.summary.agency_verdict.decision', 'لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertJsonPath('data.summary.agency_verdict.meeting_brief', "مرحباً، راجعنا أداء الحملات ونحتاج قبل أي توسعة أو تجديد إلى تصحيح القياس وربط النتائج بأهداف العمل.\nقرارنا الحالي: لا توسّع أو تجدّد قبل تصحيح القياس.\nالطلب الأول: تقرير CAC أو تكلفة العميل المحتمل المؤهل.\nالطلب الثاني: توضيح مصدر كل نتيجة عبر Pixel أو UTM أو CRM.\nسؤال الاجتماع: ما تكلفة العميل المحتمل المؤهل؟\nنحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية أو تثبيت الخطة القادمة.")
+            ->assertJsonPath('data.output.agency_verdict.score', 38);
+
+        $bullets = $response->json('data.summary.bullets');
+        $this->assertContains('الحكم: لا توسّع أو تجدّد قبل تصحيح القياس', $bullets);
+        $this->assertContains('اطلب من الوكالة: تقرير CAC أو تكلفة العميل المحتمل المؤهل', $bullets);
+        $this->assertContains('سؤال الاجتماع القادم: ما تكلفة العميل المحتمل المؤهل؟', $bullets);
+
+        $nextActions = $response->json('data.next_actions');
+        $this->assertContains('لا توسّع أو تجدّد قبل تصحيح القياس', $nextActions);
+        $this->assertContains('اطلب من الوكالة: تقرير CAC أو تكلفة العميل المحتمل المؤهل', $nextActions);
+        $this->assertContains('اسأل في الاجتماع القادم: ما تكلفة العميل المحتمل المؤهل؟', $nextActions);
+    }
+
+    #[Test]
+    public function agency_audit_result_panel_renders_the_operational_verdict(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة حملات ميتا',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => '120 نقرة وظهور كثير بدون مبيعات',
+                    'agency_tracking' => 'لا يوجد UTM واضح',
+                    'agency_concern' => 'أرقام تفاعل فقط',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                ],
+            ])
+            ->assertOk();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('tools.show', $tool))
+            ->assertOk()
+            ->assertSee('حكم تشغيل الوكالة', false)
+            ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertSee('مستوى المخاطرة')
+            ->assertSee('مطالب من الوكالة')
+            ->assertSee('أسئلة الاجتماع القادم')
+            ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل')
+            ->assertSee('رسالة الاجتماع مع الوكالة')
+            ->assertSee('راجعنا أداء الحملات ونحتاج قبل أي توسعة أو تجديد')
+            ->assertSee('خطوات المتابعة')
+            ->assertSee('اتفق على فترة قياس قصيرة قبل أي زيادة ميزانية أو تجديد.');
+    }
+
+    #[Test]
+    public function project_page_shows_the_latest_tool_run_next_action(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة حملات ميتا',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => '120 نقرة وظهور كثير بدون مبيعات',
+                    'agency_tracking' => 'لا يوجد UTM واضح',
+                    'agency_concern' => 'أرقام تفاعل فقط',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                ],
+            ])
+            ->assertOk();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('projects.show', $project))
+            ->assertOk()
+            ->assertSee('آخر تشغيلات الأدوات')
+            ->assertSee('خطوة هذا التشغيل')
+            ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertSee('فتح النتيجة')
+            ->assertSee(route('tools.show', $tool), false);
+    }
+
+    #[Test]
+    public function project_page_surfaces_the_latest_agency_audit_verdict(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة حملات ميتا',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => '120 نقرة وظهور كثير بدون مبيعات',
+                    'agency_tracking' => 'لا يوجد UTM واضح',
+                    'agency_concern' => 'أرقام تفاعل فقط',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                ],
+            ])
+            ->assertOk();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('projects.show', $project))
+            ->assertOk()
+            ->assertSee('حكم الوكالة الحالي')
+            ->assertSee('لا توسّع أو تجدّد قبل تصحيح القياس')
+            ->assertSee('مرتفع')
+            ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل')
+            ->assertSee('رسالة الاجتماع مع الوكالة')
+            ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية')
+            ->assertSee('طلب اعتماد مطالب الوكالة')
+            ->assertSee('فتح تقييم الوكالة');
+    }
+
+    #[Test]
+    public function agency_audit_meeting_brief_can_be_requested_for_approval(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة حملات ميتا',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => '120 نقرة وظهور كثير بدون مبيعات',
+                    'agency_tracking' => 'لا يوجد UTM واضح',
+                    'agency_concern' => 'أرقام تفاعل فقط',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                ],
+            ])
+            ->assertOk();
+
+        $run = ToolRun::query()->where('tool_code', 'agency-audit')->firstOrFail();
+        $meetingBrief = $run->summary_json['agency_verdict']['meeting_brief'];
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->post(route('projects.approvals.store', $project), [
+                'item_type' => 'tool_run',
+                'item_id' => $run->id,
+                'note' => $meetingBrief,
+            ])
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('approvals', [
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'item_type' => 'tool_run',
+            'item_id' => $run->id,
+            'status' => 'pending',
+            'note' => $meetingBrief,
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->post(route('projects.approvals.store', $project), [
+                'item_type' => 'tool_run',
+                'item_id' => $run->id,
+                'note' => $meetingBrief,
+            ])
+            ->assertSessionHas('status');
+
+        $this->assertSame(
+            1,
+            Approval::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('project_id', $project->id)
+                ->where('item_type', 'tool_run')
+                ->where('item_id', $run->id)
+                ->where('status', 'pending')
+                ->count()
+        );
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('approvals.index'))
+            ->assertOk()
+            ->assertSee('تقييم الوكالة — API Project')
+            ->assertSee('تشغيل أداة')
+            ->assertSee('قيد المراجعة')
+            ->assertSee('app-badge-warning', false)
+            ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية')
+            ->assertSee('فتح المصدر')
+            ->assertSee('اعتماد')
+            ->assertSee('رفض')
+            ->assertSee(route('tools.show', $tool), false);
+
+        $approval = Approval::query()->where('item_type', 'tool_run')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('approvals.update', $approval), [
+                'status' => 'approved',
+            ])
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('approvals', [
+            'id' => $approval->id,
+            'status' => 'approved',
+            'note' => $meetingBrief,
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('approvals.index'))
+            ->assertOk()
+            ->assertSee('معتمد')
+            ->assertSee('app-badge-success', false)
+            ->assertDontSee('رفض');
     }
 
     /**

@@ -178,7 +178,7 @@
             <div class="app-list-item">
                 <div>
                     <strong>تحليل مشروعك</strong>
-                    <small>آخر الدرجات، موثوقية التحليل، التشخيص الصادق، والأولويات السريعة قبل التوليد.</small>
+                    <small>Marketing Intelligence: آخر الدرجات، موثوقية التحليل، التشخيص الصادق، والأولويات السريعة قبل التوليد.</small>
                 </div>
             </div>
             <div class="app-list-item">

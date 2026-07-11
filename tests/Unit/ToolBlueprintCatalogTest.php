@@ -36,6 +36,7 @@ class ToolBlueprintCatalogTest extends TestCase
             'kpi-tracker',
             'execution-plan',
             'performance-review',
+            'agency-audit',
             'smart-recommendations',
             'growth-priorities',
         ];
@@ -50,12 +51,12 @@ class ToolBlueprintCatalogTest extends TestCase
             $this->assertNotEmpty($blueprint['when'] ?? null);
             $this->assertNotEmpty($blueprint['ai_role'] ?? null);
             $this->assertArrayHasKey('guided', $blueprint['modes']);
-            $this->assertArrayHasKey('structured', $blueprint['modes']);
-            $this->assertArrayHasKey('expert', $blueprint['modes']);
+            $this->assertArrayNotHasKey('structured', $blueprint['modes']);
+            $this->assertArrayNotHasKey('expert', $blueprint['modes']);
             $this->assertNotEmpty($blueprint['modes']['guided']['fields']);
-            $this->assertNotEmpty($blueprint['modes']['structured']['fields']);
-            $this->assertNotEmpty($blueprint['modes']['expert']['fields']);
             $this->assertNotEmpty($blueprint['modes']['guided']['fields'][0]['answer_tip'] ?? null);
+            $this->assertContains('core', array_column($blueprint['modes']['guided']['fields'], 'depth'));
+            $this->assertContains('detail', array_column($blueprint['modes']['guided']['fields'], 'depth'));
         }
     }
 }

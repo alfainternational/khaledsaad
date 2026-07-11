@@ -1256,6 +1256,83 @@ function updateToolInputCoach(form) {
     return recommendation;
 }
 
+function renderAgencyVerdictCard(resultBody, verdict, textNode) {
+    if (!resultBody) return;
+
+    const existing = resultBody.querySelector('.agency-verdict-card');
+    if (!verdict || typeof verdict !== 'object') {
+        if (existing) existing.remove();
+        return;
+    }
+
+    const demands = Array.isArray(verdict.demands) ? verdict.demands.filter(Boolean).slice(0, 3) : [];
+    const questions = Array.isArray(verdict.questions) ? verdict.questions.filter(Boolean).slice(0, 3) : [];
+    const score = Number.parseInt(verdict.score, 10) || 0;
+    const riskLevel = verdict.risk_level || 'غير محدد';
+    const decision = verdict.decision || 'راجع القياس قبل القرار.';
+    const firstDemand = demands[0] || 'اطلب أرقاماً قابلة للقياس.';
+    const meetingBrief = typeof verdict.meeting_brief === 'string' ? verdict.meeting_brief.trim() : '';
+
+    const cardHtml = `
+        <section class="agency-verdict-card" aria-label="حكم تشغيل الوكالة">
+            <div class="agency-verdict-head">
+                <span>حكم تشغيل الوكالة</span>
+                <strong>${score}/100</strong>
+            </div>
+            <p class="agency-verdict-decision">${escapeHtml(decision)}</p>
+            <div class="agency-verdict-meta">
+                <div>
+                    <span>مستوى المخاطرة</span>
+                    <strong>${escapeHtml(riskLevel)}</strong>
+                </div>
+                <div>
+                    <span>أول طلب</span>
+                    <strong>${escapeHtml(firstDemand)}</strong>
+                </div>
+            </div>
+            ${demands.length > 0 ? `
+                <div class="agency-verdict-list">
+                    <strong>مطالب من الوكالة</strong>
+                    <ul>${demands.map(demand => `<li>${escapeHtml(demand)}</li>`).join('')}</ul>
+                </div>
+            ` : ''}
+            ${questions.length > 0 ? `
+                <div class="agency-verdict-list">
+                    <strong>أسئلة الاجتماع القادم</strong>
+                    <ul>${questions.map(question => `<li>${escapeHtml(question)}</li>`).join('')}</ul>
+                </div>
+            ` : ''}
+            ${meetingBrief ? `
+                <div class="agency-verdict-list">
+                    <strong>رسالة الاجتماع مع الوكالة</strong>
+                    <p>${escapeHtml(meetingBrief).replace(/\n/g, '<br>')}</p>
+                </div>
+            ` : ''}
+        </section>
+    `;
+
+    if (existing) {
+        existing.outerHTML = cardHtml;
+    } else if (textNode) {
+        textNode.insertAdjacentHTML('afterend', cardHtml);
+    } else {
+        resultBody.insertAdjacentHTML('afterbegin', cardHtml);
+    }
+}
+
+function renderToolNextActions(container, actions) {
+    const card = container.querySelector('[data-tool-next-actions-card]');
+    if (!card) return;
+
+    const list = card.querySelector('[data-tool-next-actions-list]');
+    const nextActions = Array.isArray(actions) ? actions.filter(Boolean).slice(0, 4) : [];
+
+    card.hidden = nextActions.length === 0;
+    if (list) {
+        list.innerHTML = nextActions.map(action => `<li>${escapeHtml(action)}</li>`).join('');
+    }
+}
+
 function renderToolResult(container, data) {
     const summary = data.summary || {};
     const score = data.completeness_score || 0;
@@ -1263,6 +1340,7 @@ function renderToolResult(container, data) {
     const text = summary.text || '';
     const bullets = summary.bullets || [];
     const isAiGenerated = data.ai_generated || false;
+    const agencyVerdict = summary.agency_verdict || data.output?.agency_verdict || null;
 
     const scoreNode = container.querySelector('[data-tool-preview-score], [data-diagnosis-score]');
     const headlineNode = container.querySelector('[data-tool-preview-headline], [data-diagnosis-headline]');
@@ -1273,6 +1351,8 @@ function renderToolResult(container, data) {
     if (scoreNode) scoreNode.textContent = `${score}%`;
     if (headlineNode) headlineNode.textContent = headline;
     if (textNode) textNode.textContent = text;
+    renderAgencyVerdictCard(resultBody, agencyVerdict, textNode);
+    renderToolNextActions(container, data.next_actions);
     if (bulletsNode) {
         bulletsNode.innerHTML = bullets
             .filter(b => b && b.trim() !== '')

@@ -32,7 +32,7 @@ class ReadinessCatalog
             ],
             'measurement_readiness' => [
                 'label' => 'اكتمال قياس النتائج والتوسّع',
-                'tools' => ['kpi-tracker', 'execution-plan', 'performance-review', 'smart-recommendations', 'growth-priorities'],
+                'tools' => ['kpi-tracker', 'execution-plan', 'performance-review', 'agency-audit', 'smart-recommendations', 'growth-priorities'],
             ],
         ];
     }
