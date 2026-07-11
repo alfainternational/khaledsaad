@@ -24,6 +24,7 @@
     ];
     $nextPackageAction = $packageActions[$package->status] ?? null;
     $canUpdateTasks = $package->status === 'in_progress';
+    $canUpdatePackageDetails = ! in_array($package->status, ['executed', 'measuring'], true);
     $canCreateReports = in_array($package->status, ['in_progress', 'executed', 'measuring'], true);
     $allTasksDone = $package->tasks->isNotEmpty() && $package->tasks->every(fn ($task) => $task->status === 'done');
     $taskLockedLabel = in_array($package->status, ['executed', 'measuring'], true)
@@ -66,6 +67,42 @@
         <p>{{ $package->decision }}</p>
     </article>
 @endif
+
+<article class="exec-section">
+    <h3>مسؤولية الحزمة</h3>
+    <p>
+        مالك الحزمة: {{ $package->owner?->name ?? 'غير محدد' }}
+        @if ($package->deadline)
+            · الموعد النهائي: {{ $package->deadline->format('Y-m-d') }}
+        @else
+            · الموعد النهائي: غير محدد
+        @endif
+    </p>
+
+    @if ($canUpdatePackageDetails)
+        <form method="POST" action="{{ route('execution-packages.details', $package) }}" class="exec-report-form">
+            @csrf @method('PATCH')
+            <label>
+                <span>مالك الحزمة</span>
+                <select name="owner_user_id">
+                    <option value="">بدون مالك محدد</option>
+                    @foreach ($activeMembers as $member)
+                        @if ($member->user)
+                            <option value="{{ $member->user_id }}" @selected((int) old('owner_user_id', $package->owner_user_id) === $member->user_id)>{{ $member->user->name }}</option>
+                        @endif
+                    @endforeach
+                </select>
+            </label>
+            <label>
+                <span>الموعد النهائي</span>
+                <input type="date" name="deadline" value="{{ old('deadline', $package->deadline?->format('Y-m-d')) }}">
+            </label>
+            <button type="submit" class="btn btn-secondary btn-sm">تحديث مسؤولية الحزمة</button>
+        </form>
+    @else
+        <p>تم إغلاق تفاصيل الحزمة بعد تأكيد التنفيذ.</p>
+    @endif
+</article>
 
 <article class="exec-section">
     <h3>المهام</h3>

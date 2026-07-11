@@ -27,7 +27,7 @@ class ExecutionPackageController extends Controller
         $workspace = $this->currentWorkspace($request);
         abort_unless($executionPackage->workspace_id === $workspace->id, 404);
 
-        $executionPackage->load(['tasks.assignee', 'assets', 'reports', 'recommendation', 'project']);
+        $executionPackage->load(['owner', 'tasks.assignee', 'assets', 'reports', 'recommendation', 'project']);
         $this->authorize('view', $executionPackage->project);
 
         return view('app.execution-packages.show', [
@@ -60,6 +60,46 @@ class ExecutionPackageController extends Controller
         return redirect()
             ->route('execution-packages.show', $executionPackage)
             ->with('status', $flash->statusUpdated('حزمة التنفيذ'));
+    }
+
+    public function updateDetails(
+        Request $request,
+        ExecutionPackage $executionPackage,
+        FlashMessageCatalog $flash,
+    ): RedirectResponse {
+        $workspace = $this->currentWorkspace($request);
+        abort_unless($executionPackage->workspace_id === $workspace->id, 404);
+        $this->authorize('update', $executionPackage->project);
+
+        if (in_array($executionPackage->status, ['executed', 'measuring'], true)) {
+            throw ValidationException::withMessages([
+                'package' => ['لا يمكن تعديل تفاصيل الحزمة بعد تأكيد التنفيذ.'],
+            ]);
+        }
+
+        $validated = $request->validate([
+            'owner_user_id' => ['nullable', 'integer'],
+            'deadline' => ['nullable', 'date'],
+        ]);
+
+        if (($validated['owner_user_id'] ?? null) !== null) {
+            $isMember = $workspace->members()
+                ->where('user_id', (int) $validated['owner_user_id'])
+                ->where('status', 'active')
+                ->exists();
+
+            if (! $isMember) {
+                throw ValidationException::withMessages([
+                    'owner_user_id' => ['المستخدم المحدد ليس عضواً نشطاً في مساحة العمل.'],
+                ]);
+            }
+        }
+
+        $executionPackage->update($validated);
+
+        return redirect()
+            ->route('execution-packages.show', $executionPackage)
+            ->with('status', $flash->updated('تفاصيل حزمة التنفيذ'));
     }
 
     public function updateTaskStatus(

@@ -4,6 +4,7 @@ namespace App\Domain\Execution\Models;
 
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
+use App\Models\User;
 use App\Support\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,6 +56,11 @@ class ExecutionPackage extends Model
     public function recommendation(): BelongsTo
     {
         return $this->belongsTo(Recommendation::class);
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_user_id');
     }
 
     public function tasks(): HasMany
