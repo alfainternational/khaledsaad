@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/session_service.dart';
+import '../shared/widgets/animated_app_background.dart';
+import '../shared/widgets/brand_mark.dart';
 import 'register_controller.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -48,29 +50,51 @@ class _RegisterPageState extends State<RegisterPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('إنشاء حساب')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Obx(() {
-                  final err = _c.formError.value;
-                  if (err == null) return const SizedBox.shrink();
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.errorContainer,
-                      borderRadius: BorderRadius.circular(12),
+      body: AnimatedAppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Center(child: BrandMark(size: 56)),
+                  const SizedBox(height: 18),
+                  Text(
+                    'ابدأ مشروعك الأول',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
                     ),
-                    child: Text(err,
-                        style: TextStyle(color: theme.colorScheme.onErrorContainer)),
-                  );
-                }),
-                Obx(() => TextFormField(
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'أنشئ الحساب ثم اترك المنصة ترشدك للخطوة التسويقية التالية.',
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Obx(() {
+                    final err = _c.formError.value;
+                    if (err == null) return const SizedBox.shrink();
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        err,
+                        style: TextStyle(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    );
+                  }),
+                  Obx(
+                    () => TextFormField(
                       controller: _name,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
@@ -80,9 +104,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'أدخل اسمك' : null,
-                    )),
-                const SizedBox(height: 16),
-                Obx(() => TextFormField(
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(
+                    () => TextFormField(
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
@@ -94,9 +120,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'أدخل بريدك الإلكتروني'
                           : null,
-                    )),
-                const SizedBox(height: 16),
-                Obx(() => TextFormField(
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(
+                    () => TextFormField(
                       controller: _password,
                       obscureText: _c.obscurePassword.value,
                       textInputAction: TextInputAction.next,
@@ -105,41 +133,50 @@ class _RegisterPageState extends State<RegisterPage> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         errorText: _c.fieldErrors['password'],
                         suffixIcon: IconButton(
-                          icon: Icon(_c.obscurePassword.value
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
+                          icon: Icon(
+                            _c.obscurePassword.value
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
                           onPressed: () => _c.obscurePassword.toggle(),
                         ),
                       ),
                       validator: (v) => (v == null || v.length < 8)
                           ? 'كلمة المرور 8 أحرف على الأقل'
                           : null,
-                    )),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirm,
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _submit(),
-                  decoration: const InputDecoration(
-                    labelText: 'تأكيد كلمة المرور',
-                    prefixIcon: Icon(Icons.lock_outline),
+                    ),
                   ),
-                  validator: (v) =>
-                      (v != _password.text) ? 'كلمتا المرور غير متطابقتين' : null,
-                ),
-                const SizedBox(height: 24),
-                Obx(() => FilledButton(
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _confirm,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _submit(),
+                    decoration: const InputDecoration(
+                      labelText: 'تأكيد كلمة المرور',
+                      prefixIcon: Icon(Icons.lock_outline),
+                    ),
+                    validator: (v) => (v != _password.text)
+                        ? 'كلمتا المرور غير متطابقتين'
+                        : null,
+                  ),
+                  const SizedBox(height: 24),
+                  Obx(
+                    () => FilledButton(
                       onPressed: _c.isLoading.value ? null : _submit,
                       child: _c.isLoading.value
                           ? const SizedBox(
                               height: 22,
                               width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.4),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                              ),
                             )
                           : const Text('إنشاء الحساب'),
-                    )),
-              ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

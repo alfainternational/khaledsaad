@@ -6,7 +6,9 @@ import '../../core/error/api_exception.dart';
 import '../../data/models/tool_list_item.dart';
 import '../../data/repositories/tool_repository.dart';
 import '../../data/services/workspace_service.dart';
+import '../shared/widgets/animated_app_background.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/hero_panel.dart';
 
 /// أدوات المشروع مجمّعة حسب المرحلة — قائمة هادئة بأقسام واضحة.
 class ProjectToolsPage extends StatefulWidget {
@@ -69,68 +71,80 @@ class _ProjectToolsPageState extends State<ProjectToolsPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('الأدوات')),
-      body: Obx(() {
-        if (_loading.value) return AppStateView.loading();
-        if (_error.value != null) {
-          return AppStateView.error(message: _error.value, onRetry: _load);
-        }
-        if (_tools.isEmpty) {
-          return AppStateView.empty(
-            icon: Icons.build_outlined,
-            title: 'لا توجد أدوات متاحة',
-          );
-        }
+      body: AnimatedAppBackground(
+        child: Obx(() {
+          if (_loading.value) return AppStateView.loading();
+          if (_error.value != null) {
+            return AppStateView.error(message: _error.value, onRetry: _load);
+          }
+          if (_tools.isEmpty) {
+            return AppStateView.empty(
+              icon: Icons.build_outlined,
+              title: 'لا توجد أدوات متاحة',
+            );
+          }
 
-        final recommended = _tools.where((tool) => tool.recommendedNow).toList()
-          ..sort(_compareTools);
+          final recommended =
+              _tools.where((tool) => tool.recommendedNow).toList()
+                ..sort(_compareTools);
 
-        // تجميع حسب المرحلة مع الحفاظ على الترتيب.
-        final byStage = <int, List<ToolListItem>>{};
-        for (final tool in _tools) {
-          byStage.putIfAbsent(tool.stage ?? 0, () => []).add(tool);
-        }
-        for (final stageTools in byStage.values) {
-          stageTools.sort(_compareTools);
-        }
-        final stages = byStage.keys.toList()..sort();
+          // تجميع حسب المرحلة مع الحفاظ على الترتيب.
+          final byStage = <int, List<ToolListItem>>{};
+          for (final tool in _tools) {
+            byStage.putIfAbsent(tool.stage ?? 0, () => []).add(tool);
+          }
+          for (final stageTools in byStage.values) {
+            stageTools.sort(_compareTools);
+          }
+          final stages = byStage.keys.toList()..sort();
 
-        return RefreshIndicator(
-          onRefresh: _load,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (recommended.isNotEmpty) ...[
-                Text(
-                  'ابدأ بهذه الآن',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+          return RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+              children: [
+                const HeroPanel(
+                  icon: Icons.route_outlined,
+                  title: 'الأدوات مرتبة حسب خطوتك التالية',
+                  body:
+                      'ابدأ بما يحتاجه المشروع الآن، ثم انتقل للأدوات المتقدمة عند اكتمال الأساس.',
                 ),
-                const SizedBox(height: 8),
-                ...recommended.map(
-                  (tool) => _ToolTile(tool: tool, onTap: () => _openTool(tool)),
-                ),
-                const SizedBox(height: 12),
-              ],
-              for (final stage in stages) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8, top: 8),
-                  child: Text(
-                    _stageLabels[stage] ?? 'أدوات أخرى',
-                    style: theme.textTheme.titleSmall?.copyWith(
+                const SizedBox(height: 16),
+                if (recommended.isNotEmpty) ...[
+                  Text(
+                    'ابدأ بهذه الآن',
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.primary,
                     ),
                   ),
-                ),
-                ...byStage[stage]!.map(
-                  (tool) => _ToolTile(tool: tool, onTap: () => _openTool(tool)),
-                ),
+                  const SizedBox(height: 8),
+                  ...recommended.map(
+                    (tool) =>
+                        _ToolTile(tool: tool, onTap: () => _openTool(tool)),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                for (final stage in stages) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8, top: 8),
+                    child: Text(
+                      _stageLabels[stage] ?? 'أدوات أخرى',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  ...byStage[stage]!.map(
+                    (tool) =>
+                        _ToolTile(tool: tool, onTap: () => _openTool(tool)),
+                  ),
+                ],
               ],
-            ],
-          ),
-        );
-      }),
+            ),
+          );
+        }),
+      ),
     );
   }
 

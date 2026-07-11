@@ -6,7 +6,10 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/session_service.dart';
 import '../../data/services/workspace_service.dart';
+import '../shared/widgets/action_tile.dart';
+import '../shared/widgets/animated_app_background.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/hero_panel.dart';
 import 'dashboard_controller.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -14,16 +17,18 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(DashboardController(
-      Get.find<WorkspaceService>(),
-      Get.find<AuthRepository>(),
-      Get.find<SessionService>(),
-      Get.find<CollabRepository>(),
-    ));
+    final c = Get.put(
+      DashboardController(
+        Get.find<WorkspaceService>(),
+        Get.find<AuthRepository>(),
+        Get.find<SessionService>(),
+        Get.find<CollabRepository>(),
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('لوحة المتابعة'),
+        title: const Text('مركز النمو'),
         actions: [
           IconButton(
             tooltip: 'تسجيل الخروج',
@@ -32,139 +37,114 @@ class DashboardPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Obx(() {
-        if (c.isLoading.value && c.workspaces.workspaces.isEmpty) {
-          return AppStateView.loading();
-        }
-        if (c.error.value != null && c.workspaces.workspaces.isEmpty) {
-          return AppStateView.error(message: c.error.value, onRetry: c.load);
-        }
-        if (c.workspaces.workspaces.isEmpty) {
-          return AppStateView.empty(
-            icon: Icons.workspaces_outline,
-            title: 'لا توجد مساحات عمل',
-            message: 'ابدأ بإنشاء مساحة عمل من الويب.',
-          );
-        }
-        return RefreshIndicator(
-          onRefresh: c.load,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Obx(() {
-                if (!c.workspaces.isOffline.value) return const SizedBox.shrink();
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.tertiaryContainer,
-                    borderRadius: BorderRadius.circular(12),
+      body: AnimatedAppBackground(
+        child: Obx(() {
+          if (c.isLoading.value && c.workspaces.workspaces.isEmpty) {
+            return AppStateView.loading();
+          }
+          if (c.error.value != null && c.workspaces.workspaces.isEmpty) {
+            return AppStateView.error(message: c.error.value, onRetry: c.load);
+          }
+          if (c.workspaces.workspaces.isEmpty) {
+            return AppStateView.empty(
+              icon: Icons.workspaces_outline,
+              title: 'لا توجد مساحات عمل',
+              message: 'ابدأ بإنشاء مساحة عمل من الويب.',
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: c.load,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+              children: [
+                const HeroPanel(
+                  icon: Icons.trending_up,
+                  title: 'خطوتك التالية تبدأ من هنا',
+                  body:
+                      'تابع مشروعك، شغّل الأداة المناسبة، وحوّل التشخيص إلى تنفيذ قابل للقياس.',
+                ),
+                const SizedBox(height: 14),
+                _WorkspaceCard(service: c.workspaces),
+                const SizedBox(height: 16),
+                Text(
+                  'العمل اليومي',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.wifi_off, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text('أنت بلا اتصال — تُعرض آخر نسخة محفوظة.',
-                            style: Theme.of(context).textTheme.bodySmall),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-              _WorkspaceCard(service: c.workspaces),
-              const SizedBox(height: 16),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.folder_open),
-                  title: const Text('مشاريعي'),
-                  subtitle: const Text('إدارة مشاريعك وتشغيل الأدوات'),
-                  trailing: const Icon(Icons.chevron_left),
+                ),
+                const SizedBox(height: 8),
+                ActionTile(
+                  icon: Icons.folder_open,
+                  title: 'مشاريعي',
+                  subtitle: 'اختر مشروعاً واعرف ما يجب تنفيذه تالياً',
+                  emphasized: true,
+                  badge: 'ابدأ',
                   onTap: c.openProjects,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.auto_awesome),
-                  title: const Text('الاستوديو الذكي'),
-                  subtitle: const Text('توليد محتوى تسويقي جاهز'),
-                  trailing: const Icon(Icons.chevron_left),
+                ActionTile(
+                  icon: Icons.auto_awesome,
+                  title: 'الاستوديو الذكي',
+                  subtitle: 'حوّل التوصيات إلى محتوى وصفحات وحملات',
                   onTap: () => Get.toNamed(Routes.studio),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.group_outlined),
-                  title: const Text('الفريق'),
-                  subtitle: const Text('الأعضاء والدعوات'),
-                  trailing: const Icon(Icons.chevron_left),
-                  onTap: () => Get.toNamed(Routes.team),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.fact_check_outlined),
-                  title: const Text('الموافقات'),
-                  subtitle: const Text('مراجعة واعتماد المخرجات'),
-                  trailing: const Icon(Icons.chevron_left),
+                ActionTile(
+                  icon: Icons.fact_check_outlined,
+                  title: 'الموافقات',
+                  subtitle: 'راجع المخرجات قبل اعتمادها أو إرسالها',
                   onTap: () => Get.toNamed(Routes.approvals),
                 ),
-              ),
-              Obx(() {
-                final isAgency = c.workspaces.active.value?.isAgency ?? false;
-                if (!isAgency) return const SizedBox.shrink();
-                return Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.groups_outlined),
-                        title: const Text('عملاء الوكالة'),
-                        subtitle: const Text('إدارة عملائك ومشاريعهم'),
-                        trailing: const Icon(Icons.chevron_left),
+                const SizedBox(height: 10),
+                Text(
+                  'الإدارة',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ActionTile(
+                  icon: Icons.group_outlined,
+                  title: 'الفريق',
+                  subtitle: 'الأعضاء والدعوات وتوزيع العمل',
+                  onTap: () => Get.toNamed(Routes.team),
+                ),
+                Obx(() {
+                  final isAgency = c.workspaces.active.value?.isAgency ?? false;
+                  if (!isAgency) return const SizedBox.shrink();
+                  return Column(
+                    children: [
+                      ActionTile(
+                        icon: Icons.groups_outlined,
+                        title: 'عملاء الوكالة',
+                        subtitle: 'إدارة العملاء ومشاريعهم في مكان واحد',
                         onTap: () => Get.toNamed(Routes.clients),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.branding_watermark_outlined),
-                        title: const Text('علامة الوكالة'),
-                        subtitle: const Text('العلامة البيضاء لتقاريرك'),
-                        trailing: const Icon(Icons.chevron_left),
+                      ActionTile(
+                        icon: Icons.branding_watermark_outlined,
+                        title: 'علامة الوكالة',
+                        subtitle: 'العلامة البيضاء لتقاريرك ومخرجاتك',
                         onTap: () => Get.toNamed(Routes.agencyBranding),
                       ),
-                    ),
-                  ],
-                );
-              }),
-              const SizedBox(height: 8),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.credit_card_outlined),
-                  title: const Text('الفوترة والباقات'),
-                  subtitle: const Text('باقتك ورصيدك والترقية'),
-                  trailing: const Icon(Icons.chevron_left),
+                    ],
+                  );
+                }),
+                ActionTile(
+                  icon: Icons.credit_card_outlined,
+                  title: 'الفوترة والباقات',
+                  subtitle: 'الباقة، الرصيد، والترقية',
                   onTap: () => Get.toNamed(Routes.billing),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: const Text('الحساب'),
-                  subtitle: const Text('إعداداتك وملفك التسويقي'),
-                  trailing: const Icon(Icons.chevron_left),
+                ActionTile(
+                  icon: Icons.settings_outlined,
+                  title: 'الحساب',
+                  subtitle: 'إعداداتك وملفك التسويقي',
                   onTap: () => Get.toNamed(Routes.account),
                 ),
-              ),
-            ],
-          ),
-        );
-      }),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }
@@ -185,30 +165,51 @@ class _WorkspaceCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('مساحة العمل الحالية',
-                  style: theme.textTheme.labelMedium
-                      ?.copyWith(color: theme.colorScheme.primary)),
-              const SizedBox(height: 6),
-              Text(active?.name ?? '—',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w800)),
+              Row(
+                children: [
+                  Icon(
+                    Icons.workspaces_outline,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'مساحة العمل الحالية',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                active?.name ?? '—',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text('النوع: ${active?.type ?? '—'}',
-                  style: theme.textTheme.bodySmall),
+              Text(
+                'نوع الاستخدام: ${active?.type ?? '—'}',
+                style: theme.textTheme.bodySmall,
+              ),
               if (service.workspaces.length > 1) ...[
                 const Divider(height: 24),
                 DropdownButtonFormField<String>(
                   initialValue: active?.publicId,
                   decoration: const InputDecoration(labelText: 'تبديل المساحة'),
                   items: service.workspaces
-                      .map((w) => DropdownMenuItem(
-                            value: w.publicId,
-                            child: Text(w.name),
-                          ))
+                      .map(
+                        (w) => DropdownMenuItem(
+                          value: w.publicId,
+                          child: Text(w.name),
+                        ),
+                      )
                       .toList(),
                   onChanged: (id) {
-                    final ws = service.workspaces
-                        .firstWhereOrNull((w) => w.publicId == id);
+                    final ws = service.workspaces.firstWhereOrNull(
+                      (w) => w.publicId == id,
+                    );
                     if (ws != null) service.setActive(ws);
                   },
                 ),

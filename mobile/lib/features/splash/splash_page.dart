@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../app/theme/app_colors.dart';
 import '../../data/services/session_service.dart';
+import '../shared/widgets/animated_app_background.dart';
+import '../shared/widgets/brand_mark.dart';
 import 'splash_controller.dart';
 
 class SplashPage extends StatelessWidget {
@@ -13,30 +14,23 @@ class SplashPage extends StatelessWidget {
     Get.put(SplashController(Get.find<SessionService>()));
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                'KS',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 24,
-                ),
-              ),
+      body: AnimatedAppBackground(
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.92, end: 1),
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeOutBack,
+            builder: (context, scale, child) =>
+                Transform.scale(scale: scale, child: child),
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                BrandMark(size: 72),
+                SizedBox(height: 24),
+                CircularProgressIndicator(),
+              ],
             ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-          ],
+          ),
         ),
       ),
     );

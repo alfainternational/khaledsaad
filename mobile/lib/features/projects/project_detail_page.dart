@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/repositories/project_repository.dart';
 import '../../data/services/workspace_service.dart';
+import '../shared/widgets/action_tile.dart';
+import '../shared/widgets/animated_app_background.dart';
 import '../shared/widgets/app_state_view.dart';
 import '../shared/widgets/status_badge.dart';
 import 'project_detail_controller.dart';
@@ -27,30 +29,42 @@ class ProjectDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('المشروع')),
-      body: Obx(() {
-        if (c.isLoading.value && c.project.value == null) {
-          return AppStateView.loading();
-        }
-        if (c.error.value != null && c.project.value == null) {
-          return AppStateView.error(message: c.error.value, onRetry: c.load);
-        }
-        final project = c.project.value;
-        if (project == null) {
-          return AppStateView.empty(
-            icon: Icons.folder_off_outlined,
-            title: 'المشروع غير متاح',
-          );
-        }
-        final theme = Theme.of(context);
-        return RefreshIndicator(
-          onRefresh: c.load,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // بطاقة التعريف
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+      body: AnimatedAppBackground(
+        child: Obx(() {
+          if (c.isLoading.value && c.project.value == null) {
+            return AppStateView.loading();
+          }
+          if (c.error.value != null && c.project.value == null) {
+            return AppStateView.error(message: c.error.value, onRetry: c.load);
+          }
+          final project = c.project.value;
+          if (project == null) {
+            return AppStateView.empty(
+              icon: Icons.folder_off_outlined,
+              title: 'المشروع غير متاح',
+            );
+          }
+          final theme = Theme.of(context);
+          return RefreshIndicator(
+            onRefresh: c.load,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.22,
+                        ),
+                        blurRadius: 22,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -61,8 +75,8 @@ class ProjectDetailPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                               child: Image.network(
                                 project.logoUrl!,
-                                width: 48,
-                                height: 48,
+                                width: 54,
+                                height: 54,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, _, _) =>
                                     const SizedBox.shrink(),
@@ -74,7 +88,8 @@ class ProjectDetailPage extends StatelessWidget {
                             child: Text(
                               project.name,
                               style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
                           ),
@@ -105,43 +120,51 @@ class ProjectDetailPage extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // البوابات الأربع
-              _GateTile(
-                icon: Icons.build_outlined,
-                title: 'الأدوات',
-                subtitle: 'اشتغل على مشروعك خطوة بخطوة',
-                onTap: () =>
-                    Get.toNamed(Routes.projectTools, arguments: publicId),
-              ),
-              _GateTile(
-                icon: Icons.description_outlined,
-                title: 'ملف المشروع',
-                subtitle: 'المعلومات الأساسية التي تغذّي كل الأدوات',
-                onTap: () =>
-                    Get.toNamed(Routes.projectBrief, arguments: publicId),
-              ),
-              _GateTile(
-                icon: Icons.query_stats_outlined,
-                title: 'التحليل والتوصيات',
-                subtitle: 'حلّل حضورك واحصل على خطوات عملية',
-                onTap: () => Get.toNamed(
-                  Routes.projectIntelligence,
-                  arguments: publicId,
+                const SizedBox(height: 16),
+                Text(
+                  'الخطوات العملية',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              _GateTile(
-                icon: Icons.analytics_outlined,
-                title: 'التقارير',
-                subtitle: 'التقرير الشامل ودليل المشروع + PDF',
-                onTap: () =>
-                    Get.toNamed(Routes.projectReports, arguments: publicId),
-              ),
-            ],
-          ),
-        );
-      }),
+                const SizedBox(height: 8),
+                ActionTile(
+                  icon: Icons.build_outlined,
+                  title: 'الأدوات',
+                  subtitle: 'ابدأ بالأداة المناسبة حسب وضع مشروعك الحالي',
+                  emphasized: true,
+                  badge: 'التالي',
+                  onTap: () =>
+                      Get.toNamed(Routes.projectTools, arguments: publicId),
+                ),
+                ActionTile(
+                  icon: Icons.description_outlined,
+                  title: 'ملف المشروع',
+                  subtitle: 'المعلومات الأساسية التي تغذّي كل الأدوات',
+                  onTap: () =>
+                      Get.toNamed(Routes.projectBrief, arguments: publicId),
+                ),
+                ActionTile(
+                  icon: Icons.query_stats_outlined,
+                  title: 'التحليل والتوصيات',
+                  subtitle: 'حلّل حضورك واحصل على خطوات عملية',
+                  onTap: () => Get.toNamed(
+                    Routes.projectIntelligence,
+                    arguments: publicId,
+                  ),
+                ),
+                ActionTile(
+                  icon: Icons.analytics_outlined,
+                  title: 'التقارير',
+                  subtitle: 'التقرير الشامل ودليل المشروع + PDF',
+                  onTap: () =>
+                      Get.toNamed(Routes.projectReports, arguments: publicId),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }
@@ -162,44 +185,6 @@ class _Meta extends StatelessWidget {
         const SizedBox(width: 4),
         Text(text, style: theme.textTheme.bodySmall),
       ],
-    );
-  }
-}
-
-class _GateTile extends StatelessWidget {
-  const _GateTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: CircleAvatar(
-          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-          child: Icon(icon, color: theme.colorScheme.primary),
-        ),
-        title: Text(
-          title,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
-        trailing: const Icon(Icons.chevron_left),
-        onTap: onTap,
-      ),
     );
   }
 }
