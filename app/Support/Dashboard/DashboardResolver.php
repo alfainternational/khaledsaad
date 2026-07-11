@@ -71,7 +71,9 @@ class DashboardResolver
 
         $currentProject = $workspace->projects()
             ->with('client')
+            ->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
             ->latest('updated_at')
+            ->orderByDesc('id')
             ->first();
         $currentProjectToolRuns = $currentProject
             ? ToolRun::query()
