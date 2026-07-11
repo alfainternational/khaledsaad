@@ -25,11 +25,13 @@ class KnowledgeRetriever
 
         $matches = [];
         foreach ($this->searchScopes($scope) as [$searchScope, $scopeRank]) {
-            foreach ($terms as $term) {
-                foreach ($this->repository->searchText($searchScope, $term, min(100, $limit * 4)) as $chunk) {
-                    $id = (int) $chunk->id;
-                    $matches[$id] ??= ['chunk' => $chunk, 'scope_rank' => $scopeRank, 'terms' => []];
-                    $matches[$id]['terms'][$term] = true;
+            foreach ($this->repository->searchTerms($searchScope, $terms, min(100, $limit * 4)) as $chunk) {
+                $id = (int) $chunk->id;
+                $matches[$id] ??= ['chunk' => $chunk, 'scope_rank' => $scopeRank, 'terms' => []];
+                foreach ($terms as $term) {
+                    if (mb_stripos($chunk->content, $term) !== false) {
+                        $matches[$id]['terms'][$term] = true;
+                    }
                 }
             }
         }

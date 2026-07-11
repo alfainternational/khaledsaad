@@ -209,28 +209,70 @@ class StructuredKnowledgeRepository
             return new Collection;
         }
 
-        $chunks = KnowledgeChunk::query()
+        return $this->searchTerms($scope, [$query], $limit);
+    }
+
+    /** @param list<string> $terms */
+    public function searchTerms(KnowledgeScope $scope, array $terms, int $limit = 10): Collection
+    {
+        if ($limit < 1 || $limit > 100) {
+            throw new InvalidArgumentException('Knowledge search limit must be between 1 and 100.');
+        }
+
+        $terms = collect($terms)
+            ->filter(fn ($term): bool => is_string($term) && trim($term) !== '')
+            ->map(fn (string $term): string => trim($term))
+            ->unique()
+            ->take(8)
+            ->values()
+            ->all();
+        if ($terms === []) {
+            return new Collection;
+        }
+
+        $chunks = fn () => KnowledgeChunk::query()
             ->inScope($scope)
             ->whereHas('document', fn ($documentQuery) => $documentQuery->where('status', 'active'))
-            ->with('document.source')
-            ->limit($limit);
+            ->with('document.source');
 
         if (DB::getDriverName() === 'sqlite') {
-            $literalQuery = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $query);
-
-            return $chunks
-                ->whereRaw("content LIKE ? ESCAPE '\\'", ["%{$literalQuery}%"])
+            return $chunks()
+                ->where(function ($query) use ($terms): void {
+                    foreach ($terms as $term) {
+                        $query->orWhereRaw("content LIKE ? ESCAPE '!'", ['%'.$this->escapeLike($term).'%']);
+                    }
+                })
                 ->orderBy('id')
+                ->limit($limit)
                 ->get();
         }
 
-        return $chunks
+        $fullTextQuery = implode(' ', $terms);
+        $fullText = $chunks()
             ->select('knowledge_chunks.*')
-            ->selectRaw('MATCH(content) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance', [$query])
-            ->whereRaw('MATCH(content) AGAINST (? IN NATURAL LANGUAGE MODE)', [$query])
+            ->selectRaw('MATCH(content) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance', [$fullTextQuery])
+            ->whereRaw('MATCH(content) AGAINST (? IN NATURAL LANGUAGE MODE)', [$fullTextQuery])
             ->orderByDesc('relevance')
             ->orderBy('knowledge_chunks.id')
+            ->limit($limit)
             ->get();
+
+        if ($fullText->count() >= $limit) {
+            return $fullText;
+        }
+
+        $literal = $chunks()
+            ->where(function ($query) use ($terms): void {
+                foreach ($terms as $term) {
+                    $query->orWhereRaw("content LIKE ? ESCAPE '!'", ['%'.$this->escapeLike($term).'%']);
+                }
+            })
+            ->whereNotIn('knowledge_chunks.id', $fullText->pluck('id'))
+            ->orderBy('knowledge_chunks.id')
+            ->limit($limit - $fullText->count())
+            ->get();
+
+        return $fullText->concat($literal)->values();
     }
 
     public function deactivateDocuments(KnowledgeScope $scope, string $kind, string $canonicalUri): int
@@ -308,6 +350,11 @@ class StructuredKnowledgeRepository
     private function normalizeContent(string $content): string
     {
         return trim(str_replace(["\r\n", "\r"], "\n", $content));
+    }
+
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
     }
 
     private function validateIdentity(string $kind, string $canonicalUri): void

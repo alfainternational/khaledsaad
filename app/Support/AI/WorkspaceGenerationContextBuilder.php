@@ -2,11 +2,12 @@
 
 namespace App\Support\AI;
 
-use App\Domain\Intelligence\Models\AuditRun;
-use App\Domain\Intelligence\Models\OfficialContact;
+use App\Domain\AI\Knowledge\KnowledgePromptContext;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Comment\Models\Comment;
+use App\Domain\Intelligence\Models\AuditRun;
+use App\Domain\Intelligence\Models\OfficialContact;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
@@ -25,12 +26,15 @@ class WorkspaceGenerationContextBuilder
 
     private readonly ProjectActionAdvisor $projectActionAdvisor;
 
+    private readonly KnowledgePromptContext $knowledgePromptContext;
+
     public function __construct(
         private readonly WorkspaceProfileStore $profileStore,
         private readonly WorkspaceJourneyStore $journeyStore,
         mixed $projectMarketingBriefStore = null,
         mixed $dossierBuilder = null,
         ?ProjectActionAdvisor $projectActionAdvisor = null,
+        ?KnowledgePromptContext $knowledgePromptContext = null,
     ) {
         if ($projectMarketingBriefStore instanceof StudioAnalyticalDossierBuilder && $dossierBuilder === null) {
             $dossierBuilder = $projectMarketingBriefStore;
@@ -44,12 +48,13 @@ class WorkspaceGenerationContextBuilder
             ? $dossierBuilder
             : app(StudioAnalyticalDossierBuilder::class);
         $this->projectActionAdvisor = $projectActionAdvisor ?? app(ProjectActionAdvisor::class);
+        $this->knowledgePromptContext = $knowledgePromptContext ?? app(KnowledgePromptContext::class);
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function buildForIds(?int $workspaceId, ?int $projectId = null): array
+    public function buildForIds(?int $workspaceId, ?int $projectId = null, ?string $knowledgeQuery = null): array
     {
         if (! $workspaceId) {
             return $this->emptyContext();
@@ -67,13 +72,13 @@ class WorkspaceGenerationContextBuilder
                 ->find($projectId)
             : null;
 
-        return $this->build($workspace, $project);
+        return $this->build($workspace, $project, $knowledgeQuery);
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function build(Workspace $workspace, ?Project $project = null): array
+    public function build(Workspace $workspace, ?Project $project = null, ?string $knowledgeQuery = null): array
     {
         if ($project) {
             $project->loadMissing('client');
@@ -132,7 +137,21 @@ class WorkspaceGenerationContextBuilder
             'client_notes' => $clientNotes,
             'approval_notes' => $approvals,
             'comment_notes' => $comments,
+            'knowledge_evidence' => [],
+            'knowledge_evidence_prompt' => '',
         ];
+
+        if ($project && (bool) config('services.knowledge.retrieval', false)) {
+            $knowledge = $this->knowledgePromptContext->forProject(
+                $project,
+                trim(implode(' ', array_filter([
+                    $knowledgeQuery,
+                    $this->knowledgeQuery($project, $projectBrief),
+                ]))),
+            );
+            $context['knowledge_evidence'] = $knowledge['evidence'];
+            $context['knowledge_evidence_prompt'] = $knowledge['prompt_block'];
+        }
 
         $context['analytical_dossier'] = $this->dossierBuilder->build($workspace, $project, $context);
 
@@ -141,9 +160,9 @@ class WorkspaceGenerationContextBuilder
         return $context;
     }
 
-    public function promptBlockForIds(?int $workspaceId, ?int $projectId = null): string
+    public function promptBlockForIds(?int $workspaceId, ?int $projectId = null, ?string $knowledgeQuery = null): string
     {
-        return $this->buildForIds($workspaceId, $projectId)['prompt_block'] ?? '';
+        return $this->buildForIds($workspaceId, $projectId, $knowledgeQuery)['prompt_block'] ?? '';
     }
 
     /**
@@ -159,6 +178,11 @@ class WorkspaceGenerationContextBuilder
         if ($dossierGuide !== '') {
             $parts[] = '=== الملف التحليلي المرجعي الإلزامي ===';
             $parts[] = $dossierGuide;
+        }
+
+        $knowledgeEvidence = $this->stringValue($context['knowledge_evidence_prompt'] ?? null);
+        if ($knowledgeEvidence !== '') {
+            $parts[] = $knowledgeEvidence;
         }
 
         $parts[] = 'المساحة: '.$this->stringValue($context['workspace']['name'] ?? null);
@@ -349,6 +373,25 @@ class WorkspaceGenerationContextBuilder
         }
 
         return implode("\n", array_filter($parts));
+    }
+
+    /** @param array<string, mixed> $projectBrief */
+    private function knowledgeQuery(Project $project, array $projectBrief): string
+    {
+        $values = [
+            $project->name,
+            $project->sector,
+            $project->market_country,
+            $project->primary_domain,
+        ];
+
+        array_walk_recursive($projectBrief, function (mixed $value) use (&$values): void {
+            if (is_string($value) && trim($value) !== '') {
+                $values[] = trim($value);
+            }
+        });
+
+        return Str::limit(implode(' ', array_unique(array_filter($values))), 1200, '');
     }
 
     /**
@@ -555,17 +598,11 @@ class WorkspaceGenerationContextBuilder
             ->all();
     }
 
-    /**
-     * @param  mixed  $value
-     */
     private function stringValue(mixed $value): string
     {
         return is_string($value) ? trim($value) : '';
     }
 
-    /**
-     * @param  mixed  $value
-     */
     private function limit(mixed $value, int $length = 220): string
     {
         if (! is_string($value)) {
@@ -576,7 +613,6 @@ class WorkspaceGenerationContextBuilder
     }
 
     /**
-     * @param  mixed  $values
      * @return array<int, string>
      */
     private function stringList(mixed $values): array
@@ -593,7 +629,6 @@ class WorkspaceGenerationContextBuilder
     }
 
     /**
-     * @param  mixed  $values
      * @return array<string, string>
      */
     private function scalarFields(mixed $values): array
@@ -651,9 +686,6 @@ class WorkspaceGenerationContextBuilder
             ->all();
     }
 
-    /**
-     * @param  mixed  $values
-     */
     private function formatKeyValueSummary(mixed $values): string
     {
         if (! is_array($values)) {
