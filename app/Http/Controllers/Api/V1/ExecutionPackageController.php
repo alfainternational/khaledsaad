@@ -58,6 +58,7 @@ class ExecutionPackageController extends Controller
         $this->authorize('update', $package->project);
 
         $validated = $request->validate([
+            'status' => ['sometimes', 'string', 'in:'.implode(',', ExecutionTask::STATUSES)],
             'assigned_to' => ['sometimes', 'nullable', 'integer'],
             'assignee_public_id' => ['sometimes', 'nullable', 'string'],
             'due_date' => ['sometimes', 'nullable', 'date'],

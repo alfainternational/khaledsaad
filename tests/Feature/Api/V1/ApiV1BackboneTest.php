@@ -503,16 +503,21 @@ class ApiV1BackboneTest extends TestCase
 
         $auth()
             ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
+                'status' => 'done',
                 'assignee_public_id' => $owner->public_id,
                 'due_date' => $newDueDate,
             ])
             ->assertOk()
             ->assertJsonPath('data.tasks.0.public_id', $firstTask->public_id)
+            ->assertJsonPath('data.tasks.0.status', 'done')
+            ->assertJsonPath('data.tasks.0.status_label', 'منجزة')
             ->assertJsonPath('data.tasks.0.assigned_to', $owner->id)
             ->assertJsonPath('data.tasks.0.assignee.public_id', $owner->public_id)
             ->assertJsonPath('data.tasks.0.assignee.name', $owner->name)
             ->assertJsonPath('data.tasks.0.assignee.email', $owner->email)
-            ->assertJsonPath('data.tasks.0.due_date', $newDueDate);
+            ->assertJsonPath('data.tasks.0.due_date', $newDueDate)
+            ->assertJsonPath('data.progress.done_tasks', 2)
+            ->assertJsonPath('data.progress.percent', 50);
 
         $outsider = User::factory()->create();
 
