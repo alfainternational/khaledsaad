@@ -6,6 +6,11 @@
         'proposed' => 'مقترحة', 'in_review' => 'قيد المراجعة', 'approved' => 'معتمدة',
         'in_progress' => 'قيد التنفيذ', 'executed' => 'منفّذة', 'measuring' => 'تحت القياس',
     ];
+    $taskStatusLabels = [
+        'pending' => 'لم تبدأ',
+        'in_progress' => 'قيد التنفيذ',
+        'done' => 'منجزة',
+    ];
 @endphp
 
 <section class="exec-pkg-head {{ ($brand['enabled'] ?? false) ? 'exec-pkg-head--branded' : '' }}" @if($brand['enabled'] ?? false) style="--brand: {{ $brand['color'] }}" @endif>
@@ -47,7 +52,44 @@
         @foreach ($package->tasks as $task)
             <li class="exec-task">
                 <span class="exec-task-dot {{ $task->status === 'done' ? 'exec-task-dot--done' : '' }}"></span>
-                <span>{{ $task->title }}</span>
+                <span class="exec-task-body">
+                    <strong>{{ $task->title }}</strong>
+                    @if ($task->description)
+                        <small>{{ $task->description }}</small>
+                    @endif
+                </span>
+                <span class="exec-task-state">{{ $taskStatusLabels[$task->status] ?? $task->status }}</span>
+                <span class="exec-task-actions">
+                    @if ($task->status === 'pending')
+                        <form method="POST" action="{{ route('execution-packages.tasks.status', [$package, $task]) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="in_progress">
+                            <button type="submit" class="btn btn-secondary btn-sm">بدء</button>
+                        </form>
+                        <form method="POST" action="{{ route('execution-packages.tasks.status', [$package, $task]) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="done">
+                            <button type="submit" class="btn btn-primary btn-sm">تم التنفيذ</button>
+                        </form>
+                    @elseif ($task->status === 'in_progress')
+                        <form method="POST" action="{{ route('execution-packages.tasks.status', [$package, $task]) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="done">
+                            <button type="submit" class="btn btn-primary btn-sm">تم التنفيذ</button>
+                        </form>
+                        <form method="POST" action="{{ route('execution-packages.tasks.status', [$package, $task]) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="pending">
+                            <button type="submit" class="btn btn-secondary btn-sm">إرجاع</button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('execution-packages.tasks.status', [$package, $task]) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="pending">
+                            <button type="submit" class="btn btn-secondary btn-sm">إعادة فتح</button>
+                        </form>
+                    @endif
+                </span>
             </li>
         @endforeach
     </ul>

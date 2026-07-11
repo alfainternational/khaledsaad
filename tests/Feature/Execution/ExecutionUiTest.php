@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Execution;
 
+use App\Application\Execution\BuildExecutionPackageAction;
 use App\Domain\Account\Models\Account;
 use App\Domain\Execution\Models\ExecutionPackage;
+use App\Domain\Execution\Models\ExecutionTask;
 use App\Domain\Execution\Models\Recommendation;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
@@ -117,6 +119,60 @@ class ExecutionUiTest extends TestCase
 
         $this->assertSame(3, substr_count($response->getContent(), 'class="project-priority-item"'));
         $this->assertStringNotContainsString('data-project-priority-title="أولوية مشروع 4"', $response->getContent());
+    }
+
+    #[Test]
+    public function owner_can_update_execution_task_status_from_package_page(): void
+    {
+        [$owner, $workspace, $project, $recommendation] = $this->scenario();
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $task = $package->tasks()->orderBy('order_index')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('بدء', false)
+            ->assertSee('تم التنفيذ', false);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.tasks.status', [$package, $task]), [
+                'status' => 'in_progress',
+            ])
+            ->assertRedirectToRoute('execution-packages.show', $package);
+
+        $this->assertSame('in_progress', $task->fresh()->status);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.tasks.status', [$package, $task]), [
+                'status' => 'done',
+            ])
+            ->assertRedirectToRoute('execution-packages.show', $package);
+
+        $this->assertSame('done', $task->fresh()->status);
+
+        $otherPackage = ExecutionPackage::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'recommendation_id' => $recommendation->id,
+            'title' => 'حزمة أخرى',
+            'status' => 'proposed',
+        ]);
+        $otherTask = ExecutionTask::query()->create([
+            'execution_package_id' => $otherPackage->id,
+            'title' => 'مهمة أخرى',
+            'status' => 'pending',
+            'order_index' => 1,
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.tasks.status', [$package, $otherTask]), [
+                'status' => 'done',
+            ])
+            ->assertNotFound();
     }
 
     #[Test]
