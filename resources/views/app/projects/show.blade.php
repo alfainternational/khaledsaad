@@ -69,6 +69,71 @@
     </article>
 </section>
 
+@php($performance = $latestPerformanceSnapshot?->value_json ?? [])
+<section class="card mb-8">
+    <div class="app-section-head">
+        <div>
+            <p class="section-kicker">قياس الأداء السريع</p>
+            <h3 class="heading-sm">أرقام التسويق الحالية</h3>
+            <p class="text-caption">أدخل أرقام آخر فترة حتى يعرف النظام هل المشكلة في الوصول، التحويل، أو العائد.</p>
+        </div>
+        @if (! empty($performance['captured_at']))
+            <span class="app-badge">آخر تحديث {{ \Illuminate\Support\Carbon::parse($performance['captured_at'])->diffForHumans() }}</span>
+        @endif
+    </div>
+
+    @if ($performance !== [])
+        <div class="app-meta-grid mb-6">
+            <div><span>الإنفاق</span><strong>{{ number_format((float) ($performance['spend'] ?? 0), 2) }}</strong></div>
+            <div><span>العملاء المحتملون</span><strong>{{ (int) ($performance['leads'] ?? 0) }}</strong></div>
+            <div><span>المبيعات</span><strong>{{ (int) ($performance['sales'] ?? 0) }}</strong></div>
+            <div><span>الإيراد</span><strong>{{ number_format((float) ($performance['revenue'] ?? 0), 2) }}</strong></div>
+            <div><span>تكلفة العميل المحتمل</span><strong>{{ is_null($performance['cpl'] ?? null) ? '--' : number_format((float) $performance['cpl'], 2) }}</strong></div>
+            <div><span>ROAS</span><strong>{{ is_null($performance['roas'] ?? null) ? '--' : number_format((float) $performance['roas'], 2).'x' }}</strong></div>
+            <div><span>معدل التحويل</span><strong>{{ is_null($performance['conversion_rate'] ?? null) ? '--' : number_format((float) $performance['conversion_rate'], 2).'%' }}</strong></div>
+        </div>
+
+        @if (! empty($performance['notes']))
+            <p class="app-empty mb-6">{{ $performance['notes'] }}</p>
+        @endif
+    @endif
+
+    <form method="POST" action="{{ route('projects.performance.store', $project) }}" class="app-form-grid cols-2">
+        @csrf
+        <label class="app-field">
+            <span>من تاريخ</span>
+            <input class="app-input" type="date" name="period_start" value="{{ old('period_start', $performance['period_start'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>إلى تاريخ</span>
+            <input class="app-input" type="date" name="period_end" value="{{ old('period_end', $performance['period_end'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>الإنفاق</span>
+            <input class="app-input" type="number" min="0" step="0.01" name="spend" value="{{ old('spend', $performance['spend'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>العملاء المحتملون</span>
+            <input class="app-input" type="number" min="0" step="1" name="leads" value="{{ old('leads', $performance['leads'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>المبيعات</span>
+            <input class="app-input" type="number" min="0" step="1" name="sales" value="{{ old('sales', $performance['sales'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>الإيراد</span>
+            <input class="app-input" type="number" min="0" step="0.01" name="revenue" value="{{ old('revenue', $performance['revenue'] ?? '') }}">
+        </label>
+        <label class="app-field">
+            <span>ملاحظة مختصرة</span>
+            <textarea class="app-input" name="notes" rows="2">{{ old('notes', $performance['notes'] ?? '') }}</textarea>
+        </label>
+        <div class="app-form-actions">
+            <button type="submit" class="btn btn-primary btn-sm">حفظ لقطة الأداء</button>
+        </div>
+    </form>
+</section>
+
 @if ($topExecutionRecommendations->isNotEmpty())
     @php($impactLabels = ['high' => 'أثر عالٍ', 'medium' => 'أثر متوسط', 'low' => 'أثر منخفض'])
     <section class="project-priority-panel mb-8" aria-labelledby="project-priority-title">

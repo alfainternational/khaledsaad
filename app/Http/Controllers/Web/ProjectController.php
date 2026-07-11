@@ -115,6 +115,12 @@ class ProjectController extends Controller
         $briefAssessment = $briefStore->assess($brief);
 
         $latestAudit = $projectIntelligenceRepository->latestAudit($project);
+        $latestPerformanceSnapshot = WorkspaceData::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('project_id', $project->id)
+            ->where('key', 'performance_snapshot')
+            ->latest()
+            ->first();
 
         return view('app.projects.show', [
             'workspace' => $workspace,
@@ -140,6 +146,7 @@ class ProjectController extends Controller
             'brief' => $brief,
             'briefAssessment' => $briefAssessment,
             'latestAudit' => $latestAudit,
+            'latestPerformanceSnapshot' => $latestPerformanceSnapshot,
             'latestAuditReport' => $latestAudit?->report_json ?? [],
             'latestAuditSummary' => $latestAudit?->summary_json ?? [],
             'monitoringTrend' => $projectIntelligenceRepository->trend($project),
@@ -173,6 +180,51 @@ class ProjectController extends Controller
                 ->limit(6)
                 ->get(),
         ]);
+    }
+
+    public function storePerformance(Request $request, Project $project): RedirectResponse
+    {
+        $workspace = $this->currentWorkspace($request);
+        $this->authorize('update', $project);
+
+        $data = $request->validate([
+            'period_start' => ['nullable', 'date'],
+            'period_end' => ['nullable', 'date', 'after_or_equal:period_start'],
+            'spend' => ['nullable', 'numeric', 'min:0'],
+            'leads' => ['nullable', 'integer', 'min:0'],
+            'sales' => ['nullable', 'integer', 'min:0'],
+            'revenue' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $spend = round((float) ($data['spend'] ?? 0), 2);
+        $leads = (int) ($data['leads'] ?? 0);
+        $sales = (int) ($data['sales'] ?? 0);
+        $revenue = round((float) ($data['revenue'] ?? 0), 2);
+
+        WorkspaceData::query()->updateOrCreate([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'key' => 'performance_snapshot',
+        ], [
+            'value_json' => [
+                'period_start' => $data['period_start'] ?? null,
+                'period_end' => $data['period_end'] ?? null,
+                'spend' => $spend,
+                'leads' => $leads,
+                'sales' => $sales,
+                'revenue' => $revenue,
+                'cpl' => $leads > 0 ? round($spend / $leads, 2) : null,
+                'roas' => $spend > 0 ? round($revenue / $spend, 2) : null,
+                'conversion_rate' => $leads > 0 ? round(($sales / $leads) * 100, 2) : null,
+                'notes' => $data['notes'] ?? null,
+                'captured_at' => now()->toDateTimeString(),
+            ],
+        ]);
+
+        return redirect()
+            ->route('projects.show', $project)
+            ->with('status', 'تم حفظ لقطة الأداء وحساب مؤشرات القياس.');
     }
 
     public function edit(Request $request, Project $project, SectorTemplateCatalog $sectorCatalog): View
