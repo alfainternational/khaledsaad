@@ -82,6 +82,13 @@ if ((bool) config('services.knowledge.project_sync', false)) {
         ->name('knowledge-project-sync');
 }
 
+if ((bool) config('services.knowledge.upload_processing', false)) {
+    Schedule::command('knowledge:process-uploads --limit=20')
+        ->everyTenMinutes()
+        ->withoutOverlapping()
+        ->name('knowledge-upload-processing');
+}
+
 /*
  | Compile-Ahead: يعيد تجميع artifact الذكاء لكل المساحات (ملء أوّلي + شبكة أمان).
  | العرض اليومي يقرأ الناتج الجاهز فقط — صفر حساب وقت الطلب.

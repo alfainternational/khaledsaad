@@ -102,6 +102,11 @@ class KnowledgeHealthCommandTest extends TestCase
             'sources' => 3,
             'documents' => 3,
             'chunks' => 3,
+            'uploads' => 0,
+            'uploads_indexed' => 0,
+            'uploads_stored' => 0,
+            'uploads_failed' => 0,
+            'unlinked_uploads' => 0,
             'candidate_claims' => 1,
             'failed_jobs' => 1,
             'pending_reconciliations' => 1,
@@ -116,6 +121,11 @@ class KnowledgeHealthCommandTest extends TestCase
             ->expectsOutput('sources: 0')
             ->expectsOutput('documents: 0')
             ->expectsOutput('chunks: 0')
+            ->expectsOutput('uploads: 0')
+            ->expectsOutput('uploads_indexed: 0')
+            ->expectsOutput('uploads_stored: 0')
+            ->expectsOutput('uploads_failed: 0')
+            ->expectsOutput('unlinked_uploads: 0')
             ->expectsOutput('candidate_claims: 0')
             ->expectsOutput('failed_jobs: 0')
             ->expectsOutput('pending_reconciliations: 0')

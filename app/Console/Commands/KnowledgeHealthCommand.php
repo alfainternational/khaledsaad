@@ -17,6 +17,14 @@ class KnowledgeHealthCommand extends Command
             'sources' => DB::table('knowledge_sources')->count(),
             'documents' => DB::table('knowledge_documents')->count(),
             'chunks' => DB::table('knowledge_chunks')->count(),
+            'uploads' => DB::table('knowledge_uploads')->count(),
+            'uploads_indexed' => DB::table('knowledge_uploads')->where('status', 'indexed')->count(),
+            'uploads_stored' => DB::table('knowledge_uploads')->where('status', 'stored')->count(),
+            'uploads_failed' => DB::table('knowledge_uploads')->where('status', 'failed')->count(),
+            'unlinked_uploads' => DB::table('knowledge_uploads')
+                ->where('status', 'indexed')
+                ->whereNull('knowledge_source_id')
+                ->count(),
             'candidate_claims' => DB::table('knowledge_claims')->where('review_status', 'candidate')->count(),
             'failed_jobs' => DB::table('intelligence_jobs')->where('status', 'failed')->count(),
             'pending_reconciliations' => DB::table('knowledge_sources')

@@ -133,3 +133,15 @@ Disabling all flags restores the original JSON-based runtime path. Do not delete
 ## APP_KEY Rotation
 
 Before changing `APP_KEY`, put the previous key in `AI_KNOWLEDGE_MAPPING_PREVIOUS_KEYS`, rotate the key, rebuild config cache, and verify tenant deletion mappings. Remove the previous key only after all legacy mappings have been rewritten under the new key.
+## Text Upload And Retrieval Rollout
+
+Keep these flags disabled while the upload migration is applied:
+
+    AI_KNOWLEDGE_UPLOAD_PROCESSING=false
+    AI_KNOWLEDGE_RETRIEVAL=false
+
+Run the migration, then verify knowledge:health reports zero stored, failed, and unlinked uploads. Enable upload processing first and confirm knowledge:process-uploads exits successfully. Upload one small UTF-8 text file to a canary project through the project knowledge API and verify it becomes indexed.
+
+Enable retrieval only after the canary query returns the uploaded marker with a KB citation. Confirm that the same query in another project does not return it. Retrieval can be disabled immediately without removing uploads or indexed documents.
+
+Do not enable config caching on hosting environments that replace database environment values with placeholders. Use config:clear after each flag change.
