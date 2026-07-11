@@ -210,6 +210,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/execution-packages/{executionPackage}', [ExecutionPackageController::class, 'show'])->name('execution-packages.show');
     Route::patch('/execution-packages/{executionPackage}/status', [ExecutionPackageController::class, 'updateStatus'])->name('execution-packages.status');
     Route::patch('/execution-packages/{executionPackage}/tasks/{executionTask}/status', [ExecutionPackageController::class, 'updateTaskStatus'])->name('execution-packages.tasks.status');
+    Route::post('/execution-packages/{executionPackage}/reports', [ExecutionPackageController::class, 'storeReport'])->name('execution-packages.reports.store');
 
     // Agency white-label settings (Phase د) — gated by the white_label entitlement.
     Route::get('/agency/branding', [AgencyBrandingController::class, 'edit'])

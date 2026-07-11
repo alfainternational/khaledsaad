@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Domain\Execution\Models\ExecutionPackage;
+use App\Domain\Execution\Models\ExecutionReport;
 use App\Domain\Execution\Models\ExecutionTask;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\Concerns\InteractsWithWorkspaceContext;
@@ -21,7 +22,7 @@ class ExecutionPackageController extends Controller
         $workspace = $this->currentWorkspace($request);
         abort_unless($executionPackage->workspace_id === $workspace->id, 404);
 
-        $executionPackage->load(['tasks', 'assets', 'recommendation', 'project']);
+        $executionPackage->load(['tasks', 'assets', 'reports', 'recommendation', 'project']);
         $this->authorize('view', $executionPackage->project);
 
         return view('app.execution-packages.show', [
@@ -70,5 +71,42 @@ class ExecutionPackageController extends Controller
         return redirect()
             ->route('execution-packages.show', $executionPackage)
             ->with('status', $flash->statusUpdated('مهمة التنفيذ'));
+    }
+
+    public function storeReport(
+        Request $request,
+        ExecutionPackage $executionPackage,
+        FlashMessageCatalog $flash,
+    ): RedirectResponse {
+        $workspace = $this->currentWorkspace($request);
+        abort_unless($executionPackage->workspace_id === $workspace->id, 404);
+        $this->authorize('update', $executionPackage->project);
+
+        $validated = $request->validate([
+            'phase' => ['required', 'string', 'in:'.implode(',', ExecutionReport::PHASES)],
+            'progress' => ['required', 'integer', 'min:0', 'max:100'],
+            'note' => ['nullable', 'string', 'max:2000'],
+            'metric_name' => ['nullable', 'string', 'max:120'],
+            'metric_value' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $notes = filled($validated['note'] ?? null) ? ['summary' => $validated['note']] : [];
+        $metrics = filled($validated['metric_name'] ?? null) || filled($validated['metric_value'] ?? null)
+            ? [[
+                'name' => $validated['metric_name'] ?? '',
+                'value' => $validated['metric_value'] ?? '',
+            ]]
+            : [];
+
+        $executionPackage->reports()->create([
+            'phase' => $validated['phase'],
+            'progress' => $validated['progress'],
+            'notes_json' => $notes,
+            'metrics_json' => $metrics,
+        ]);
+
+        return redirect()
+            ->route('execution-packages.show', $executionPackage)
+            ->with('status', $flash->created('تقرير القياس'));
     }
 }

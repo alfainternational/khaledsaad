@@ -540,6 +540,15 @@
 .exec-task-state { flex: none; padding: 4px 10px; border-radius: var(--r-full); background: var(--surface); border: 1px solid var(--border); color: var(--text-2); font-size: var(--fs-xs); font-weight: 700; }
 .exec-task-actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-2); flex-wrap: wrap; }
 .exec-task-actions form { margin: 0; }
+.exec-reports { display: grid; gap: var(--sp-2); list-style: none; margin: 0 0 var(--sp-4); padding: 0; }
+.exec-report { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface-2); }
+.exec-report-progress { display: inline-flex; align-items: center; justify-content: center; width: 54px; height: 34px; border-radius: var(--r-full); background: color-mix(in srgb, var(--accent, #6366f1) 14%, transparent); color: var(--accent, #6366f1); font-weight: 800; }
+.exec-report-body { display: grid; gap: 3px; min-width: 0; }
+.exec-report-body small, .exec-report time { color: var(--text-2); line-height: 1.6; }
+.exec-report-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--border); }
+.exec-report-form label { display: grid; gap: 6px; color: var(--text); font-size: var(--fs-sm); font-weight: 700; }
+.exec-report-form input, .exec-report-form select, .exec-report-form textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); color: var(--text); padding: 10px 12px; font: inherit; }
+.exec-report-form-note, .exec-report-form button { grid-column: 1 / -1; }
 
 @media (max-width: 960px) {
     .exec-priority-grid { grid-template-columns: 1fr; }
@@ -547,6 +556,8 @@
     .project-priority-action { grid-column: 2; justify-content: flex-start; }
     .exec-task { align-items: flex-start; flex-wrap: wrap; }
     .exec-task-actions { width: 100%; justify-content: flex-start; }
+    .exec-report { grid-template-columns: 1fr; align-items: flex-start; }
+    .exec-report-form { grid-template-columns: 1fr; }
 }
 
 .gate-locked { user-select: none; -webkit-user-select: none; }

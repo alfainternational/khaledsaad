@@ -219,6 +219,48 @@ class ExecutionUiTest extends TestCase
     }
 
     #[Test]
+    public function owner_can_add_measurement_report_to_execution_package(): void
+    {
+        [$owner, $workspace, $project, $recommendation] = $this->scenario();
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $package->update(['status' => 'measuring']);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('تقارير القياس', false)
+            ->assertSee('حفظ تقرير القياس', false)
+            ->assertSee('لا توجد تقارير قياس بعد.', false);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->post(route('execution-packages.reports.store', $package), [
+                'phase' => 'validation',
+                'progress' => 70,
+                'metric_name' => 'العملاء المحتملون',
+                'metric_value' => '34 خلال أسبوع',
+                'note' => 'تحسن عدد الطلبات بعد تعديل صفحة الثقة.',
+            ])
+            ->assertRedirectToRoute('execution-packages.show', $package);
+
+        $this->assertDatabaseHas('execution_reports', [
+            'execution_package_id' => $package->id,
+            'phase' => 'validation',
+            'progress' => 70,
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('70%', false)
+            ->assertSee('تحقق', false)
+            ->assertSee('العملاء المحتملون: 34 خلال أسبوع', false)
+            ->assertSee('تحسن عدد الطلبات بعد تعديل صفحة الثقة.', false);
+    }
+
+    #[Test]
     public function a_member_of_another_workspace_cannot_view_the_package(): void
     {
         [, , , $recommendation] = $this->scenario();

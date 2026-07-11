@@ -17,6 +17,12 @@
         'in_progress' => ['status' => 'executed', 'label' => 'تأكيد التنفيذ', 'style' => 'btn-primary'],
         'executed' => ['status' => 'measuring', 'label' => 'بدء القياس', 'style' => 'btn-secondary'],
     ];
+    $reportPhaseLabels = [
+        'discovery' => 'اكتشاف',
+        'planning' => 'تخطيط',
+        'execution' => 'تنفيذ',
+        'validation' => 'تحقق',
+    ];
     $nextPackageAction = $packageActions[$package->status] ?? null;
 @endphp
 
@@ -119,6 +125,64 @@
         <p>{{ $package->measurement_plan }}</p>
     </article>
 @endif
+
+<article class="exec-section">
+    <h3>تقارير القياس</h3>
+    @if ($package->reports->isNotEmpty())
+        <ul class="exec-reports">
+            @foreach ($package->reports as $report)
+                @php
+                    $metric = collect($report->metrics_json ?? [])->first();
+                    $note = $report->notes_json['summary'] ?? null;
+                @endphp
+                <li class="exec-report">
+                    <span class="exec-report-progress">{{ $report->progress }}%</span>
+                    <span class="exec-report-body">
+                        <strong>{{ $reportPhaseLabels[$report->phase] ?? $report->phase }}</strong>
+                        @if ($note)
+                            <small>{{ $note }}</small>
+                        @endif
+                        @if ($metric)
+                            <small>{{ $metric['name'] ?? 'مؤشر' }}: {{ $metric['value'] ?? '-' }}</small>
+                        @endif
+                    </span>
+                    <time datetime="{{ $report->created_at?->toIso8601String() }}">{{ $report->created_at?->diffForHumans() }}</time>
+                </li>
+            @endforeach
+        </ul>
+    @else
+        <p>لا توجد تقارير قياس بعد.</p>
+    @endif
+
+    <form method="POST" action="{{ route('execution-packages.reports.store', $package) }}" class="exec-report-form">
+        @csrf
+        <label>
+            <span>المرحلة</span>
+            <select name="phase" required>
+                @foreach ($reportPhaseLabels as $phase => $label)
+                    <option value="{{ $phase }}">{{ $label }}</option>
+                @endforeach
+            </select>
+        </label>
+        <label>
+            <span>نسبة التقدم</span>
+            <input type="number" name="progress" min="0" max="100" value="0" required>
+        </label>
+        <label>
+            <span>اسم المؤشر</span>
+            <input type="text" name="metric_name" placeholder="مثلاً: العملاء المحتملون">
+        </label>
+        <label>
+            <span>قيمة المؤشر</span>
+            <input type="text" name="metric_value" placeholder="مثلاً: 34 خلال أسبوع">
+        </label>
+        <label class="exec-report-form-note">
+            <span>ملاحظة القياس</span>
+            <textarea name="note" rows="3" placeholder="ماذا تغيّر بعد التنفيذ؟"></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary">حفظ تقرير القياس</button>
+    </form>
+</article>
 
 <section class="studio-gen-footer mb-8">
     <a href="{{ route('projects.recommendations.index', $package->project) }}" class="btn btn-secondary">العودة للتوصيات</a>
