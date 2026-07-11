@@ -11,8 +11,8 @@ use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
 use App\Models\User;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use LogicException;
@@ -21,9 +21,7 @@ use Tests\TestCase;
 
 class StructuredKnowledgeRepositoryTest extends TestCase
 {
-    use DatabaseMigrations {
-        runDatabaseMigrations as runFrameworkDatabaseMigrations;
-    }
+    use DatabaseTruncation;
 
     private StructuredKnowledgeRepository $repository;
 
@@ -34,37 +32,11 @@ class StructuredKnowledgeRepositoryTest extends TestCase
         $this->repository = new StructuredKnowledgeRepository;
     }
 
-    public function runDatabaseMigrations(): void
+    protected function beforeTruncatingDatabase(): void
     {
-        $this->beforeApplicationDestroyed(function (): void {
-            if (DB::getDriverName() === 'sqlite') {
-                DB::statement('PRAGMA writable_schema = ON');
-
-                return;
-            }
-
-            if (DB::getDriverName() !== 'mysql') {
-                return;
-            }
-
-            $foreignKeys = DB::select(<<<'SQL'
-                SELECT DISTINCT TABLE_NAME, COLUMN_NAME
-                FROM information_schema.KEY_COLUMN_USAGE
-                WHERE TABLE_SCHEMA = DATABASE()
-                  AND REFERENCED_TABLE_NAME IS NOT NULL
-                SQL);
-
-            foreach ($foreignKeys as $foreignKey) {
-                $indexName = 'test_fk_support_'.substr(hash('sha256', "{$foreignKey->TABLE_NAME}.{$foreignKey->COLUMN_NAME}"), 0, 16);
-
-                DB::connection()->getSchemaBuilder()->table(
-                    $foreignKey->TABLE_NAME,
-                    fn (Blueprint $table) => $table->index([$foreignKey->COLUMN_NAME], $indexName)
-                );
-            }
-        });
-
-        $this->runFrameworkDatabaseMigrations();
+        if (DB::getDriverName() === 'sqlite' && config('database.connections.sqlite.database') === ':memory:') {
+            RefreshDatabaseState::$migrated = false;
+        }
     }
 
     #[Test]
