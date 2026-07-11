@@ -58,7 +58,15 @@ class ProjectController extends Controller
         $this->authorize('view', $project);
 
         return new ProjectDetailResource(
-            $project->load('client')->loadCount(['toolRuns', 'approvals'])
+            $project
+                ->load([
+                    'client',
+                    'executionPackages' => fn ($query) => $query
+                        ->with(['tasks', 'reports'])
+                        ->latest()
+                        ->limit(3),
+                ])
+                ->loadCount(['toolRuns', 'approvals'])
         );
     }
 

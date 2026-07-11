@@ -6,6 +6,7 @@ use App\Domain\Intelligence\Models\AuditRun;
 use App\Domain\Intelligence\Models\MonitorSnapshot;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Client\Models\Client;
+use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Support\Concerns\HasPublicId;
@@ -62,6 +63,11 @@ class Project extends Model
     public function approvals(): HasMany
     {
         return $this->hasMany(Approval::class);
+    }
+
+    public function executionPackages(): HasMany
+    {
+        return $this->hasMany(ExecutionPackage::class);
     }
 
     public function auditRuns(): HasMany

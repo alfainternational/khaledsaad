@@ -107,12 +107,50 @@ class ApiV1BackboneTest extends TestCase
         $publicId = $create->json('data.public_id');
         $this->assertNotEmpty($publicId);
 
+        $project = Project::query()->where('public_id', $publicId)->firstOrFail();
+        $recommendation = Recommendation::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'area' => 'conversion',
+            'title' => 'أضف إثبات ثقة قبل نموذج التواصل',
+            'priority' => 10,
+            'severity' => 'high',
+            'evidence' => 'الدليل ناقص.',
+            'rationale' => 'أضف شهادة عميل واضحة.',
+            'estimated_impact' => 'high',
+            'confidence' => 0.9,
+            'status' => 'proposed',
+            'created_by' => $owner->id,
+        ]);
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $package->update(['status' => 'measuring']);
+        $package->tasks()->take(2)->get()->each->update(['status' => 'done']);
+        $package->reports()->create([
+            'phase' => 'validation',
+            'progress' => 70,
+            'metrics_json' => [[
+                'name' => 'العملاء المحتملون',
+                'value' => '34 خلال أسبوع',
+            ]],
+        ]);
+
         // عرض تفصيلي
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson($base.'/projects/'.$publicId)
             ->assertOk()
             ->assertJsonPath('data.public_id', $publicId)
-            ->assertJsonPath('data.market_country', 'SA');
+            ->assertJsonPath('data.market_country', 'SA')
+            ->assertJsonPath('data.execution_summary.packages_count', 1)
+            ->assertJsonPath('data.execution_summary.active_packages_count', 1)
+            ->assertJsonPath('data.execution_summary.total_tasks', 4)
+            ->assertJsonPath('data.execution_summary.done_tasks', 2)
+            ->assertJsonPath('data.execution_summary.task_progress_percent', 50)
+            ->assertJsonPath('data.execution_summary.latest_measurement.phase', 'validation')
+            ->assertJsonPath('data.execution_summary.latest_measurement.phase_label', 'تحقق')
+            ->assertJsonPath('data.execution_summary.latest_measurement.progress', 70)
+            ->assertJsonPath('data.execution_summary.latest_measurement.metric.name', 'العملاء المحتملون')
+            ->assertJsonPath('data.recent_execution_packages.0.public_id', $package->public_id)
+            ->assertJsonPath('data.recent_execution_packages.0.status_label', 'تحت القياس');
 
         // تعديل
         $this->withHeader('Authorization', 'Bearer '.$token)
