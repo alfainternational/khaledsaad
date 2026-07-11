@@ -145,3 +145,33 @@ Run the migration, then verify knowledge:health reports zero stored, failed, and
 Enable retrieval only after the canary query returns the uploaded marker with a KB citation. Confirm that the same query in another project does not return it. Retrieval can be disabled immediately without removing uploads or indexed documents.
 
 Do not enable config caching on hosting environments that replace database environment values with placeholders. Use config:clear after each flag change.
+
+## Private Worker Control Plane
+
+Deploy the worker migration and routes with AI_PRIVATE_WORKER_ENABLED=false. Verify knowledge:health reports zero active and online workers before provisioning.
+
+Provision a worker:
+
+    php artisan private-worker:provision "Owner Laptop" \
+      --capability=deterministic_echo \
+      --capability=ocr \
+      --capability=document_extract \
+      --capability=local_llm --json
+
+The command prints the secret once. Store it only on the private machine. The database contains Laravel-encrypted ciphertext, and HTTP logs must never contain the secret.
+
+Enable the control plane with AI_PRIVATE_WORKER_ENABLED=true and clear configuration. Run the Python worker with --once for a deterministic canary. Confirm:
+
+- the request is accepted only with a fresh timestamp, nonce, and HMAC;
+- one queued job becomes completed;
+- replaying the signed request is rejected;
+- knowledge:health reports one online worker;
+- private-worker:maintain is scheduled every five minutes.
+
+Disable a compromised or retired worker immediately:
+
+    php artisan private-worker:disable WORKER_ID
+
+This releases active leases. Rotate by provisioning a new worker; never reuse the old secret. Set AI_PRIVATE_WORKER_ENABLED=false for a global shutdown. The existing deterministic and external fallbacks remain available.
+
+For OCR, install Tesseract Arabic language data and pdftotext on the private machine. DOCX and XLSX extraction use the Python standard library. Ollama remains bound to localhost and is never exposed to the public network.
