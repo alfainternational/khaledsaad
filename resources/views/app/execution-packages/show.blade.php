@@ -200,6 +200,34 @@
     </article>
 @endif
 
+@if ($studioTemplates->isNotEmpty())
+    <article class="exec-section">
+        <h3>تسليم Studio من هذه الحزمة</h3>
+        <p>اختر قالباً مناسباً ليحوّل الاستوديو هذه الحزمة إلى مخرج جاهز للفريق، مع موجز الحزمة مرفقاً تلقائياً.</p>
+        <div class="app-list">
+            @foreach ($studioTemplates as $template)
+                <div class="app-list-item">
+                    <div>
+                        <strong>{{ $template->name }}</strong>
+                        <small>{{ $template->description }}</small>
+                    </div>
+                    @if ($studioEnabled)
+                        <form method="POST" action="{{ route('studio.generations.store') }}" class="app-inline-actions">
+                            @csrf
+                            <input type="hidden" name="template_id" value="{{ $template->id }}">
+                            <input type="hidden" name="project_id" value="{{ $package->project_id }}">
+                            <textarea name="brief" hidden>{{ $studioBrief }}</textarea>
+                            <button type="submit" class="btn btn-primary btn-sm">توليد مخرج Studio</button>
+                        </form>
+                    @else
+                        <a href="{{ route('billing.index') }}" class="btn btn-secondary btn-sm">تفعيل Studio</a>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </article>
+@endif
+
 @if ($package->measurement_plan)
     <article class="exec-section">
         <h3>خطة القياس</h3>

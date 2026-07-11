@@ -4,7 +4,9 @@ namespace Tests\Feature\Execution;
 
 use App\Application\Execution\BuildExecutionPackageAction;
 use App\Domain\Account\Models\Account;
+use App\Domain\AI\Models\AITemplate;
 use App\Domain\Approval\Models\Approval;
+use App\Domain\Entitlement\Models\Entitlement;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionTask;
 use App\Domain\Execution\Models\Recommendation;
@@ -230,6 +232,54 @@ class ExecutionUiTest extends TestCase
             ->assertOk()
             ->assertSee('المسؤول: '.$owner->name, false)
             ->assertSee('الاستحقاق: '.$task->fresh()->due_date->format('Y-m-d'), false);
+    }
+
+    #[Test]
+    public function package_page_suggests_studio_templates_with_a_package_brief(): void
+    {
+        [$owner, $workspace, $project, $recommendation] = $this->scenario();
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        Entitlement::query()->create([
+            'scope_type' => 'workspace',
+            'scope_id' => $workspace->id,
+            'key' => 'modules.ai_studio',
+            'value_type' => 'boolean',
+            'value' => ['value' => true],
+            'source' => 'manual_override',
+        ]);
+
+        $landingTemplate = AITemplate::query()->create([
+            'code' => 'landing-headlines',
+            'name' => 'عناوين صفحة هبوط',
+            'description' => 'نص صفحة هبوط جاهز.',
+            'prompt_template' => 'Draft {{project_name}}',
+            'model' => 'gpt-5',
+            'credit_cost' => 1,
+            'status' => 'published',
+            'module' => 'modules.ai_studio',
+        ]);
+        AITemplate::query()->create([
+            'code' => 'social-ad',
+            'name' => 'إعلان سوشيال',
+            'description' => 'إعلان جاهز.',
+            'prompt_template' => 'Ad {{project_name}}',
+            'model' => 'gpt-5',
+            'credit_cost' => 1,
+            'status' => 'published',
+            'module' => 'modules.ai_studio',
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('تسليم Studio من هذه الحزمة', false)
+            ->assertSee($landingTemplate->name, false)
+            ->assertSee('name="template_id" value="'.$landingTemplate->id.'"', false)
+            ->assertSee('name="project_id" value="'.$project->id.'"', false)
+            ->assertSee('المشكلة: الموقع غير آمن (HTTP)', false)
+            ->assertSee('القرار المطلوب: فعّل HTTPS.', false)
+            ->assertSee('توليد مخرج Studio', false);
     }
 
     #[Test]

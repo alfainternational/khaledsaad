@@ -6,6 +6,8 @@ use App\Application\Execution\AdvanceExecutionPackageStatusAction;
 use App\Application\Execution\CreateExecutionReportAction;
 use App\Application\Execution\UpdateExecutionTaskDetailsAction;
 use App\Application\Execution\UpdateExecutionTaskStatusAction;
+use App\Domain\AI\Models\AITemplate;
+use App\Domain\Entitlement\Services\EntitlementResolver;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionReport;
 use App\Domain\Execution\Models\ExecutionTask;
@@ -22,8 +24,12 @@ class ExecutionPackageController extends Controller
 {
     use InteractsWithWorkspaceContext;
 
-    public function show(Request $request, ExecutionPackage $executionPackage, WhiteLabelResolver $whiteLabel): View
-    {
+    public function show(
+        Request $request,
+        ExecutionPackage $executionPackage,
+        WhiteLabelResolver $whiteLabel,
+        EntitlementResolver $entitlements,
+    ): View {
         $workspace = $this->currentWorkspace($request);
         abort_unless($executionPackage->workspace_id === $workspace->id, 404);
 
@@ -33,6 +39,9 @@ class ExecutionPackageController extends Controller
         return view('app.execution-packages.show', [
             'package' => $executionPackage,
             'brand' => $whiteLabel->for($workspace),
+            'studioTemplates' => $this->studioTemplatesFor($executionPackage),
+            'studioBrief' => $this->studioBriefFor($executionPackage),
+            'studioEnabled' => $entitlements->boolean('modules.ai_studio', $workspace),
             'activeMembers' => $workspace->members()
                 ->with('user')
                 ->where('status', 'active')
@@ -198,5 +207,40 @@ class ExecutionPackageController extends Controller
         return redirect()
             ->route('execution-packages.show', $executionPackage)
             ->with('status', $flash->created('تقرير القياس'));
+    }
+
+    private function studioTemplatesFor(ExecutionPackage $package)
+    {
+        $assetTypes = $package->assets->pluck('type')->all();
+        $preferred = in_array('dev_brief', $assetTypes, true)
+            ? ['landing-headlines', 'social-ad', 'whatsapp-followup']
+            : ['social-ad', 'content-calendar', 'whatsapp-followup', 'landing-headlines'];
+
+        return AITemplate::query()
+            ->where('status', 'published')
+            ->whereIn('code', $preferred)
+            ->get()
+            ->sortBy(function (AITemplate $template) use ($preferred): int {
+                $position = array_search($template->code, $preferred, true);
+
+                return $position === false ? 99 : $position;
+            })
+            ->values();
+    }
+
+    private function studioBriefFor(ExecutionPackage $package): string
+    {
+        $asset = $package->assets->first();
+
+        return trim(implode("\n", array_filter([
+            'حوّل حزمة التنفيذ التالية إلى مخرج جاهز للتسليم.',
+            'المشروع: '.$package->project?->name,
+            'عنوان الحزمة: '.$package->title,
+            $package->problem ? 'المشكلة: '.$package->problem : null,
+            $package->evidence ? 'الدليل: '.$package->evidence : null,
+            $package->decision ? 'القرار المطلوب: '.$package->decision : null,
+            $asset?->body ? "موجز المخرج الحالي:\n".$asset->body : null,
+            $package->measurement_plan ? 'خطة القياس: '.$package->measurement_plan : null,
+        ])));
     }
 }
