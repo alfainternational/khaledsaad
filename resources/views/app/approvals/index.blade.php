@@ -3,6 +3,7 @@
 @section('content')
 @php
     $statusLabels = ['pending' => 'قيد المراجعة', 'approved' => 'معتمد', 'rejected' => 'مرفوض'];
+    $statusBadgeClasses = ['pending' => 'app-badge-warning', 'approved' => 'app-badge-success', 'rejected' => 'app-badge-danger'];
 @endphp
 
 <section class="app-stat-grid mb-8">
@@ -71,7 +72,7 @@
                     @endif
                 </div>
                 <div class="app-inline-actions">
-                    <span class="app-badge">{{ $statusLabels[$approval->status] ?? $approval->status }}</span>
+                    <span class="app-badge {{ $statusBadgeClasses[$approval->status] ?? '' }}">{{ $statusLabels[$approval->status] ?? $approval->status }}</span>
                     @if ($sourceUrl)
                         <a href="{{ $sourceUrl }}" class="btn btn-secondary btn-sm">فتح المصدر</a>
                     @endif

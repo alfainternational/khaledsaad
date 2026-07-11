@@ -321,6 +321,7 @@ class ToolRunApiTest extends TestCase
             ->assertSee('تقييم الوكالة — API Project')
             ->assertSee('تشغيل أداة')
             ->assertSee('قيد المراجعة')
+            ->assertSee('app-badge-warning', false)
             ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية')
             ->assertSee('فتح المصدر')
             ->assertSee('اعتماد')
@@ -347,6 +348,7 @@ class ToolRunApiTest extends TestCase
             ->get(route('approvals.index'))
             ->assertOk()
             ->assertSee('معتمد')
+            ->assertSee('app-badge-success', false)
             ->assertDontSee('رفض');
     }
 
