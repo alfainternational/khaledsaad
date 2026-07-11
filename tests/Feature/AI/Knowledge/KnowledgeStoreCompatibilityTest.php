@@ -176,11 +176,11 @@ class KnowledgeStoreCompatibilityTest extends TestCase
     }
 
     #[Test]
-    public function unscoped_and_tenant_tainted_global_memories_are_not_mirrored(): void
+    public function public_web_research_is_global_while_tenant_tainted_memories_are_not_mirrored(): void
     {
         Storage::fake('local');
         $this->enableDualWrite();
-        Log::shouldReceive('notice')->twice()->with(
+        Log::shouldReceive('notice')->once()->with(
             'Structured knowledge mirror skipped.',
             Mockery::on(fn (array $context): bool => isset($context['key_hash'], $context['reason'])
                 && ! array_key_exists('key', $context)),
@@ -190,7 +190,8 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $store->remember('web.market-query', ['query' => 'خطة عميل خاصة']);
         $store->remember('playbook.tainted', ['workspace_id' => 77, 'principle' => 'خاص']);
 
-        $this->assertDatabaseCount('knowledge_sources', 0);
+        $this->assertDatabaseCount('knowledge_sources', 1);
+        $this->assertDatabaseHas('knowledge_sources', ['visibility' => 'global']);
         Storage::disk('local')->assertExists('ai-knowledge/web.market-query.json');
         Storage::disk('local')->assertExists('ai-knowledge/playbook.tainted.json');
     }
@@ -359,7 +360,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
             config()->set('services.knowledge.dual_write', $enabled);
 
             if ($enabled) {
-                Log::shouldReceive('notice')->times(count($keys))->with(
+                Log::shouldReceive('notice')->times(count($keys) - 1)->with(
                     'Structured knowledge mirror skipped.',
                     Mockery::on(fn (array $context): bool => isset($context['key_hash'], $context['reason'])
                         && ! array_key_exists('key', $context)),
@@ -381,7 +382,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $store->remember('a?b', ['value' => 'question']);
         $this->assertSame('question', $store->recall('a/b')['data']['value']);
         $this->assertSame('question', $store->recall('a?b')['data']['value']);
-        $this->assertDatabaseCount('knowledge_sources', 0);
+        $this->assertDatabaseCount('knowledge_sources', 1);
     }
 
     #[Test]

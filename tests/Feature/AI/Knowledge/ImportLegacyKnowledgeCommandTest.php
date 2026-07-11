@@ -287,4 +287,35 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
         $this->assertContains('value: "1"', $contents);
         $this->assertContains('value: 1', $contents);
     }
+
+    #[Test]
+    public function global_web_research_is_imported_but_tenant_tainted_research_is_rejected(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('ai-knowledge/web.market.json', json_encode([
+            'key' => 'web.market_trends_saudi',
+            'data' => [
+                'query' => 'اتجاهات السوق السعودي',
+                'top_category' => 'market',
+                'sources' => [['title' => 'مصدر عام', 'url' => 'https://example.test/report']],
+            ],
+            'learned_at' => '2026-07-11T17:23:34+00:00',
+        ], JSON_UNESCAPED_UNICODE));
+        Storage::disk('local')->put('ai-knowledge/web.private.json', json_encode([
+            'key' => 'web.private_project_research',
+            'data' => [
+                'query' => 'بحث خاص',
+                'project_id' => 123,
+                'sources' => [],
+            ],
+            'learned_at' => '2026-07-11T17:23:34+00:00',
+        ], JSON_UNESCAPED_UNICODE));
+
+        $this->artisan('knowledge:import-legacy')
+            ->expectsOutput('Imported: 1; unchanged: 0; skipped: 1')
+            ->assertSuccessful();
+
+        $this->assertDatabaseCount('knowledge_sources', 1);
+        $this->assertDatabaseHas('knowledge_sources', ['visibility' => 'global']);
+    }
 }

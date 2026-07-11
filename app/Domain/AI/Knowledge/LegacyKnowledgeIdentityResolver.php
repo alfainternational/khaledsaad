@@ -95,7 +95,7 @@ final class LegacyKnowledgeIdentityResolver
     private function isGlobalKey(string $key): bool
     {
         return $key === 'patterns.global'
-            || preg_match('/\A(?:playbook|teach)\.[a-z0-9][a-z0-9._-]*\z/D', $key) === 1;
+            || preg_match('/\A(?:playbook|teach|web)\.[a-z0-9][a-z0-9._-]*\z/D', $key) === 1;
     }
 
     /** @param array<string, mixed> $data */
