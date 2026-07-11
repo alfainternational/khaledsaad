@@ -131,7 +131,7 @@ class ProjectController extends Controller
             'recentExecutionPackages' => ExecutionPackage::query()
                 ->where('workspace_id', $workspace->id)
                 ->where('project_id', $project->id)
-                ->with(['tasks', 'reports', 'recommendation'])
+                ->with(['owner', 'tasks', 'reports', 'recommendation'])
                 ->latest()
                 ->limit(3)
                 ->get(),

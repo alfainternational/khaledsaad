@@ -111,6 +111,7 @@ class ExecutionUiTest extends TestCase
 
         $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
         $package->update(['status' => 'measuring']);
+        $package->update(['deadline' => now()->addDays(10)->toDateString()]);
         $package->tasks()->take(2)->get()->each->update(['status' => 'done']);
         $package->reports()->create([
             'phase' => 'validation',
@@ -130,6 +131,8 @@ class ExecutionUiTest extends TestCase
             ->assertSee('الموقع غير آمن (HTTP)')
             ->assertSee('تحت القياس', false)
             ->assertSee('آخر قياس تحقق 70%', false)
+            ->assertSee('مالك الحزمة: '.$owner->name, false)
+            ->assertSee('الموعد النهائي: '.$package->fresh()->deadline->format('Y-m-d'), false)
             ->assertSee('العملاء المحتملون: 34 خلال أسبوع', false)
             ->assertSee('أولوية مشروع 3')
             ->assertSee('فتح التوصيات والتنفيذ', false);

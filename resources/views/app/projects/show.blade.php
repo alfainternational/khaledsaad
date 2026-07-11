@@ -142,6 +142,14 @@
                                 · لا يوجد قياس بعد
                             @endif
                         </small>
+                        <small>
+                            مالك الحزمة: {{ $package->owner?->name ?? 'غير محدد' }}
+                            @if ($package->deadline)
+                                · الموعد النهائي: {{ $package->deadline->format('Y-m-d') }}
+                            @else
+                                · الموعد النهائي: غير محدد
+                            @endif
+                        </small>
                         @if ($latestMetric)
                             <small>{{ $latestMetric['name'] ?? 'مؤشر' }}: {{ $latestMetric['value'] ?? '-' }}</small>
                         @endif
