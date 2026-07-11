@@ -47,9 +47,10 @@ class KnowledgeStore
             'learned_at' => now()->toIso8601String(),
         ];
         $disk = Storage::disk(self::DISK);
+        $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: '{}';
         $written = $disk->put(
             $this->path($key),
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: '{}',
+            $encoded,
         );
 
         if ($written !== true) {
@@ -62,18 +63,35 @@ class KnowledgeStore
         }
 
         if ($this->dualWriteEnabled()) {
-            $this->withMirrorLock($disk, $key, function () use ($disk, $key): void {
-                $memory = $this->legacyMemory($disk, $key);
+            $memory = $this->legacyMemory($disk, $key);
 
-                if ($memory === null) {
-                    $this->logSkipped($key, 'legacy_payload_unreadable');
+            if ($memory === null || ! $this->preparePendingMirror($disk, $memory)) {
+                return;
+            }
 
-                    return;
-                }
-
-                $this->mirrorStructured($disk, $memory['key'], $memory['data']);
-            });
+            $this->reconcile($key);
         }
+    }
+
+    public function reconcile(string $key): bool
+    {
+        if (! $this->dualWriteEnabled()) {
+            return false;
+        }
+
+        $disk = Storage::disk(self::DISK);
+
+        return $this->withMirrorLock($disk, $key, function () use ($disk, $key): void {
+            $memory = $this->legacyMemory($disk, $key);
+
+            if ($memory === null) {
+                $this->logSkipped($key, 'legacy_payload_unreadable');
+
+                return;
+            }
+
+            $this->mirrorStructured($disk, $memory);
+        });
     }
 
     /**
@@ -171,59 +189,29 @@ class KnowledgeStore
         return self::ROOT.'/'.$safe.'.json';
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function mirrorStructured(FilesystemAdapter $disk, string $key, array $data): void
+    /** @param array{key: string, data: array<string, mixed>, generation: string} $memory */
+    private function mirrorStructured(FilesystemAdapter $disk, array $memory): void
     {
-        if (! $this->dualWriteEnabled()) {
+        if (! $this->preparePendingMirror($disk, $memory)) {
             return;
         }
 
+        $this->runTestMirrorReadHook();
+
         try {
             $repository = $this->structured ?? app(StructuredKnowledgeRepository::class);
-            $identity = $this->resolver()->resolve($key, $data);
+            $identity = $this->resolver()->resolve($memory['key'], $memory['data']);
             $scope = $identity['scope'];
 
             if ($scope === null) {
-                $this->logSkipped($key, $identity['failure_reason'] ?? 'scope_unresolved');
-
                 return;
             }
 
             $canonicalUri = $identity['canonical_uri'];
             $keyHash = $identity['key_hash'];
-            $content = implode("\n", $this->flatten($data));
-            $previousContext = $this->mappedContextForPath($disk, $key);
+            $content = implode("\n", $this->flatten($memory['data']));
 
-            if ($previousContext !== null
-                && ($previousContext['scope']->key() !== $scope->key()
-                    || $previousContext['canonical_uri'] !== $canonicalUri)) {
-                $repository->deactivateDocuments(
-                    $previousContext['scope'],
-                    'legacy_memory',
-                    $previousContext['canonical_uri'],
-                );
-            }
-
-            try {
-                $mappingWritten = $this->writeMapping($disk, $key, $scope, $canonicalUri);
-            } catch (Throwable) {
-                $mappingWritten = false;
-            }
-
-            $verifiedContext = $mappingWritten ? $this->mappedContext($disk, $key) : null;
-
-            if ($verifiedContext === null || $verifiedContext['scope']->key() !== $scope->key()) {
-                Log::warning('Structured knowledge scope mapping write failed.', [
-                    'key_hash' => $keyHash,
-                    'reason' => 'mapping_write_failed',
-                ]);
-
-                return;
-            }
-
-            $repository->storeDocument(
+            $repository->storePendingDocument(
                 $scope,
                 'legacy_memory',
                 $canonicalUri,
@@ -234,13 +222,89 @@ class KnowledgeStore
                     'content' => $content,
                     'locator' => ['canonical_uri' => $canonicalUri, 'key_hash' => $keyHash],
                 ]],
+                $memory['generation'],
                 50,
             );
         } catch (Throwable $exception) {
             Log::warning('Structured knowledge dual write failed.', [
-                'key_hash' => $this->keyHash($key),
+                'key_hash' => $this->keyHash($memory['key']),
                 'exception' => $exception::class,
             ]);
+        }
+    }
+
+    /** @param array{key: string, data: array<string, mixed>, generation: string} $memory */
+    private function preparePendingMirror(FilesystemAdapter $disk, array $memory): bool
+    {
+        try {
+            $repository = $this->structured ?? app(StructuredKnowledgeRepository::class);
+            $identity = $this->resolver()->resolve($memory['key'], $memory['data']);
+            $scope = $identity['scope'];
+
+            if ($scope === null) {
+                $this->logSkipped($memory['key'], $identity['failure_reason'] ?? 'scope_unresolved');
+
+                return false;
+            }
+
+            $previousContext = $this->mappedContextForPath($disk, $memory['key']);
+
+            if ($previousContext !== null
+                && ($previousContext['scope']->key() !== $scope->key()
+                    || $previousContext['canonical_uri'] !== $identity['canonical_uri'])) {
+                $repository->deactivateDocuments(
+                    $previousContext['scope'],
+                    'legacy_memory',
+                    $previousContext['canonical_uri'],
+                );
+            }
+
+            try {
+                $mappingWritten = $this->writeMapping(
+                    $disk,
+                    $memory['key'],
+                    $scope,
+                    $identity['canonical_uri'],
+                );
+            } catch (Throwable) {
+                $mappingWritten = false;
+            }
+
+            $verifiedContext = $this->mappedContext($disk, $memory['key']);
+
+            if (! $mappingWritten || $verifiedContext === null || $verifiedContext['scope']->key() !== $scope->key()) {
+                if ($previousContext !== null) {
+                    $repository->markPendingGeneration(
+                        $previousContext['scope'],
+                        'legacy_memory',
+                        $previousContext['canonical_uri'],
+                        $memory['generation'],
+                    );
+                }
+
+                Log::warning('Structured knowledge scope mapping write failed.', [
+                    'key_hash' => $identity['key_hash'],
+                    'reason' => 'mapping_write_failed',
+                ]);
+
+                return false;
+            }
+
+            $repository->markPendingGeneration(
+                $scope,
+                'legacy_memory',
+                $identity['canonical_uri'],
+                $memory['generation'],
+            );
+
+            return true;
+        } catch (Throwable $exception) {
+            Log::warning('Structured knowledge dual write failed.', [
+                'key_hash' => $this->keyHash($memory['key']),
+                'exception' => $exception::class,
+            ]);
+
+            return false;
         }
     }
 
@@ -485,7 +549,7 @@ class KnowledgeStore
     }
 
     /**
-     * @return array{key: string, data: array<string, mixed>}|null
+     * @return array{key: string, data: array<string, mixed>, generation: string}|null
      */
     private function legacyMemory(FilesystemAdapter $disk, string $key): ?array
     {
@@ -495,7 +559,8 @@ class KnowledgeStore
             return null;
         }
 
-        $decoded = json_decode((string) $disk->get($path), true);
+        $raw = (string) $disk->get($path);
+        $decoded = json_decode($raw, true);
 
         if (! is_array($decoded)
             || ! is_string($decoded['key'] ?? null)
@@ -503,7 +568,31 @@ class KnowledgeStore
             return null;
         }
 
-        return ['key' => $decoded['key'], 'data' => $decoded['data']];
+        return [
+            'key' => $decoded['key'],
+            'data' => $decoded['data'],
+            'generation' => hash('sha256', $raw),
+        ];
+    }
+
+    private function runTestMirrorReadHook(): void
+    {
+        if (! app()->environment('testing')) {
+            return;
+        }
+
+        $signalPath = config('services.knowledge.test_mirror_read_signal_path');
+
+        if (is_string($signalPath) && $signalPath !== '') {
+            File::ensureDirectoryExists(dirname($signalPath));
+            File::put($signalPath, 'read');
+        }
+
+        $delay = max(0, min(5000, (int) config('services.knowledge.test_mirror_delay_milliseconds', 0)));
+
+        if ($delay > 0) {
+            usleep($delay * 1000);
+        }
     }
 
     /**

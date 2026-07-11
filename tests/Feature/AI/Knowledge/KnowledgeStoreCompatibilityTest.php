@@ -6,6 +6,7 @@ use App\Domain\Account\Models\Account;
 use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\Models\KnowledgeDocument;
+use App\Domain\AI\Knowledge\Models\KnowledgeSource;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
@@ -141,15 +142,16 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         {
             public function __construct(private readonly RuntimeException $failure) {}
 
-            public function storeDocument(
+            public function storePendingDocument(
                 KnowledgeScope $scope,
                 string $kind,
                 string $canonicalUri,
                 string $title,
                 string $content,
                 array $chunks,
+                string $generation,
                 int $trustScore = 50,
-            ): KnowledgeDocument {
+            ): ?KnowledgeDocument {
                 throw $this->failure;
             }
         };
@@ -263,15 +265,16 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         );
         $repository = new class extends StructuredKnowledgeRepository
         {
-            public function storeDocument(
+            public function storePendingDocument(
                 KnowledgeScope $scope,
                 string $kind,
                 string $canonicalUri,
                 string $title,
                 string $content,
                 array $chunks,
+                string $generation,
                 int $trustScore = 50,
-            ): KnowledgeDocument {
+            ): ?KnowledgeDocument {
                 throw new RuntimeException('Structured mirror must not start.');
             }
         };
@@ -412,15 +415,16 @@ class KnowledgeStoreCompatibilityTest extends TestCase
 
             public function __construct(private readonly string $pathHash) {}
 
-            public function storeDocument(
+            public function storePendingDocument(
                 KnowledgeScope $scope,
                 string $kind,
                 string $canonicalUri,
                 string $title,
                 string $content,
                 array $chunks,
+                string $generation,
                 int $trustScore = 50,
-            ): KnowledgeDocument {
+            ): ?KnowledgeDocument {
                 $path = Storage::disk('local')->path('ai-knowledge/.locks/'.$this->pathHash.'.lock');
                 $handle = fopen($path, 'c+');
                 $this->lockWasHeldDuringMirror = is_resource($handle) && ! flock($handle, LOCK_EX | LOCK_NB);
@@ -472,7 +476,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
     }
 
     #[Test]
-    public function rollout_on_lock_contention_keeps_json_and_safely_skips_the_mirror(): void
+    public function rollout_on_lock_contention_keeps_json_and_records_a_pending_generation_without_active_content(): void
     {
         Storage::fake('local');
         $this->enableDualWrite();
@@ -488,15 +492,29 @@ class KnowledgeStoreCompatibilityTest extends TestCase
             ['key_hash' => hash('sha256', $key), 'reason' => 'lock_timeout'],
         );
 
+        $store = new KnowledgeStore(new StructuredKnowledgeRepository);
+
         try {
-            (new KnowledgeStore(new StructuredKnowledgeRepository))->remember($key, ['value' => 'authoritative']);
+            $store->remember($key, ['value' => 'authoritative']);
 
             $this->assertSame('authoritative', (new KnowledgeStore)->recall($key)['data']['value']);
-            $this->assertDatabaseCount('knowledge_sources', 0);
+            $this->assertDatabaseCount('knowledge_sources', 1);
+            $this->assertDatabaseCount('knowledge_documents', 0);
+            $this->assertSame(
+                hash('sha256', Storage::disk('local')->get($this->legacyPath($key))),
+                KnowledgeSource::query()->sole()->meta_json['legacy_pending_generation'],
+            );
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);
         }
+
+        $this->assertTrue($store->reconcile($key));
+        $this->assertSame('value: "authoritative"', KnowledgeDocument::query()->where('status', 'active')->sole()->content);
+        $this->assertArrayNotHasKey(
+            'legacy_pending_generation',
+            KnowledgeSource::query()->sole()->fresh()->meta_json,
+        );
     }
 
     #[Test]
@@ -515,7 +533,12 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         (new KnowledgeStore(new StructuredKnowledgeRepository))->remember($key, ['value' => 'authoritative']);
 
         $this->assertSame('authoritative', (new KnowledgeStore)->recall($key)['data']['value']);
-        $this->assertDatabaseCount('knowledge_sources', 0);
+        $this->assertDatabaseCount('knowledge_sources', 1);
+        $this->assertDatabaseCount('knowledge_documents', 0);
+        $this->assertSame(
+            hash('sha256', Storage::disk('local')->get($this->legacyPath($key))),
+            KnowledgeSource::query()->sole()->meta_json['legacy_pending_generation'],
+        );
     }
 
     #[Test]

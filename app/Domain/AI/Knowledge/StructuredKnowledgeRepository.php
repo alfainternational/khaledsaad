@@ -21,6 +21,83 @@ class StructuredKnowledgeRepository
         array $chunks,
         int $trustScore = 50
     ): KnowledgeDocument {
+        $document = $this->storeDocumentInternal(
+            $scope,
+            $kind,
+            $canonicalUri,
+            $title,
+            $content,
+            $chunks,
+            $trustScore,
+            null,
+        );
+
+        if ($document === null) {
+            throw new LogicException('Unconditional knowledge storage was unexpectedly rejected.');
+        }
+
+        return $document;
+    }
+
+    public function markPendingGeneration(
+        KnowledgeScope $scope,
+        string $kind,
+        string $canonicalUri,
+        string $generation,
+        int $trustScore = 50,
+    ): void {
+        $kind = trim($kind);
+        $canonicalUri = trim($canonicalUri);
+        $this->validateIdentity($kind, $canonicalUri);
+        $this->validateGeneration($generation);
+
+        if ($trustScore < 0 || $trustScore > 100) {
+            throw new InvalidArgumentException('Knowledge trust score must be between 0 and 100.');
+        }
+
+        DB::transaction(function () use ($scope, $kind, $canonicalUri, $generation, $trustScore): void {
+            $source = $this->sourceForUpdate($scope, $kind, $canonicalUri, $trustScore);
+            $meta = is_array($source->meta_json) ? $source->meta_json : [];
+            $meta['legacy_pending_generation'] = $generation;
+            $source->update(['meta_json' => $meta]);
+            $source->documents()->where('status', 'active')->update(['status' => 'superseded']);
+        });
+    }
+
+    public function storePendingDocument(
+        KnowledgeScope $scope,
+        string $kind,
+        string $canonicalUri,
+        string $title,
+        string $content,
+        array $chunks,
+        string $generation,
+        int $trustScore = 50,
+    ): ?KnowledgeDocument {
+        $this->validateGeneration($generation);
+
+        return $this->storeDocumentInternal(
+            $scope,
+            $kind,
+            $canonicalUri,
+            $title,
+            $content,
+            $chunks,
+            $trustScore,
+            $generation,
+        );
+    }
+
+    private function storeDocumentInternal(
+        KnowledgeScope $scope,
+        string $kind,
+        string $canonicalUri,
+        string $title,
+        string $content,
+        array $chunks,
+        int $trustScore,
+        ?string $expectedGeneration,
+    ): ?KnowledgeDocument {
         $kind = trim($kind);
         $canonicalUri = trim($canonicalUri);
 
@@ -44,26 +121,15 @@ class StructuredKnowledgeRepository
             $chunks,
             $trustScore,
             $contentHash,
-            $identityHash
-        ): KnowledgeDocument {
-            $source = KnowledgeSource::query()->firstOrCreate(
-                [
-                    'scope_key' => $scope->key(),
-                    'identity_hash' => $identityHash,
-                ],
-                [
-                    'account_id' => $scope->accountId,
-                    'workspace_id' => $scope->workspaceId,
-                    'project_id' => $scope->projectId,
-                    'kind' => $kind,
-                    'canonical_uri' => $canonicalUri,
-                    'trust_score' => $trustScore,
-                    'visibility' => $scope->visibility,
-                ]
-            );
+            $identityHash,
+            $expectedGeneration,
+        ): ?KnowledgeDocument {
+            $source = $this->sourceForUpdate($scope, $kind, $canonicalUri, $trustScore, $identityHash);
 
-            $source = KnowledgeSource::query()->lockForUpdate()->findOrFail($source->id);
-            $this->assertSourceIntegrity($source, $scope, $kind, $canonicalUri);
+            if ($expectedGeneration !== null
+                && ($source->meta_json['legacy_pending_generation'] ?? null) !== $expectedGeneration) {
+                return null;
+            }
 
             $existing = $source->documents()->where('content_hash', $contentHash)->first();
 
@@ -78,6 +144,8 @@ class StructuredKnowledgeRepository
                 if ($existing->status !== 'active') {
                     $existing->update(['status' => 'active']);
                 }
+
+                $this->markGenerationApplied($source, $expectedGeneration);
 
                 return $existing->load(['source', 'chunks' => fn ($query) => $query->orderBy('position')]);
             }
@@ -102,6 +170,8 @@ class StructuredKnowledgeRepository
                     'locator_json' => $chunk['locator'],
                 ]);
             }
+
+            $this->markGenerationApplied($source, $expectedGeneration);
 
             return $document->load(['source', 'chunks' => fn ($query) => $query->orderBy('position')]);
         });
@@ -185,6 +255,54 @@ class StructuredKnowledgeRepository
 
             return $source->documents()->where('status', 'active')->update(['status' => 'superseded']);
         });
+    }
+
+    private function sourceForUpdate(
+        KnowledgeScope $scope,
+        string $kind,
+        string $canonicalUri,
+        int $trustScore,
+        ?string $identityHash = null,
+    ): KnowledgeSource {
+        $source = KnowledgeSource::query()->firstOrCreate(
+            [
+                'scope_key' => $scope->key(),
+                'identity_hash' => $identityHash ?? $this->identityHash($scope, $kind, $canonicalUri),
+            ],
+            [
+                'account_id' => $scope->accountId,
+                'workspace_id' => $scope->workspaceId,
+                'project_id' => $scope->projectId,
+                'kind' => $kind,
+                'canonical_uri' => $canonicalUri,
+                'trust_score' => $trustScore,
+                'visibility' => $scope->visibility,
+            ],
+        );
+
+        $source = KnowledgeSource::query()->lockForUpdate()->findOrFail($source->id);
+        $this->assertSourceIntegrity($source, $scope, $kind, $canonicalUri);
+
+        return $source;
+    }
+
+    private function markGenerationApplied(KnowledgeSource $source, ?string $generation): void
+    {
+        if ($generation === null) {
+            return;
+        }
+
+        $meta = is_array($source->meta_json) ? $source->meta_json : [];
+        unset($meta['legacy_pending_generation']);
+        $meta['legacy_applied_generation'] = $generation;
+        $source->update(['meta_json' => $meta]);
+    }
+
+    private function validateGeneration(string $generation): void
+    {
+        if (preg_match('/\A[0-9a-f]{64}\z/D', $generation) !== 1) {
+            throw new InvalidArgumentException('Knowledge generation must be a SHA-256 hash.');
+        }
     }
 
     private function normalizeContent(string $content): string

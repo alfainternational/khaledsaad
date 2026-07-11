@@ -6,6 +6,7 @@ use App\Domain\Account\Models\Account;
 use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\Models\KnowledgeDocument;
+use App\Domain\AI\Knowledge\Models\KnowledgeSource;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
@@ -15,6 +16,7 @@ use DateTimeInterface;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
@@ -156,18 +158,22 @@ class LegacyKnowledgeLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function mysql_cross_process_two_writers_converge_while_sqlite_memory_is_covered_in_process(): void
+    public function mysql_delayed_old_writer_cannot_leave_stale_content_active_after_new_writer_times_out(): void
     {
         if (DB::getDriverName() === 'sqlite') {
-            $this->markTestSkipped('SQLite :memory: cannot share its database with subprocesses; lock behavior is covered in-process.');
+            $this->markTestSkipped('SQLite :memory: cannot share its database with subprocesses; generation ordering is covered in-process.');
         }
 
-        $key = 'playbook.concurrent-'.bin2hex(random_bytes(6));
+        $key = 'playbook.generation-race-'.bin2hex(random_bytes(6));
         $legacyPath = 'ai-knowledge/'.$key.'.json';
         $mappingPath = 'ai-knowledge/.structured-map/'.hash('sha256', $legacyPath).'.json';
         $lockPath = 'ai-knowledge/.locks/'.hash('sha256', $legacyPath).'.lock';
+        $signalPath = storage_path('framework/testing/'.hash('sha256', $key).'.mirror-read');
         $disk = Storage::disk('local');
         $disk->delete([$legacyPath, $mappingPath, $lockPath]);
+        File::delete($signalPath);
+        $this->enableDualWrite();
+        (new KnowledgeStore(new StructuredKnowledgeRepository))->remember($key, ['writer' => 'baseline']);
         $script = <<<'PHP'
 $base = $argv[1];
 require $base.'/vendor/autoload.php';
@@ -175,11 +181,74 @@ $app = require $base.'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 config()->set('services.knowledge.structured_store', true);
 config()->set('services.knowledge.dual_write', true);
+config()->set('services.knowledge.lock_wait_milliseconds', (int) $argv[5]);
+config()->set('services.knowledge.test_mirror_delay_milliseconds', (int) $argv[4]);
+config()->set('services.knowledge.test_mirror_read_signal_path', $argv[6] === '-' ? null : $argv[6]);
 (new App\Domain\AI\Kernel\Knowledge\KnowledgeStore(
     new App\Domain\AI\Knowledge\StructuredKnowledgeRepository,
 ))->remember($argv[2], ['writer' => $argv[3]]);
 PHP;
-        $environment = [
+        $environment = $this->subprocessEnvironment();
+        $writerA = new Process([
+            PHP_BINARY, '-r', $script, base_path(), $key, 'old-A', '1200', '500', $signalPath,
+        ], base_path(), $environment);
+        $writerB = new Process([
+            PHP_BINARY, '-r', $script, base_path(), $key, 'new-B', '0', '50', '-',
+        ], base_path(), $environment);
+        $writerA->setTimeout(20);
+        $writerB->setTimeout(20);
+
+        try {
+            $writerA->start();
+            $deadline = microtime(true) + 5;
+
+            while (! File::exists($signalPath) && $writerA->isRunning() && microtime(true) < $deadline) {
+                usleep(20_000);
+            }
+
+            $this->assertFileExists($signalPath, $writerA->getErrorOutput());
+            $writerB->start();
+            $this->assertSame(0, $writerB->wait(), $writerB->getErrorOutput());
+            $this->assertSame(0, $writerA->wait(), $writerA->getErrorOutput());
+
+            $memory = (new KnowledgeStore)->recall($key);
+            $source = KnowledgeSource::query()->sole();
+            $active = (new StructuredKnowledgeRepository)->latestDocument(
+                KnowledgeScope::global(),
+                'legacy_memory',
+                'legacy://sha256/'.hash('sha256', $key),
+            );
+            $latestGeneration = hash('sha256', (string) $disk->get($legacyPath));
+            $this->assertSame('new-B', $memory['data']['writer']);
+
+            if ($active !== null) {
+                $this->assertSame('writer: "new-B"', $active->content);
+            } else {
+                $this->assertSame($latestGeneration, $source->meta_json['legacy_pending_generation'] ?? null);
+            }
+
+            $this->assertNotSame('writer: "old-A"', $active?->content);
+        } finally {
+            foreach ([$writerA, $writerB] as $writer) {
+                if ($writer->isRunning()) {
+                    $writer->stop(1);
+                }
+            }
+            $disk->delete([$legacyPath, $mappingPath, $lockPath]);
+            File::delete($signalPath);
+        }
+    }
+
+    private function enableDualWrite(): void
+    {
+        config()->set('services.knowledge.structured_store', true);
+        config()->set('services.knowledge.dual_write', true);
+    }
+
+    /** @return array<string, string> */
+    private function subprocessEnvironment(): array
+    {
+        return [
             'APP_ENV' => 'testing',
             'APP_KEY' => (string) config('app.key'),
             'DB_CONNECTION' => (string) config('database.default'),
@@ -189,48 +258,6 @@ PHP;
             'DB_USERNAME' => (string) config('database.connections.mysql.username'),
             'DB_PASSWORD' => (string) config('database.connections.mysql.password'),
         ];
-        $writers = [
-            new Process([PHP_BINARY, '-r', $script, base_path(), $key, 'one'], base_path(), $environment),
-            new Process([PHP_BINARY, '-r', $script, base_path(), $key, 'two'], base_path(), $environment),
-        ];
-
-        foreach ($writers as $writer) {
-            $writer->setTimeout(20);
-        }
-
-        try {
-            foreach ($writers as $writer) {
-                $writer->start();
-            }
-            foreach ($writers as $writer) {
-                $this->assertSame(0, $writer->wait(), $writer->getErrorOutput());
-            }
-
-            $memory = (new KnowledgeStore)->recall($key);
-            $document = (new StructuredKnowledgeRepository)->latestDocument(
-                KnowledgeScope::global(),
-                'legacy_memory',
-                'legacy://sha256/'.hash('sha256', $key),
-            );
-            $this->assertNotNull($memory);
-            $this->assertNotNull($document);
-            $this->assertSame('writer: '.json_encode($memory['data']['writer']), $document->content);
-            $this->assertDatabaseCount('knowledge_sources', 1);
-            $this->assertSame(1, KnowledgeDocument::query()->where('status', 'active')->count());
-        } finally {
-            foreach ($writers as $writer) {
-                if ($writer->isRunning()) {
-                    $writer->stop(1);
-                }
-            }
-            $disk->delete([$legacyPath, $mappingPath, $lockPath]);
-        }
-    }
-
-    private function enableDualWrite(): void
-    {
-        config()->set('services.knowledge.structured_store', true);
-        config()->set('services.knowledge.dual_write', true);
     }
 
     /** @param array<string, mixed> $data */

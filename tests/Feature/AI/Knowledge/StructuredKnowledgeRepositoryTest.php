@@ -302,6 +302,62 @@ class StructuredKnowledgeRepositoryTest extends TestCase
         $this->assertSame('active', $otherUri->fresh()->status);
     }
 
+    #[Test]
+    public function pending_generation_deactivates_old_content_and_atomically_rejects_a_stale_writer(): void
+    {
+        [, , , $scope] = $this->createTenant('Generation');
+        $old = $this->store($scope, 'old active', [['content' => 'old active']]);
+        $oldGeneration = hash('sha256', 'old generation');
+        $newGeneration = hash('sha256', 'new generation');
+
+        $this->repository->markPendingGeneration(
+            $scope,
+            'manual',
+            'knowledge://guide',
+            $oldGeneration,
+            75,
+        );
+        $this->repository->markPendingGeneration(
+            $scope,
+            'manual',
+            'knowledge://guide',
+            $newGeneration,
+            75,
+        );
+        $stale = $this->repository->storePendingDocument(
+            $scope,
+            'manual',
+            'knowledge://guide',
+            'Guide',
+            'stale writer',
+            [['content' => 'stale writer']],
+            $oldGeneration,
+            75,
+        );
+
+        $this->assertNull($stale);
+        $this->assertSame('superseded', $old->fresh()->status);
+        $this->assertNull($this->repository->latestDocument($scope, 'manual', 'knowledge://guide'));
+        $this->assertSame($newGeneration, KnowledgeSource::query()->sole()->meta_json['legacy_pending_generation']);
+
+        $current = $this->repository->storePendingDocument(
+            $scope,
+            'manual',
+            'knowledge://guide',
+            'Guide',
+            'new writer',
+            [['content' => 'new writer']],
+            $newGeneration,
+            75,
+        );
+
+        $this->assertNotNull($current);
+        $this->assertSame('new writer', $current->content);
+        $meta = KnowledgeSource::query()->sole()->meta_json;
+        $this->assertArrayNotHasKey('legacy_pending_generation', $meta);
+        $this->assertSame($newGeneration, $meta['legacy_applied_generation']);
+    }
+
     private function store(KnowledgeScope $scope, string $content, array $chunks): KnowledgeDocument
     {
         return $this->repository->storeDocument($scope, 'manual', 'knowledge://guide', 'Guide', $content, $chunks, 75);

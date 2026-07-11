@@ -134,6 +134,8 @@ return [
             'trim',
             explode(',', (string) env('AI_KNOWLEDGE_MAPPING_PREVIOUS_KEYS', '')),
         ))),
+        'test_mirror_delay_milliseconds' => 0,
+        'test_mirror_read_signal_path' => null,
     ],
 
     /*
