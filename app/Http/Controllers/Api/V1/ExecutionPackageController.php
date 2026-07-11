@@ -7,6 +7,7 @@ use App\Domain\Execution\Models\ExecutionTask;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\ExecutionPackageResource;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ExecutionPackageController extends Controller
 {
@@ -49,6 +50,26 @@ class ExecutionPackageController extends Controller
         return new ExecutionPackageResource($package->fresh()->load(['tasks', 'assets']));
     }
 
+    public function updateTask(Request $request): ExecutionPackageResource
+    {
+        $task = $this->resolveTask((string) $request->route('taskPublicId'));
+        $package = $task->executionPackage;
+        $this->authorize('update', $package->project);
+
+        $validated = $request->validate([
+            'assigned_to' => ['sometimes', 'nullable', 'integer'],
+            'due_date' => ['sometimes', 'nullable', 'date'],
+        ]);
+
+        if (array_key_exists('assigned_to', $validated) && $validated['assigned_to'] !== null) {
+            $this->ensureAssigneeBelongsToWorkspace((int) $validated['assigned_to']);
+        }
+
+        $task->update($validated);
+
+        return new ExecutionPackageResource($package->fresh()->load(['tasks', 'assets']));
+    }
+
     /**
      * يحل الحزمة ضمن مساحة العمل الحالية (عزل صارم).
      */
@@ -73,5 +94,22 @@ class ExecutionPackageController extends Controller
             ->whereHas('executionPackage', fn ($query) => $query->where('workspace_id', $workspace->id))
             ->with('executionPackage.project')
             ->firstOrFail();
+    }
+
+    private function ensureAssigneeBelongsToWorkspace(int $userId): void
+    {
+        /** @var \App\Domain\Workspace\Models\Workspace $workspace */
+        $workspace = app('currentWorkspace');
+
+        $isMember = $workspace->members()
+            ->where('user_id', $userId)
+            ->where('status', 'active')
+            ->exists();
+
+        if (! $isMember) {
+            throw ValidationException::withMessages([
+                'assigned_to' => ['المستخدم المحدد ليس عضواً نشطاً في مساحة العمل.'],
+            ]);
+        }
     }
 }

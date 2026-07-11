@@ -498,6 +498,18 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.tasks.0.status_label', 'قيد التنفيذ')
             ->assertJsonPath('data.progress.done_tasks', 1)
             ->assertJsonPath('data.progress.percent', 25);
+
+        $newDueDate = now()->addDays(10)->toDateString();
+
+        $auth()
+            ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
+                'assigned_to' => $owner->id,
+                'due_date' => $newDueDate,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.tasks.0.public_id', $firstTask->public_id)
+            ->assertJsonPath('data.tasks.0.assigned_to', $owner->id)
+            ->assertJsonPath('data.tasks.0.due_date', $newDueDate);
     }
 
     #[Test]
