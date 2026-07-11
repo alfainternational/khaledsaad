@@ -62,12 +62,13 @@ class ApprovalController extends Controller
 
         abort_unless($this->itemBelongsToProject($workspace->id, $project->id, $itemType, $itemId), 422);
 
-        Approval::query()->create([
+        Approval::query()->updateOrCreate([
             'workspace_id' => $workspace->id,
             'project_id' => $project->id,
             'item_type' => $itemType,
             'item_id' => $itemId,
             'status' => 'pending',
+        ], [
             'reviewer_id' => $request->user()->id,
             'note' => $data['note'] ?? null,
         ]);

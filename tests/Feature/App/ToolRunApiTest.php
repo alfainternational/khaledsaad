@@ -316,6 +316,26 @@ class ToolRunApiTest extends TestCase
 
         $this->actingAs($owner)
             ->withSession(['current_workspace_id' => $workspace->id])
+            ->post(route('projects.approvals.store', $project), [
+                'item_type' => 'tool_run',
+                'item_id' => $run->id,
+                'note' => $meetingBrief,
+            ])
+            ->assertSessionHas('status');
+
+        $this->assertSame(
+            1,
+            Approval::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('project_id', $project->id)
+                ->where('item_type', 'tool_run')
+                ->where('item_id', $run->id)
+                ->where('status', 'pending')
+                ->count()
+        );
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
             ->get(route('approvals.index'))
             ->assertOk()
             ->assertSee('تقييم الوكالة — API Project')
