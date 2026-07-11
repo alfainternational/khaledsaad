@@ -144,6 +144,13 @@
                         <strong>رسالة الاجتماع مع الوكالة</strong>
                         <small>{!! nl2br(e($agencyVerdict['meeting_brief'])) !!}</small>
                     </div>
+                    <form method="POST" action="{{ route('projects.approvals.store', $project) }}">
+                        @csrf
+                        <input type="hidden" name="item_type" value="tool_run">
+                        <input type="hidden" name="item_id" value="{{ $latestAgencyAuditRun->id }}">
+                        <input type="hidden" name="note" value="{{ $agencyVerdict['meeting_brief'] }}">
+                        <button type="submit" class="btn btn-primary btn-sm">طلب اعتماد مطالب الوكالة</button>
+                    </form>
                 </div>
             </div>
         @endif

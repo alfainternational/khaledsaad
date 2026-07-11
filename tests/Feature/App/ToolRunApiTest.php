@@ -266,7 +266,52 @@ class ToolRunApiTest extends TestCase
             ->assertSee('تقرير CAC أو تكلفة العميل المحتمل المؤهل')
             ->assertSee('رسالة الاجتماع مع الوكالة')
             ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية')
+            ->assertSee('طلب اعتماد مطالب الوكالة')
             ->assertSee('فتح تقييم الوكالة');
+    }
+
+    #[Test]
+    public function agency_audit_meeting_brief_can_be_requested_for_approval(): void
+    {
+        [$owner, $workspace, $project] = $this->makeWorkspaceToolScenario();
+        $tool = Tool::query()->where('code', 'agency-audit')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->postJson(route('api.tools.run', $tool), [
+                'project_id' => $project->id,
+                'mode' => 'guided',
+                'inputs' => [
+                    'agency_scope' => 'إدارة حملات ميتا',
+                    'agency_promise' => 'زيادة المبيعات خلال شهر',
+                    'agency_reported_results' => '120 نقرة وظهور كثير بدون مبيعات',
+                    'agency_tracking' => 'لا يوجد UTM واضح',
+                    'agency_concern' => 'أرقام تفاعل فقط',
+                    'agency_questions' => 'ما تكلفة العميل المحتمل المؤهل؟',
+                ],
+            ])
+            ->assertOk();
+
+        $run = ToolRun::query()->where('tool_code', 'agency-audit')->firstOrFail();
+        $meetingBrief = $run->summary_json['agency_verdict']['meeting_brief'];
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->post(route('projects.approvals.store', $project), [
+                'item_type' => 'tool_run',
+                'item_id' => $run->id,
+                'note' => $meetingBrief,
+            ])
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('approvals', [
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'item_type' => 'tool_run',
+            'item_id' => $run->id,
+            'status' => 'pending',
+            'note' => $meetingBrief,
+        ]);
     }
 
     /**
