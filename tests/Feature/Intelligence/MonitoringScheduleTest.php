@@ -7,15 +7,26 @@ use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
 use App\Jobs\CaptureMonitoringSnapshotJob;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Console\Scheduling\Event;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MonitoringScheduleTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTruncation;
+
+    protected function beforeTruncatingDatabase(): void
+    {
+        if (DB::getDriverName() === 'sqlite' && config('database.connections.sqlite.database') === ':memory:') {
+            RefreshDatabaseState::$migrated = false;
+        }
+    }
 
     #[Test]
     public function the_monitoring_command_only_queues_snapshots_for_enabled_projects(): void
@@ -34,6 +45,40 @@ class MonitoringScheduleTest extends TestCase
             CaptureMonitoringSnapshotJob::class,
             fn (CaptureMonitoringSnapshotJob $job): bool => $job->projectId === $monitored->id,
         );
+    }
+
+    #[Test]
+    public function project_knowledge_sync_is_not_scheduled_when_disabled(): void
+    {
+        $this->assertFalse(config('services.knowledge.project_sync'));
+        $this->assertSame([], $this->projectKnowledgeSyncEvents());
+    }
+
+    #[Test]
+    public function project_knowledge_sync_runs_daily_without_overlapping_when_enabled(): void
+    {
+        config()->set('services.knowledge.project_sync', true);
+
+        try {
+            require base_path('routes/console.php');
+            $events = $this->projectKnowledgeSyncEvents();
+
+            $this->assertCount(1, $events);
+            $this->assertSame('15 3 * * *', $events[0]->expression);
+            $this->assertSame('knowledge-project-sync', $events[0]->description);
+            $this->assertTrue($events[0]->withoutOverlapping);
+        } finally {
+            config()->set('services.knowledge.project_sync', false);
+        }
+    }
+
+    /** @return list<Event> */
+    private function projectKnowledgeSyncEvents(): array
+    {
+        return array_values(array_filter(
+            Schedule::events(),
+            fn ($event): bool => str_contains($event->command ?? '', 'knowledge:sync-projects'),
+        ));
     }
 
     private function workspace(): Workspace

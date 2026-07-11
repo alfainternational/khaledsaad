@@ -75,6 +75,13 @@ Schedule::command('ai:learn')
     ->withoutOverlapping()
     ->name('ai-continuous-learning');
 
+if ((bool) config('services.knowledge.project_sync', false)) {
+    Schedule::command('knowledge:sync-projects')
+        ->dailyAt('03:15')
+        ->withoutOverlapping()
+        ->name('knowledge-project-sync');
+}
+
 /*
  | Compile-Ahead: يعيد تجميع artifact الذكاء لكل المساحات (ملء أوّلي + شبكة أمان).
  | العرض اليومي يقرأ الناتج الجاهز فقط — صفر حساب وقت الطلب.
@@ -199,7 +206,7 @@ Artisan::command('ai:teach {limit=6}', function (AiGatewayInterface $gateway, Kn
             if (trim($inputs) === '') {
                 continue;
             }
-            $samples[] = "مدخلات المستخدم: ".$inputs."\nمخرج النظام المحلي: ".trim($headline.' | '.$bullets);
+            $samples[] = 'مدخلات المستخدم: '.$inputs."\nمخرج النظام المحلي: ".trim($headline.' | '.$bullets);
         }
 
         if ($samples === []) {
