@@ -149,6 +149,31 @@ class ProjectKnowledgeSnapshotBuilderTest extends TestCase
         }
     }
 
+    #[Test]
+    public function it_sanitizes_sensitive_query_values_in_direct_project_fields_and_title(): void
+    {
+        $project = Project::query()->create([
+            'public_id' => 'project-direct-scalars',
+            'workspace_id' => $this->workspaceId('Direct'),
+            'name' => 'Project https://example.test/name?view=public&token=NAME-SECRET',
+            'stage' => 1,
+            'status' => 'active',
+            'sector' => 'Technology',
+            'market_country' => 'Saudi Arabia',
+            'primary_domain' => 'https://example.test/site?locale=ar&X-Amz-Signature=DOMAIN-SECRET',
+        ]);
+
+        $snapshot = (new ProjectKnowledgeSnapshotBuilder)->build($project);
+
+        $this->assertStringContainsString('https://example.test/name?view=public', $snapshot['title']);
+        $this->assertStringContainsString('token=[REDACTED]', $snapshot['title']);
+        $this->assertStringContainsString('https://example.test/site?locale=ar', $snapshot['content']);
+        $this->assertStringContainsString('X-Amz-Signature=[REDACTED]', $snapshot['content']);
+        $this->assertStringNotContainsString('NAME-SECRET', $snapshot['title']);
+        $this->assertStringNotContainsString('NAME-SECRET', $snapshot['content']);
+        $this->assertStringNotContainsString('DOMAIN-SECRET', $snapshot['content']);
+    }
+
     private function workspaceId(string $suffix): int
     {
         $userId = DB::table('users')->insertGetId([

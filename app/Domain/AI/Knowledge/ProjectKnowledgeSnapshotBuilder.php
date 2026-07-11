@@ -64,6 +64,7 @@ class ProjectKnowledgeSnapshotBuilder
         $chunks = [];
         foreach ($sections as $heading => $values) {
             $field = strtolower($heading);
+            $values = $this->sanitize($values);
             $lines = $this->flatten($values);
             $chunks[] = [
                 'heading' => $heading,
@@ -72,8 +73,9 @@ class ProjectKnowledgeSnapshotBuilder
             ];
         }
 
-        $title = preg_replace('/[\t ]+|\n+/', ' ', trim($this->normalizeLineEndings((string) $project->name)))
-            ?? trim((string) $project->name);
+        $sanitizedTitle = (string) $this->sanitize((string) $project->name);
+        $title = preg_replace('/[\t ]+|\n+/', ' ', trim($sanitizedTitle))
+            ?? trim($sanitizedTitle);
 
         return [
             'title' => $title,
@@ -198,7 +200,7 @@ class ProjectKnowledgeSnapshotBuilder
             if ((is_scalar($value) || $value === null) && (! is_string($value) || trim($value) !== '')) {
                 $lines[] = $path.': '.json_encode(
                     is_string($value) ? $this->normalizeLineEndings($value) : $value,
-                    JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR,
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR,
                 );
             }
         }
