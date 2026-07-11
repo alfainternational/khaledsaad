@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Domain\AI\Models\AIGeneration;
+use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\Recommendation;
 use App\Domain\Intelligence\Models\AuditRun;
 use App\Domain\Client\Models\Client;
@@ -125,6 +126,13 @@ class ProjectController extends Controller
                 ->where('project_id', $project->id)
                 ->with('executionPackages')
                 ->orderBy('priority')
+                ->limit(3)
+                ->get(),
+            'recentExecutionPackages' => ExecutionPackage::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('project_id', $project->id)
+                ->with(['tasks', 'reports', 'recommendation'])
+                ->latest()
                 ->limit(3)
                 ->get(),
             'journeySnapshot' => $journeySnapshot,

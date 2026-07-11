@@ -104,6 +104,58 @@
     </section>
 @endif
 
+@if ($recentExecutionPackages->isNotEmpty())
+    @php($packageStatusLabels = [
+        'proposed' => 'مقترحة',
+        'in_review' => 'قيد المراجعة',
+        'approved' => 'معتمدة',
+        'in_progress' => 'قيد التنفيذ',
+        'executed' => 'منفّذة',
+        'measuring' => 'تحت القياس',
+    ])
+    @php($reportPhaseLabels = ['discovery' => 'اكتشاف', 'planning' => 'تخطيط', 'execution' => 'تنفيذ', 'validation' => 'تحقق'])
+    <section class="card mb-8">
+        <div class="app-section-head">
+            <div>
+                <p class="section-kicker">متابعة التنفيذ</p>
+                <h3 class="heading-sm">حالة التنفيذ والقياس</h3>
+                <p class="text-caption">آخر حزم العمل لهذا المشروع، مع تقدم المهام وآخر قياس محفوظ.</p>
+            </div>
+            <a href="{{ route('projects.recommendations.index', $project) }}" class="btn btn-secondary btn-sm">فتح مركز التنفيذ</a>
+        </div>
+
+        <div class="app-list">
+            @foreach ($recentExecutionPackages as $package)
+                @php($totalTasks = $package->tasks->count())
+                @php($doneTasks = $package->tasks->where('status', 'done')->count())
+                @php($latestReport = $package->reports->first())
+                @php($latestMetric = $latestReport ? collect($latestReport->metrics_json ?? [])->first() : null)
+                <div class="app-list-item">
+                    <div>
+                        <strong>{{ $package->title }}</strong>
+                        <small>
+                            {{ $packageStatusLabels[$package->status] ?? $package->status }}
+                            · المهام {{ $doneTasks }}/{{ $totalTasks }}
+                            @if ($latestReport)
+                                · آخر قياس {{ $reportPhaseLabels[$latestReport->phase] ?? $latestReport->phase }} {{ $latestReport->progress }}%
+                            @else
+                                · لا يوجد قياس بعد
+                            @endif
+                        </small>
+                        @if ($latestMetric)
+                            <small>{{ $latestMetric['name'] ?? 'مؤشر' }}: {{ $latestMetric['value'] ?? '-' }}</small>
+                        @endif
+                    </div>
+                    <div class="app-inline-actions">
+                        <span class="app-badge">{{ $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : 0 }}%</span>
+                        <a href="{{ route('execution-packages.show', $package) }}" class="btn btn-secondary btn-sm">فتح الحزمة</a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </section>
+@endif
+
 @php($agencyVerdict = $latestAgencyAuditRun?->summary_json['agency_verdict'] ?? [])
 @if (! empty($agencyVerdict))
     <section class="card mb-8">

@@ -89,7 +89,7 @@ class ExecutionUiTest extends TestCase
     #[Test]
     public function project_page_surfaces_top_execution_priorities(): void
     {
-        [$owner, $workspace, $project] = $this->scenario();
+        [$owner, $workspace, $project, $recommendation] = $this->scenario();
 
         foreach ([2, 3, 4] as $index) {
             Recommendation::query()->create([
@@ -108,12 +108,28 @@ class ExecutionUiTest extends TestCase
             ]);
         }
 
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $package->update(['status' => 'measuring']);
+        $package->tasks()->take(2)->get()->each->update(['status' => 'done']);
+        $package->reports()->create([
+            'phase' => 'validation',
+            'progress' => 70,
+            'metrics_json' => [[
+                'name' => 'العملاء المحتملون',
+                'value' => '34 خلال أسبوع',
+            ]],
+        ]);
+
         $response = $this->actingAs($owner)
             ->withSession(['current_workspace_id' => $workspace->id])
             ->get(route('projects.show', $project))
             ->assertOk()
             ->assertSee('أولويات التنفيذ الآن', false)
+            ->assertSee('حالة التنفيذ والقياس', false)
             ->assertSee('الموقع غير آمن (HTTP)')
+            ->assertSee('تحت القياس', false)
+            ->assertSee('آخر قياس تحقق 70%', false)
+            ->assertSee('العملاء المحتملون: 34 خلال أسبوع', false)
             ->assertSee('أولوية مشروع 3')
             ->assertSee('فتح التوصيات والتنفيذ', false);
 
