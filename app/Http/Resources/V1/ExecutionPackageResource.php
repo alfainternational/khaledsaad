@@ -34,6 +34,7 @@ class ExecutionPackageResource extends JsonResource
                 'description' => $task->description,
                 'status' => $task->status,
                 'status_label' => $this->taskStatusLabel((string) $task->status),
+                'available_actions' => $this->taskAvailableActions((string) $task->status),
                 'assigned_to' => $task->assigned_to,
                 'assignee' => $task->relationLoaded('assignee') && $task->assignee ? [
                     'public_id' => $task->assignee->public_id,
@@ -108,6 +109,19 @@ class ExecutionPackageResource extends JsonResource
             'in_progress' => 'قيد التنفيذ',
             'done' => 'منجزة',
             default => $status,
+        };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function taskAvailableActions(string $status): array
+    {
+        return match ($status) {
+            'pending' => ['start', 'complete'],
+            'in_progress' => ['complete', 'reopen'],
+            'done' => ['reopen'],
+            default => [],
         };
     }
 

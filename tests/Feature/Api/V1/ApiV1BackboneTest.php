@@ -471,6 +471,7 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.tasks.0.public_id', $firstTask->public_id)
             ->assertJsonPath('data.tasks.0.status', 'done')
             ->assertJsonPath('data.tasks.0.status_label', 'منجزة')
+            ->assertJsonPath('data.tasks.0.available_actions.0', 'reopen')
             ->assertJsonPath('data.tasks.0.assigned_to', $owner->id)
             ->assertJsonPath('data.tasks.0.due_date', $dueDate)
             ->assertJsonPath('data.assets.0.public_id', $firstAsset->public_id)
@@ -496,6 +497,8 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.tasks.0.public_id', $firstTask->public_id)
             ->assertJsonPath('data.tasks.0.status', 'in_progress')
             ->assertJsonPath('data.tasks.0.status_label', 'قيد التنفيذ')
+            ->assertJsonPath('data.tasks.0.available_actions.0', 'complete')
+            ->assertJsonPath('data.tasks.0.available_actions.1', 'reopen')
             ->assertJsonPath('data.progress.done_tasks', 1)
             ->assertJsonPath('data.progress.percent', 25);
 
@@ -511,6 +514,7 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.tasks.0.public_id', $firstTask->public_id)
             ->assertJsonPath('data.tasks.0.status', 'done')
             ->assertJsonPath('data.tasks.0.status_label', 'منجزة')
+            ->assertJsonPath('data.tasks.0.available_actions.0', 'reopen')
             ->assertJsonPath('data.tasks.0.assigned_to', $owner->id)
             ->assertJsonPath('data.tasks.0.assignee.public_id', $owner->public_id)
             ->assertJsonPath('data.tasks.0.assignee.name', $owner->name)
