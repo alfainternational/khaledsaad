@@ -31,7 +31,7 @@ class ApprovalController extends Controller
 
         $approvals = Approval::query()
             ->where('workspace_id', $workspace->id)
-            ->with(['project.client', 'reviewer'])
+            ->with(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template'])
             ->when(
                 $request->string('status')->isNotEmpty(),
                 fn ($query) => $query->where('status', $request->string('status')->value())

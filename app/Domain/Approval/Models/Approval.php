@@ -2,7 +2,9 @@
 
 namespace App\Domain\Approval\Models;
 
+use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Project\Models\Project;
+use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -33,5 +35,15 @@ class Approval extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
+    public function toolRun(): BelongsTo
+    {
+        return $this->belongsTo(ToolRun::class, 'item_id');
+    }
+
+    public function aiGeneration(): BelongsTo
+    {
+        return $this->belongsTo(AIGeneration::class, 'item_id');
     }
 }

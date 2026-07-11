@@ -312,6 +312,14 @@ class ToolRunApiTest extends TestCase
             'status' => 'pending',
             'note' => $meetingBrief,
         ]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('approvals.index'))
+            ->assertOk()
+            ->assertSee('تقييم الوكالة — API Project')
+            ->assertSee('تشغيل أداة')
+            ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية');
     }
 
     /**

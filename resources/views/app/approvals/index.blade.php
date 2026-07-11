@@ -36,11 +36,26 @@
 <section class="card">
     <div class="app-list">
         @forelse ($approvals as $approval)
+            @php
+                $toolRun = $approval->item_type === 'tool_run' ? $approval->toolRun : null;
+                $generation = $approval->item_type === 'ai_generation' ? $approval->aiGeneration : null;
+                $itemTitle = $toolRun?->summary_json['headline']
+                    ?? $toolRun?->tool?->name
+                    ?? $generation?->headline
+                    ?? $generation?->template?->name
+                    ?? 'عنصر يحتاج مراجعة';
+                $itemKind = match ($approval->item_type) {
+                    'tool_run' => 'تشغيل أداة',
+                    'ai_generation' => 'مخرج استوديو',
+                    default => $approval->item_type,
+                };
+            @endphp
             <div class="app-list-item app-approval-item">
                 <div>
-                    <strong>{{ $approval->project?->name ?? 'عنصر بدون مشروع' }}</strong>
+                    <strong>{{ $itemTitle }}</strong>
                     <small>
-                        {{ $approval->item_type }} ·
+                        {{ $itemKind }} ·
+                        {{ $approval->project?->name ?? 'عنصر بدون مشروع' }} ·
                         {{ $approval->project?->client?->name ?? 'بدون عميل' }} ·
                         {{ $approval->reviewer?->name ?? 'بدون مراجع' }}
                     </small>
