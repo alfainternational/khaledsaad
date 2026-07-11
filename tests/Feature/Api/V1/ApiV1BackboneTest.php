@@ -180,11 +180,19 @@ class ApiV1BackboneTest extends TestCase
         $token = $owner->createToken('test')->plainTextToken;
         $base = '/api/v1/workspaces/'.$workspace->public_id;
 
+        \App\Domain\Tool\Models\Tool::query()
+            ->where('code', 'ideal-customer')
+            ->update(['name' => 'Ideal Customer']);
+
         // فهرس الأدوات متاح.
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson($base.'/tools')
             ->assertOk()
-            ->assertJsonStructure(['data' => [['code', 'name', 'stage']]]);
+            ->assertJsonStructure(['data' => [['code', 'name', 'stage']]])
+            ->assertJsonFragment([
+                'code' => 'ideal-customer',
+                'name' => 'العميل المثالي',
+            ]);
 
         // مشروع لتحميل أداة عليه.
         $project = \App\Domain\Project\Models\Project::query()->create([
@@ -194,6 +202,32 @@ class ApiV1BackboneTest extends TestCase
             'status' => 'active',
             'sector' => 'ecommerce',
         ]);
+        ToolRun::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'user_id' => $owner->id,
+            'tool_code' => 'diagnosis',
+            'mode' => 'guided',
+            'input_json' => [],
+            'output_json' => ['headline' => 'تم التشخيص'],
+            'summary_json' => ['headline' => 'تم التشخيص'],
+            'status' => 'completed',
+            'completeness_score' => 80,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson($base.'/tools?project_public_id='.$project->public_id)
+            ->assertOk()
+            ->assertJsonFragment([
+                'code' => 'diagnosis',
+                'completed_in_current_project' => true,
+                'recommended_now' => false,
+            ])
+            ->assertJsonFragment([
+                'code' => 'marketing-plan',
+                'completed_in_current_project' => false,
+                'recommended_now' => true,
+            ]);
 
         // تحميل أداة يعيد مخطط النموذج الديناميكي (form.modes) للموبايل.
         $this->withHeader('Authorization', 'Bearer '.$token)

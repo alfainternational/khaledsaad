@@ -46,6 +46,7 @@ class UpsertProjectRequest extends FormRequest
             'sector' => ['required', 'string', Rule::in(['general_business', 'ecommerce', 'clinic', 'restaurant', 'b2b_services', 'education', 'saas'])],
             'market_country' => ['nullable', 'string', 'max:120'],
             'primary_domain' => ['nullable', 'string', 'max:255'],
+            'logo' => ['nullable', 'image', 'max:2048'],
             'official_social_links_json' => ['nullable', 'array'],
             'official_social_links_json.*' => ['string', 'max:255'],
             'verified_social_profiles_json' => ['nullable', 'array'],

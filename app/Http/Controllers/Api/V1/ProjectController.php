@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -43,9 +44,12 @@ class ProjectController extends Controller
         $workspace = app('currentWorkspace');
         $this->authorize('manageProjects', $workspace);
 
-        $project = Project::query()->create(
-            $this->attributesFrom($request) + ['workspace_id' => $workspace->id]
-        );
+        $attributes = $this->attributesFrom($request) + ['workspace_id' => $workspace->id];
+        if ($request->hasFile('logo')) {
+            $attributes['logo_path'] = $request->file('logo')->store('project-logos', 'public');
+        }
+
+        $project = Project::query()->create($attributes);
 
         return (new ProjectResource($project->load('client')))
             ->response()
@@ -75,7 +79,15 @@ class ProjectController extends Controller
         $project = $this->resolveProject();
         $this->authorize('update', $project);
 
-        $project->update($this->attributesFrom($request));
+        $attributes = $this->attributesFrom($request);
+        if ($request->hasFile('logo')) {
+            if ($project->logo_path) {
+                Storage::disk('public')->delete($project->logo_path);
+            }
+            $attributes['logo_path'] = $request->file('logo')->store('project-logos', 'public');
+        }
+
+        $project->update($attributes);
 
         return new ProjectDetailResource($project->load('client'));
     }

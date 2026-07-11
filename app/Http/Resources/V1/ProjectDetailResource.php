@@ -28,6 +28,8 @@ class ProjectDetailResource extends JsonResource
             'sector' => $this->sector,
             'market_country' => $this->market_country,
             'primary_domain' => $this->primary_domain,
+            'logo_path' => $this->logo_path,
+            'logo_url' => $this->logo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->logo_path) : null,
             'monitoring_enabled' => (bool) $this->monitoring_enabled,
             'official_social_links' => $this->official_social_links_json ?? [],
             'verified_social_profiles' => $this->verified_social_profiles_json ?? [],

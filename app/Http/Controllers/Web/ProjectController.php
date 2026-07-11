@@ -26,6 +26,7 @@ use App\Support\Workspaces\WorkspaceJourneyStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
@@ -81,7 +82,7 @@ class ProjectController extends Controller
         $this->authorize('manageProjects', $workspace);
         $data = $request->validated();
 
-        Project::query()->create([
+        $attributes = [
             'workspace_id' => $workspace->id,
             'client_id' => $data['client_id'] ?? null,
             'name' => $data['name'],
@@ -95,7 +96,13 @@ class ProjectController extends Controller
             'competitors_json' => $data['competitors_json'] ?? [],
             'analysis_goals_json' => $data['analysis_goals_json'] ?? [],
             'monitoring_enabled' => $data['monitoring_enabled'] ?? false,
-        ]);
+        ];
+
+        if ($request->hasFile('logo')) {
+            $attributes['logo_path'] = $request->file('logo')->store('project-logos', 'public');
+        }
+
+        Project::query()->create($attributes);
 
         return redirect()->route('projects.index')->with('status', $flash->created('المشروع'));
     }
@@ -247,7 +254,7 @@ class ProjectController extends Controller
         $this->authorize('update', $project);
         $data = $request->validated();
 
-        $project->update([
+        $attributes = [
             'client_id' => $data['client_id'] ?? null,
             'name' => $data['name'],
             'stage' => $data['stage'],
@@ -260,7 +267,16 @@ class ProjectController extends Controller
             'competitors_json' => $data['competitors_json'] ?? [],
             'analysis_goals_json' => $data['analysis_goals_json'] ?? [],
             'monitoring_enabled' => $data['monitoring_enabled'] ?? false,
-        ]);
+        ];
+
+        if ($request->hasFile('logo')) {
+            if ($project->logo_path) {
+                Storage::disk('public')->delete($project->logo_path);
+            }
+            $attributes['logo_path'] = $request->file('logo')->store('project-logos', 'public');
+        }
+
+        $project->update($attributes);
 
         return redirect()->route('projects.index')->with('status', $flash->updated('المشروع'));
     }

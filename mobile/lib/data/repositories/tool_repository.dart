@@ -17,8 +17,17 @@ class ToolRepository {
 
   final ApiClient _api;
 
-  Future<List<ToolListItem>> listTools(String ws) async {
-    final res = await _api.get(ApiEndpoints.tools(ws));
+  Future<List<ToolListItem>> listTools(
+    String ws, {
+    String? projectPublicId,
+  }) async {
+    final res = await _api.get(
+      ApiEndpoints.tools(ws),
+      query: {
+        if (projectPublicId != null && projectPublicId.isNotEmpty)
+          'project_public_id': projectPublicId,
+      },
+    );
     final rows = (res['data'] as List?) ?? const [];
     return rows
         .map((e) => ToolListItem.fromJson(Map<String, dynamic>.from(e as Map)))

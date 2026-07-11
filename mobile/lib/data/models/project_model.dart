@@ -6,9 +6,9 @@ class ClientRef {
   final String name;
 
   factory ClientRef.fromJson(Map<String, dynamic> json) => ClientRef(
-        publicId: json['public_id']?.toString() ?? '',
-        name: json['name']?.toString() ?? '',
-      );
+    publicId: json['public_id']?.toString() ?? '',
+    name: json['name']?.toString() ?? '',
+  );
 }
 
 /// نموذج المشروع — يعكس ProjectResource / ProjectDetailResource.
@@ -21,6 +21,7 @@ class ProjectModel {
     this.sector,
     this.marketCountry,
     this.primaryDomain,
+    this.logoUrl,
     this.monitoringEnabled = false,
     this.client,
     // حقول تفصيلية (من ProjectDetailResource)
@@ -40,6 +41,7 @@ class ProjectModel {
   final String? sector;
   final String? marketCountry;
   final String? primaryDomain;
+  final String? logoUrl;
   final bool monitoringEnabled;
   final ClientRef? client;
 
@@ -60,6 +62,7 @@ class ProjectModel {
       sector: json['sector']?.toString(),
       marketCountry: json['market_country']?.toString(),
       primaryDomain: json['primary_domain']?.toString(),
+      logoUrl: json['logo_url']?.toString(),
       monitoringEnabled: json['monitoring_enabled'] == true,
       client: json['client'] is Map
           ? ClientRef.fromJson(Map<String, dynamic>.from(json['client'] as Map))
