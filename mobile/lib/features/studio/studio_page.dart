@@ -13,18 +13,21 @@ class StudioPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(StudioController(
-      Get.find<StudioRepository>(),
-      Get.find<WorkspaceService>(),
-    ));
+    final c = Get.put(
+      StudioController(
+        Get.find<StudioRepository>(),
+        Get.find<WorkspaceService>(),
+      ),
+    );
     final theme = Theme.of(context);
+    final args = Get.arguments;
+    final initialBrief = args is Map ? args['brief']?.toString() : null;
+    final sourceTitle = args is Map ? args['source_title']?.toString() : null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('الاستوديو الذكي')),
       body: Obx(() {
-        if (c.isLoading.value &&
-            c.templates.isEmpty &&
-            c.generations.isEmpty) {
+        if (c.isLoading.value && c.templates.isEmpty && c.generations.isEmpty) {
           return AppStateView.loading();
         }
         if (c.error.value != null &&
@@ -37,9 +40,29 @@ class StudioPage extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text('القوالب',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800)),
+              if (initialBrief != null && initialBrief.trim().isNotEmpty) ...[
+                Card(
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.auto_awesome,
+                      color: theme.colorScheme.primary,
+                    ),
+                    title: const Text('موجز التنفيذ جاهز'),
+                    subtitle: Text(
+                      sourceTitle?.trim().isNotEmpty == true
+                          ? 'سيتم تعبئة التوليد من: $sourceTitle'
+                          : 'سيتم تعبئة التوليد من حزمة التنفيذ.',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              Text(
+                'القوالب',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 8),
               if (c.templates.isEmpty)
                 const Padding(
@@ -47,14 +70,24 @@ class StudioPage extends StatelessWidget {
                   child: Text('لا توجد قوالب متاحة حالياً.'),
                 )
               else
-                ...c.templates.map((t) => _TemplateTile(
-                      template: t,
-                      onGenerate: () => _openGenerate(context, c, t),
-                    )),
+                ...c.templates.map(
+                  (t) => _TemplateTile(
+                    template: t,
+                    onGenerate: () => _openGenerate(
+                      context,
+                      c,
+                      t,
+                      initialBrief: initialBrief,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 24),
-              Text('أحدث المخرجات',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800)),
+              Text(
+                'أحدث المخرجات',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 8),
               if (c.generations.isEmpty)
                 const Padding(
@@ -62,11 +95,13 @@ class StudioPage extends StatelessWidget {
                   child: Text('لم تُنشئ أي مخرجات بعد.'),
                 )
               else
-                ...c.generations.map((g) => _GenerationTile(
-                      generation: g,
-                      onTap: () => c.openGeneration(g),
-                      onDelete: () => _confirmDelete(context, c, g),
-                    )),
+                ...c.generations.map(
+                  (g) => _GenerationTile(
+                    generation: g,
+                    onTap: () => c.openGeneration(g),
+                    onDelete: () => _confirmDelete(context, c, g),
+                  ),
+                ),
             ],
           ),
         );
@@ -74,16 +109,28 @@ class StudioPage extends StatelessWidget {
     );
   }
 
-  void _openGenerate(BuildContext context, StudioController c, AiTemplate template) {
+  void _openGenerate(
+    BuildContext context,
+    StudioController c,
+    AiTemplate template, {
+    String? initialBrief,
+  }) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => GenerateSheet(controller: c, template: template),
+      builder: (_) => GenerateSheet(
+        controller: c,
+        template: template,
+        initialBrief: initialBrief,
+      ),
     );
   }
 
   Future<void> _confirmDelete(
-      BuildContext context, StudioController c, StudioGeneration g) async {
+    BuildContext context,
+    StudioController c,
+    StudioGeneration g,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -91,9 +138,13 @@ class StudioPage extends StatelessWidget {
         content: const Text('هل تريد حذف هذا المخرج نهائياً؟'),
         actions: [
           TextButton(
-              onPressed: () => Get.back(result: false), child: const Text('إلغاء')),
+            onPressed: () => Get.back(result: false),
+            child: const Text('إلغاء'),
+          ),
           FilledButton(
-              onPressed: () => Get.back(result: true), child: const Text('حذف')),
+            onPressed: () => Get.back(result: true),
+            child: const Text('حذف'),
+          ),
         ],
       ),
     );
@@ -115,7 +166,11 @@ class _TemplateTile extends StatelessWidget {
       child: ListTile(
         title: Text(template.name),
         subtitle: template.description != null
-            ? Text(template.description!, maxLines: 2, overflow: TextOverflow.ellipsis)
+            ? Text(
+                template.description!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              )
             : null,
         trailing: FilledButton.tonal(
           onPressed: onGenerate,
@@ -142,7 +197,9 @@ class _GenerationTile extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Icon(
-          generation.isFailed ? Icons.error_outline : Icons.description_outlined,
+          generation.isFailed
+              ? Icons.error_outline
+              : Icons.description_outlined,
           color: generation.isFailed
               ? Theme.of(context).colorScheme.error
               : Theme.of(context).colorScheme.primary,

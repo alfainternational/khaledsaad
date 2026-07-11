@@ -36,8 +36,9 @@ class RecommendationModel {
       publicId: json['public_id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       area: json['area']?.toString(),
-      priority:
-          (json['priority'] is num) ? (json['priority'] as num).toInt() : null,
+      priority: (json['priority'] is num)
+          ? (json['priority'] as num).toInt()
+          : null,
       severity: json['severity']?.toString(),
       evidence: json['evidence']?.toString(),
       rationale: json['rationale']?.toString(),
@@ -74,6 +75,19 @@ class ExecutionPackageModel {
   final List<Map<String, dynamic>> tasks;
   final List<Map<String, dynamic>> assets;
 
+  String get studioBrief {
+    final lines = <String>[
+      'حزمة التنفيذ: $title',
+      if (_hasText(problem)) 'المشكلة: ${problem!.trim()}',
+      if (_hasText(evidence)) 'الدليل: ${evidence!.trim()}',
+      if (_hasText(decision)) 'القرار: ${decision!.trim()}',
+      if (assets.isNotEmpty) ..._assetBriefLines(assets.first),
+      if (_hasText(measurementPlan)) 'خطة القياس: ${measurementPlan!.trim()}',
+    ];
+
+    return lines.join('\n');
+  }
+
   static const statuses = [
     'proposed',
     'in_review',
@@ -109,9 +123,21 @@ class ExecutionPackageModel {
 
   static List<Map<String, dynamic>> _listOfMaps(dynamic v) {
     if (v is! List) return const [];
-    return v
-        .whereType<Map>()
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    return v.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  static bool _hasText(String? value) =>
+      value != null && value.trim().isNotEmpty;
+
+  static List<String> _assetBriefLines(Map<String, dynamic> asset) {
+    final title = asset['title']?.toString().trim();
+    final type = asset['type']?.toString().trim();
+    final body = asset['body']?.toString().trim();
+
+    return [
+      if (_hasText(title)) 'الأصل المطلوب: $title',
+      if (_hasText(type)) 'نوع الأصل: $type',
+      if (_hasText(body)) 'المحتوى الأولي: $body',
+    ];
   }
 }

@@ -7,10 +7,16 @@ import '../studio_controller.dart';
 
 /// ورقة سفلية لتوليد مخرج من قالب: ملخّص اختياري ثم توليد.
 class GenerateSheet extends StatefulWidget {
-  const GenerateSheet({super.key, required this.controller, required this.template});
+  const GenerateSheet({
+    super.key,
+    required this.controller,
+    required this.template,
+    this.initialBrief,
+  });
 
   final StudioController controller;
   final AiTemplate template;
+  final String? initialBrief;
 
   @override
   State<GenerateSheet> createState() => _GenerateSheetState();
@@ -19,6 +25,15 @@ class GenerateSheet extends StatefulWidget {
 class _GenerateSheetState extends State<GenerateSheet> {
   final _brief = TextEditingController();
   final _error = RxnString();
+
+  @override
+  void initState() {
+    super.initState();
+    final initialBrief = widget.initialBrief?.trim();
+    if (initialBrief != null && initialBrief.isNotEmpty) {
+      _brief.text = initialBrief;
+    }
+  }
 
   @override
   void dispose() {
@@ -60,12 +75,18 @@ class _GenerateSheetState extends State<GenerateSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(widget.template.name,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w800)),
+          Text(
+            widget.template.name,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           if (widget.template.description != null) ...[
             const SizedBox(height: 6),
-            Text(widget.template.description!, style: theme.textTheme.bodyMedium),
+            Text(
+              widget.template.description!,
+              style: theme.textTheme.bodyMedium,
+            ),
           ],
           const SizedBox(height: 16),
           TextField(
@@ -83,22 +104,31 @@ class _GenerateSheetState extends State<GenerateSheet> {
             if (err == null) return const SizedBox.shrink();
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text(err, style: TextStyle(color: theme.colorScheme.error)),
+              child: Text(
+                err,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
             );
           }),
-          Obx(() => FilledButton.icon(
-                onPressed:
-                    widget.controller.isGenerating.value ? null : _generate,
-                icon: widget.controller.isGenerating.value
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2.2))
-                    : const Icon(Icons.auto_awesome),
-                label: Text(widget.controller.isGenerating.value
+          Obx(
+            () => FilledButton.icon(
+              onPressed: widget.controller.isGenerating.value
+                  ? null
+                  : _generate,
+              icon: widget.controller.isGenerating.value
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.2),
+                    )
+                  : const Icon(Icons.auto_awesome),
+              label: Text(
+                widget.controller.isGenerating.value
                     ? 'جارٍ التوليد...'
-                    : 'توليد'),
-              )),
+                    : 'توليد',
+              ),
+            ),
+          ),
         ],
       ),
     );
