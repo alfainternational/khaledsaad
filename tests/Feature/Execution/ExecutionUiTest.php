@@ -176,6 +176,49 @@ class ExecutionUiTest extends TestCase
     }
 
     #[Test]
+    public function owner_can_advance_execution_package_status_from_package_page(): void
+    {
+        [$owner, $workspace, $project, $recommendation] = $this->scenario();
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('اعتماد الحزمة', false);
+
+        foreach ([
+            'approved' => 'بدء التنفيذ',
+            'in_progress' => 'تأكيد التنفيذ',
+            'executed' => 'بدء القياس',
+            'measuring' => null,
+        ] as $status => $nextButton) {
+            $this->actingAs($owner)
+                ->withSession(['current_workspace_id' => $workspace->id])
+                ->patch(route('execution-packages.status', $package), [
+                    'status' => $status,
+                ])
+                ->assertRedirectToRoute('execution-packages.show', $package);
+
+            $this->assertSame($status, $package->fresh()->status);
+
+            $response = $this->actingAs($owner)
+                ->withSession(['current_workspace_id' => $workspace->id])
+                ->get(route('execution-packages.show', $package))
+                ->assertOk();
+
+            if ($nextButton) {
+                $response->assertSee($nextButton, false);
+            } else {
+                $response->assertDontSee('اعتماد الحزمة', false)
+                    ->assertDontSee('بدء التنفيذ', false)
+                    ->assertDontSee('تأكيد التنفيذ', false)
+                    ->assertDontSee('بدء القياس', false);
+            }
+        }
+    }
+
+    #[Test]
     public function a_member_of_another_workspace_cannot_view_the_package(): void
     {
         [, , , $recommendation] = $this->scenario();

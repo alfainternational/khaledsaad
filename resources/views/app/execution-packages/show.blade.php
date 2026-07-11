@@ -11,6 +11,13 @@
         'in_progress' => 'قيد التنفيذ',
         'done' => 'منجزة',
     ];
+    $packageActions = [
+        'proposed' => ['status' => 'approved', 'label' => 'اعتماد الحزمة', 'style' => 'btn-primary'],
+        'approved' => ['status' => 'in_progress', 'label' => 'بدء التنفيذ', 'style' => 'btn-primary'],
+        'in_progress' => ['status' => 'executed', 'label' => 'تأكيد التنفيذ', 'style' => 'btn-primary'],
+        'executed' => ['status' => 'measuring', 'label' => 'بدء القياس', 'style' => 'btn-secondary'],
+    ];
+    $nextPackageAction = $packageActions[$package->status] ?? null;
 @endphp
 
 <section class="exec-pkg-head {{ ($brand['enabled'] ?? false) ? 'exec-pkg-head--branded' : '' }}" @if($brand['enabled'] ?? false) style="--brand: {{ $brand['color'] }}" @endif>
@@ -115,12 +122,12 @@
 
 <section class="studio-gen-footer mb-8">
     <a href="{{ route('projects.recommendations.index', $package->project) }}" class="btn btn-secondary">العودة للتوصيات</a>
-    <form method="POST" action="{{ route('execution-packages.status', $package) }}">
-        @csrf @method('PATCH')
-        <input type="hidden" name="status" value="approved">
-        @if ($package->status === 'proposed')
-            <button type="submit" class="btn btn-primary">اعتماد الحزمة</button>
-        @endif
-    </form>
+    @if ($nextPackageAction)
+        <form method="POST" action="{{ route('execution-packages.status', $package) }}">
+            @csrf @method('PATCH')
+            <input type="hidden" name="status" value="{{ $nextPackageAction['status'] }}">
+            <button type="submit" class="btn {{ $nextPackageAction['style'] }}">{{ $nextPackageAction['label'] }}</button>
+        </form>
+    @endif
 </section>
 @endsection
