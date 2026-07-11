@@ -334,10 +334,28 @@ class ExecutionUiTest extends TestCase
                 $response->assertSee($nextButton, false);
             } else {
                 $response->assertDontSee('بدء التنفيذ', false)
-                    ->assertDontSee('تأكيد التنفيذ', false)
+                    ->assertDontSee('value="executed"', false)
                     ->assertDontSee('بدء القياس', false);
             }
         }
+
+        $task = $package->tasks()->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.tasks.status', [$package, $task]), [
+                'status' => 'pending',
+            ])
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('done', $task->fresh()->status);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('مغلقة بعد تأكيد التنفيذ', false)
+            ->assertDontSee('إعادة فتح', false);
     }
 
     #[Test]

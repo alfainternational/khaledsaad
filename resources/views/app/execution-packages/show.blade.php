@@ -23,9 +23,12 @@
         'validation' => 'تحقق',
     ];
     $nextPackageAction = $packageActions[$package->status] ?? null;
-    $canUpdateTasks = in_array($package->status, ['in_progress', 'executed', 'measuring'], true);
+    $canUpdateTasks = $package->status === 'in_progress';
     $canCreateReports = in_array($package->status, ['in_progress', 'executed', 'measuring'], true);
     $allTasksDone = $package->tasks->isNotEmpty() && $package->tasks->every(fn ($task) => $task->status === 'done');
+    $taskLockedLabel = in_array($package->status, ['executed', 'measuring'], true)
+        ? 'مغلقة بعد تأكيد التنفيذ'
+        : 'بانتظار بدء التنفيذ';
     if ($package->status === 'in_progress' && ! $allTasksDone) {
         $nextPackageAction = null;
     }
@@ -79,7 +82,7 @@
                 <span class="exec-task-state">{{ $taskStatusLabels[$task->status] ?? $task->status }}</span>
                 <span class="exec-task-actions">
                     @if (! $canUpdateTasks)
-                        <small>بانتظار بدء التنفيذ</small>
+                        <small>{{ $taskLockedLabel }}</small>
                     @elseif ($task->status === 'pending')
                         <form method="POST" action="{{ route('execution-packages.tasks.status', [$package, $task]) }}">
                             @csrf @method('PATCH')

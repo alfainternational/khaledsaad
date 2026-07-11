@@ -154,6 +154,10 @@ class ExecutionPackageResource extends JsonResource
      */
     private function taskAvailableActions(string $status): array
     {
+        if ($this->status !== 'in_progress') {
+            return [];
+        }
+
         return match ($status) {
             'pending' => ['start', 'complete'],
             'in_progress' => ['complete', 'reopen'],

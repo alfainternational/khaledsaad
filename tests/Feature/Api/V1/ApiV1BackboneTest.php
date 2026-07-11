@@ -618,7 +618,7 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.tasks.0.public_id', $firstTask->public_id)
             ->assertJsonPath('data.tasks.0.status', 'done')
             ->assertJsonPath('data.tasks.0.status_label', 'منجزة')
-            ->assertJsonPath('data.tasks.0.available_actions.0', 'reopen')
+            ->assertJsonPath('data.tasks.0.available_actions', [])
             ->assertJsonPath('data.tasks.0.assigned_to', $owner->id)
             ->assertJsonPath('data.tasks.0.due_date', $dueDate)
             ->assertJsonPath('data.assets.0.public_id', $firstAsset->public_id)
@@ -767,7 +767,17 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.status', 'executed')
             ->assertJsonPath('data.status_label', 'منفّذة')
             ->assertJsonPath('data.available_actions.0', 'start_measuring')
+            ->assertJsonPath('data.tasks.0.available_actions', [])
             ->assertJsonPath('data.progress.percent', 100);
+
+        $auth()
+            ->patchJson($base.'/execution-tasks/'.$firstTask->public_id.'/status', [
+                'status' => 'pending',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['status']);
+
+        $this->assertSame('done', $firstTask->fresh()->status);
 
         $outsider = User::factory()->create();
 
