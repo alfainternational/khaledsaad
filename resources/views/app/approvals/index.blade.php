@@ -75,18 +75,20 @@
                     @if ($sourceUrl)
                         <a href="{{ $sourceUrl }}" class="btn btn-secondary btn-sm">فتح المصدر</a>
                     @endif
-                    <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="approved">
-                        <button type="submit" class="btn btn-secondary btn-sm">اعتماد</button>
-                    </form>
-                    <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="rejected">
-                        <button type="submit" class="btn btn-ghost btn-sm">رفض</button>
-                    </form>
+                    @if ($approval->status === 'pending')
+                        <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="approved">
+                            <button type="submit" class="btn btn-secondary btn-sm">اعتماد</button>
+                        </form>
+                        <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="rejected">
+                            <button type="submit" class="btn btn-ghost btn-sm">رفض</button>
+                        </form>
+                    @endif
                 </div>
             </div>
         @empty

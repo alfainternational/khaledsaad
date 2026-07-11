@@ -323,6 +323,8 @@ class ToolRunApiTest extends TestCase
             ->assertSee('قيد المراجعة')
             ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية')
             ->assertSee('فتح المصدر')
+            ->assertSee('اعتماد')
+            ->assertSee('رفض')
             ->assertSee(route('tools.show', $tool), false);
 
         $approval = Approval::query()->where('item_type', 'tool_run')->firstOrFail();
@@ -344,7 +346,8 @@ class ToolRunApiTest extends TestCase
             ->withSession(['current_workspace_id' => $workspace->id])
             ->get(route('approvals.index'))
             ->assertOk()
-            ->assertSee('معتمد');
+            ->assertSee('معتمد')
+            ->assertDontSee('رفض');
     }
 
     /**
