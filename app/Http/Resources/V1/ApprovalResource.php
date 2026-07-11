@@ -21,6 +21,7 @@ class ApprovalResource extends JsonResource
             'item_type' => $this->item_type,
             'item_id' => $this->item_id,
             'status' => $this->status,
+            'status_label' => $this->statusLabel(),
             'note' => $this->note,
             'project' => $this->whenLoaded('project', fn () => [
                 'public_id' => $this->project?->public_id,
@@ -35,8 +36,27 @@ class ApprovalResource extends JsonResource
                 'name' => $this->reviewer?->name,
             ]),
             'item' => $this->approvalItem(),
+            'available_actions' => $this->availableActions(),
             'created_at' => optional($this->created_at)->toIso8601String(),
         ];
+    }
+
+    private function statusLabel(): string
+    {
+        return match ($this->status) {
+            'pending' => 'قيد المراجعة',
+            'approved' => 'معتمد',
+            'rejected' => 'مرفوض',
+            default => (string) $this->status,
+        };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function availableActions(): array
+    {
+        return $this->status === 'pending' ? ['approve', 'reject'] : [];
     }
 
     /**

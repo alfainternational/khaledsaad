@@ -358,6 +358,9 @@ class ApiV1BackboneTest extends TestCase
         $created = $auth()
             ->postJson($base.'/projects/'.$project->public_id.'/approvals', $payload)
             ->assertStatus(201)
+            ->assertJsonPath('data.status_label', 'قيد المراجعة')
+            ->assertJsonPath('data.available_actions.0', 'approve')
+            ->assertJsonPath('data.available_actions.1', 'reject')
             ->assertJsonPath('data.note', 'ملاحظة مهمة قبل الاعتماد.')
             ->assertJsonPath('data.item.kind', 'tool_run')
             ->assertJsonPath('data.item.kind_label', 'تشغيل أداة')
@@ -389,6 +392,8 @@ class ApiV1BackboneTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.status', 'approved')
+            ->assertJsonPath('data.status_label', 'معتمد')
+            ->assertJsonPath('data.available_actions', [])
             ->assertJsonPath('data.note', 'ملاحظة مهمة قبل الاعتماد.')
             ->assertJsonPath('data.item.title', 'تقييم الوكالة يحتاج قياساً أوضح');
 
@@ -397,7 +402,9 @@ class ApiV1BackboneTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.item.public_id', $run->public_id)
             ->assertJsonPath('data.0.item.title', 'تقييم الوكالة يحتاج قياساً أوضح')
-            ->assertJsonPath('data.0.project.name', 'مشروع الاعتماد');
+            ->assertJsonPath('data.0.project.name', 'مشروع الاعتماد')
+            ->assertJsonPath('data.0.status_label', 'معتمد')
+            ->assertJsonPath('data.0.available_actions', []);
 
         $this->assertDatabaseHas('approvals', [
             'id' => $approval->id,
