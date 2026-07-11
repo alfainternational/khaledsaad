@@ -15,9 +15,10 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use InvalidArgumentException;
+use Illuminate\Support\Str;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
@@ -92,7 +93,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $this->assertSame('أضف الدليل بجانب الدعوة للإجراء', $memory['data']['quick_win']);
         $this->assertDatabaseHas('knowledge_sources', [
             'kind' => 'legacy_memory',
-            'canonical_uri' => 'legacy://playbook.offer',
+            'canonical_uri' => $this->structuredUri('playbook.offer'),
             'trust_score' => 50,
             'visibility' => 'global',
         ]);
@@ -107,7 +108,10 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $document = KnowledgeDocument::query()->with('chunks')->sole();
         $this->assertSame($expected, $document->content);
         $this->assertSame($expected, $document->chunks->sole()->content);
-        $this->assertSame(['canonical_uri' => 'legacy://playbook.offer'], $document->chunks->sole()->locator_json);
+        $this->assertSame([
+            'canonical_uri' => $this->structuredUri('playbook.offer'),
+            'key_hash' => hash('sha256', 'playbook.offer'),
+        ], $document->chunks->sole()->locator_json);
     }
 
     #[Test]
@@ -216,12 +220,12 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $this->assertNotNull($repository->latestDocument(
             $workspaceScope,
             'legacy_memory',
-            'legacy://monitor.performance.ws'.$workspaceA->id,
+            $this->structuredUri('monitor.performance.ws'.$workspaceA->id),
         ));
         $this->assertNotNull($repository->latestDocument(
             $projectScope,
             'legacy_memory',
-            'legacy://agent.strategist.ws'.$workspaceA->id.'.audit',
+            $this->structuredUri('agent.strategist.ws'.$workspaceA->id.'.audit'),
         ));
         $this->assertDatabaseCount('knowledge_sources', 2);
 
@@ -230,12 +234,12 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $this->assertNull($repository->latestDocument(
             $projectScope,
             'legacy_memory',
-            'legacy://agent.strategist.ws'.$workspaceA->id.'.audit',
+            $this->structuredUri('agent.strategist.ws'.$workspaceA->id.'.audit'),
         ));
         $this->assertNotNull($repository->latestDocument(
             $workspaceScope,
             'legacy_memory',
-            'legacy://monitor.performance.ws'.$workspaceA->id,
+            $this->structuredUri('monitor.performance.ws'.$workspaceA->id),
         ));
     }
 
@@ -244,9 +248,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
     {
         $this->enableDualWrite();
         $key = 'playbook.storage-failure';
-        $lockPath = storage_path('framework/testing/'.hash('sha256', $key).'.lock');
         $disk = Mockery::mock(FilesystemAdapter::class);
-        $disk->shouldReceive('path')->once()->andReturn($lockPath);
         $disk->shouldReceive('put')->once()->andReturnFalse();
         Storage::shouldReceive('disk')->with('local')->andReturn($disk);
         Log::shouldReceive('warning')->once()->with(
@@ -286,8 +288,16 @@ class KnowledgeStoreCompatibilityTest extends TestCase
 
         Storage::disk('local')->assertMissing('ai-knowledge/playbook.delete-me.json');
         $repository = new StructuredKnowledgeRepository;
-        $this->assertNull($repository->latestDocument(KnowledgeScope::global(), 'legacy_memory', 'legacy://playbook.delete-me'));
-        $this->assertNotNull($repository->latestDocument(KnowledgeScope::global(), 'legacy_memory', 'legacy://playbook.keep-me'));
+        $this->assertNull($repository->latestDocument(
+            KnowledgeScope::global(),
+            'legacy_memory',
+            $this->structuredUri('playbook.delete-me'),
+        ));
+        $this->assertNotNull($repository->latestDocument(
+            KnowledgeScope::global(),
+            'legacy_memory',
+            $this->structuredUri('playbook.keep-me'),
+        ));
     }
 
     #[Test]
@@ -296,6 +306,8 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         Storage::fake('local');
         $this->enableDualWrite();
         $key = 'playbook.delete-failure';
+        (new KnowledgeStore(new StructuredKnowledgeRepository))->remember($key, ['value' => 1]);
+        Storage::disk('local')->assertExists($this->mappingPath($key));
         $repository = new class extends StructuredKnowledgeRepository
         {
             public function deactivateDocuments(KnowledgeScope $scope, string $kind, string $canonicalUri): int
@@ -304,9 +316,6 @@ class KnowledgeStoreCompatibilityTest extends TestCase
             }
         };
         $store = new KnowledgeStore($repository);
-        config()->set('services.knowledge.dual_write', false);
-        $store->remember($key, ['value' => 1]);
-        config()->set('services.knowledge.dual_write', true);
         Log::shouldReceive('warning')->once()->with(
             'Structured knowledge delete failed.',
             ['key_hash' => hash('sha256', $key), 'exception' => RuntimeException::class],
@@ -315,24 +324,55 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $store->forget($key);
 
         Storage::disk('local')->assertMissing('ai-knowledge/'.$key.'.json');
+        Storage::disk('local')->assertExists($this->mappingPath($key));
+        $this->assertNotNull((new StructuredKnowledgeRepository)->latestDocument(
+            KnowledgeScope::global(),
+            'legacy_memory',
+            $this->structuredUri($key),
+        ));
     }
 
     #[Test]
-    public function ambiguous_new_keys_are_rejected_without_overwriting_legacy_files(): void
+    public function arbitrary_legacy_keys_keep_exact_remember_recall_and_forget_behavior_with_rollout_off_and_on(): void
     {
         Storage::fake('local');
         $store = new KnowledgeStore;
+        $keys = [
+            'UPPER.case',
+            'ذاكرة عربية',
+            ' spaced key ',
+            str_repeat('l', 210),
+            'web.'.Str::slug('خطة تسويق', '_', 'ar'),
+        ];
 
-        foreach (['a/b', 'a?b', ' spaced ', "line\nbreak", 'UPPER.case'] as $key) {
-            try {
-                $store->remember($key, ['value' => 1]);
-                $this->fail('Expected an ambiguous key to be rejected.');
-            } catch (InvalidArgumentException) {
-                $this->addToAssertionCount(1);
+        foreach ([false, true] as $enabled) {
+            config()->set('services.knowledge.structured_store', $enabled);
+            config()->set('services.knowledge.dual_write', $enabled);
+
+            if ($enabled) {
+                Log::shouldReceive('notice')->times(count($keys) * 2)->with(
+                    'Structured knowledge mirror skipped.',
+                    Mockery::on(fn (array $context): bool => isset($context['key_hash'], $context['reason'])
+                        && ! array_key_exists('key', $context)),
+                );
+            }
+
+            foreach ($keys as $key) {
+                $store->remember($key, ['value' => $key]);
+                $this->assertSame($key, $store->recall($key)['key']);
+                $this->assertSame($key, $store->recall($key)['data']['value']);
+                $store->forget($key);
+                $this->assertNull($store->recall($key));
             }
         }
 
-        $this->assertSame([], Storage::disk('local')->files('ai-knowledge'));
+        config()->set('services.knowledge.structured_store', false);
+        config()->set('services.knowledge.dual_write', false);
+        $store->remember('a/b', ['value' => 'slash']);
+        $store->remember('a?b', ['value' => 'question']);
+        $this->assertSame('question', $store->recall('a/b')['data']['value']);
+        $this->assertSame('question', $store->recall('a?b')['data']['value']);
+        $this->assertDatabaseCount('knowledge_sources', 0);
     }
 
     #[Test]
@@ -358,11 +398,13 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         Storage::fake('local');
         $this->enableDualWrite();
         $key = 'playbook.locked';
-        $repository = new class($key) extends StructuredKnowledgeRepository
+        $legacyPath = $this->legacyPath($key);
+        $pathHash = hash('sha256', $legacyPath);
+        $repository = new class($pathHash) extends StructuredKnowledgeRepository
         {
             public bool $lockWasHeldDuringMirror = false;
 
-            public function __construct(private readonly string $key) {}
+            public function __construct(private readonly string $pathHash) {}
 
             public function storeDocument(
                 KnowledgeScope $scope,
@@ -373,7 +415,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
                 array $chunks,
                 int $trustScore = 50,
             ): KnowledgeDocument {
-                $path = Storage::disk('local')->path('ai-knowledge/.locks/'.hash('sha256', $this->key).'.lock');
+                $path = Storage::disk('local')->path('ai-knowledge/.locks/'.$this->pathHash.'.lock');
                 $handle = fopen($path, 'c+');
                 $this->lockWasHeldDuringMirror = is_resource($handle) && ! flock($handle, LOCK_EX | LOCK_NB);
 
@@ -389,24 +431,229 @@ class KnowledgeStoreCompatibilityTest extends TestCase
 
         $store->remember($key, ['value' => 1]);
 
-        $lockPath = Storage::disk('local')->path('ai-knowledge/.locks/'.hash('sha256', $key).'.lock');
+        $lockPath = Storage::disk('local')->path('ai-knowledge/.locks/'.$pathHash.'.lock');
         $this->assertTrue($repository->lockWasHeldDuringMirror);
         $this->assertFileExists($lockPath);
         $handle = fopen($lockPath, 'c+');
         $this->assertIsResource($handle);
-        $this->assertTrue(flock($handle, LOCK_EX | LOCK_NB));
-        flock($handle, LOCK_UN);
-        fclose($handle);
+
+        try {
+            $this->assertTrue(flock($handle, LOCK_EX | LOCK_NB));
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
 
         config()->set('services.knowledge.dual_write', false);
         $store->forget($key);
         $this->assertCount(1, glob(dirname($lockPath).'/*.lock') ?: []);
     }
 
+    #[Test]
+    public function rollout_off_never_attempts_a_mirror_lock(): void
+    {
+        Storage::fake('local');
+        $key = 'UPPER key';
+        $lockPath = $this->lockPath($key);
+        File::ensureDirectoryExists($lockPath);
+
+        $store = new KnowledgeStore;
+        $store->remember($key, ['value' => 'legacy']);
+
+        $this->assertSame('legacy', $store->recall($key)['data']['value']);
+        $store->forget($key);
+        $this->assertNull($store->recall($key));
+    }
+
+    #[Test]
+    public function rollout_on_lock_contention_keeps_json_and_safely_skips_the_mirror(): void
+    {
+        Storage::fake('local');
+        $this->enableDualWrite();
+        config()->set('services.knowledge.lock_wait_milliseconds', 50);
+        $key = 'playbook.contended';
+        $lockPath = $this->lockPath($key);
+        File::ensureDirectoryExists(dirname($lockPath));
+        $handle = fopen($lockPath, 'c+');
+        $this->assertIsResource($handle);
+        $this->assertTrue(flock($handle, LOCK_EX | LOCK_NB));
+        Log::shouldReceive('warning')->once()->with(
+            'Knowledge mirror lock timed out.',
+            ['key_hash' => hash('sha256', $key), 'reason' => 'lock_timeout'],
+        );
+
+        try {
+            (new KnowledgeStore(new StructuredKnowledgeRepository))->remember($key, ['value' => 'authoritative']);
+
+            $this->assertSame('authoritative', (new KnowledgeStore)->recall($key)['data']['value']);
+            $this->assertDatabaseCount('knowledge_sources', 0);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    #[Test]
+    public function mirror_lock_open_failure_keeps_json_and_does_not_escape_to_the_caller(): void
+    {
+        Storage::fake('local');
+        $this->enableDualWrite();
+        $key = 'playbook.lock-open';
+        $lockPath = $this->lockPath($key);
+        File::ensureDirectoryExists($lockPath);
+        Log::shouldReceive('warning')->once()->with(
+            'Knowledge mirror lock unavailable.',
+            ['key_hash' => hash('sha256', $key), 'reason' => 'lock_open_failed'],
+        );
+
+        (new KnowledgeStore(new StructuredKnowledgeRepository))->remember($key, ['value' => 'authoritative']);
+
+        $this->assertSame('authoritative', (new KnowledgeStore)->recall($key)['data']['value']);
+        $this->assertDatabaseCount('knowledge_sources', 0);
+    }
+
+    #[Test]
+    public function durable_scope_mapping_supports_missing_corrupt_and_repeated_tenant_deletes_without_cross_tenant_effects(): void
+    {
+        Storage::fake('local');
+        $this->enableDualWrite();
+        [$accountA, $workspaceA, $projectA] = $this->createTenant('Delete A');
+        [$accountB, $workspaceB, $projectB] = $this->createTenant('Delete B');
+        $store = new KnowledgeStore(new StructuredKnowledgeRepository);
+        $keyA = 'agent.strategist.ws'.$workspaceA->id.'.durable';
+        $keyB = 'agent.strategist.ws'.$workspaceB->id.'.durable';
+
+        foreach ([[$keyA, $workspaceA, $projectA], [$keyB, $workspaceB, $projectB]] as [$key, $workspace, $project]) {
+            $store->remember($key, [
+                'workspace_id' => $workspace->id,
+                'project_id' => $project->id,
+                'headline' => 'private',
+            ]);
+            $mapping = json_decode(Storage::disk('local')->get($this->mappingPath($key)), true);
+            $this->assertSame([
+                'version', 'key_hash', 'canonical_uri', 'visibility', 'account_id', 'workspace_id', 'project_id', 'integrity_hash',
+            ], array_keys($mapping));
+        }
+
+        Storage::disk('local')->delete($this->legacyPath($keyA));
+        Storage::disk('local')->put($this->legacyPath($keyB), '{corrupt-json');
+
+        $store->forget($keyA);
+        $store->forget($keyA);
+        $this->assertNull((new StructuredKnowledgeRepository)->latestDocument(
+            KnowledgeScope::forProject($accountA->id, $workspaceA->id, $projectA->id),
+            'legacy_memory',
+            $this->structuredUri($keyA),
+        ));
+        $this->assertNotNull((new StructuredKnowledgeRepository)->latestDocument(
+            KnowledgeScope::forProject($accountB->id, $workspaceB->id, $projectB->id),
+            'legacy_memory',
+            $this->structuredUri($keyB),
+        ));
+        Storage::disk('local')->assertMissing($this->mappingPath($keyA));
+
+        $store->forget($keyB);
+        $this->assertNull((new StructuredKnowledgeRepository)->latestDocument(
+            KnowledgeScope::forProject($accountB->id, $workspaceB->id, $projectB->id),
+            'legacy_memory',
+            $this->structuredUri($keyB),
+        ));
+        Storage::disk('local')->assertMissing($this->mappingPath($keyB));
+    }
+
+    #[Test]
+    public function reusing_one_legacy_key_in_a_new_project_deactivates_only_its_previous_scope(): void
+    {
+        Storage::fake('local');
+        $this->enableDualWrite();
+        [$account, $workspace, $projectA] = $this->createTenant('Scope A');
+        $projectB = Project::query()->create([
+            'workspace_id' => $workspace->id,
+            'client_id' => $projectA->client_id,
+            'name' => 'Project Scope B',
+            'stage' => 1,
+            'status' => 'active',
+        ]);
+        [$otherAccount, $otherWorkspace, $otherProject] = $this->createTenant('Unrelated');
+        $key = 'agent.strategist.ws'.$workspace->id.'.shared-key';
+        $otherKey = 'agent.strategist.ws'.$otherWorkspace->id.'.shared-key';
+        $store = new KnowledgeStore(new StructuredKnowledgeRepository);
+
+        $store->remember($key, [
+            'workspace_id' => $workspace->id,
+            'project_id' => $projectA->id,
+            'value' => 'first scope',
+        ]);
+        $store->remember($otherKey, [
+            'workspace_id' => $otherWorkspace->id,
+            'project_id' => $otherProject->id,
+            'value' => 'unrelated scope',
+        ]);
+        $store->remember($key, [
+            'workspace_id' => $workspace->id,
+            'project_id' => $projectB->id,
+            'value' => 'second scope',
+        ]);
+
+        $repository = new StructuredKnowledgeRepository;
+        $this->assertNull($repository->latestDocument(
+            KnowledgeScope::forProject($account->id, $workspace->id, $projectA->id),
+            'legacy_memory',
+            $this->structuredUri($key),
+        ));
+        $this->assertNotNull($repository->latestDocument(
+            KnowledgeScope::forProject($account->id, $workspace->id, $projectB->id),
+            'legacy_memory',
+            $this->structuredUri($key),
+        ));
+        $this->assertNotNull($repository->latestDocument(
+            KnowledgeScope::forProject($otherAccount->id, $otherWorkspace->id, $otherProject->id),
+            'legacy_memory',
+            $this->structuredUri($otherKey),
+        ));
+
+        $store->forget($key);
+
+        $this->assertNull($repository->latestDocument(
+            KnowledgeScope::forProject($account->id, $workspace->id, $projectB->id),
+            'legacy_memory',
+            $this->structuredUri($key),
+        ));
+        $this->assertNotNull($repository->latestDocument(
+            KnowledgeScope::forProject($otherAccount->id, $otherWorkspace->id, $otherProject->id),
+            'legacy_memory',
+            $this->structuredUri($otherKey),
+        ));
+    }
+
     private function enableDualWrite(): void
     {
         config()->set('services.knowledge.structured_store', true);
         config()->set('services.knowledge.dual_write', true);
+    }
+
+    private function legacyPath(string $key): string
+    {
+        $safe = preg_replace('/[^a-z0-9._-]+/i', '_', $key) ?: 'unknown';
+
+        return 'ai-knowledge/'.$safe.'.json';
+    }
+
+    private function structuredUri(string $key): string
+    {
+        return 'legacy://sha256/'.hash('sha256', $key."\0".$this->legacyPath($key));
+    }
+
+    private function lockPath(string $key): string
+    {
+        return Storage::disk('local')->path(
+            'ai-knowledge/.locks/'.hash('sha256', $this->legacyPath($key)).'.lock',
+        );
+    }
+
+    private function mappingPath(string $key): string
+    {
+        return 'ai-knowledge/.structured-map/'.hash('sha256', $this->legacyPath($key)).'.json';
     }
 
     /**

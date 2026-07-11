@@ -11,9 +11,7 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use InvalidArgumentException;
 use JsonException;
-use RuntimeException;
 use Throwable;
 use UnexpectedValueException;
 
@@ -41,31 +39,39 @@ class KnowledgeStore
      */
     public function remember(string $key, array $data): void
     {
-        $canonicalKey = $this->canonicalKey($key);
+        $payload = [
+            'key' => $key,
+            'data' => $data,
+            'learned_at' => now()->toIso8601String(),
+        ];
+        $disk = Storage::disk(self::DISK);
+        $written = $disk->put(
+            $this->path($key),
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: '{}',
+        );
 
-        $this->withIdentityLock($canonicalKey, function (FilesystemAdapter $disk) use ($canonicalKey, $data): void {
-            $payload = [
-                'key' => $canonicalKey,
-                'data' => $data,
-                'learned_at' => now()->toIso8601String(),
-            ];
+        if ($written !== true) {
+            Log::warning('Legacy knowledge write failed.', [
+                'key_hash' => $this->keyHash($key),
+                'reason' => 'storage_write_failed',
+            ]);
 
-            $written = $disk->put(
-                $this->path($canonicalKey),
-                json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: '{}',
-            );
+            return;
+        }
 
-            if ($written !== true) {
-                Log::warning('Legacy knowledge write failed.', [
-                    'key_hash' => $this->keyHash($canonicalKey),
-                    'reason' => 'storage_write_failed',
-                ]);
+        if ($this->dualWriteEnabled()) {
+            $this->withMirrorLock($disk, $key, function () use ($disk, $key): void {
+                $memory = $this->legacyMemory($disk, $key);
 
-                return;
-            }
+                if ($memory === null) {
+                    $this->logSkipped($key, 'legacy_payload_unreadable');
 
-            $this->mirrorStructured($canonicalKey, $data);
-        });
+                    return;
+                }
+
+                $this->mirrorStructured($disk, $memory['key'], $memory['data']);
+            });
+        }
     }
 
     /**
@@ -105,53 +111,51 @@ class KnowledgeStore
 
     public function forget(string $key): void
     {
-        try {
-            $canonicalKey = $this->canonicalKey($key);
-            $lockIdentity = $canonicalKey;
-        } catch (InvalidArgumentException) {
-            $canonicalKey = null;
-            $lockIdentity = 'legacy-path:'.$this->path($key);
+        $disk = Storage::disk(self::DISK);
+        $data = $this->legacyData($disk, $key);
+        $deleted = $disk->delete($this->path($key));
+
+        if ($deleted !== true) {
+            Log::warning('Legacy knowledge delete failed.', [
+                'key_hash' => $this->keyHash($key),
+                'reason' => 'storage_delete_failed',
+            ]);
+
+            return;
         }
 
-        $this->withIdentityLock($lockIdentity, function (FilesystemAdapter $disk) use ($key, $canonicalKey): void {
-            $data = $this->legacyData($disk, $key);
-            $deleted = $disk->delete($this->path($key));
+        if (! $this->dualWriteEnabled()) {
+            return;
+        }
 
-            if ($deleted !== true) {
-                Log::warning('Legacy knowledge delete failed.', [
-                    'key_hash' => $this->keyHash($key),
-                    'reason' => 'storage_delete_failed',
-                ]);
+        $this->withMirrorLock($disk, $key, function () use ($disk, $key, $data): void {
+            $mappingPath = $this->mappingPath($key);
+            $mappingExists = $disk->exists($mappingPath);
+            $context = $mappingExists
+                ? $this->mappedContext($disk, $key)
+                : $this->contextFromLegacyData($key, $data);
 
-                return;
-            }
+            if ($context === null) {
+                if ($mappingExists) {
+                    $this->logSkipped($key, 'scope_mapping_invalid');
+                }
 
-            if (! $this->dualWriteEnabled()) {
-                return;
-            }
-
-            if ($canonicalKey === null) {
-                $this->logSkipped($key, 'unsafe_legacy_key');
-
-                return;
-            }
-
-            $scope = $this->scopeFor($canonicalKey, $data ?? []);
-
-            if ($scope === null) {
                 return;
             }
 
             try {
                 $repository = $this->structured ?? app(StructuredKnowledgeRepository::class);
-                $repository->deactivateDocuments(
-                    $scope,
-                    'legacy_memory',
-                    'legacy://'.$canonicalKey,
-                );
+                $repository->deactivateDocuments($context['scope'], 'legacy_memory', $context['canonical_uri']);
+
+                if ($mappingExists && $disk->delete($mappingPath) !== true) {
+                    Log::warning('Structured knowledge scope mapping cleanup failed.', [
+                        'key_hash' => $this->keyHash($key),
+                        'reason' => 'mapping_delete_failed',
+                    ]);
+                }
             } catch (Throwable $exception) {
                 Log::warning('Structured knowledge delete failed.', [
-                    'key_hash' => $this->keyHash($canonicalKey),
+                    'key_hash' => $this->keyHash($key),
                     'exception' => $exception::class,
                 ]);
             }
@@ -168,7 +172,7 @@ class KnowledgeStore
     /**
      * @param  array<string, mixed>  $data
      */
-    private function mirrorStructured(string $key, array $data): void
+    private function mirrorStructured(FilesystemAdapter $disk, string $key, array $data): void
     {
         if (! $this->dualWriteEnabled()) {
             return;
@@ -182,22 +186,36 @@ class KnowledgeStore
                 return;
             }
 
-            $canonicalUri = 'legacy://'.$key;
+            $canonicalUri = $this->structuredUri($key);
+            $keyHash = $this->keyHash($key);
             $content = implode("\n", $this->flatten($data));
+            $previousContext = $this->mappedContextForPath($disk, $key);
+
+            if ($previousContext !== null
+                && ($previousContext['scope']->key() !== $scope->key()
+                    || $previousContext['canonical_uri'] !== $canonicalUri)) {
+                $repository->deactivateDocuments(
+                    $previousContext['scope'],
+                    'legacy_memory',
+                    $previousContext['canonical_uri'],
+                );
+            }
 
             $repository->storeDocument(
                 $scope,
                 'legacy_memory',
                 $canonicalUri,
-                $key,
+                'Legacy memory '.substr($keyHash, 0, 12),
                 $content,
                 [[
-                    'heading' => $key,
+                    'heading' => null,
                     'content' => $content,
-                    'locator' => ['canonical_uri' => $canonicalUri],
+                    'locator' => ['canonical_uri' => $canonicalUri, 'key_hash' => $keyHash],
                 ]],
                 50,
             );
+
+            $this->writeMapping($disk, $key, $scope, $canonicalUri);
         } catch (Throwable $exception) {
             Log::warning('Structured knowledge dual write failed.', [
                 'key_hash' => $this->keyHash($key),
@@ -317,15 +335,6 @@ class KnowledgeStore
         return false;
     }
 
-    private function canonicalKey(string $key): string
-    {
-        if (preg_match('/\A[a-z0-9](?:[a-z0-9._-]{0,198}[a-z0-9])?\z/D', $key) !== 1) {
-            throw new InvalidArgumentException('Knowledge key must use a canonical lowercase ASCII identity.');
-        }
-
-        return $key;
-    }
-
     private function keyHash(string $key): string
     {
         return hash('sha256', $key);
@@ -337,6 +346,168 @@ class KnowledgeStore
             'key_hash' => $this->keyHash($key),
             'reason' => $reason,
         ]);
+    }
+
+    private function structuredUri(string $key): string
+    {
+        return 'legacy://sha256/'.hash('sha256', $key."\0".$this->path($key));
+    }
+
+    private function mappingPath(string $key): string
+    {
+        return self::ROOT.'/.structured-map/'.hash('sha256', $this->path($key)).'.json';
+    }
+
+    private function writeMapping(
+        FilesystemAdapter $disk,
+        string $key,
+        KnowledgeScope $scope,
+        string $canonicalUri,
+    ): void {
+        $mapping = [
+            'version' => 1,
+            'key_hash' => $this->keyHash($key),
+            'canonical_uri' => $canonicalUri,
+            'visibility' => $scope->visibility,
+            'account_id' => $scope->accountId,
+            'workspace_id' => $scope->workspaceId,
+            'project_id' => $scope->projectId,
+        ];
+        $mapping['integrity_hash'] = $this->mappingIntegrity($mapping);
+        $encoded = json_encode($mapping, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+        if ($disk->put($this->mappingPath($key), $encoded) !== true) {
+            Log::warning('Structured knowledge scope mapping write failed.', [
+                'key_hash' => $this->keyHash($key),
+                'reason' => 'mapping_write_failed',
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $mapping
+     */
+    private function mappingIntegrity(array $mapping): string
+    {
+        unset($mapping['integrity_hash']);
+
+        return hash_hmac(
+            'sha256',
+            json_encode($mapping, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+            (string) config('app.key'),
+        );
+    }
+
+    /**
+     * @return array{scope: KnowledgeScope, canonical_uri: string}|null
+     */
+    private function mappedContext(FilesystemAdapter $disk, string $key): ?array
+    {
+        $context = $this->mappedContextForPath($disk, $key);
+
+        if ($context === null
+            || $context['key_hash'] !== $this->keyHash($key)
+            || $context['canonical_uri'] !== $this->structuredUri($key)) {
+            return null;
+        }
+
+        return [
+            'scope' => $context['scope'],
+            'canonical_uri' => $context['canonical_uri'],
+        ];
+    }
+
+    /**
+     * @return array{scope: KnowledgeScope, canonical_uri: string, key_hash: string}|null
+     */
+    private function mappedContextForPath(FilesystemAdapter $disk, string $key): ?array
+    {
+        try {
+            $mapping = json_decode($disk->get($this->mappingPath($key)), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! is_array($mapping)
+            || ($mapping['version'] ?? null) !== 1
+            || ! is_string($mapping['key_hash'] ?? null)
+            || preg_match('/\A[0-9a-f]{64}\z/D', $mapping['key_hash']) !== 1
+            || ! is_string($mapping['canonical_uri'] ?? null)
+            || ! str_starts_with($mapping['canonical_uri'], 'legacy://sha256/')
+            || ! is_string($mapping['integrity_hash'] ?? null)
+            || ! hash_equals($this->mappingIntegrity($mapping), $mapping['integrity_hash'])) {
+            return null;
+        }
+
+        $scope = $this->scopeFromMapping($mapping);
+
+        return $scope === null ? null : [
+            'scope' => $scope,
+            'canonical_uri' => $mapping['canonical_uri'],
+            'key_hash' => $mapping['key_hash'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $mapping
+     */
+    private function scopeFromMapping(array $mapping): ?KnowledgeScope
+    {
+        $accountId = $mapping['account_id'] ?? null;
+        $workspaceId = $mapping['workspace_id'] ?? null;
+        $projectId = $mapping['project_id'] ?? null;
+
+        if (($mapping['visibility'] ?? null) === 'global'
+            && $accountId === null && $workspaceId === null && $projectId === null) {
+            return KnowledgeScope::global();
+        }
+
+        if (! is_int($accountId) || ! is_int($workspaceId) || $accountId <= 0 || $workspaceId <= 0) {
+            return null;
+        }
+
+        $workspace = Workspace::query()
+            ->whereKey($workspaceId)
+            ->where('account_id', $accountId)
+            ->first();
+
+        if ($workspace === null) {
+            return null;
+        }
+
+        if (($mapping['visibility'] ?? null) === 'workspace' && $projectId === null) {
+            return KnowledgeScope::forWorkspace($accountId, $workspaceId);
+        }
+
+        if (($mapping['visibility'] ?? null) !== 'project' || ! is_int($projectId) || $projectId <= 0) {
+            return null;
+        }
+
+        $projectExists = Project::query()
+            ->whereKey($projectId)
+            ->where('workspace_id', $workspaceId)
+            ->exists();
+
+        return $projectExists ? KnowledgeScope::forProject($accountId, $workspaceId, $projectId) : null;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $data
+     * @return array{scope: KnowledgeScope, canonical_uri: string}|null
+     */
+    private function contextFromLegacyData(string $key, ?array $data): ?array
+    {
+        if ($data === null) {
+            if (! $this->isGlobalKey($key)) {
+                return null;
+            }
+
+            return ['scope' => KnowledgeScope::global(), 'canonical_uri' => $this->structuredUri($key)];
+        }
+
+        $scope = $this->scopeFor($key, $data);
+
+        return $scope === null ? null : ['scope' => $scope, 'canonical_uri' => $this->structuredUri($key)];
     }
 
     /**
@@ -356,17 +527,50 @@ class KnowledgeStore
     }
 
     /**
+     * @return array{key: string, data: array<string, mixed>}|null
+     */
+    private function legacyMemory(FilesystemAdapter $disk, string $key): ?array
+    {
+        $path = $this->path($key);
+
+        if (! $disk->exists($path)) {
+            return null;
+        }
+
+        $decoded = json_decode((string) $disk->get($path), true);
+
+        if (! is_array($decoded)
+            || ! is_string($decoded['key'] ?? null)
+            || ! is_array($decoded['data'] ?? null)) {
+            return null;
+        }
+
+        return ['key' => $decoded['key'], 'data' => $decoded['data']];
+    }
+
+    /**
      * @param  Closure(FilesystemAdapter): void  $operation
      */
-    private function withIdentityLock(string $identity, Closure $operation): void
-    {
-        $disk = Storage::disk(self::DISK);
-        $lockPath = $disk->path(self::ROOT.'/.locks/'.$this->keyHash($identity).'.lock');
-        File::ensureDirectoryExists(dirname($lockPath));
-        $handle = fopen($lockPath, 'c+');
+    private function withMirrorLock(
+        FilesystemAdapter $disk,
+        string $key,
+        Closure $operation,
+    ): bool {
+        try {
+            $lockPath = $disk->path(self::ROOT.'/.locks/'.hash('sha256', $this->path($key)).'.lock');
+            File::ensureDirectoryExists(dirname($lockPath));
+            $handle = @fopen($lockPath, 'c+');
+        } catch (Throwable) {
+            $handle = false;
+        }
 
         if ($handle === false) {
-            throw new RuntimeException('Unable to open the knowledge identity lock.');
+            Log::warning('Knowledge mirror lock unavailable.', [
+                'key_hash' => $this->keyHash($key),
+                'reason' => 'lock_open_failed',
+            ]);
+
+            return false;
         }
 
         $waitMilliseconds = max(50, min(2000, (int) config('services.knowledge.lock_wait_milliseconds', 500)));
@@ -383,16 +587,25 @@ class KnowledgeStore
 
         if (! $locked) {
             fclose($handle);
-            Log::warning('Knowledge identity lock timed out.', [
-                'key_hash' => $this->keyHash($identity),
+            Log::warning('Knowledge mirror lock timed out.', [
+                'key_hash' => $this->keyHash($key),
                 'reason' => 'lock_timeout',
             ]);
 
-            throw new RuntimeException('Knowledge identity lock timed out.');
+            return false;
         }
 
         try {
-            $operation($disk);
+            $operation();
+
+            return true;
+        } catch (Throwable $exception) {
+            Log::warning('Knowledge mirror operation failed.', [
+                'key_hash' => $this->keyHash($key),
+                'exception' => $exception::class,
+            ]);
+
+            return false;
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);
