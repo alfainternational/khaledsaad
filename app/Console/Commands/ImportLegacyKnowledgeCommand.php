@@ -5,10 +5,12 @@ namespace App\Console\Commands;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use JsonException;
 use Throwable;
+use UnexpectedValueException;
 
 class ImportLegacyKnowledgeCommand extends Command
 {
@@ -17,6 +19,17 @@ class ImportLegacyKnowledgeCommand extends Command
     protected $description = 'Import legacy JSON memories into the structured knowledge store';
 
     public function handle(StructuredKnowledgeRepository $repository): int
+    {
+        try {
+            return $this->importFiles($repository);
+        } catch (Throwable $exception) {
+            $this->error('Legacy knowledge import failed: '.$exception::class);
+
+            return self::FAILURE;
+        }
+    }
+
+    private function importFiles(StructuredKnowledgeRepository $repository): int
     {
         $files = Storage::disk('local')->files('ai-knowledge');
         sort($files, SORT_STRING);
@@ -35,31 +48,33 @@ class ImportLegacyKnowledgeCommand extends Command
                 $lines = $this->flatten($memory['data']);
 
                 if ($lines === []) {
-                    throw new JsonException('Legacy memory contains no scalar data.');
+                    throw new UnexpectedValueException('Legacy memory contains no scalar data.');
                 }
-
-                $content = implode("\n", $lines);
-                $uri = 'legacy://'.$memory['key'];
-                $scope = KnowledgeScope::global();
-                $current = $repository->latestDocument($scope, 'legacy_memory', $uri);
-
-                $repository->storeDocument(
-                    $scope,
-                    'legacy_memory',
-                    $uri,
-                    $memory['key'],
-                    $content,
-                    [['heading' => $memory['key'], 'content' => $content, 'locator' => ['file' => $file]]],
-                    50,
-                );
-
-                if ($current !== null && $current->content === $content) {
-                    $unchanged++;
-                } else {
-                    $imported++;
-                }
-            } catch (Throwable) {
+            } catch (JsonException|UnexpectedValueException) {
                 $skipped++;
+
+                continue;
+            }
+
+            $content = implode("\n", $lines);
+            $uri = 'legacy://'.$memory['key'];
+            $scope = KnowledgeScope::global();
+            $current = $repository->latestDocument($scope, 'legacy_memory', $uri);
+
+            $repository->storeDocument(
+                $scope,
+                'legacy_memory',
+                $uri,
+                $memory['key'],
+                $content,
+                [['heading' => $memory['key'], 'content' => $content, 'locator' => ['canonical_uri' => $uri]]],
+                50,
+            );
+
+            if ($current !== null && $current->content === $content) {
+                $unchanged++;
+            } else {
+                $imported++;
             }
         }
 
@@ -83,10 +98,17 @@ class ImportLegacyKnowledgeCommand extends Command
             || ! is_string($memory['learned_at'])
             || ! array_key_exists('data', $memory)
             || ! is_array($memory['data'])) {
-            throw new JsonException('Legacy memory schema is invalid.');
+            throw new UnexpectedValueException('Legacy memory schema is invalid.');
         }
 
-        new DateTimeImmutable($memory['learned_at']);
+        $learnedAt = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $memory['learned_at']);
+
+        // The structured schema has no source timestamp column yet. Validate the exact
+        // format emitted by KnowledgeStore without overloading document timestamps.
+        if ($learnedAt === false || $learnedAt->format(DateTimeInterface::ATOM) !== $memory['learned_at']) {
+            throw new UnexpectedValueException('Legacy learned_at must use ISO-8601 ATOM format.');
+        }
+
         $memory['key'] = trim($memory['key']);
 
         return $memory;
@@ -98,19 +120,48 @@ class ImportLegacyKnowledgeCommand extends Command
      */
     private function flatten(array $data, string $prefix = ''): array
     {
-        ksort($data, SORT_STRING);
+        if (! array_is_list($data)) {
+            ksort($data, SORT_STRING);
+        }
+
         $lines = [];
 
         foreach ($data as $key => $value) {
-            $path = ltrim($prefix.'.'.$key, '.');
+            $segment = $this->escapePathSegment((string) $key);
+            $path = $prefix === '' ? $segment : $prefix.'.'.$segment;
 
             if (is_array($value)) {
                 $lines = array_merge($lines, $this->flatten($value, $path));
             } elseif (is_scalar($value) || $value === null) {
-                $lines[] = $path.': '.($value === null ? 'null' : (string) $value);
+                $lines[] = $path.': '.$this->serializeScalar($value);
             }
         }
 
         return $lines;
+    }
+
+    private function escapePathSegment(string $segment): string
+    {
+        $segment = str_replace('~', '~0', $segment);
+        $segment = str_replace('.', '~1', $segment);
+
+        return preg_replace_callback(
+            '/[\x00-\x1F\x7F]/',
+            fn (array $match): string => sprintf('~u%04X', ord($match[0])),
+            $segment,
+        ) ?? $segment;
+    }
+
+    private function serializeScalar(mixed $value): string
+    {
+        if ($value === null) {
+            return 'null';
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        return (string) $value;
     }
 }
