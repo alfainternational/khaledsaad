@@ -124,10 +124,19 @@ class ExecutionPackageResource extends JsonResource
         return match ($this->status) {
             'proposed' => ['request_approval'],
             'approved' => ['start_execution'],
-            'in_progress' => ['mark_executed'],
+            'in_progress' => $this->allTasksDone() ? ['mark_executed'] : [],
             'executed' => ['start_measuring'],
             default => [],
         };
+    }
+
+    private function allTasksDone(): bool
+    {
+        if ($this->relationLoaded('tasks')) {
+            return $this->tasks->isNotEmpty() && $this->tasks->every(fn ($task): bool => $task->status === 'done');
+        }
+
+        return $this->tasks()->exists() && ! $this->tasks()->where('status', '!=', 'done')->exists();
     }
 
     private function taskStatusLabel(string $status): string

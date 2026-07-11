@@ -285,8 +285,34 @@ class ExecutionUiTest extends TestCase
             ->assertOk()
             ->assertSee('بدء التنفيذ', false);
 
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.status', $package), [
+                'status' => 'in_progress',
+            ])
+            ->assertRedirectToRoute('execution-packages.show', $package);
+
+        $this->assertSame('in_progress', $package->fresh()->status);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.status', $package), [
+                'status' => 'executed',
+            ])
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('in_progress', $package->fresh()->status);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('أكمل كل المهام قبل تأكيد التنفيذ', false)
+            ->assertDontSee('value="executed"', false);
+
+        $package->tasks()->update(['status' => 'done']);
+
         foreach ([
-            'in_progress' => 'تأكيد التنفيذ',
             'executed' => 'بدء القياس',
             'measuring' => null,
         ] as $status => $nextButton) {

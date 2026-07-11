@@ -26,6 +26,12 @@ class AdvanceExecutionPackageStatusAction
             ]);
         }
 
+        if ($nextStatus === 'executed' && $package->tasks()->where('status', '!=', 'done')->exists()) {
+            throw ValidationException::withMessages([
+                'status' => ['لا يمكن تأكيد تنفيذ الحزمة قبل إنجاز كل مهام التنفيذ.'],
+            ]);
+        }
+
         $package->update(['status' => $nextStatus]);
 
         return $package->fresh();

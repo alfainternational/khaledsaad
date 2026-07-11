@@ -690,8 +690,15 @@ class ApiV1BackboneTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', 'in_progress')
             ->assertJsonPath('data.status_label', 'قيد التنفيذ')
-            ->assertJsonPath('data.available_actions.0', 'mark_executed')
+            ->assertJsonPath('data.available_actions', [])
             ->assertJsonPath('data.progress.percent', 50);
+
+        $auth()
+            ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [
+                'status' => 'executed',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['status']);
 
         $auth()
             ->postJson($base.'/execution-packages/'.$package->public_id.'/reports', [
@@ -749,6 +756,18 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.tasks.0.due_date', $newDueDate)
             ->assertJsonPath('data.progress.done_tasks', 2)
             ->assertJsonPath('data.progress.percent', 50);
+
+        $package->tasks()->update(['status' => 'done']);
+
+        $auth()
+            ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [
+                'status' => 'executed',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'executed')
+            ->assertJsonPath('data.status_label', 'منفّذة')
+            ->assertJsonPath('data.available_actions.0', 'start_measuring')
+            ->assertJsonPath('data.progress.percent', 100);
 
         $outsider = User::factory()->create();
 

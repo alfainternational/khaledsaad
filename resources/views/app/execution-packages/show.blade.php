@@ -25,6 +25,10 @@
     $nextPackageAction = $packageActions[$package->status] ?? null;
     $canUpdateTasks = in_array($package->status, ['in_progress', 'executed', 'measuring'], true);
     $canCreateReports = in_array($package->status, ['in_progress', 'executed', 'measuring'], true);
+    $allTasksDone = $package->tasks->isNotEmpty() && $package->tasks->every(fn ($task) => $task->status === 'done');
+    if ($package->status === 'in_progress' && ! $allTasksDone) {
+        $nextPackageAction = null;
+    }
 @endphp
 
 <section class="exec-pkg-head {{ ($brand['enabled'] ?? false) ? 'exec-pkg-head--branded' : '' }}" @if($brand['enabled'] ?? false) style="--brand: {{ $brand['color'] }}" @endif>
@@ -199,6 +203,8 @@
             <input type="hidden" name="status" value="{{ $nextPackageAction['status'] }}">
             <button type="submit" class="btn {{ $nextPackageAction['style'] }}">{{ $nextPackageAction['label'] }}</button>
         </form>
+    @elseif ($package->status === 'in_progress')
+        <span class="btn btn-secondary">أكمل كل المهام قبل تأكيد التنفيذ</span>
     @endif
     @if ($package->status === 'proposed')
         <form method="POST" action="{{ route('projects.approvals.store', $package->project) }}">
