@@ -48,6 +48,10 @@ Route::prefix('v1')->group(function (): void {
         ->prefix('private-worker')
         ->group(function (): void {
             Route::post('/lease', [PrivateWorkerController::class, 'lease']);
+            Route::post('/jobs/{jobPublicId}/heartbeat', [PrivateWorkerController::class, 'heartbeat']);
+            Route::get('/jobs/{jobPublicId}/input', [PrivateWorkerController::class, 'input']);
+            Route::post('/jobs/{jobPublicId}/complete', [PrivateWorkerController::class, 'complete']);
+            Route::post('/jobs/{jobPublicId}/fail', [PrivateWorkerController::class, 'fail']);
         });
 
     Route::get('/ping', PingController::class)->middleware('throttle:60,1');

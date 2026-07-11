@@ -136,7 +136,7 @@ return [
             'trim',
             explode(',', (string) env('AI_KNOWLEDGE_MAPPING_PREVIOUS_KEYS', '')),
         ))),
-        'upload_max_bytes' => (int) env('AI_KNOWLEDGE_UPLOAD_MAX_BYTES', 2097152),
+        'upload_max_bytes' => (int) env('AI_KNOWLEDGE_UPLOAD_MAX_BYTES', 8388608),
         'upload_chunk_chars' => (int) env('AI_KNOWLEDGE_UPLOAD_CHUNK_CHARS', 3500),
         'upload_max_text_chars' => (int) env('AI_KNOWLEDGE_UPLOAD_MAX_TEXT_CHARS', 350000),
         'test_mirror_delay_milliseconds' => 0,

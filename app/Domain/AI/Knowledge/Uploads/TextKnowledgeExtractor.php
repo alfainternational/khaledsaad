@@ -17,6 +17,11 @@ class TextKnowledgeExtractor
         'application/xhtml+xml' => 'html',
     ];
 
+    public function supports(string $mimeType): bool
+    {
+        return isset(self::SUPPORTED_MIMES[strtolower(trim(explode(';', $mimeType)[0]))]);
+    }
+
     public function extract(string $path, string $mimeType, string $originalName): ExtractedKnowledge
     {
         $format = self::SUPPORTED_MIMES[strtolower(trim(explode(';', $mimeType)[0]))] ?? null;

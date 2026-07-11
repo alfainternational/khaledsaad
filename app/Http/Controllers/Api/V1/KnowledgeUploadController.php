@@ -7,6 +7,8 @@ use App\Domain\AI\Knowledge\Models\KnowledgeUpload;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use App\Domain\AI\Knowledge\Uploads\KnowledgeExtractionException;
 use App\Domain\AI\Knowledge\Uploads\KnowledgeUploadIndexer;
+use App\Domain\AI\Knowledge\Uploads\TextKnowledgeExtractor;
+use App\Domain\AI\Worker\KnowledgeUploadJobDispatcher;
 use App\Domain\Project\Models\Project;
 use App\Http\Controllers\Api\V1\Concerns\ResolvesCurrentProject;
 use App\Http\Controllers\Controller;
@@ -24,7 +26,10 @@ class KnowledgeUploadController extends Controller
 {
     use ResolvesCurrentProject;
 
-    private const EXTENSIONS = ['txt', 'md', 'markdown', 'csv', 'json', 'html', 'htm'];
+    private const EXTENSIONS = [
+        'txt', 'md', 'markdown', 'csv', 'json', 'html', 'htm',
+        'pdf', 'docx', 'xlsx', 'png', 'jpg', 'jpeg', 'webp', 'tif', 'tiff',
+    ];
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -43,6 +48,8 @@ class KnowledgeUploadController extends Controller
     public function store(
         StoreKnowledgeUploadRequest $request,
         KnowledgeUploadIndexer $indexer,
+        KnowledgeUploadJobDispatcher $dispatcher,
+        TextKnowledgeExtractor $extractor,
     ): JsonResponse {
         $project = $this->currentProject()->loadMissing('workspace');
         $this->authorize('update', $project);
@@ -93,6 +100,13 @@ class KnowledgeUploadController extends Controller
                 'sha256' => $sha256,
                 'status' => 'stored',
             ]);
+            if (! $extractor->supports($upload->mime_type)) {
+                $dispatcher->dispatch($upload);
+
+                return (new KnowledgeUploadResource($upload->fresh()))
+                    ->response()
+                    ->setStatusCode(202);
+            }
             $upload = $indexer->index($upload);
         } catch (KnowledgeExtractionException $exception) {
             return $this->extractionFailure($upload, $exception);

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Domain\Account\Models\Account;
+use App\Domain\AI\Worker\Models\IntelligenceJob;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Client\Models\Client;
@@ -125,6 +126,31 @@ class KnowledgeUploadApiTest extends TestCase
             'status' => 'failed',
             'error_code' => 'binary_content',
         ]);
+    }
+
+    #[Test]
+    public function heavy_documents_are_stored_privately_and_queued_for_the_private_worker(): void
+    {
+        Storage::fake('local');
+        [$owner, $workspace, $project] = $this->tenant('Heavy');
+        $base = '/api/v1/workspaces/'.$workspace->public_id.'/projects/'.$project->public_id.'/knowledge/uploads';
+
+        $response = $this->withToken($owner->createToken('owner')->plainTextToken)
+            ->post($base, [
+                'file' => UploadedFile::fake()->create('research.pdf', 200, 'application/pdf'),
+            ], ['Accept' => 'application/json'])
+            ->assertAccepted()
+            ->assertJsonPath('data.status', 'needs_worker');
+
+        $this->assertDatabaseHas('intelligence_jobs', [
+            'project_id' => $project->id,
+            'type' => 'document_extract',
+            'status' => 'queued',
+        ]);
+        $payload = IntelligenceJob::query()->firstOrFail()->payload_json;
+        $this->assertSame($response->json('data.public_id'), $payload['upload_public_id']);
+        $this->assertArrayNotHasKey('path', $payload);
+        $this->assertArrayNotHasKey('disk', $payload);
     }
 
     /** @return array{User, Workspace, Project} */

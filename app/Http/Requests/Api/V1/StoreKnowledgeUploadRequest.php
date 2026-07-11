@@ -14,14 +14,14 @@ class StoreKnowledgeUploadRequest extends FormRequest
     /** @return array<string, list<string>> */
     public function rules(): array
     {
-        $maxKilobytes = max(1, (int) ceil((int) config('services.knowledge.upload_max_bytes', 2097152) / 1024));
+        $maxKilobytes = max(1, (int) ceil((int) config('services.knowledge.upload_max_bytes', 8388608) / 1024));
 
         return [
             'file' => [
                 'required',
                 'file',
                 'max:'.$maxKilobytes,
-                'mimetypes:text/plain,text/markdown,text/csv,application/csv,application/json,text/json,text/html,application/xhtml+xml',
+                'mimetypes:text/plain,text/markdown,text/csv,application/csv,application/json,text/json,text/html,application/xhtml+xml,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/png,image/jpeg,image/webp,image/tiff',
             ],
         ];
     }
