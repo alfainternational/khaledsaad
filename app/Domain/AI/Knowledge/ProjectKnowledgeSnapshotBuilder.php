@@ -5,7 +5,6 @@ namespace App\Domain\AI\Knowledge;
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\WorkspaceData\Models\WorkspaceData;
-use UnexpectedValueException;
 
 class ProjectKnowledgeSnapshotBuilder
 {
@@ -15,13 +14,12 @@ class ProjectKnowledgeSnapshotBuilder
     public function build(Project $project): array
     {
         if ($project->id === null || $project->workspace_id === null || trim((string) $project->public_id) === '') {
-            throw new UnexpectedValueException('Project snapshot identity is incomplete.');
+            throw new InvalidProjectKnowledgeData('Project snapshot identity is incomplete.');
         }
 
         $brief = $this->marketingBrief($project);
-        $toolSummaries = $this->toolSummaries($project);
         $sections = [
-            'Project' => [
+            'Project' => $this->present([
                 'name' => $project->name,
                 'stage' => $project->stage,
                 'status' => $project->status,
@@ -29,38 +27,38 @@ class ProjectKnowledgeSnapshotBuilder
                 'offer' => data_get($brief, 'business.offer'),
                 'ideal_customer' => data_get($brief, 'audience.ideal_customer'),
                 'positioning_edge' => data_get($brief, 'positioning.edge'),
-            ],
-            'Market' => [
+            ]),
+            'Market' => $this->present([
                 'sector' => $project->sector,
                 'country' => $project->market_country,
                 'primary_domain' => $project->primary_domain,
                 'market' => data_get($brief, 'business.market'),
                 'pain_points' => data_get($brief, 'audience.pain_points'),
                 'buying_trigger' => data_get($brief, 'audience.buying_trigger'),
-            ],
-            'Channels' => [
-                'official_social_links' => $project->official_social_links_json,
-                'verified_social_profiles' => $project->verified_social_profiles_json,
+            ]),
+            'Channels' => $this->present([
+                'official_social_links' => $this->sanitize($project->official_social_links_json),
+                'verified_social_profiles' => $this->sanitize($project->verified_social_profiles_json),
                 'current_channels' => data_get($brief, 'current_marketing.channels'),
                 'current_state' => data_get($brief, 'current_marketing.current_state'),
                 'assets' => data_get($brief, 'current_marketing.assets'),
                 'brand_voice' => data_get($brief, 'brand.voice'),
                 'tone_rules' => data_get($brief, 'brand.tone_rules'),
-            ],
-            'Competitors' => [
-                'competitors' => $project->competitors_json,
+            ]),
+            'Competitors' => $this->present([
+                'competitors' => $this->sanitize($project->competitors_json),
                 'brief_competitors' => data_get($brief, 'competition.competitors'),
                 'market_gap' => data_get($brief, 'competition.gap'),
-            ],
-            'Goals' => [
-                'analysis_goals' => $project->analysis_goals_json,
+            ]),
+            'Goals' => $this->present([
+                'analysis_goals' => $this->sanitize($project->analysis_goals_json),
                 'primary_goal' => data_get($brief, 'goals.primary_goal'),
                 'success_metric' => data_get($brief, 'goals.success_metric'),
                 'timeframe' => data_get($brief, 'goals.timeframe'),
                 'execution_priority' => data_get($brief, 'execution.priority'),
                 'next_asset' => data_get($brief, 'execution.next_asset'),
-                'tool_summaries' => $toolSummaries,
-            ],
+                'tool_summaries' => $this->toolSummaries($project),
+            ]),
         ];
 
         $chunks = [];
@@ -74,7 +72,8 @@ class ProjectKnowledgeSnapshotBuilder
             ];
         }
 
-        $title = $this->normalizeText((string) $project->name);
+        $title = preg_replace('/[\t ]+|\n+/', ' ', trim($this->normalizeLineEndings((string) $project->name)))
+            ?? trim((string) $project->name);
 
         return [
             'title' => $title,
@@ -99,22 +98,26 @@ class ProjectKnowledgeSnapshotBuilder
             $payload = json_decode($payload, true);
         }
 
-        return is_array($payload) ? $payload : [];
+        return is_array($payload) ? $this->sanitize($payload) : [];
     }
 
     /** @return array<string, mixed> */
     private function toolSummaries(Project $project): array
     {
+        $latestRunIds = ToolRun::query()
+            ->selectRaw('MAX(id)')
+            ->where('workspace_id', $project->workspace_id)
+            ->where('project_id', $project->id)
+            ->groupBy('tool_code');
+
         return ToolRun::query()
             ->where('workspace_id', $project->workspace_id)
             ->where('project_id', $project->id)
-            ->whereNotNull('summary_json')
+            ->whereIn('id', $latestRunIds)
             ->orderBy('tool_code')
-            ->orderByDesc('id')
             ->get(['id', 'tool_code', 'summary_json', 'next_actions_json'])
-            ->unique('tool_code')
             ->mapWithKeys(function (ToolRun $run): array {
-                $summary = $this->removeSensitiveKeys([
+                $summary = $this->sanitize([
                     'summary' => $run->summary_json,
                     'next_actions' => $run->next_actions_json,
                 ]);
@@ -124,77 +127,108 @@ class ProjectKnowledgeSnapshotBuilder
             ->all();
     }
 
-    /** @return array<mixed> */
-    private function removeSensitiveKeys(array $payload): array
+    private function sanitize(mixed $value): mixed
     {
-        $clean = [];
+        if (is_string($value)) {
+            return $this->redactSensitiveUrlQuery($this->normalizeLineEndings($value));
+        }
 
-        foreach ($payload as $key => $value) {
-            if (preg_match('/(?:password|secret|token|credential|api[_-]?key)/i', (string) $key) === 1) {
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        $clean = [];
+        foreach ($value as $key => $item) {
+            if (is_string($key) && $this->isSensitiveKey($key)) {
                 continue;
             }
 
-            if (is_array($value)) {
-                $value = $this->removeSensitiveKeys($value);
-            }
-
-            if ($value !== null && $value !== [] && (! is_string($value) || trim($value) !== '')) {
-                $clean[$key] = $value;
-            }
+            $clean[$key] = $this->sanitize($item);
         }
 
         return $clean;
     }
 
+    private function isSensitiveKey(string $key): bool
+    {
+        return preg_match(
+            '/(?:authorization|private[_-]?key|access[_-]?key|api[_-]?key|cookies?|tokens?|pass(?:word|wd)s?|secrets?|credentials?|signatures?)/i',
+            $key,
+        ) === 1;
+    }
+
+    private function redactSensitiveUrlQuery(string $value): string
+    {
+        if (! str_contains($value, '?')) {
+            return $value;
+        }
+
+        return preg_replace_callback(
+            '/([?&])([^=&#]+)=([^&#]*)/',
+            fn (array $match): string => $this->isSensitiveKey(rawurldecode($match[2]))
+                ? $match[1].$match[2].'=[REDACTED]'
+                : $match[0],
+            $value,
+        ) ?? $value;
+    }
+
     /**
-     * @param  array<string, mixed>  $values
+     * @param  array<mixed>  $values
      * @return list<string>
      */
     private function flatten(array $values, string $prefix = ''): array
     {
-        ksort($values, SORT_STRING);
-        $lines = [];
+        if (! array_is_list($values)) {
+            ksort($values, SORT_STRING);
+        }
 
+        $lines = [];
         foreach ($values as $key => $value) {
-            $path = $prefix === '' ? (string) $key : $prefix.'.'.$key;
+            $segment = $this->escapePathSegment((string) $key);
+            $path = $prefix === '' ? $segment : $prefix.'.'.$segment;
 
             if (is_array($value)) {
-                if ($value === []) {
-                    continue;
-                }
-
-                if (array_is_list($value)) {
-                    foreach ($value as $index => $item) {
-                        if ($this->isFilledScalar($item)) {
-                            $lines[] = $path.'.'.$index.': '.$this->normalizeText((string) $item);
-                        }
-                    }
-                } else {
+                if ($value !== []) {
                     $lines = array_merge($lines, $this->flatten($value, $path));
                 }
 
                 continue;
             }
 
-            if ($this->isFilledScalar($value)) {
-                $lines[] = $path.': '.$this->normalizeText(is_bool($value) ? ($value ? 'true' : 'false') : (string) $value);
+            if ((is_scalar($value) || $value === null) && (! is_string($value) || trim($value) !== '')) {
+                $lines[] = $path.': '.json_encode(
+                    is_string($value) ? $this->normalizeLineEndings($value) : $value,
+                    JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR,
+                );
             }
         }
 
         return $lines;
     }
 
-    private function isFilledScalar(mixed $value): bool
+    /** @param array<string, mixed> $values */
+    private function present(array $values): array
     {
-        return (is_scalar($value) || $value === null)
-            && $value !== null
-            && (! is_string($value) || trim($value) !== '');
+        return array_filter(
+            $values,
+            fn (mixed $value): bool => $value !== null && $value !== [] && (! is_string($value) || trim($value) !== ''),
+        );
     }
 
-    private function normalizeText(string $value): string
+    private function escapePathSegment(string $segment): string
     {
-        $value = str_replace(["\r\n", "\r"], "\n", trim($value));
+        $segment = str_replace('~', '~0', $segment);
+        $segment = str_replace('.', '~1', $segment);
 
-        return preg_replace('/[\t ]+|\n+/', ' ', $value) ?? $value;
+        return preg_replace_callback(
+            '/[\x00-\x1F\x7F]/',
+            fn (array $match): string => sprintf('~u%04X', ord($match[0])),
+            $segment,
+        ) ?? $segment;
+    }
+
+    private function normalizeLineEndings(string $value): string
+    {
+        return str_replace(["\r\n", "\r"], "\n", $value);
     }
 }

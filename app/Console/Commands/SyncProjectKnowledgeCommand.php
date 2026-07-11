@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Domain\AI\Knowledge\InvalidProjectKnowledgeData;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\ProjectKnowledgeSnapshotBuilder;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
@@ -36,6 +37,12 @@ class SyncProjectKnowledgeCommand extends Command
             throw new UnexpectedValueException('The project option must be a positive integer.');
         }
 
+        if ($projectOption !== null && ! Project::query()->whereKey((int) $projectOption)->exists()) {
+            $this->error('Project '.(int) $projectOption.' was not found.');
+
+            return self::FAILURE;
+        }
+
         $synced = 0;
         $unchanged = 0;
         $failed = 0;
@@ -47,7 +54,7 @@ class SyncProjectKnowledgeCommand extends Command
                 foreach ($projects as $project) {
                     try {
                         if ($project->workspace === null) {
-                            throw new UnexpectedValueException('Project workspace is missing.');
+                            throw new InvalidProjectKnowledgeData('Project workspace is missing.');
                         }
 
                         $snapshot = $builder->build($project);
@@ -74,7 +81,7 @@ class SyncProjectKnowledgeCommand extends Command
                         } else {
                             $synced++;
                         }
-                    } catch (Throwable $exception) {
+                    } catch (InvalidProjectKnowledgeData $exception) {
                         Log::error('Project knowledge synchronization failed.', [
                             'project_id' => $project->id,
                             'exception_type' => $exception::class,

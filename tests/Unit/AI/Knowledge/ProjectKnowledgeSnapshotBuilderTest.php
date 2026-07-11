@@ -35,7 +35,11 @@ class ProjectKnowledgeSnapshotBuilderTest extends TestCase
             'sector' => 'التقنية',
             'market_country' => 'السعودية',
             'primary_domain' => 'example.sa',
-            'official_social_links_json' => ['linkedin' => 'https://linkedin.test/company', 'x' => ''],
+            'official_social_links_json' => [
+                'linkedin' => 'https://linkedin.test/company',
+                'signed' => 'https://example.test/page?ok=1&access_token=URL-SECRET&X-Amz-Signature=SIGNATURE-SECRET',
+                'x' => '',
+            ],
             'verified_social_profiles_json' => ['instagram' => '@example'],
             'competitors_json' => ['منافس ب', 'منافس أ'],
             'analysis_goals_json' => ['زيادة المبيعات', 'تحسين الظهور'],
@@ -45,7 +49,24 @@ class ProjectKnowledgeSnapshotBuilderTest extends TestCase
             'workspace_id' => $project->workspace_id,
             'project_id' => $project->id,
             'key' => 'project.marketing_brief',
-            'value_json' => ['business' => ['offer' => 'حل آمن'], 'api_key' => 'SECRET-123'],
+            'value_json' => [
+                'business' => [
+                    'offer' => [
+                        'safe' => 'حل آمن',
+                        'authorization' => 'AUTHORIZATION-SECRET',
+                        "multi.line\n~key" => [
+                            'items' => [
+                                ['name' => 'عنصر', 'private_key' => 'PRIVATE-KEY-SECRET'],
+                                '1',
+                                1,
+                                null,
+                                1.5,
+                            ],
+                        ],
+                    ],
+                ],
+                'api_key' => 'SECRET-123',
+            ],
         ]);
         WorkspaceData::query()->create([
             'workspace_id' => $project->workspace_id,
@@ -62,6 +83,40 @@ class ProjectKnowledgeSnapshotBuilderTest extends TestCase
             'summary_json' => ['summary' => 'فرصة نمو واضحة', 'api_key' => 'TOOL-SECRET'],
             'next_actions_json' => ['اختبار الرسالة'],
         ]);
+        ToolRun::query()->create([
+            'public_id' => 'tool-run-latest-summary',
+            'workspace_id' => $project->workspace_id,
+            'project_id' => $project->id,
+            'tool_code' => 'market-analysis',
+            'mode' => 'quick',
+            'summary_json' => [
+                'summary' => 'أحدث فرصة نمو',
+                'nested' => [
+                    'cookie' => 'COOKIE-SECRET',
+                    'access_key_id' => 'ACCESS-KEY-SECRET',
+                    'tokens' => ['TOKEN-SECRET'],
+                    'safe_url' => 'https://example.test/callback?code=SAFE&signature=QUERY-SIGNATURE-SECRET',
+                ],
+            ],
+            'next_actions_json' => ['البدء الآن'],
+        ]);
+        ToolRun::query()->create([
+            'public_id' => 'tool-run-content-old',
+            'workspace_id' => $project->workspace_id,
+            'project_id' => $project->id,
+            'tool_code' => 'content-plan',
+            'mode' => 'quick',
+            'summary_json' => ['summary' => 'ملخص قديم لا يجب تحميله'],
+        ]);
+        ToolRun::query()->create([
+            'public_id' => 'tool-run-content-latest',
+            'workspace_id' => $project->workspace_id,
+            'project_id' => $project->id,
+            'tool_code' => 'content-plan',
+            'mode' => 'quick',
+            'summary_json' => null,
+            'next_actions_json' => ['أحدث إجراء فقط'],
+        ]);
 
         $snapshot = (new ProjectKnowledgeSnapshotBuilder)->build($project);
 
@@ -75,10 +130,23 @@ class ProjectKnowledgeSnapshotBuilderTest extends TestCase
         $this->assertStringContainsString('منافس أ', $snapshot['content']);
         $this->assertStringContainsString('زيادة المبيعات', $snapshot['content']);
         $this->assertStringContainsString('حل آمن', $snapshot['content']);
-        $this->assertStringContainsString('فرصة نمو واضحة', $snapshot['content']);
-        $this->assertStringNotContainsString('SECRET-123', $snapshot['content']);
-        $this->assertStringNotContainsString('TOOL-SECRET', $snapshot['content']);
-        $this->assertStringNotContainsString('WORKSPACE-SECRET', $snapshot['content']);
+        $this->assertStringContainsString('أحدث فرصة نمو', $snapshot['content']);
+        $this->assertStringNotContainsString('فرصة نمو واضحة', $snapshot['content']);
+        $this->assertStringContainsString('أحدث إجراء فقط', $snapshot['content']);
+        $this->assertStringNotContainsString('ملخص قديم لا يجب تحميله', $snapshot['content']);
+        $this->assertStringContainsString('offer.multi~1line~u000A~0key.items.0.name: "عنصر"', $snapshot['content']);
+        $this->assertStringContainsString('offer.multi~1line~u000A~0key.items.1: "1"', $snapshot['content']);
+        $this->assertStringContainsString('offer.multi~1line~u000A~0key.items.2: 1', $snapshot['content']);
+        $this->assertStringContainsString('offer.multi~1line~u000A~0key.items.3: null', $snapshot['content']);
+        $this->assertStringContainsString('offer.multi~1line~u000A~0key.items.4: 1.5', $snapshot['content']);
+
+        foreach ([
+            'SECRET-123', 'TOOL-SECRET', 'WORKSPACE-SECRET', 'AUTHORIZATION-SECRET',
+            'PRIVATE-KEY-SECRET', 'COOKIE-SECRET', 'ACCESS-KEY-SECRET', 'TOKEN-SECRET',
+            'URL-SECRET', 'SIGNATURE-SECRET', 'QUERY-SIGNATURE-SECRET',
+        ] as $secret) {
+            $this->assertStringNotContainsString($secret, $snapshot['content']);
+        }
     }
 
     private function workspaceId(string $suffix): int

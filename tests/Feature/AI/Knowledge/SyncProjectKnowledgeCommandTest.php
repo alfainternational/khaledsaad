@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\AI\Knowledge;
 
+use App\Domain\AI\Knowledge\InvalidProjectKnowledgeData;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\Models\KnowledgeDocument;
 use App\Domain\AI\Knowledge\Models\KnowledgeSource;
@@ -11,10 +12,10 @@ use App\Domain\Project\Models\Project;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Tests\TestCase;
-use UnexpectedValueException;
 
 class SyncProjectKnowledgeCommandTest extends TestCase
 {
@@ -67,21 +68,29 @@ class SyncProjectKnowledgeCommandTest extends TestCase
     }
 
     #[Test]
-    public function infrastructure_failures_return_a_non_zero_status(): void
+    public function infrastructure_failure_aborts_the_batch_immediately(): void
     {
-        $project = $this->project('Failure', 'تقنية');
-        $this->app->instance(StructuredKnowledgeRepository::class, new class extends StructuredKnowledgeRepository
+        $first = $this->project('Failure', 'تقنية');
+        $second = $this->project('NeverReached', 'تجارة');
+        $repository = new class extends StructuredKnowledgeRepository
         {
+            public int $calls = 0;
+
             public function latestDocument(KnowledgeScope $scope, string $kind, string $canonicalUri): ?KnowledgeDocument
             {
+                $this->calls++;
                 throw new RuntimeException('database unavailable');
             }
-        });
+        };
+        $this->app->instance(StructuredKnowledgeRepository::class, $repository);
 
-        $this->artisan('knowledge:sync-projects', ['--project' => $project->id])
-            ->expectsOutputToContain('Project '.$project->id.' could not be synchronized.')
-            ->expectsOutputToContain('Synced: 0; unchanged: 0; failed: 1')
+        $this->artisan('knowledge:sync-projects')
+            ->expectsOutputToContain('Project knowledge synchronization failed.')
             ->assertFailed();
+
+        $this->assertSame(1, $repository->calls);
+        $this->assertDatabaseMissing('knowledge_sources', ['project_id' => $first->id]);
+        $this->assertDatabaseMissing('knowledge_sources', ['project_id' => $second->id]);
     }
 
     #[Test]
@@ -96,7 +105,7 @@ class SyncProjectKnowledgeCommandTest extends TestCase
             public function build(Project $project): array
             {
                 if ($project->id === $this->invalidId) {
-                    throw new UnexpectedValueException('invalid project data');
+                    throw new InvalidProjectKnowledgeData('invalid project data');
                 }
 
                 return parent::build($project);
@@ -110,7 +119,7 @@ class SyncProjectKnowledgeCommandTest extends TestCase
     }
 
     #[Test]
-    public function unexpected_failure_in_one_project_is_reported_and_does_not_stop_later_projects(): void
+    public function explicit_domain_validation_failure_is_safe_and_does_not_stop_later_projects(): void
     {
         $broken = $this->project('Broken', 'تقنية');
         $valid = $this->project('Later', 'تجارة');
@@ -121,7 +130,7 @@ class SyncProjectKnowledgeCommandTest extends TestCase
             public function build(Project $project): array
             {
                 if ($project->id === $this->brokenId) {
-                    throw new RuntimeException('sensitive failure detail');
+                    throw new InvalidProjectKnowledgeData('sensitive failure detail');
                 }
 
                 return parent::build($project);
@@ -136,6 +145,24 @@ class SyncProjectKnowledgeCommandTest extends TestCase
 
         $this->assertDatabaseHas('knowledge_sources', ['project_id' => $valid->id]);
         $this->assertDatabaseMissing('knowledge_sources', ['project_id' => $broken->id]);
+    }
+
+    #[Test]
+    public function an_explicit_missing_project_returns_a_safe_non_zero_result(): void
+    {
+        $this->artisan('knowledge:sync-projects', ['--project' => 999999])
+            ->expectsOutputToContain('Project 999999 was not found.')
+            ->assertFailed();
+    }
+
+    #[Test]
+    public function latest_tool_run_lookup_has_a_portable_supporting_index(): void
+    {
+        $indexes = collect(Schema::getIndexes('tool_runs'));
+
+        $this->assertTrue($indexes->contains(
+            fn (array $index): bool => $index['columns'] === ['workspace_id', 'project_id', 'tool_code', 'id'],
+        ));
     }
 
     private function project(string $suffix, ?string $sector): Project
