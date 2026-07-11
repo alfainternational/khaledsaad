@@ -662,6 +662,17 @@ class ApiV1BackboneTest extends TestCase
 
         $this->assertSame('proposed', $package->fresh()->status);
 
+        $auth()
+            ->postJson($base.'/execution-packages/'.$package->public_id.'/reports', [
+                'phase' => 'execution',
+                'progress' => 10,
+                'note' => 'محاولة تقرير قبل بدء التنفيذ.',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['phase']);
+
+        $this->assertSame(1, $package->reports()->count());
+
         $package->update(['status' => 'approved']);
 
         $auth()

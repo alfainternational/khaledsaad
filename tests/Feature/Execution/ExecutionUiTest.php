@@ -319,15 +319,36 @@ class ExecutionUiTest extends TestCase
     {
         [$owner, $workspace, $project, $recommendation] = $this->scenario();
         $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
-        $package->update(['status' => 'measuring']);
 
         $this->actingAs($owner)
             ->withSession(['current_workspace_id' => $workspace->id])
             ->get(route('execution-packages.show', $package))
             ->assertOk()
             ->assertSee('تقارير القياس', false)
-            ->assertSee('حفظ تقرير القياس', false)
+            ->assertSee('يظهر نموذج القياس بعد بدء التنفيذ.', false)
+            ->assertDontSee('حفظ تقرير القياس', false)
             ->assertSee('لا توجد تقارير قياس بعد.', false);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->post(route('execution-packages.reports.store', $package), [
+                'phase' => 'validation',
+                'progress' => 70,
+                'metric_name' => 'العملاء المحتملون',
+                'metric_value' => '34 خلال أسبوع',
+                'note' => 'محاولة مبكرة قبل التنفيذ.',
+            ])
+            ->assertSessionHasErrors('phase');
+
+        $this->assertSame(0, $package->reports()->count());
+
+        $package->update(['status' => 'measuring']);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('حفظ تقرير القياس', false);
 
         $this->actingAs($owner)
             ->withSession(['current_workspace_id' => $workspace->id])

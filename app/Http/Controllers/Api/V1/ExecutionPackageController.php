@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Application\Execution\AdvanceExecutionPackageStatusAction;
+use App\Application\Execution\CreateExecutionReportAction;
 use App\Application\Execution\UpdateExecutionTaskStatusAction;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionReport;
@@ -42,7 +43,10 @@ class ExecutionPackageController extends Controller
         return new ExecutionPackageResource($package->load(['tasks.assignee', 'assets', 'reports']));
     }
 
-    public function storeReport(Request $request): ExecutionPackageResource
+    public function storeReport(
+        Request $request,
+        CreateExecutionReportAction $createExecutionReport,
+    ): ExecutionPackageResource
     {
         $package = $this->resolve((string) $request->route('packagePublicId'));
         $this->authorize('update', $package->project);
@@ -70,7 +74,7 @@ class ExecutionPackageController extends Controller
             ];
         }
 
-        $package->reports()->create([
+        $createExecutionReport->handle($package, [
             'phase' => $validated['phase'],
             'progress' => $validated['progress'],
             'notes_json' => $notes,

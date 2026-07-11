@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Application\Execution\AdvanceExecutionPackageStatusAction;
+use App\Application\Execution\CreateExecutionReportAction;
 use App\Application\Execution\UpdateExecutionTaskStatusAction;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionReport;
@@ -81,6 +82,7 @@ class ExecutionPackageController extends Controller
         Request $request,
         ExecutionPackage $executionPackage,
         FlashMessageCatalog $flash,
+        CreateExecutionReportAction $createExecutionReport,
     ): RedirectResponse {
         $workspace = $this->currentWorkspace($request);
         abort_unless($executionPackage->workspace_id === $workspace->id, 404);
@@ -102,7 +104,7 @@ class ExecutionPackageController extends Controller
             ]]
             : [];
 
-        $executionPackage->reports()->create([
+        $createExecutionReport->handle($executionPackage, [
             'phase' => $validated['phase'],
             'progress' => $validated['progress'],
             'notes_json' => $notes,
