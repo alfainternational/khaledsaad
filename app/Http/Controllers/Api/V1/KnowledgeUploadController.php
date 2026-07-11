@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\Models\KnowledgeUpload;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
+use App\Domain\AI\Knowledge\Uploads\KnowledgeExtractionException;
 use App\Domain\AI\Knowledge\Uploads\KnowledgeUploadIndexer;
 use App\Domain\Project\Models\Project;
 use App\Http\Controllers\Api\V1\Concerns\ResolvesCurrentProject;
@@ -93,6 +94,8 @@ class KnowledgeUploadController extends Controller
                 'status' => 'stored',
             ]);
             $upload = $indexer->index($upload);
+        } catch (KnowledgeExtractionException $exception) {
+            return $this->extractionFailure($upload, $exception);
         } catch (\Throwable $exception) {
             if (! isset($upload)) {
                 Storage::disk('local')->delete($path);
@@ -105,13 +108,17 @@ class KnowledgeUploadController extends Controller
             ->setStatusCode(201);
     }
 
-    public function retry(Request $request, KnowledgeUploadIndexer $indexer): KnowledgeUploadResource
+    public function retry(Request $request, KnowledgeUploadIndexer $indexer): KnowledgeUploadResource|JsonResponse
     {
         $project = $this->currentProject();
         $this->authorize('update', $project);
         $upload = $this->upload($project, (string) $request->route('uploadPublicId'));
 
-        return new KnowledgeUploadResource($indexer->index($upload));
+        try {
+            return new KnowledgeUploadResource($indexer->index($upload));
+        } catch (KnowledgeExtractionException $exception) {
+            return $this->extractionFailure($upload->fresh(), $exception);
+        }
     }
 
     public function destroy(
@@ -143,5 +150,15 @@ class KnowledgeUploadController extends Controller
             ->where('project_id', $project->id)
             ->where('public_id', $publicId)
             ->firstOrFail();
+    }
+
+    private function extractionFailure(KnowledgeUpload $upload, KnowledgeExtractionException $exception): JsonResponse
+    {
+        return response()->json([
+            'message' => 'تعذر استخراج نص صالح من الملف.',
+            'code' => 'KNOWLEDGE_EXTRACTION_FAILED',
+            'errors' => ['file' => [$exception->machineCode]],
+            'data' => (new KnowledgeUploadResource($upload->fresh()))->resolve(),
+        ], 422);
     }
 }

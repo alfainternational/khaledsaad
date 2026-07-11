@@ -53,6 +53,18 @@ class TextKnowledgeExtractorTest extends TestCase
         }
     }
 
+    #[Test]
+    public function it_rejects_extracted_text_beyond_the_shared_hosting_bound(): void
+    {
+        config()->set('services.knowledge.upload_max_text_chars', 20);
+        $path = $this->temporary(str_repeat('نص طويل ', 10));
+
+        $this->expectException(KnowledgeExtractionException::class);
+        $this->expectExceptionMessage('exceeds the indexing limit');
+
+        app(TextKnowledgeExtractor::class)->extract($path, 'text/plain', 'large.txt');
+    }
+
     private function temporary(string $content): string
     {
         $path = tempnam(sys_get_temp_dir(), 'knowledge-');

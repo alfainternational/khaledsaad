@@ -49,6 +49,12 @@ class TextKnowledgeExtractor
         if ($content === '') {
             throw new KnowledgeExtractionException('empty_text', 'No indexable text was found in the uploaded file.');
         }
+        if (mb_strlen($content) > (int) config('services.knowledge.upload_max_text_chars', 350000)) {
+            throw new KnowledgeExtractionException('expanded_text_too_large', 'The extracted text exceeds the indexing limit.');
+        }
+        if (count($chunks) > 100) {
+            throw new KnowledgeExtractionException('too_many_chunks', 'The extracted document has too many chunks.');
+        }
 
         return new ExtractedKnowledge(
             content: $content,
@@ -93,7 +99,7 @@ class TextKnowledgeExtractor
         }
         $flush(count($lines));
 
-        return [trim($text), array_slice($chunks, 0, 100)];
+        return [trim($text), $chunks];
     }
 
     /** @return array{string, list<array{heading: string|null, content: string, locator: array<string, mixed>}>} */

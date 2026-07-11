@@ -104,6 +104,29 @@ class KnowledgeUploadApiTest extends TestCase
             ->assertForbidden();
     }
 
+    #[Test]
+    public function binary_content_returns_a_stable_extraction_error_and_retains_the_failed_record(): void
+    {
+        Storage::fake('local');
+        [$owner, $workspace, $project] = $this->tenant('Binary');
+        $base = '/api/v1/workspaces/'.$workspace->public_id.'/projects/'.$project->public_id.'/knowledge/uploads';
+
+        $this->withToken($owner->createToken('owner')->plainTextToken)
+            ->post($base, [
+                'file' => UploadedFile::fake()->createWithContent('binary.txt', "valid\0binary"),
+            ], ['Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'KNOWLEDGE_EXTRACTION_FAILED')
+            ->assertJsonPath('errors.file.0', 'binary_content')
+            ->assertJsonPath('data.status', 'failed');
+
+        $this->assertDatabaseHas('knowledge_uploads', [
+            'project_id' => $project->id,
+            'status' => 'failed',
+            'error_code' => 'binary_content',
+        ]);
+    }
+
     /** @return array{User, Workspace, Project} */
     private function tenant(string $suffix): array
     {
