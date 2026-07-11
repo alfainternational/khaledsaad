@@ -3,6 +3,7 @@
 namespace Tests\Feature\App;
 
 use App\Domain\Account\Models\Account;
+use App\Domain\Approval\Models\Approval;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Client\Models\Client;
@@ -322,6 +323,21 @@ class ToolRunApiTest extends TestCase
             ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية')
             ->assertSee('فتح المصدر')
             ->assertSee(route('tools.show', $tool), false);
+
+        $approval = Approval::query()->where('item_type', 'tool_run')->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('approvals.update', $approval), [
+                'status' => 'approved',
+            ])
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('approvals', [
+            'id' => $approval->id,
+            'status' => 'approved',
+            'note' => $meetingBrief,
+        ]);
     }
 
     /**

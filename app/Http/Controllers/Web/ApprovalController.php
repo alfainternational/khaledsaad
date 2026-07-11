@@ -81,9 +81,11 @@ class ApprovalController extends Controller
         $this->authorize('review', $approval);
         abort_unless($approval->workspace_id === $workspace->id, 404);
 
+        $data = $request->validated();
+
         $approval->update([
             'status' => $request->validated('status'),
-            'note' => $request->validated('note'),
+            'note' => array_key_exists('note', $data) ? $data['note'] : $approval->note,
             'reviewer_id' => $request->user()->id,
         ]);
 
