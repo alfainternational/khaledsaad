@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Execution\Models\ExecutionPackage;
+use App\Domain\Execution\Models\ExecutionReport;
 use App\Domain\Execution\Models\ExecutionTask;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\ExecutionPackageResource;
@@ -34,6 +35,44 @@ class ExecutionPackageController extends Controller
         $package->update(['status' => $validated['status']]);
 
         return new ExecutionPackageResource($package->load(['tasks.assignee', 'assets', 'reports']));
+    }
+
+    public function storeReport(Request $request): ExecutionPackageResource
+    {
+        $package = $this->resolve((string) $request->route('packagePublicId'));
+        $this->authorize('update', $package->project);
+
+        $validated = $request->validate([
+            'phase' => ['required', 'string', 'in:'.implode(',', ExecutionReport::PHASES)],
+            'progress' => ['required', 'integer', 'min:0', 'max:100'],
+            'note' => ['nullable', 'string', 'max:2000'],
+            'metric_name' => ['nullable', 'string', 'max:120'],
+            'metric_value' => ['nullable', 'string', 'max:120'],
+            'notes' => ['sometimes', 'array'],
+            'metrics' => ['sometimes', 'array'],
+        ]);
+
+        $notes = $validated['notes'] ?? [];
+        if (filled($validated['note'] ?? null)) {
+            $notes['summary'] = $validated['note'];
+        }
+
+        $metrics = $validated['metrics'] ?? [];
+        if (filled($validated['metric_name'] ?? null) || filled($validated['metric_value'] ?? null)) {
+            $metrics[] = [
+                'name' => $validated['metric_name'] ?? '',
+                'value' => $validated['metric_value'] ?? '',
+            ];
+        }
+
+        $package->reports()->create([
+            'phase' => $validated['phase'],
+            'progress' => $validated['progress'],
+            'notes_json' => $notes,
+            'metrics_json' => $metrics,
+        ]);
+
+        return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
     }
 
     public function updateTaskStatus(Request $request): ExecutionPackageResource

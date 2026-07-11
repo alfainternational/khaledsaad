@@ -69,6 +69,6 @@ class ExecutionPackage extends Model
 
     public function reports(): HasMany
     {
-        return $this->hasMany(ExecutionReport::class)->latest();
+        return $this->hasMany(ExecutionReport::class)->latest('id');
     }
 }

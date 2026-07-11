@@ -506,6 +506,22 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.progress.percent', 50);
 
         $auth()
+            ->postJson($base.'/execution-packages/'.$package->public_id.'/reports', [
+                'phase' => 'execution',
+                'progress' => 85,
+                'note' => 'تمت مراجعة أثر التنفيذ من التطبيق.',
+                'metric_name' => 'الطلبات المؤهلة',
+                'metric_value' => '19 طلب',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.reports.0.phase', 'execution')
+            ->assertJsonPath('data.reports.0.phase_label', 'تنفيذ')
+            ->assertJsonPath('data.reports.0.progress', 85)
+            ->assertJsonPath('data.reports.0.notes.summary', 'تمت مراجعة أثر التنفيذ من التطبيق.')
+            ->assertJsonPath('data.reports.0.metrics.0.name', 'الطلبات المؤهلة')
+            ->assertJsonPath('data.reports.0.metrics.0.value', '19 طلب');
+
+        $auth()
             ->patchJson($base.'/execution-tasks/'.$firstTask->public_id.'/status', [
                 'status' => 'in_progress',
             ])
