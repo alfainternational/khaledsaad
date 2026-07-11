@@ -519,7 +519,14 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.reports.0.progress', 85)
             ->assertJsonPath('data.reports.0.notes.summary', 'تمت مراجعة أثر التنفيذ من التطبيق.')
             ->assertJsonPath('data.reports.0.metrics.0.name', 'الطلبات المؤهلة')
-            ->assertJsonPath('data.reports.0.metrics.0.value', '19 طلب');
+            ->assertJsonPath('data.reports.0.metrics.0.value', '19 طلب')
+            ->assertJsonPath('data.measurement_summary.reports_count', 2)
+            ->assertJsonPath('data.measurement_summary.latest_phase', 'execution')
+            ->assertJsonPath('data.measurement_summary.latest_phase_label', 'تنفيذ')
+            ->assertJsonPath('data.measurement_summary.latest_progress', 85)
+            ->assertJsonPath('data.measurement_summary.latest_metric.name', 'الطلبات المؤهلة')
+            ->assertJsonPath('data.measurement_summary.latest_metric.value', '19 طلب')
+            ->assertJsonPath('data.measurement_summary.latest_note', 'تمت مراجعة أثر التنفيذ من التطبيق.');
 
         $auth()
             ->patchJson($base.'/execution-tasks/'.$firstTask->public_id.'/status', [

@@ -26,6 +26,7 @@ class ExecutionPackageResource extends JsonResource
             'status' => $this->status,
             'status_label' => $this->statusLabel(),
             'progress' => $this->progress(),
+            'measurement_summary' => $this->whenLoaded('reports', fn () => $this->measurementSummary()),
             'available_actions' => $this->availableActions(),
             'deadline' => optional($this->deadline)->toDateString(),
             'tasks' => $this->whenLoaded('tasks', fn () => $this->tasks->map(fn ($task) => [
@@ -94,6 +95,24 @@ class ExecutionPackageResource extends JsonResource
             'total_tasks' => $total,
             'done_tasks' => $done,
             'percent' => $total > 0 ? (int) round(($done / $total) * 100) : 0,
+        ];
+    }
+
+    /**
+     * @return array{reports_count: int, latest_phase: ?string, latest_phase_label: ?string, latest_progress: ?int, latest_metric: ?array<string, mixed>, latest_note: ?string}
+     */
+    private function measurementSummary(): array
+    {
+        $latest = $this->reports->first();
+        $metric = $latest ? collect($latest->metrics_json ?? [])->first() : null;
+
+        return [
+            'reports_count' => $this->reports->count(),
+            'latest_phase' => $latest?->phase,
+            'latest_phase_label' => $latest ? $this->reportPhaseLabel((string) $latest->phase) : null,
+            'latest_progress' => $latest?->progress,
+            'latest_metric' => $metric ?: null,
+            'latest_note' => $latest->notes_json['summary'] ?? null,
         ];
     }
 
