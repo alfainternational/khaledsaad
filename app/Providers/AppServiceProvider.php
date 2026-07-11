@@ -2,12 +2,9 @@
 
 namespace App\Providers;
 
-use App\Contracts\AiGatewayInterface;
 use App\Application\Integration\CloudIntegrationService;
+use App\Contracts\AiGatewayInterface;
 use App\Contracts\CloudClientContract;
-use App\Domain\Integration\Services\CloudIntegrationGate;
-use App\Domain\Integration\Services\HttpCloudClient;
-use App\Domain\Integration\Services\NullCloudClient;
 use App\Contracts\WebSearchGateway;
 use App\Domain\AI\Kernel\Agents\AgentCatalog;
 use App\Domain\AI\Kernel\SkillRegistry;
@@ -15,31 +12,39 @@ use App\Domain\AI\Kernel\Skills\InsightSkill;
 use App\Domain\AI\Kernel\Skills\NextStepSkill;
 use App\Domain\AI\Kernel\Skills\ToolAnalysisSkill;
 use App\Domain\AI\Kernel\Skills\WebResearchSkill;
+use App\Domain\AI\Semantic\LexicalSemanticMatcher;
+use App\Domain\AI\Semantic\SemanticMatcher;
+use App\Domain\AI\Services\AiGatewayFactory;
 use App\Domain\AI\Services\AiMetrics;
-use App\Domain\AI\Services\NullAiGateway;
-use App\Domain\AI\Web\DuckDuckGoSearchGateway;
-use App\Domain\AI\Web\NullWebSearchGateway;
-use App\Http\View\Composers\AmbientAdvisorComposer;
-use App\Support\Settings\SettingsStore;
 use App\Domain\AI\Services\CachingAiGateway;
+use App\Domain\AI\Services\ChainAiGateway;
 use App\Domain\AI\Services\FallbackAiGateway;
 use App\Domain\AI\Services\GeminiGateway;
+use App\Domain\AI\Services\NullAiGateway;
 use App\Domain\AI\Services\NvidiaNimGateway;
+use App\Domain\AI\Services\PrivateWorkerAiGateway;
+use App\Domain\AI\Web\DuckDuckGoSearchGateway;
+use App\Domain\AI\Web\NullWebSearchGateway;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Client\Models\Client;
 use App\Domain\Entitlement\Services\EntitlementResolver;
 use App\Domain\FeatureFlag\Services\FeatureFlagService;
+use App\Domain\Integration\Services\CloudIntegrationGate;
+use App\Domain\Integration\Services\HttpCloudClient;
+use App\Domain\Integration\Services\NullCloudClient;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
 use App\Domain\Workspace\Models\WorkspaceInvitation;
 use App\Domain\Workspace\Models\WorkspaceMember;
+use App\Http\View\Composers\AmbientAdvisorComposer;
 use App\Policies\ApprovalPolicy;
 use App\Policies\ClientPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\WorkspaceInvitationPolicy;
 use App\Policies\WorkspaceMemberPolicy;
 use App\Policies\WorkspacePolicy;
+use App\Support\Settings\SettingsStore;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -67,7 +72,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $provider = config('services.ai.provider', 'gemini');
-            $factory = new \App\Domain\AI\Services\AiGatewayFactory;
+            $factory = new AiGatewayFactory;
 
             $gateway = match ($provider) {
                 // سلسلة مزوّدات مرتّبة (Groq→Cerebras→NVIDIA…) — الصمود والجودة.
@@ -84,6 +89,17 @@ class AppServiceProvider extends ServiceProvider
                 default => new GeminiGateway,
             };
 
+            if (
+                $provider !== 'private_worker'
+                && (bool) config('services.private_worker.enabled', false)
+                && (bool) config('services.private_worker.prefer_for_generation', true)
+            ) {
+                $gateway = new ChainAiGateway(
+                    $app->make(PrivateWorkerAiGateway::class),
+                    $gateway,
+                );
+            }
+
             // Phase هـ: cache identical prompts to cut paid AI spend.
             if ((bool) config('services.ai.cache', true)) {
                 $gateway = new CachingAiGateway(
@@ -98,8 +114,8 @@ class AppServiceProvider extends ServiceProvider
 
         // طبقة الفهم الدلالي المحلية: تُربط عبر عقد قابل للترقية لاحقاً لمحرّك تضمينات.
         $this->app->singleton(
-            \App\Domain\AI\Semantic\SemanticMatcher::class,
-            \App\Domain\AI\Semantic\LexicalSemanticMatcher::class,
+            SemanticMatcher::class,
+            LexicalSemanticMatcher::class,
         );
 
         $this->app->singleton(HttpCloudClient::class);

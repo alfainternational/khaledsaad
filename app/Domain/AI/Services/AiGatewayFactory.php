@@ -24,6 +24,7 @@ class AiGatewayFactory
         return match ($name) {
             'gemini' => new GeminiGateway,
             'nvidia' => new NvidiaNimGateway,
+            'private_worker' => app(PrivateWorkerAiGateway::class),
             default => null,
         };
     }

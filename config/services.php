@@ -149,6 +149,8 @@ return [
         'nonce_ttl_seconds' => (int) env('AI_PRIVATE_WORKER_NONCE_TTL_SECONDS', 600),
         'lease_seconds' => (int) env('AI_PRIVATE_WORKER_LEASE_SECONDS', 120),
         'max_result_bytes' => (int) env('AI_PRIVATE_WORKER_MAX_RESULT_BYTES', 1048576),
+        'gateway_wait_seconds' => (int) env('AI_PRIVATE_WORKER_GATEWAY_WAIT_SECONDS', 8),
+        'prefer_for_generation' => env('AI_PRIVATE_WORKER_PREFER_GENERATION', true),
     ],
 
     /*
