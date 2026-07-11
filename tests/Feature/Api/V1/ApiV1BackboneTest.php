@@ -513,6 +513,23 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.tasks.0.assignee.name', $owner->name)
             ->assertJsonPath('data.tasks.0.assignee.email', $owner->email)
             ->assertJsonPath('data.tasks.0.due_date', $newDueDate);
+
+        $outsider = User::factory()->create();
+
+        $auth()
+            ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
+                'assignee_public_id' => $outsider->public_id,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['assignee_public_id']);
+
+        $auth()
+            ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
+                'assignee_public_id' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.tasks.0.assigned_to', null)
+            ->assertJsonPath('data.tasks.0.assignee', null);
     }
 
     #[Test]
