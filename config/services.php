@@ -125,6 +125,12 @@ return [
         'enrich_tools' => env('AI_SEARCH_ENRICH_TOOLS', true),
     ],
 
+    'knowledge' => [
+        'structured_store' => env('AI_KNOWLEDGE_STRUCTURED_STORE', false),
+        'dual_write' => env('AI_KNOWLEDGE_DUAL_WRITE', false),
+        'project_sync' => env('AI_KNOWLEDGE_PROJECT_SYNC', false),
+    ],
+
     /*
     | تقييم مدخلات الأدوات: طبقة اختيارية لصقل الحكم والملاحظة الاستراتيجية عبر LLM (الأرقام تبقى من المحرك المنظم).
     */
