@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Application\Approval\SyncExecutionPackageApprovalStateAction;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Execution\Models\ExecutionPackage;
@@ -60,7 +61,10 @@ class ApprovalController extends Controller
     /**
      * طلب موافقة على عنصر داخل مشروع. يدعم item_public_id من الموبايل.
      */
-    public function store(RequestApprovalRequest $request): JsonResponse
+    public function store(
+        RequestApprovalRequest $request,
+        SyncExecutionPackageApprovalStateAction $syncExecutionPackageApprovalState,
+    ): JsonResponse
     {
         /** @var \App\Domain\Workspace\Models\Workspace $workspace */
         $workspace = app('currentWorkspace');
@@ -87,12 +91,17 @@ class ApprovalController extends Controller
             'note' => $data['note'] ?? null,
         ]);
 
+        $syncExecutionPackageApprovalState->markRequested($approval);
+
         return (new ApprovalResource($approval->load(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template', 'executionPackage'])))
             ->response()
             ->setStatusCode(201);
     }
 
-    public function update(ReviewApprovalRequest $request): ApprovalResource
+    public function update(
+        ReviewApprovalRequest $request,
+        SyncExecutionPackageApprovalStateAction $syncExecutionPackageApprovalState,
+    ): ApprovalResource
     {
         /** @var \App\Domain\Workspace\Models\Workspace $workspace */
         $workspace = app('currentWorkspace');
@@ -110,6 +119,8 @@ class ApprovalController extends Controller
             'note' => array_key_exists('note', $data) ? $data['note'] : $approval->note,
             'reviewer_id' => $request->user()->id,
         ]);
+
+        $syncExecutionPackageApprovalState->applyDecision($approval);
 
         return new ApprovalResource($approval->load(['project.client', 'reviewer', 'toolRun.tool', 'aiGeneration.template', 'executionPackage']));
     }

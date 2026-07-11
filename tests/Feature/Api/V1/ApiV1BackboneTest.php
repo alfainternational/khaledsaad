@@ -479,7 +479,7 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.item.title', 'تقييم الوكالة يحتاج قياساً أوضح')
             ->assertJsonPath('data.item.tool_code', 'agency-audit');
 
-        $auth()
+        $packageApproval = $auth()
             ->postJson($base.'/projects/'.$project->public_id.'/approvals', [
                 'item_type' => 'execution_package',
                 'item_public_id' => $package->public_id,
@@ -490,7 +490,20 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.item.kind_label', 'حزمة تنفيذ')
             ->assertJsonPath('data.item.public_id', $package->public_id)
             ->assertJsonPath('data.item.title', $package->title)
-            ->assertJsonPath('data.item.status', 'proposed');
+            ->assertJsonPath('data.item.status', 'in_review');
+
+        $this->assertSame('in_review', $package->fresh()->status);
+
+        $auth()
+            ->patchJson($base.'/approvals/'.$packageApproval->json('data.id'), [
+                'status' => 'approved',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved')
+            ->assertJsonPath('data.item.kind', 'execution_package')
+            ->assertJsonPath('data.item.status', 'approved');
+
+        $this->assertSame('approved', $package->fresh()->status);
 
         $auth()
             ->postJson($base.'/projects/'.$project->public_id.'/approvals', $payload)
@@ -508,7 +521,10 @@ class ApiV1BackboneTest extends TestCase
                 ->count()
         );
 
-        $approval = Approval::query()->firstOrFail();
+        $approval = Approval::query()
+            ->where('item_type', 'tool_run')
+            ->where('item_id', $run->id)
+            ->firstOrFail();
 
         $auth()
             ->patchJson($base.'/approvals/'.$approval->id, [

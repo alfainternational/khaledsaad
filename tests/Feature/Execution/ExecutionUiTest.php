@@ -4,6 +4,7 @@ namespace Tests\Feature\Execution;
 
 use App\Application\Execution\BuildExecutionPackageAction;
 use App\Domain\Account\Models\Account;
+use App\Domain\Approval\Models\Approval;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionTask;
 use App\Domain\Execution\Models\Recommendation;
@@ -220,6 +221,7 @@ class ExecutionUiTest extends TestCase
             'item_id' => $package->id,
             'status' => 'pending',
         ]);
+        $this->assertSame('in_review', $package->fresh()->status);
 
         $this->actingAs($owner)
             ->withSession(['current_workspace_id' => $workspace->id])
@@ -227,6 +229,26 @@ class ExecutionUiTest extends TestCase
             ->assertOk()
             ->assertSee('حزمة تنفيذ', false)
             ->assertSee($package->title, false);
+
+        $approval = Approval::query()
+            ->where('item_type', 'execution_package')
+            ->where('item_id', $package->id)
+            ->firstOrFail();
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('approvals.update', $approval), [
+                'status' => 'approved',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('approved', $package->fresh()->status);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('بدء التنفيذ', false);
 
         foreach ([
             'approved' => 'بدء التنفيذ',

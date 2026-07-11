@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Application\Approval\SyncExecutionPackageApprovalStateAction;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Execution\Models\ExecutionPackage;
@@ -50,7 +51,12 @@ class ApprovalController extends Controller
         ]);
     }
 
-    public function store(RequestApprovalRequest $request, Project $project, FlashMessageCatalog $flash): RedirectResponse
+    public function store(
+        RequestApprovalRequest $request,
+        Project $project,
+        FlashMessageCatalog $flash,
+        SyncExecutionPackageApprovalStateAction $syncExecutionPackageApprovalState,
+    ): RedirectResponse
     {
         $workspace = $this->currentWorkspace($request);
         $this->authorize('requestApprovals', $workspace);
@@ -63,7 +69,7 @@ class ApprovalController extends Controller
 
         abort_unless($this->itemBelongsToProject($workspace->id, $project->id, $itemType, $itemId), 422);
 
-        Approval::query()->updateOrCreate([
+        $approval = Approval::query()->updateOrCreate([
             'workspace_id' => $workspace->id,
             'project_id' => $project->id,
             'item_type' => $itemType,
@@ -74,10 +80,17 @@ class ApprovalController extends Controller
             'note' => $data['note'] ?? null,
         ]);
 
+        $syncExecutionPackageApprovalState->markRequested($approval);
+
         return back()->with('status', $flash->approvalSubmitted());
     }
 
-    public function update(ReviewApprovalRequest $request, Approval $approval, FlashMessageCatalog $flash): RedirectResponse
+    public function update(
+        ReviewApprovalRequest $request,
+        Approval $approval,
+        FlashMessageCatalog $flash,
+        SyncExecutionPackageApprovalStateAction $syncExecutionPackageApprovalState,
+    ): RedirectResponse
     {
         $workspace = $this->currentWorkspace($request);
         $this->authorize('review', $approval);
@@ -90,6 +103,8 @@ class ApprovalController extends Controller
             'note' => array_key_exists('note', $data) ? $data['note'] : $approval->note,
             'reviewer_id' => $request->user()->id,
         ]);
+
+        $syncExecutionPackageApprovalState->applyDecision($approval);
 
         return back()->with('status', $flash->approvalUpdated());
     }
