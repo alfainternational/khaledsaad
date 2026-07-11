@@ -39,9 +39,12 @@ class ExecutionPackageResource extends JsonResource
                 'order_index' => $task->order_index,
             ])->values()),
             'assets' => $this->whenLoaded('assets', fn () => $this->assets->map(fn ($asset) => [
+                'public_id' => $asset->public_id,
                 'type' => $asset->type,
+                'type_label' => $this->assetTypeLabel((string) $asset->type),
                 'title' => $asset->title,
                 'body' => $asset->body,
+                'meta' => $asset->meta_json ?? [],
             ])->values()),
             'created_at' => optional($this->created_at)->toIso8601String(),
         ];
@@ -100,6 +103,19 @@ class ExecutionPackageResource extends JsonResource
             'in_progress' => 'قيد التنفيذ',
             'done' => 'منجزة',
             default => $status,
+        };
+    }
+
+    private function assetTypeLabel(string $type): string
+    {
+        return match ($type) {
+            'copy' => 'نص تسويقي',
+            'design_brief' => 'موجز تصميم',
+            'dev_brief' => 'موجز تطوير',
+            'ad' => 'إعلان',
+            'measurement' => 'قياس',
+            'other' => 'أصل آخر',
+            default => $type,
         };
     }
 }

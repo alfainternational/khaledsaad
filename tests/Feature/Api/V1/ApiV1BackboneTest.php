@@ -454,6 +454,10 @@ class ApiV1BackboneTest extends TestCase
             'assigned_to' => $owner->id,
             'due_date' => $dueDate,
         ]);
+        $firstAsset = $package->assets()->firstOrFail();
+        $firstAsset->update([
+            'meta_json' => ['channel' => 'landing_page'],
+        ]);
 
         $auth()
             ->getJson($base.'/execution-packages/'.$package->public_id)
@@ -468,7 +472,11 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.tasks.0.status', 'done')
             ->assertJsonPath('data.tasks.0.status_label', 'منجزة')
             ->assertJsonPath('data.tasks.0.assigned_to', $owner->id)
-            ->assertJsonPath('data.tasks.0.due_date', $dueDate);
+            ->assertJsonPath('data.tasks.0.due_date', $dueDate)
+            ->assertJsonPath('data.assets.0.public_id', $firstAsset->public_id)
+            ->assertJsonPath('data.assets.0.type', 'dev_brief')
+            ->assertJsonPath('data.assets.0.type_label', 'موجز تطوير')
+            ->assertJsonPath('data.assets.0.meta.channel', 'landing_page');
 
         $auth()
             ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [
