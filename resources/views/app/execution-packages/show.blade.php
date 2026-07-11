@@ -78,6 +78,19 @@
                     @if ($task->description)
                         <small>{{ $task->description }}</small>
                     @endif
+                    @if ($task->assignee || $task->due_date)
+                        <small>
+                            @if ($task->assignee)
+                                المسؤول: {{ $task->assignee->name }}
+                            @endif
+                            @if ($task->assignee && $task->due_date)
+                                ·
+                            @endif
+                            @if ($task->due_date)
+                                الاستحقاق: {{ $task->due_date->format('Y-m-d') }}
+                            @endif
+                        </small>
+                    @endif
                 </span>
                 <span class="exec-task-state">{{ $taskStatusLabels[$task->status] ?? $task->status }}</span>
                 <span class="exec-task-actions">

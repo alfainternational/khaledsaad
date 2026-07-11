@@ -25,7 +25,7 @@ class ExecutionPackageController extends Controller
         $workspace = $this->currentWorkspace($request);
         abort_unless($executionPackage->workspace_id === $workspace->id, 404);
 
-        $executionPackage->load(['tasks', 'assets', 'reports', 'recommendation', 'project']);
+        $executionPackage->load(['tasks.assignee', 'assets', 'reports', 'recommendation', 'project']);
         $this->authorize('view', $executionPackage->project);
 
         return view('app.execution-packages.show', [

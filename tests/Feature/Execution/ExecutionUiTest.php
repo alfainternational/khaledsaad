@@ -211,6 +211,25 @@ class ExecutionUiTest extends TestCase
     }
 
     #[Test]
+    public function package_page_shows_task_assignee_and_due_date(): void
+    {
+        [$owner, $workspace, , $recommendation] = $this->scenario();
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $task = $package->tasks()->orderBy('order_index')->firstOrFail();
+        $task->update([
+            'assigned_to' => $owner->id,
+            'due_date' => now()->addDays(5)->toDateString(),
+        ]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertSee('المسؤول: '.$owner->name, false)
+            ->assertSee('الاستحقاق: '.$task->fresh()->due_date->format('Y-m-d'), false);
+    }
+
+    #[Test]
     public function owner_can_advance_execution_package_status_from_package_page(): void
     {
         [$owner, $workspace, $project, $recommendation] = $this->scenario();
