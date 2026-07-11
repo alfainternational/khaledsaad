@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Application\Execution\AdvanceExecutionPackageStatusAction;
+use App\Application\Execution\UpdateExecutionTaskStatusAction;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionReport;
 use App\Domain\Execution\Models\ExecutionTask;
@@ -79,7 +80,10 @@ class ExecutionPackageController extends Controller
         return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
     }
 
-    public function updateTaskStatus(Request $request): ExecutionPackageResource
+    public function updateTaskStatus(
+        Request $request,
+        UpdateExecutionTaskStatusAction $updateExecutionTaskStatus,
+    ): ExecutionPackageResource
     {
         $task = $this->resolveTask((string) $request->route('taskPublicId'));
         $package = $task->executionPackage;
@@ -89,12 +93,15 @@ class ExecutionPackageController extends Controller
             'status' => ['required', 'string', 'in:'.implode(',', ExecutionTask::STATUSES)],
         ]);
 
-        $task->update(['status' => $validated['status']]);
+        $updateExecutionTaskStatus->handle($task, $validated['status']);
 
         return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
     }
 
-    public function updateTask(Request $request): ExecutionPackageResource
+    public function updateTask(
+        Request $request,
+        UpdateExecutionTaskStatusAction $updateExecutionTaskStatus,
+    ): ExecutionPackageResource
     {
         $task = $this->resolveTask((string) $request->route('taskPublicId'));
         $package = $task->executionPackage;
@@ -118,7 +125,14 @@ class ExecutionPackageController extends Controller
             $this->ensureAssigneeBelongsToWorkspace((int) $validated['assigned_to']);
         }
 
-        $task->update($validated);
+        if (array_key_exists('status', $validated)) {
+            $updateExecutionTaskStatus->handle($task, (string) $validated['status']);
+            unset($validated['status']);
+        }
+
+        if ($validated !== []) {
+            $task->update($validated);
+        }
 
         return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
     }

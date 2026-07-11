@@ -23,6 +23,7 @@
         'validation' => 'تحقق',
     ];
     $nextPackageAction = $packageActions[$package->status] ?? null;
+    $canUpdateTasks = in_array($package->status, ['in_progress', 'executed', 'measuring'], true);
 @endphp
 
 <section class="exec-pkg-head {{ ($brand['enabled'] ?? false) ? 'exec-pkg-head--branded' : '' }}" @if($brand['enabled'] ?? false) style="--brand: {{ $brand['color'] }}" @endif>
@@ -72,7 +73,9 @@
                 </span>
                 <span class="exec-task-state">{{ $taskStatusLabels[$task->status] ?? $task->status }}</span>
                 <span class="exec-task-actions">
-                    @if ($task->status === 'pending')
+                    @if (! $canUpdateTasks)
+                        <small>بانتظار بدء التنفيذ</small>
+                    @elseif ($task->status === 'pending')
                         <form method="POST" action="{{ route('execution-packages.tasks.status', [$package, $task]) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="in_progress">

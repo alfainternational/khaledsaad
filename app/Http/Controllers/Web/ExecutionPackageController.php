@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Application\Execution\AdvanceExecutionPackageStatusAction;
+use App\Application\Execution\UpdateExecutionTaskStatusAction;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionReport;
 use App\Domain\Execution\Models\ExecutionTask;
@@ -58,6 +59,7 @@ class ExecutionPackageController extends Controller
         ExecutionPackage $executionPackage,
         ExecutionTask $executionTask,
         FlashMessageCatalog $flash,
+        UpdateExecutionTaskStatusAction $updateExecutionTaskStatus,
     ): RedirectResponse {
         $workspace = $this->currentWorkspace($request);
         abort_unless($executionPackage->workspace_id === $workspace->id, 404);
@@ -68,7 +70,7 @@ class ExecutionPackageController extends Controller
             'status' => ['required', 'string', 'in:'.implode(',', ExecutionTask::STATUSES)],
         ]);
 
-        $executionTask->update(['status' => $validated['status']]);
+        $updateExecutionTaskStatus->handle($executionTask, $validated['status']);
 
         return redirect()
             ->route('execution-packages.show', $executionPackage)

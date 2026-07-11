@@ -634,6 +634,26 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.reports.0.metrics.0.value', '34 خلال أسبوع');
 
         $auth()
+            ->patchJson($base.'/execution-tasks/'.$firstTask->public_id.'/status', [
+                'status' => 'in_progress',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['status']);
+
+        $this->assertSame('done', $firstTask->fresh()->status);
+
+        $prepDueDate = now()->addDays(9)->toDateString();
+
+        $auth()
+            ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
+                'assignee_public_id' => $owner->public_id,
+                'due_date' => $prepDueDate,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.tasks.0.assignee.public_id', $owner->public_id)
+            ->assertJsonPath('data.tasks.0.due_date', $prepDueDate);
+
+        $auth()
             ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [
                 'status' => 'approved',
             ])
