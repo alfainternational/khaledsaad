@@ -277,6 +277,62 @@ class ApiV1BackboneTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['data']);
 
+        $recommendation = Recommendation::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'area' => 'conversion',
+            'title' => 'أضف إثبات ثقة قبل نموذج التواصل',
+            'priority' => 10,
+            'severity' => 'high',
+            'evidence' => 'الدليل ناقص.',
+            'rationale' => 'أضف شهادة عميل واضحة.',
+            'estimated_impact' => 'high',
+            'confidence' => 0.9,
+            'status' => 'proposed',
+            'created_by' => $owner->id,
+        ]);
+        $package = app(BuildExecutionPackageAction::class)->handle($recommendation, $owner);
+        $package->tasks()->firstOrFail()->update(['status' => 'done']);
+        $package->reports()->create([
+            'phase' => 'validation',
+            'progress' => 70,
+            'metrics_json' => [[
+                'name' => 'العملاء المحتملون',
+                'value' => '34 خلال أسبوع',
+            ]],
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson($pBase.'/recommendations')
+            ->assertOk()
+            ->assertJsonPath('data.0.execution_packages.0.public_id', $package->public_id)
+            ->assertJsonPath('data.0.execution_packages.0.progress.total_tasks', 4)
+            ->assertJsonPath('data.0.execution_packages.0.progress.done_tasks', 1)
+            ->assertJsonPath('data.0.execution_packages.0.measurement_summary.latest_phase', 'validation')
+            ->assertJsonPath('data.0.execution_packages.0.measurement_summary.latest_metric.name', 'العملاء المحتملون');
+
+        $newRecommendation = Recommendation::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'area' => 'trust',
+            'title' => 'أضف ضماناً واضحاً',
+            'priority' => 20,
+            'severity' => 'medium',
+            'evidence' => 'لا يوجد ضمان ظاهر.',
+            'rationale' => 'أضف ضمان استرداد واضح.',
+            'estimated_impact' => 'medium',
+            'confidence' => 0.8,
+            'status' => 'proposed',
+            'created_by' => $owner->id,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson($pBase.'/recommendations/'.$newRecommendation->public_id.'/package')
+            ->assertCreated()
+            ->assertJsonPath('data.progress.total_tasks', 4)
+            ->assertJsonPath('data.measurement_summary.reports_count', 0)
+            ->assertJsonPath('data.reports', []);
+
         // دليل المشروع JSON.
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson($pBase.'/dossier')

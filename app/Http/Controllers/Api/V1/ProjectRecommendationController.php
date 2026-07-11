@@ -23,7 +23,7 @@ class ProjectRecommendationController extends Controller
 
         $rows = Recommendation::query()
             ->where('project_id', $project->id)
-            ->with('executionPackages')
+            ->with(['executionPackages.tasks.assignee', 'executionPackages.assets', 'executionPackages.reports'])
             ->orderBy('priority')
             ->get();
 
@@ -48,7 +48,7 @@ class ProjectRecommendationController extends Controller
         $package = $recommendation->executionPackages()->first()
             ?? $action->handle($recommendation, $request->user());
 
-        return (new ExecutionPackageResource($package->load(['tasks', 'assets'])))
+        return (new ExecutionPackageResource($package->load(['tasks.assignee', 'assets', 'reports'])))
             ->response()
             ->setStatusCode(201);
     }
