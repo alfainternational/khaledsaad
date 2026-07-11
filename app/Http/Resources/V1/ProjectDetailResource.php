@@ -92,6 +92,13 @@ class ProjectDetailResource extends JsonResource
                 'title' => $package->title,
                 'status' => $package->status,
                 'status_label' => $this->packageStatusLabel((string) $package->status),
+                'owner_user_id' => $package->owner_user_id,
+                'owner' => $package->relationLoaded('owner') && $package->owner ? [
+                    'public_id' => $package->owner->public_id,
+                    'name' => $package->owner->name,
+                    'email' => $package->owner->email,
+                ] : null,
+                'deadline' => optional($package->deadline)->toDateString(),
                 'total_tasks' => $totalTasks,
                 'done_tasks' => $doneTasks,
                 'task_progress_percent' => $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : 0,

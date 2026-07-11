@@ -150,7 +150,8 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.execution_summary.latest_measurement.progress', 70)
             ->assertJsonPath('data.execution_summary.latest_measurement.metric.name', 'العملاء المحتملون')
             ->assertJsonPath('data.recent_execution_packages.0.public_id', $package->public_id)
-            ->assertJsonPath('data.recent_execution_packages.0.status_label', 'تحت القياس');
+            ->assertJsonPath('data.recent_execution_packages.0.status_label', 'تحت القياس')
+            ->assertJsonPath('data.recent_execution_packages.0.owner.public_id', $owner->public_id);
 
         // تعديل
         $this->withHeader('Authorization', 'Bearer '.$token)
@@ -308,6 +309,7 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.0.execution_packages.0.public_id', $package->public_id)
             ->assertJsonPath('data.0.execution_packages.0.progress.total_tasks', 4)
             ->assertJsonPath('data.0.execution_packages.0.progress.done_tasks', 1)
+            ->assertJsonPath('data.0.execution_packages.0.owner.public_id', $owner->public_id)
             ->assertJsonPath('data.0.execution_packages.0.measurement_summary.latest_phase', 'validation')
             ->assertJsonPath('data.0.execution_packages.0.measurement_summary.latest_metric.name', 'العملاء المحتملون');
 
@@ -329,6 +331,7 @@ class ApiV1BackboneTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson($pBase.'/recommendations/'.$newRecommendation->public_id.'/package')
             ->assertCreated()
+            ->assertJsonPath('data.owner.public_id', $owner->public_id)
             ->assertJsonPath('data.progress.total_tasks', 4)
             ->assertJsonPath('data.measurement_summary.reports_count', 0)
             ->assertJsonPath('data.reports', []);

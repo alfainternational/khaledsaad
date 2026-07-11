@@ -62,7 +62,7 @@ class ProjectController extends Controller
                 ->load([
                     'client',
                     'executionPackages' => fn ($query) => $query
-                        ->with(['tasks', 'reports'])
+                        ->with(['owner', 'tasks', 'reports'])
                         ->latest()
                         ->limit(3),
                 ])
