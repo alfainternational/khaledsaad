@@ -89,6 +89,13 @@ if ((bool) config('services.knowledge.upload_processing', false)) {
         ->name('knowledge-upload-processing');
 }
 
+if ((bool) config('services.private_worker.enabled', false)) {
+    Schedule::command('private-worker:maintain')
+        ->everyFiveMinutes()
+        ->withoutOverlapping()
+        ->name('private-worker-maintenance');
+}
+
 /*
  | Compile-Ahead: يعيد تجميع artifact الذكاء لكل المساحات (ملء أوّلي + شبكة أمان).
  | العرض اليومي يقرأ الناتج الجاهز فقط — صفر حساب وقت الطلب.

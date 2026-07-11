@@ -109,6 +109,10 @@ class KnowledgeHealthCommandTest extends TestCase
             'unlinked_uploads' => 0,
             'candidate_claims' => 1,
             'failed_jobs' => 1,
+            'queued_worker_jobs' => 1,
+            'leased_worker_jobs' => 0,
+            'active_workers' => 0,
+            'online_workers' => 0,
             'pending_reconciliations' => 1,
             'stale_documents' => 1,
         ], json_decode(trim(Artisan::output()), true, 512, JSON_THROW_ON_ERROR));
@@ -128,6 +132,10 @@ class KnowledgeHealthCommandTest extends TestCase
             ->expectsOutput('unlinked_uploads: 0')
             ->expectsOutput('candidate_claims: 0')
             ->expectsOutput('failed_jobs: 0')
+            ->expectsOutput('queued_worker_jobs: 0')
+            ->expectsOutput('leased_worker_jobs: 0')
+            ->expectsOutput('active_workers: 0')
+            ->expectsOutput('online_workers: 0')
             ->expectsOutput('pending_reconciliations: 0')
             ->expectsOutput('stale_documents: 0')
             ->assertSuccessful();

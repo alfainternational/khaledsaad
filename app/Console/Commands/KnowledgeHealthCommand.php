@@ -27,6 +27,13 @@ class KnowledgeHealthCommand extends Command
                 ->count(),
             'candidate_claims' => DB::table('knowledge_claims')->where('review_status', 'candidate')->count(),
             'failed_jobs' => DB::table('intelligence_jobs')->where('status', 'failed')->count(),
+            'queued_worker_jobs' => DB::table('intelligence_jobs')->where('status', 'queued')->count(),
+            'leased_worker_jobs' => DB::table('intelligence_jobs')->where('status', 'leased')->count(),
+            'active_workers' => DB::table('intelligence_workers')->where('status', 'active')->count(),
+            'online_workers' => DB::table('intelligence_workers')
+                ->where('status', 'active')
+                ->where('last_seen_at', '>=', now()->subMinutes(5))
+                ->count(),
             'pending_reconciliations' => DB::table('knowledge_sources')
                 ->whereNotNull('meta_json')
                 ->where('meta_json', 'like', '%"legacy_pending_generation"%')
