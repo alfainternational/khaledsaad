@@ -163,6 +163,30 @@ class StructuredKnowledgeRepository
             ->get();
     }
 
+    public function deactivateDocuments(KnowledgeScope $scope, string $kind, string $canonicalUri): int
+    {
+        $kind = trim($kind);
+        $canonicalUri = trim($canonicalUri);
+        $this->validateIdentity($kind, $canonicalUri);
+
+        return DB::transaction(function () use ($scope, $kind, $canonicalUri): int {
+            $source = KnowledgeSource::query()
+                ->inScope($scope)
+                ->where('kind', $kind)
+                ->where('canonical_uri', $canonicalUri)
+                ->lockForUpdate()
+                ->first();
+
+            if ($source === null) {
+                return 0;
+            }
+
+            $this->assertSourceIntegrity($source, $scope, $kind, $canonicalUri);
+
+            return $source->documents()->where('status', 'active')->update(['status' => 'superseded']);
+        });
+    }
+
     private function normalizeContent(string $content): string
     {
         return trim(str_replace(["\r\n", "\r"], "\n", $content));

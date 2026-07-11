@@ -279,6 +279,29 @@ class StructuredKnowledgeRepositoryTest extends TestCase
         }
     }
 
+    #[Test]
+    public function deactivation_supersedes_only_active_documents_for_the_exact_scope_and_identity(): void
+    {
+        [, , , $scopeA] = $this->createTenant('Deactivate A');
+        [, , , $scopeB] = $this->createTenant('Deactivate B');
+        $documentA = $this->store($scopeA, 'remove', [['content' => 'remove']]);
+        $documentB = $this->store($scopeB, 'keep tenant', [['content' => 'keep tenant']]);
+        $otherUri = $this->repository->storeDocument(
+            $scopeA,
+            'manual',
+            'knowledge://other',
+            'Other',
+            'keep uri',
+            [['content' => 'keep uri']],
+        );
+
+        $this->assertSame(1, $this->repository->deactivateDocuments($scopeA, 'manual', 'knowledge://guide'));
+        $this->assertSame(0, $this->repository->deactivateDocuments($scopeA, 'manual', 'knowledge://guide'));
+        $this->assertSame('superseded', $documentA->fresh()->status);
+        $this->assertSame('active', $documentB->fresh()->status);
+        $this->assertSame('active', $otherUri->fresh()->status);
+    }
+
     private function store(KnowledgeScope $scope, string $content, array $chunks): KnowledgeDocument
     {
         return $this->repository->storeDocument($scope, 'manual', 'knowledge://guide', 'Guide', $content, $chunks, 75);
