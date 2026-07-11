@@ -503,7 +503,7 @@ class ApiV1BackboneTest extends TestCase
 
         $auth()
             ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
-                'assigned_to' => $owner->id,
+                'assignee_public_id' => $owner->public_id,
                 'due_date' => $newDueDate,
             ])
             ->assertOk()
