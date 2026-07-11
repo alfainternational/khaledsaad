@@ -129,6 +129,7 @@ return [
         'structured_store' => env('AI_KNOWLEDGE_STRUCTURED_STORE', false),
         'dual_write' => env('AI_KNOWLEDGE_DUAL_WRITE', false),
         'project_sync' => env('AI_KNOWLEDGE_PROJECT_SYNC', false),
+        'lock_wait_milliseconds' => env('AI_KNOWLEDGE_LOCK_WAIT_MILLISECONDS', 500),
     ],
 
     /*
