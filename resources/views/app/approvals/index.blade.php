@@ -49,6 +49,9 @@
                     'ai_generation' => 'مخرج استوديو',
                     default => $approval->item_type,
                 };
+                $sourceUrl = $toolRun?->tool
+                    ? route('tools.show', $toolRun->tool)
+                    : ($generation ? route('studio.generations.show', $generation) : null);
             @endphp
             <div class="app-list-item app-approval-item">
                 <div>
@@ -65,6 +68,9 @@
                 </div>
                 <div class="app-inline-actions">
                     <span class="app-badge">{{ $approval->status }}</span>
+                    @if ($sourceUrl)
+                        <a href="{{ $sourceUrl }}" class="btn btn-secondary btn-sm">فتح المصدر</a>
+                    @endif
                     <form method="POST" action="{{ route('approvals.update', $approval) }}" class="app-inline-form">
                         @csrf
                         @method('PATCH')

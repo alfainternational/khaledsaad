@@ -319,7 +319,9 @@ class ToolRunApiTest extends TestCase
             ->assertOk()
             ->assertSee('تقييم الوكالة — API Project')
             ->assertSee('تشغيل أداة')
-            ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية');
+            ->assertSee('نحتاج فترة قياس قصيرة بمؤشرات مكتوبة قبل رفع الميزانية')
+            ->assertSee('فتح المصدر')
+            ->assertSee(route('tools.show', $tool), false);
     }
 
     /**
