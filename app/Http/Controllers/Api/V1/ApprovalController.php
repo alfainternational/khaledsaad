@@ -75,12 +75,13 @@ class ApprovalController extends Controller
             throw new ApiException('العنصر لا يتبع هذا المشروع.', 'ITEM_MISMATCH', 422);
         }
 
-        $approval = Approval::query()->create([
+        $approval = Approval::query()->updateOrCreate([
             'workspace_id' => $workspace->id,
             'project_id' => $project->id,
             'item_type' => $itemType,
             'item_id' => $itemId,
             'status' => 'pending',
+        ], [
             'reviewer_id' => $request->user()->id,
             'note' => $data['note'] ?? null,
         ]);
@@ -101,9 +102,11 @@ class ApprovalController extends Controller
 
         $this->authorize('review', $approval);
 
+        $data = $request->validated();
+
         $approval->update([
             'status' => $request->validated('status'),
-            'note' => $request->validated('note'),
+            'note' => array_key_exists('note', $data) ? $data['note'] : $approval->note,
             'reviewer_id' => $request->user()->id,
         ]);
 

@@ -3,9 +3,11 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Domain\Account\Models\Account;
+use App\Domain\Approval\Models\Approval;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Project\Models\Project;
+use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Domain\Workspace\Models\WorkspaceMember;
 use App\Models\User;
@@ -318,6 +320,76 @@ class ApiV1BackboneTest extends TestCase
             'name' => 'وكالتي',
             'color' => '#112233',
         ])->assertOk()->assertJsonPath('data.branding.name', 'وكالتي');
+    }
+
+    #[Test]
+    public function api_approval_requests_are_idempotent_for_pending_items_and_keep_notes_on_review(): void
+    {
+        [$owner, $workspace] = $this->makeWorkspace();
+        $token = $owner->createToken('test')->plainTextToken;
+        $base = '/api/v1/workspaces/'.$workspace->public_id;
+        $auth = fn () => $this->withHeader('Authorization', 'Bearer '.$token);
+
+        $project = Project::query()->create([
+            'workspace_id' => $workspace->id,
+            'name' => 'مشروع الاعتماد',
+            'stage' => 5,
+            'status' => 'active',
+            'sector' => 'services',
+        ]);
+
+        $run = ToolRun::query()->create([
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'tool_code' => 'agency-audit',
+            'mode' => 'guided',
+            'inputs_json' => ['agency_scope' => 'إعلانات Meta'],
+            'output_json' => ['meeting_brief' => 'ناقشوا قياس تكلفة العميل.'],
+            'created_by' => $owner->id,
+        ]);
+
+        $payload = [
+            'item_type' => 'tool_run',
+            'item_public_id' => $run->public_id,
+            'note' => 'ملاحظة مهمة قبل الاعتماد.',
+        ];
+
+        $created = $auth()
+            ->postJson($base.'/projects/'.$project->public_id.'/approvals', $payload)
+            ->assertStatus(201)
+            ->assertJsonPath('data.note', 'ملاحظة مهمة قبل الاعتماد.');
+
+        $auth()
+            ->postJson($base.'/projects/'.$project->public_id.'/approvals', $payload)
+            ->assertStatus(201)
+            ->assertJsonPath('data.id', $created->json('data.id'));
+
+        $this->assertSame(
+            1,
+            Approval::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('project_id', $project->id)
+                ->where('item_type', 'tool_run')
+                ->where('item_id', $run->id)
+                ->where('status', 'pending')
+                ->count()
+        );
+
+        $approval = Approval::query()->firstOrFail();
+
+        $auth()
+            ->patchJson($base.'/approvals/'.$approval->id, [
+                'status' => 'approved',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved')
+            ->assertJsonPath('data.note', 'ملاحظة مهمة قبل الاعتماد.');
+
+        $this->assertDatabaseHas('approvals', [
+            'id' => $approval->id,
+            'status' => 'approved',
+            'note' => 'ملاحظة مهمة قبل الاعتماد.',
+        ]);
     }
 
     #[Test]
