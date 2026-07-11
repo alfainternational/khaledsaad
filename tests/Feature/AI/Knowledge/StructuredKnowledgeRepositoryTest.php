@@ -74,6 +74,97 @@ class StructuredKnowledgeRepositoryTest extends TestCase
     }
 
     #[Test]
+    public function changed_content_supersedes_the_previous_version_and_excludes_its_chunks_from_search(): void
+    {
+        [, , , $scope] = $this->createTenant('Superseded');
+
+        $versionOne = $this->store($scope, 'الإصدار الأول', [['content' => 'legacyversionuniqueterm']]);
+        $versionTwo = $this->store($scope, 'الإصدار الثاني', [['content' => 'currentversionuniqueterm']]);
+
+        $this->assertSame('superseded', $versionOne->fresh()->status);
+        $this->assertSame('active', $versionTwo->fresh()->status);
+        $this->assertCount(0, $this->repository->searchText($scope, 'legacyversionuniqueterm'));
+        $this->assertSame(['currentversionuniqueterm'], $this->repository->searchText($scope, 'currentversionuniqueterm')->pluck('content')->all());
+    }
+
+    #[Test]
+    public function reverting_content_reactivates_the_original_version_and_supersedes_the_current_one(): void
+    {
+        [, , , $scope] = $this->createTenant('Reversion');
+        $versionOneChunks = [['content' => 'originalversionuniqueterm', 'heading' => 'Original', 'locator' => ['page' => 1]]];
+
+        $versionOne = $this->store($scope, 'الإصدار الأول', $versionOneChunks);
+        $versionTwo = $this->store($scope, 'الإصدار الثاني', [['content' => 'secondversionuniqueterm']]);
+        $reactivated = $this->store($scope, 'الإصدار الأول', $versionOneChunks);
+        $latest = $this->repository->latestDocument($scope, 'manual', 'knowledge://guide');
+
+        $this->assertTrue($versionOne->is($reactivated));
+        $this->assertTrue($versionOne->is($latest));
+        $this->assertSame('active', $versionOne->fresh()->status);
+        $this->assertSame('superseded', $versionTwo->fresh()->status);
+        $this->assertDatabaseCount('knowledge_documents', 2);
+    }
+
+    #[Test]
+    public function same_content_retry_rejects_invalid_chunks_before_idempotency_check(): void
+    {
+        [, , , $scope] = $this->createTenant('Retry Validation');
+        $this->store($scope, 'ثابت', [['content' => 'صالح']]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->store($scope, 'ثابت', [['content' => ' ']]);
+    }
+
+    #[Test]
+    public function same_content_retry_rejects_changed_valid_chunk_payload_or_count(): void
+    {
+        [, , , $scope] = $this->createTenant('Retry Payload');
+        $this->store($scope, 'ثابت', [['content' => 'أصلي', 'heading' => 'عنوان', 'locator' => ['page' => 1]]]);
+
+        foreach ([
+            [['content' => 'مختلف', 'heading' => 'عنوان', 'locator' => ['page' => 1]]],
+            [
+                ['content' => 'أصلي', 'heading' => 'عنوان', 'locator' => ['page' => 1]],
+                ['content' => 'إضافي'],
+            ],
+        ] as $chunks) {
+            try {
+                $this->store($scope, 'ثابت', $chunks);
+                $this->fail('Expected changed chunk payload to be rejected.');
+            } catch (LogicException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
+    #[Test]
+    public function same_content_retry_rejects_a_document_with_missing_persisted_chunks(): void
+    {
+        [, , , $scope] = $this->createTenant('Missing Chunk');
+        $chunks = [['content' => 'الأول'], ['content' => 'الثاني']];
+        $document = $this->store($scope, 'ثابت', $chunks);
+        $document->chunks()->where('position', 1)->delete();
+
+        $this->expectException(LogicException::class);
+        $this->store($scope, 'ثابت', $chunks);
+    }
+
+    #[Test]
+    public function search_results_with_equal_relevance_are_ordered_by_chunk_id(): void
+    {
+        [, , , $scope] = $this->createTenant('Stable Search');
+        $document = $this->store($scope, 'بحث ثابت', [
+            ['content' => 'stableorderingterm alpha'],
+            ['content' => 'stableorderingterm beta'],
+            ['content' => 'stableorderingterm gamma'],
+        ]);
+        $expectedIds = $document->chunks()->orderBy('id')->pluck('id')->all();
+
+        $this->assertSame($expectedIds, $this->repository->searchText($scope, 'stableorderingterm')->pluck('id')->all());
+        $this->assertSame($expectedIds, $this->repository->searchText($scope, 'stableorderingterm')->pluck('id')->all());
+    }
+
+    #[Test]
     public function latest_and_search_are_strictly_isolated_to_the_project_scope(): void
     {
         [$account, , , $scopeA] = $this->createTenant('A');

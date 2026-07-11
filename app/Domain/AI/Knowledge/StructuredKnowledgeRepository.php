@@ -31,6 +31,7 @@ class StructuredKnowledgeRepository
         }
 
         $content = $this->normalizeContent($content);
+        $chunks = $this->normalizeChunks($chunks);
         $contentHash = hash('sha256', $content);
         $identityHash = $this->identityHash($scope, $kind, $canonicalUri);
 
@@ -67,8 +68,21 @@ class StructuredKnowledgeRepository
             $existing = $source->documents()->where('content_hash', $contentHash)->first();
 
             if ($existing !== null) {
+                $this->assertChunkIntegrity($existing, $chunks);
+
+                $source->documents()
+                    ->where('status', 'active')
+                    ->whereKeyNot($existing->id)
+                    ->update(['status' => 'superseded']);
+
+                if ($existing->status !== 'active') {
+                    $existing->update(['status' => 'active']);
+                }
+
                 return $existing->load(['source', 'chunks' => fn ($query) => $query->orderBy('position')]);
             }
+
+            $source->documents()->where('status', 'active')->update(['status' => 'superseded']);
 
             $document = $source->documents()->create([
                 'content_hash' => $contentHash,
@@ -79,29 +93,13 @@ class StructuredKnowledgeRepository
                 'content' => $content,
             ]);
 
-            foreach (array_values($chunks) as $position => $chunk) {
-                if (! is_array($chunk) || ! array_key_exists('content', $chunk) || ! is_string($chunk['content'])) {
-                    throw new InvalidArgumentException('Each knowledge chunk must contain text content.');
-                }
-
-                $chunkContent = $this->normalizeContent($chunk['content']);
-
-                if ($chunkContent === '') {
-                    throw new InvalidArgumentException('Knowledge chunk content must not be blank.');
-                }
-
-                $locator = $chunk['locator'] ?? [];
-
-                if (! is_array($locator)) {
-                    throw new InvalidArgumentException('Knowledge chunk locator must be an array.');
-                }
-
+            foreach ($chunks as $chunk) {
                 $document->chunks()->create([
-                    'position' => $position,
-                    'heading' => $chunk['heading'] ?? null,
-                    'content' => $chunkContent,
-                    'token_count' => max(1, (int) ceil(mb_strlen($chunkContent) / 4)),
-                    'locator_json' => $locator,
+                    'position' => $chunk['position'],
+                    'heading' => $chunk['heading'],
+                    'content' => $chunk['content'],
+                    'token_count' => $chunk['token_count'],
+                    'locator_json' => $chunk['locator'],
                 ]);
             }
 
@@ -123,6 +121,7 @@ class StructuredKnowledgeRepository
             ->whereHas('source', fn ($query) => $query
                 ->where('kind', $kind)
                 ->where('canonical_uri', $canonicalUri))
+            ->where('status', 'active')
             ->with(['source', 'chunks' => fn ($query) => $query->orderBy('position')])
             ->orderByDesc('version')
             ->first();
@@ -160,6 +159,7 @@ class StructuredKnowledgeRepository
             ->selectRaw('MATCH(content) AGAINST (? IN NATURAL LANGUAGE MODE) AS relevance', [$query])
             ->whereRaw('MATCH(content) AGAINST (? IN NATURAL LANGUAGE MODE)', [$query])
             ->orderByDesc('relevance')
+            ->orderBy('knowledge_chunks.id')
             ->get();
     }
 
@@ -172,6 +172,65 @@ class StructuredKnowledgeRepository
     {
         if ($kind === '' || $canonicalUri === '') {
             throw new InvalidArgumentException('Knowledge kind and canonical URI must not be blank.');
+        }
+    }
+
+    private function normalizeChunks(array $chunks): array
+    {
+        return array_map(function ($chunk, int $position): array {
+            if (! is_array($chunk) || ! array_key_exists('content', $chunk) || ! is_string($chunk['content'])) {
+                throw new InvalidArgumentException('Each knowledge chunk must contain text content.');
+            }
+
+            $content = $this->normalizeContent($chunk['content']);
+
+            if ($content === '') {
+                throw new InvalidArgumentException('Knowledge chunk content must not be blank.');
+            }
+
+            $heading = $chunk['heading'] ?? null;
+
+            if ($heading !== null && ! is_string($heading)) {
+                throw new InvalidArgumentException('Knowledge chunk heading must be text or null.');
+            }
+
+            $locator = $chunk['locator'] ?? [];
+
+            if (! is_array($locator)) {
+                throw new InvalidArgumentException('Knowledge chunk locator must be an array.');
+            }
+
+            return [
+                'position' => $position,
+                'heading' => $heading,
+                'content' => $content,
+                'token_count' => max(1, (int) ceil(mb_strlen($content) / 4)),
+                'locator' => $locator,
+            ];
+        }, array_values($chunks), array_keys(array_values($chunks)));
+    }
+
+    private function assertChunkIntegrity(KnowledgeDocument $document, array $expectedChunks): void
+    {
+        $persistedChunks = $document->chunks()->orderBy('position')->get();
+
+        if ($persistedChunks->count() !== count($expectedChunks)) {
+            throw new LogicException('Knowledge document chunks do not match the stored content.');
+        }
+
+        foreach ($expectedChunks as $index => $expected) {
+            $persisted = $persistedChunks->get($index);
+
+            if (
+                $persisted === null
+                || $persisted->position !== $expected['position']
+                || $persisted->heading !== $expected['heading']
+                || $persisted->content !== $expected['content']
+                || $persisted->token_count !== $expected['token_count']
+                || $persisted->locator_json != $expected['locator']
+            ) {
+                throw new LogicException('Knowledge document chunks do not match the stored content.');
+            }
         }
     }
 
