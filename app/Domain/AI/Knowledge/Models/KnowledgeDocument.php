@@ -2,6 +2,8 @@
 
 namespace App\Domain\AI\Knowledge\Models;
 
+use App\Domain\AI\Knowledge\KnowledgeScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -36,5 +38,13 @@ class KnowledgeDocument extends Model
     public function chunks(): HasMany
     {
         return $this->hasMany(KnowledgeChunk::class);
+    }
+
+    public function scopeInScope(Builder $query, KnowledgeScope $scope): Builder
+    {
+        return $query->whereHas(
+            'source',
+            fn (Builder $sourceQuery) => $sourceQuery->inScope($scope)
+        );
     }
 }

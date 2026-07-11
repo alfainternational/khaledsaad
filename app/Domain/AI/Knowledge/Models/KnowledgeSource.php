@@ -53,7 +53,9 @@ class KnowledgeSource extends Model
 
     public function scopeInScope(Builder $query, KnowledgeScope $scope): Builder
     {
-        $query->where('visibility', $scope->visibility);
+        $query
+            ->where('scope_key', $scope->key())
+            ->where('visibility', $scope->visibility);
 
         foreach ([
             'account_id' => $scope->accountId,

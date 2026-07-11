@@ -2,6 +2,8 @@
 
 namespace App\Domain\AI\Knowledge\Models;
 
+use App\Domain\AI\Knowledge\KnowledgeScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -25,5 +27,13 @@ class KnowledgeChunk extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(KnowledgeDocument::class, 'knowledge_document_id');
+    }
+
+    public function scopeInScope(Builder $query, KnowledgeScope $scope): Builder
+    {
+        return $query->whereHas(
+            'document.source',
+            fn (Builder $sourceQuery) => $sourceQuery->inScope($scope)
+        );
     }
 }
