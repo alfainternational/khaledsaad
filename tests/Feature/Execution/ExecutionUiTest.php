@@ -202,8 +202,18 @@ class ExecutionUiTest extends TestCase
             ->withSession(['current_workspace_id' => $workspace->id])
             ->get(route('execution-packages.show', $package))
             ->assertOk()
-            ->assertSee('اعتماد الحزمة', false)
-            ->assertSee('طلب اعتماد الحزمة', false);
+            ->assertSee('طلب اعتماد الحزمة', false)
+            ->assertDontSee('value="approved"', false)
+            ->assertDontSee('بدء التنفيذ', false);
+
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->patch(route('execution-packages.status', $package), [
+                'status' => 'approved',
+            ])
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('proposed', $package->fresh()->status);
 
         $this->actingAs($owner)
             ->withSession(['current_workspace_id' => $workspace->id])
@@ -230,6 +240,13 @@ class ExecutionUiTest extends TestCase
             ->assertSee('حزمة تنفيذ', false)
             ->assertSee($package->title, false);
 
+        $this->actingAs($owner)
+            ->withSession(['current_workspace_id' => $workspace->id])
+            ->get(route('execution-packages.show', $package))
+            ->assertOk()
+            ->assertDontSee('طلب اعتماد الحزمة', false)
+            ->assertDontSee('بدء التنفيذ', false);
+
         $approval = Approval::query()
             ->where('item_type', 'execution_package')
             ->where('item_id', $package->id)
@@ -251,7 +268,6 @@ class ExecutionUiTest extends TestCase
             ->assertSee('بدء التنفيذ', false);
 
         foreach ([
-            'approved' => 'بدء التنفيذ',
             'in_progress' => 'تأكيد التنفيذ',
             'executed' => 'بدء القياس',
             'measuring' => null,

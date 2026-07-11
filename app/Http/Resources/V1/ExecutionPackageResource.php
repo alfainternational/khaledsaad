@@ -122,7 +122,7 @@ class ExecutionPackageResource extends JsonResource
     private function availableActions(): array
     {
         return match ($this->status) {
-            'proposed' => ['approve'],
+            'proposed' => ['request_approval'],
             'approved' => ['start_execution'],
             'in_progress' => ['mark_executed'],
             'executed' => ['start_measuring'],

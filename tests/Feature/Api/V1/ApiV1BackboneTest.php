@@ -611,7 +611,7 @@ class ApiV1BackboneTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', 'proposed')
             ->assertJsonPath('data.status_label', 'مقترحة')
-            ->assertJsonPath('data.available_actions.0', 'approve')
+            ->assertJsonPath('data.available_actions.0', 'request_approval')
             ->assertJsonPath('data.progress.total_tasks', 4)
             ->assertJsonPath('data.progress.done_tasks', 2)
             ->assertJsonPath('data.progress.percent', 50)
@@ -637,10 +637,29 @@ class ApiV1BackboneTest extends TestCase
             ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [
                 'status' => 'approved',
             ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['status']);
+
+        $this->assertSame('proposed', $package->fresh()->status);
+
+        $package->update(['status' => 'approved']);
+
+        $auth()
+            ->getJson($base.'/execution-packages/'.$package->public_id)
             ->assertOk()
             ->assertJsonPath('data.status', 'approved')
             ->assertJsonPath('data.status_label', 'معتمدة')
             ->assertJsonPath('data.available_actions.0', 'start_execution')
+            ->assertJsonPath('data.progress.percent', 50);
+
+        $auth()
+            ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [
+                'status' => 'in_progress',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'in_progress')
+            ->assertJsonPath('data.status_label', 'قيد التنفيذ')
+            ->assertJsonPath('data.available_actions.0', 'mark_executed')
             ->assertJsonPath('data.progress.percent', 50);
 
         $auth()

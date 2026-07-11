@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Application\Execution\AdvanceExecutionPackageStatusAction;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionReport;
 use App\Domain\Execution\Models\ExecutionTask;
@@ -23,7 +24,10 @@ class ExecutionPackageController extends Controller
         );
     }
 
-    public function updateStatus(Request $request): ExecutionPackageResource
+    public function updateStatus(
+        Request $request,
+        AdvanceExecutionPackageStatusAction $advanceExecutionPackageStatus,
+    ): ExecutionPackageResource
     {
         $package = $this->resolve((string) $request->route('packagePublicId'));
         $this->authorize('update', $package->project);
@@ -32,7 +36,7 @@ class ExecutionPackageController extends Controller
             'status' => ['required', 'string', 'in:'.implode(',', ExecutionPackage::STATUSES)],
         ]);
 
-        $package->update(['status' => $validated['status']]);
+        $package = $advanceExecutionPackageStatus->handle($package, $validated['status']);
 
         return new ExecutionPackageResource($package->load(['tasks.assignee', 'assets', 'reports']));
     }

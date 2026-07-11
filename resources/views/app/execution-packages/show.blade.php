@@ -12,7 +12,6 @@
         'done' => 'منجزة',
     ];
     $packageActions = [
-        'proposed' => ['status' => 'approved', 'label' => 'اعتماد الحزمة', 'style' => 'btn-primary'],
         'approved' => ['status' => 'in_progress', 'label' => 'بدء التنفيذ', 'style' => 'btn-primary'],
         'in_progress' => ['status' => 'executed', 'label' => 'تأكيد التنفيذ', 'style' => 'btn-primary'],
         'executed' => ['status' => 'measuring', 'label' => 'بدء القياس', 'style' => 'btn-secondary'],
@@ -193,12 +192,14 @@
             <button type="submit" class="btn {{ $nextPackageAction['style'] }}">{{ $nextPackageAction['label'] }}</button>
         </form>
     @endif
-    <form method="POST" action="{{ route('projects.approvals.store', $package->project) }}">
-        @csrf
-        <input type="hidden" name="item_type" value="execution_package">
-        <input type="hidden" name="item_id" value="{{ $package->id }}">
-        <input type="hidden" name="note" value="مراجعة واعتماد حزمة التنفيذ: {{ $package->title }}">
-        <button type="submit" class="btn btn-secondary">طلب اعتماد الحزمة</button>
-    </form>
+    @if ($package->status === 'proposed')
+        <form method="POST" action="{{ route('projects.approvals.store', $package->project) }}">
+            @csrf
+            <input type="hidden" name="item_type" value="execution_package">
+            <input type="hidden" name="item_id" value="{{ $package->id }}">
+            <input type="hidden" name="note" value="مراجعة واعتماد حزمة التنفيذ: {{ $package->title }}">
+            <button type="submit" class="btn btn-secondary">طلب اعتماد الحزمة</button>
+        </form>
+    @endif
 </section>
 @endsection
