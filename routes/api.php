@@ -102,6 +102,7 @@ Route::prefix('v1')->group(function (): void {
             // حزم التنفيذ
             Route::get('/execution-packages/{packagePublicId}', [ExecutionPackageController::class, 'show']);
             Route::patch('/execution-packages/{packagePublicId}/status', [ExecutionPackageController::class, 'updateStatus']);
+            Route::patch('/execution-tasks/{taskPublicId}/status', [ExecutionPackageController::class, 'updateTaskStatus']);
 
             // الاستوديو الذكي
             Route::get('/templates', [StudioTemplateController::class, 'index']);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Execution\Models\ExecutionPackage;
+use App\Domain\Execution\Models\ExecutionTask;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\ExecutionPackageResource;
 use Illuminate\Http\Request;
@@ -33,6 +34,21 @@ class ExecutionPackageController extends Controller
         return new ExecutionPackageResource($package->load(['tasks', 'assets']));
     }
 
+    public function updateTaskStatus(Request $request): ExecutionPackageResource
+    {
+        $task = $this->resolveTask((string) $request->route('taskPublicId'));
+        $package = $task->executionPackage;
+        $this->authorize('update', $package->project);
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:'.implode(',', ExecutionTask::STATUSES)],
+        ]);
+
+        $task->update(['status' => $validated['status']]);
+
+        return new ExecutionPackageResource($package->fresh()->load(['tasks', 'assets']));
+    }
+
     /**
      * يحل الحزمة ضمن مساحة العمل الحالية (عزل صارم).
      */
@@ -44,6 +60,18 @@ class ExecutionPackageController extends Controller
         return ExecutionPackage::query()
             ->where('workspace_id', $workspace->id)
             ->where('public_id', $publicId)
+            ->firstOrFail();
+    }
+
+    private function resolveTask(string $publicId): ExecutionTask
+    {
+        /** @var \App\Domain\Workspace\Models\Workspace $workspace */
+        $workspace = app('currentWorkspace');
+
+        return ExecutionTask::query()
+            ->where('public_id', $publicId)
+            ->whereHas('executionPackage', fn ($query) => $query->where('workspace_id', $workspace->id))
+            ->with('executionPackage.project')
             ->firstOrFail();
     }
 }
