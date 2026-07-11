@@ -35,6 +35,11 @@ class ExecutionPackageResource extends JsonResource
                 'status' => $task->status,
                 'status_label' => $this->taskStatusLabel((string) $task->status),
                 'assigned_to' => $task->assigned_to,
+                'assignee' => $task->relationLoaded('assignee') && $task->assignee ? [
+                    'public_id' => $task->assignee->public_id,
+                    'name' => $task->assignee->name,
+                    'email' => $task->assignee->email,
+                ] : null,
                 'due_date' => optional($task->due_date)->toDateString(),
                 'order_index' => $task->order_index,
             ])->values()),

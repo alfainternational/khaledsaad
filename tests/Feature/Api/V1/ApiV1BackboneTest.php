@@ -509,6 +509,9 @@ class ApiV1BackboneTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.tasks.0.public_id', $firstTask->public_id)
             ->assertJsonPath('data.tasks.0.assigned_to', $owner->id)
+            ->assertJsonPath('data.tasks.0.assignee.public_id', $owner->public_id)
+            ->assertJsonPath('data.tasks.0.assignee.name', $owner->name)
+            ->assertJsonPath('data.tasks.0.assignee.email', $owner->email)
             ->assertJsonPath('data.tasks.0.due_date', $newDueDate);
     }
 
