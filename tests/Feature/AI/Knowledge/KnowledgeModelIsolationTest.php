@@ -30,6 +30,21 @@ class KnowledgeModelIsolationTest extends TestCase
     }
 
     #[Test]
+    public function source_tenant_identifiers_are_cast_to_integers(): void
+    {
+        $source = new KnowledgeSource;
+        $source->setRawAttributes([
+            'account_id' => '11',
+            'workspace_id' => '22',
+            'project_id' => '33',
+        ]);
+
+        $this->assertSame(11, $source->account_id);
+        $this->assertSame(22, $source->workspace_id);
+        $this->assertSame(33, $source->project_id);
+    }
+
+    #[Test]
     public function sources_are_isolated_by_scope_and_expose_document_relations(): void
     {
         $user = User::factory()->create();

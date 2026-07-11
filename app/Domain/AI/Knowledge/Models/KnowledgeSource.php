@@ -27,6 +27,9 @@ class KnowledgeSource extends Model
     ];
 
     protected $casts = [
+        'account_id' => 'integer',
+        'workspace_id' => 'integer',
+        'project_id' => 'integer',
         'trust_score' => 'integer',
         'meta_json' => 'array',
     ];
