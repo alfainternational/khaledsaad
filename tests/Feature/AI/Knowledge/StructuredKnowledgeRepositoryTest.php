@@ -11,7 +11,8 @@ use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use LogicException;
@@ -20,7 +21,9 @@ use Tests\TestCase;
 
 class StructuredKnowledgeRepositoryTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseMigrations {
+        runDatabaseMigrations as runFrameworkDatabaseMigrations;
+    }
 
     private StructuredKnowledgeRepository $repository;
 
@@ -29,6 +32,39 @@ class StructuredKnowledgeRepositoryTest extends TestCase
         parent::setUp();
 
         $this->repository = new StructuredKnowledgeRepository;
+    }
+
+    public function runDatabaseMigrations(): void
+    {
+        $this->beforeApplicationDestroyed(function (): void {
+            if (DB::getDriverName() === 'sqlite') {
+                DB::statement('PRAGMA writable_schema = ON');
+
+                return;
+            }
+
+            if (DB::getDriverName() !== 'mysql') {
+                return;
+            }
+
+            $foreignKeys = DB::select(<<<'SQL'
+                SELECT DISTINCT TABLE_NAME, COLUMN_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND REFERENCED_TABLE_NAME IS NOT NULL
+                SQL);
+
+            foreach ($foreignKeys as $foreignKey) {
+                $indexName = 'test_fk_support_'.substr(hash('sha256', "{$foreignKey->TABLE_NAME}.{$foreignKey->COLUMN_NAME}"), 0, 16);
+
+                DB::connection()->getSchemaBuilder()->table(
+                    $foreignKey->TABLE_NAME,
+                    fn (Blueprint $table) => $table->index([$foreignKey->COLUMN_NAME], $indexName)
+                );
+            }
+        });
+
+        $this->runFrameworkDatabaseMigrations();
     }
 
     #[Test]
@@ -77,25 +113,7 @@ class StructuredKnowledgeRepositoryTest extends TestCase
         $this->store($global, 'معرفة عامة', [['content' => 'globaluniqueterm عامة']]);
 
         $this->assertTrue($documentA->is($this->repository->latestDocument($scopeA, 'manual', 'knowledge://guide')));
-
-        if (DB::getDriverName() === 'mysql') {
-            DB::commit();
-        }
-
-        try {
-            $this->assertSame(['projectalphauniqueterm ألف'], $this->repository->searchText($scopeA, 'projectalphauniqueterm')->pluck('content')->all());
-        } finally {
-            if (DB::getDriverName() === 'mysql') {
-                KnowledgeSource::query()->delete();
-                Project::query()->whereIn('workspace_id', [$scopeA->workspaceId, $scopeB->workspaceId])->delete();
-                Client::query()->whereIn('workspace_id', [$scopeA->workspaceId, $scopeB->workspaceId])->delete();
-                Workspace::query()->whereIn('id', [$scopeA->workspaceId, $scopeB->workspaceId])->delete();
-                $ownerUserId = $account->owner_user_id;
-                $account->delete();
-                User::query()->whereKey($ownerUserId)->delete();
-                DB::beginTransaction();
-            }
-        }
+        $this->assertSame(['projectalphauniqueterm ألف'], $this->repository->searchText($scopeA, 'projectalphauniqueterm')->pluck('content')->all());
     }
 
     #[Test]
