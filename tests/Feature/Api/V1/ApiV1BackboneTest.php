@@ -458,6 +458,15 @@ class ApiV1BackboneTest extends TestCase
         $firstAsset->update([
             'meta_json' => ['channel' => 'landing_page'],
         ]);
+        $firstReport = $package->reports()->create([
+            'phase' => 'validation',
+            'progress' => 70,
+            'notes_json' => ['summary' => 'تحسن عدد الطلبات بعد تعديل صفحة الثقة.'],
+            'metrics_json' => [[
+                'name' => 'العملاء المحتملون',
+                'value' => '34 خلال أسبوع',
+            ]],
+        ]);
 
         $auth()
             ->getJson($base.'/execution-packages/'.$package->public_id)
@@ -477,7 +486,14 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.assets.0.public_id', $firstAsset->public_id)
             ->assertJsonPath('data.assets.0.type', 'dev_brief')
             ->assertJsonPath('data.assets.0.type_label', 'موجز تطوير')
-            ->assertJsonPath('data.assets.0.meta.channel', 'landing_page');
+            ->assertJsonPath('data.assets.0.meta.channel', 'landing_page')
+            ->assertJsonPath('data.reports.0.public_id', $firstReport->public_id)
+            ->assertJsonPath('data.reports.0.phase', 'validation')
+            ->assertJsonPath('data.reports.0.phase_label', 'تحقق')
+            ->assertJsonPath('data.reports.0.progress', 70)
+            ->assertJsonPath('data.reports.0.notes.summary', 'تحسن عدد الطلبات بعد تعديل صفحة الثقة.')
+            ->assertJsonPath('data.reports.0.metrics.0.name', 'العملاء المحتملون')
+            ->assertJsonPath('data.reports.0.metrics.0.value', '34 خلال أسبوع');
 
         $auth()
             ->patchJson($base.'/execution-packages/'.$package->public_id.'/status', [

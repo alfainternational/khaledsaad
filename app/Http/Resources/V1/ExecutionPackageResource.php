@@ -52,6 +52,15 @@ class ExecutionPackageResource extends JsonResource
                 'body' => $asset->body,
                 'meta' => $asset->meta_json ?? [],
             ])->values()),
+            'reports' => $this->whenLoaded('reports', fn () => $this->reports->map(fn ($report) => [
+                'public_id' => $report->public_id,
+                'phase' => $report->phase,
+                'phase_label' => $this->reportPhaseLabel((string) $report->phase),
+                'progress' => $report->progress,
+                'notes' => $report->notes_json ?? [],
+                'metrics' => $report->metrics_json ?? [],
+                'created_at' => optional($report->created_at)->toIso8601String(),
+            ])->values()),
             'created_at' => optional($this->created_at)->toIso8601String(),
         ];
     }
@@ -135,6 +144,17 @@ class ExecutionPackageResource extends JsonResource
             'measurement' => 'قياس',
             'other' => 'أصل آخر',
             default => $type,
+        };
+    }
+
+    private function reportPhaseLabel(string $phase): string
+    {
+        return match ($phase) {
+            'discovery' => 'اكتشاف',
+            'planning' => 'تخطيط',
+            'execution' => 'تنفيذ',
+            'validation' => 'تحقق',
+            default => $phase,
         };
     }
 }

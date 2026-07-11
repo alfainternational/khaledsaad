@@ -18,7 +18,7 @@ class ExecutionPackageController extends Controller
         $this->authorize('view', $package->project);
 
         return new ExecutionPackageResource(
-            $package->load(['tasks.assignee', 'assets', 'recommendation'])
+            $package->load(['tasks.assignee', 'assets', 'reports', 'recommendation'])
         );
     }
 
@@ -33,7 +33,7 @@ class ExecutionPackageController extends Controller
 
         $package->update(['status' => $validated['status']]);
 
-        return new ExecutionPackageResource($package->load(['tasks.assignee', 'assets']));
+        return new ExecutionPackageResource($package->load(['tasks.assignee', 'assets', 'reports']));
     }
 
     public function updateTaskStatus(Request $request): ExecutionPackageResource
@@ -48,7 +48,7 @@ class ExecutionPackageController extends Controller
 
         $task->update(['status' => $validated['status']]);
 
-        return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets']));
+        return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
     }
 
     public function updateTask(Request $request): ExecutionPackageResource
@@ -77,7 +77,7 @@ class ExecutionPackageController extends Controller
 
         $task->update($validated);
 
-        return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets']));
+        return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
     }
 
     /**
