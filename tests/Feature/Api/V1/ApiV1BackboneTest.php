@@ -757,6 +757,23 @@ class ApiV1BackboneTest extends TestCase
             ->assertJsonPath('data.progress.done_tasks', 2)
             ->assertJsonPath('data.progress.percent', 50);
 
+        $outsider = User::factory()->create();
+
+        $auth()
+            ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
+                'assignee_public_id' => $outsider->public_id,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['assignee_public_id']);
+
+        $auth()
+            ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
+                'assignee_public_id' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.tasks.0.assigned_to', null)
+            ->assertJsonPath('data.tasks.0.assignee', null);
+
         $package->tasks()->update(['status' => 'done']);
 
         $auth()
@@ -779,22 +796,20 @@ class ApiV1BackboneTest extends TestCase
 
         $this->assertSame('done', $firstTask->fresh()->status);
 
-        $outsider = User::factory()->create();
-
         $auth()
             ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
-                'assignee_public_id' => $outsider->public_id,
+                'assignee_public_id' => $owner->public_id,
             ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['assignee_public_id']);
+            ->assertJsonValidationErrors(['task']);
 
         $auth()
             ->patchJson($base.'/execution-tasks/'.$firstTask->public_id, [
+                'due_date' => now()->addDays(14)->toDateString(),
                 'assignee_public_id' => null,
             ])
-            ->assertOk()
-            ->assertJsonPath('data.tasks.0.assigned_to', null)
-            ->assertJsonPath('data.tasks.0.assignee', null);
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['task']);
     }
 
     #[Test]

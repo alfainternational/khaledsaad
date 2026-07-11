@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Application\Execution\AdvanceExecutionPackageStatusAction;
 use App\Application\Execution\CreateExecutionReportAction;
+use App\Application\Execution\UpdateExecutionTaskDetailsAction;
 use App\Application\Execution\UpdateExecutionTaskStatusAction;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionReport;
@@ -104,6 +105,7 @@ class ExecutionPackageController extends Controller
 
     public function updateTask(
         Request $request,
+        UpdateExecutionTaskDetailsAction $updateExecutionTaskDetails,
         UpdateExecutionTaskStatusAction $updateExecutionTaskStatus,
     ): ExecutionPackageResource
     {
@@ -134,9 +136,7 @@ class ExecutionPackageController extends Controller
             unset($validated['status']);
         }
 
-        if ($validated !== []) {
-            $task->update($validated);
-        }
+        $updateExecutionTaskDetails->handle($task, $validated);
 
         return new ExecutionPackageResource($package->fresh()->load(['tasks.assignee', 'assets', 'reports']));
     }
