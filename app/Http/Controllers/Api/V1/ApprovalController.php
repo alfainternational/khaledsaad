@@ -42,7 +42,9 @@ class ApprovalController extends Controller
                 $request->string('status')->isNotEmpty(),
                 fn ($query) => $query->where('status', $request->string('status')->value())
             )
-            ->latest()
+            // طابور مراجعة: الأحدث لمساً أولاً، بترتيب حتمي عند تعادل التوقيت.
+            ->latest('updated_at')
+            ->orderByDesc('id')
             ->paginate(15);
 
         return response()->json([
