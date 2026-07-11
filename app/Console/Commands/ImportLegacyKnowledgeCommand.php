@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domain\AI\Knowledge\KnowledgeScope;
+use App\Domain\AI\Knowledge\LegacyKnowledgeIdentityResolver;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -18,10 +18,12 @@ class ImportLegacyKnowledgeCommand extends Command
 
     protected $description = 'Import legacy JSON memories into the structured knowledge store';
 
-    public function handle(StructuredKnowledgeRepository $repository): int
-    {
+    public function handle(
+        StructuredKnowledgeRepository $repository,
+        LegacyKnowledgeIdentityResolver $identityResolver,
+    ): int {
         try {
-            return $this->importFiles($repository);
+            return $this->importFiles($repository, $identityResolver);
         } catch (Throwable $exception) {
             report($exception);
             $this->error('Legacy knowledge import failed.');
@@ -30,8 +32,10 @@ class ImportLegacyKnowledgeCommand extends Command
         }
     }
 
-    private function importFiles(StructuredKnowledgeRepository $repository): int
-    {
+    private function importFiles(
+        StructuredKnowledgeRepository $repository,
+        LegacyKnowledgeIdentityResolver $identityResolver,
+    ): int {
         $files = Storage::disk('local')->files('ai-knowledge');
         sort($files, SORT_STRING);
 
@@ -58,17 +62,29 @@ class ImportLegacyKnowledgeCommand extends Command
             }
 
             $content = implode("\n", $lines);
-            $uri = 'legacy://'.$memory['key'];
-            $scope = KnowledgeScope::global();
+            $identity = $identityResolver->resolve($memory['key'], $memory['data']);
+            $scope = $identity['scope'];
+
+            if ($scope === null) {
+                $skipped++;
+
+                continue;
+            }
+
+            $uri = $identity['canonical_uri'];
             $current = $repository->latestDocument($scope, 'legacy_memory', $uri);
 
             $repository->storeDocument(
                 $scope,
                 'legacy_memory',
                 $uri,
-                $memory['key'],
+                'Legacy memory '.substr($identity['key_hash'], 0, 12),
                 $content,
-                [['heading' => $memory['key'], 'content' => $content, 'locator' => ['canonical_uri' => $uri]]],
+                [[
+                    'heading' => null,
+                    'content' => $content,
+                    'locator' => ['canonical_uri' => $uri, 'key_hash' => $identity['key_hash']],
+                ]],
                 50,
             );
 
@@ -109,8 +125,6 @@ class ImportLegacyKnowledgeCommand extends Command
         if ($learnedAt === false || $learnedAt->format(DateTimeInterface::ATOM) !== $memory['learned_at']) {
             throw new UnexpectedValueException('Legacy learned_at must use ISO-8601 ATOM format.');
         }
-
-        $memory['key'] = trim($memory['key']);
 
         return $memory;
     }

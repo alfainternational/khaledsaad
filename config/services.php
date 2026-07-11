@@ -130,6 +130,10 @@ return [
         'dual_write' => env('AI_KNOWLEDGE_DUAL_WRITE', false),
         'project_sync' => env('AI_KNOWLEDGE_PROJECT_SYNC', false),
         'lock_wait_milliseconds' => env('AI_KNOWLEDGE_LOCK_WAIT_MILLISECONDS', 500),
+        'mapping_previous_keys' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('AI_KNOWLEDGE_MAPPING_PREVIOUS_KEYS', '')),
+        ))),
     ],
 
     /*

@@ -53,7 +53,7 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
         $this->assertDatabaseCount('knowledge_chunks', 1);
         $this->assertDatabaseHas('knowledge_sources', [
             'kind' => 'legacy_memory',
-            'canonical_uri' => 'legacy://playbook.offer',
+            'canonical_uri' => 'legacy://sha256/'.hash('sha256', 'playbook.offer'),
             'trust_score' => 50,
             'visibility' => 'global',
         ]);
@@ -95,7 +95,7 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
             'learned_at' => '2026-07-01T03:00:00+03:00',
         ]));
         Storage::disk('local')->put('ai-knowledge/valid.json', json_encode([
-            'key' => 'valid.memory',
+            'key' => 'playbook.valid-memory',
             'data' => ['answer' => 42],
             'learned_at' => '2026-07-01T03:00:00+03:00',
         ]));
@@ -115,7 +115,7 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
         Storage::fake('local');
         $disk = Storage::disk('local');
         $disk->put('ai-knowledge/memory.json', json_encode([
-            'key' => 'ordered.memory',
+            'key' => 'playbook.ordered-memory',
             'data' => ['z' => 2, 'nested' => ['b' => 2, 'a' => 1], 'a' => 1],
             'learned_at' => '2026-07-01T03:00:00+03:00',
         ]));
@@ -124,7 +124,7 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
         $disk->put('ai-knowledge/memory.json', json_encode([
             'learned_at' => '2026-07-01T03:00:00+03:00',
             'data' => ['a' => 1, 'nested' => ['a' => 1, 'b' => 2], 'z' => 2],
-            'key' => 'ordered.memory',
+            'key' => 'playbook.ordered-memory',
         ]));
 
         $this->artisan('knowledge:import-legacy')
@@ -139,7 +139,7 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
     {
         Storage::fake('local');
         Storage::disk('local')->put('ai-knowledge/edge-cases.json', json_encode([
-            'key' => 'edge.cases',
+            'key' => 'playbook.edge-cases',
             'data' => [
                 'items' => range(0, 12),
                 'false_value' => false,
@@ -181,7 +181,7 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
     {
         Storage::fake('local');
         $payload = json_encode([
-            'key' => 'stable.memory',
+            'key' => 'playbook.stable-memory',
             'data' => ['answer' => 42],
             'learned_at' => '2026-07-01T03:00:00+03:00',
         ]);
@@ -201,7 +201,10 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
             ->assertSuccessful();
         $this->assertDatabaseCount('knowledge_documents', 1);
         $this->assertSame(
-            ['canonical_uri' => 'legacy://stable.memory'],
+            [
+                'canonical_uri' => 'legacy://sha256/'.hash('sha256', 'playbook.stable-memory'),
+                'key_hash' => hash('sha256', 'playbook.stable-memory'),
+            ],
             KnowledgeDocument::query()->with('chunks')->sole()->chunks->sole()->locator_json,
         );
     }
@@ -227,7 +230,7 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
     {
         Storage::fake('local');
         Storage::disk('local')->put('ai-knowledge/valid.json', json_encode([
-            'key' => 'valid.memory',
+            'key' => 'playbook.valid-memory',
             'data' => ['answer' => 42],
             'learned_at' => '2026-07-01T03:00:00+03:00',
         ]));
@@ -268,9 +271,10 @@ class ImportLegacyKnowledgeCommandTest extends TestCase
 
         foreach ($cases as $key => [$first, $second]) {
             $path = 'ai-knowledge/'.$key.'.json';
-            $disk->put($path, json_encode(['key' => $key, 'data' => $first, 'learned_at' => $learnedAt]));
+            $legacyKey = 'playbook.'.$key;
+            $disk->put($path, json_encode(['key' => $legacyKey, 'data' => $first, 'learned_at' => $learnedAt]));
             $this->artisan('knowledge:import-legacy')->assertSuccessful();
-            $disk->put($path, json_encode(['key' => $key, 'data' => $second, 'learned_at' => $learnedAt]));
+            $disk->put($path, json_encode(['key' => $legacyKey, 'data' => $second, 'learned_at' => $learnedAt]));
             $this->artisan('knowledge:import-legacy')->assertSuccessful();
         }
 

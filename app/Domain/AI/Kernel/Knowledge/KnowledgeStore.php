@@ -3,6 +3,7 @@
 namespace App\Domain\AI\Kernel\Knowledge;
 
 use App\Domain\AI\Knowledge\KnowledgeScope;
+use App\Domain\AI\Knowledge\LegacyKnowledgeIdentityResolver;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
@@ -32,6 +33,7 @@ class KnowledgeStore
 
     public function __construct(
         private readonly ?StructuredKnowledgeRepository $structured = null,
+        private readonly ?LegacyKnowledgeIdentityResolver $identityResolver = null,
     ) {}
 
     /**
@@ -180,14 +182,17 @@ class KnowledgeStore
 
         try {
             $repository = $this->structured ?? app(StructuredKnowledgeRepository::class);
-            $scope = $this->scopeFor($key, $data);
+            $identity = $this->resolver()->resolve($key, $data);
+            $scope = $identity['scope'];
 
             if ($scope === null) {
+                $this->logSkipped($key, $identity['failure_reason'] ?? 'scope_unresolved');
+
                 return;
             }
 
-            $canonicalUri = $this->structuredUri($key);
-            $keyHash = $this->keyHash($key);
+            $canonicalUri = $identity['canonical_uri'];
+            $keyHash = $identity['key_hash'];
             $content = implode("\n", $this->flatten($data));
             $previousContext = $this->mappedContextForPath($disk, $key);
 
@@ -199,6 +204,23 @@ class KnowledgeStore
                     'legacy_memory',
                     $previousContext['canonical_uri'],
                 );
+            }
+
+            try {
+                $mappingWritten = $this->writeMapping($disk, $key, $scope, $canonicalUri);
+            } catch (Throwable) {
+                $mappingWritten = false;
+            }
+
+            $verifiedContext = $mappingWritten ? $this->mappedContext($disk, $key) : null;
+
+            if ($verifiedContext === null || $verifiedContext['scope']->key() !== $scope->key()) {
+                Log::warning('Structured knowledge scope mapping write failed.', [
+                    'key_hash' => $keyHash,
+                    'reason' => 'mapping_write_failed',
+                ]);
+
+                return;
             }
 
             $repository->storeDocument(
@@ -214,8 +236,6 @@ class KnowledgeStore
                 ]],
                 50,
             );
-
-            $this->writeMapping($disk, $key, $scope, $canonicalUri);
         } catch (Throwable $exception) {
             Log::warning('Structured knowledge dual write failed.', [
                 'key_hash' => $this->keyHash($key),
@@ -230,109 +250,9 @@ class KnowledgeStore
             && (bool) config('services.knowledge.dual_write', false);
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function scopeFor(string $key, array $data): ?KnowledgeScope
+    private function resolver(): LegacyKnowledgeIdentityResolver
     {
-        if ($this->isGlobalKey($key)) {
-            if ($this->containsTenantIdentifier($data)) {
-                $this->logSkipped($key, 'tenant_data_not_global');
-
-                return null;
-            }
-
-            return KnowledgeScope::global();
-        }
-
-        if (preg_match('/\Amonitor\.performance\.ws([1-9]\d*)\z/D', $key, $matches) === 1) {
-            return $this->workspaceScope($key, $data, (int) $matches[1]);
-        }
-
-        if (preg_match('/\Aagent\.[a-z0-9._-]+\.ws([1-9]\d*)\.[a-z0-9._-]+\z/D', $key, $matches) === 1) {
-            $workspaceId = (int) $matches[1];
-            $workspaceScope = $this->workspaceScope($key, $data, $workspaceId);
-
-            if ($workspaceScope === null || ! array_key_exists('project_id', $data) || $data['project_id'] === null) {
-                return $workspaceScope;
-            }
-
-            if (! is_int($data['project_id']) || $data['project_id'] <= 0) {
-                $this->logSkipped($key, 'scope_unresolved');
-
-                return null;
-            }
-
-            $project = Project::query()
-                ->whereKey($data['project_id'])
-                ->where('workspace_id', $workspaceId)
-                ->first();
-
-            if ($project === null) {
-                $this->logSkipped($key, 'scope_unresolved');
-
-                return null;
-            }
-
-            return KnowledgeScope::forProject(
-                $workspaceScope->accountId,
-                $workspaceScope->workspaceId,
-                (int) $project->id,
-            );
-        }
-
-        $this->logSkipped($key, 'scope_unresolved');
-
-        return null;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function workspaceScope(string $key, array $data, int $workspaceId): ?KnowledgeScope
-    {
-        if (($data['workspace_id'] ?? null) !== $workspaceId) {
-            $this->logSkipped($key, 'scope_unresolved');
-
-            return null;
-        }
-
-        $workspace = Workspace::query()->find($workspaceId);
-
-        if ($workspace === null || (int) $workspace->account_id <= 0) {
-            $this->logSkipped($key, 'scope_unresolved');
-
-            return null;
-        }
-
-        return KnowledgeScope::fromWorkspace($workspace);
-    }
-
-    private function isGlobalKey(string $key): bool
-    {
-        return $key === 'patterns.global'
-            || preg_match('/\A(?:playbook|teach)\.[a-z0-9][a-z0-9._-]*\z/D', $key) === 1;
-    }
-
-    private function containsTenantIdentifier(array $data): bool
-    {
-        foreach ($data as $key => $value) {
-            if (is_string($key) && in_array(strtolower($key), [
-                'account_id',
-                'workspace_id',
-                'project_id',
-                'client_id',
-                'user_id',
-            ], true)) {
-                return true;
-            }
-
-            if (is_array($value) && $this->containsTenantIdentifier($value)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->identityResolver ?? app(LegacyKnowledgeIdentityResolver::class);
     }
 
     private function keyHash(string $key): string
@@ -350,7 +270,7 @@ class KnowledgeStore
 
     private function structuredUri(string $key): string
     {
-        return 'legacy://sha256/'.hash('sha256', $key."\0".$this->path($key));
+        return 'legacy://sha256/'.$this->keyHash($key);
     }
 
     private function mappingPath(string $key): string
@@ -358,44 +278,28 @@ class KnowledgeStore
         return self::ROOT.'/.structured-map/'.hash('sha256', $this->path($key)).'.json';
     }
 
-    private function writeMapping(
+    protected function writeMapping(
         FilesystemAdapter $disk,
         string $key,
         KnowledgeScope $scope,
         string $canonicalUri,
-    ): void {
+    ): bool {
         $mapping = [
-            'version' => 1,
+            'version' => 2,
             'key_hash' => $this->keyHash($key),
+            'path_hash' => hash('sha256', $this->path($key)),
             'canonical_uri' => $canonicalUri,
             'visibility' => $scope->visibility,
             'account_id' => $scope->accountId,
             'workspace_id' => $scope->workspaceId,
             'project_id' => $scope->projectId,
         ];
-        $mapping['integrity_hash'] = $this->mappingIntegrity($mapping);
+        $signingKey = (string) config('app.key');
+        $mapping['signing_key_id'] = hash('sha256', $signingKey);
+        $mapping['signature'] = $this->mappingSignature($mapping, $signingKey);
         $encoded = json_encode($mapping, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
-        if ($disk->put($this->mappingPath($key), $encoded) !== true) {
-            Log::warning('Structured knowledge scope mapping write failed.', [
-                'key_hash' => $this->keyHash($key),
-                'reason' => 'mapping_write_failed',
-            ]);
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $mapping
-     */
-    private function mappingIntegrity(array $mapping): string
-    {
-        unset($mapping['integrity_hash']);
-
-        return hash_hmac(
-            'sha256',
-            json_encode($mapping, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
-            (string) config('app.key'),
-        );
+        return $disk->put($this->mappingPath($key), $encoded) === true;
     }
 
     /**
@@ -429,13 +333,25 @@ class KnowledgeStore
         }
 
         if (! is_array($mapping)
-            || ($mapping['version'] ?? null) !== 1
+            || array_keys($mapping) !== [
+                'version',
+                'key_hash',
+                'path_hash',
+                'canonical_uri',
+                'visibility',
+                'account_id',
+                'workspace_id',
+                'project_id',
+                'signing_key_id',
+                'signature',
+            ]
+            || ($mapping['version'] ?? null) !== 2
             || ! is_string($mapping['key_hash'] ?? null)
             || preg_match('/\A[0-9a-f]{64}\z/D', $mapping['key_hash']) !== 1
+            || ($mapping['path_hash'] ?? null) !== hash('sha256', $this->path($key))
             || ! is_string($mapping['canonical_uri'] ?? null)
-            || ! str_starts_with($mapping['canonical_uri'], 'legacy://sha256/')
-            || ! is_string($mapping['integrity_hash'] ?? null)
-            || ! hash_equals($this->mappingIntegrity($mapping), $mapping['integrity_hash'])) {
+            || $mapping['canonical_uri'] !== 'legacy://sha256/'.$mapping['key_hash']
+            || ! $this->hasValidMappingSignature($mapping)) {
             return null;
         }
 
@@ -446,6 +362,44 @@ class KnowledgeStore
             'canonical_uri' => $mapping['canonical_uri'],
             'key_hash' => $mapping['key_hash'],
         ];
+    }
+
+    /** @param array<string, mixed> $mapping */
+    private function hasValidMappingSignature(array $mapping): bool
+    {
+        if (! is_string($mapping['signing_key_id'] ?? null)
+            || ! is_string($mapping['signature'] ?? null)) {
+            return false;
+        }
+
+        $keys = array_merge(
+            [(string) config('app.key')],
+            array_filter(
+                (array) config('services.knowledge.mapping_previous_keys', []),
+                fn (mixed $key): bool => is_string($key) && $key !== '',
+            ),
+        );
+
+        foreach (array_unique($keys) as $key) {
+            if (hash_equals(hash('sha256', $key), $mapping['signing_key_id'])
+                && hash_equals($this->mappingSignature($mapping, $key), $mapping['signature'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<string, mixed> $mapping */
+    private function mappingSignature(array $mapping, string $key): string
+    {
+        unset($mapping['signature']);
+
+        return hash_hmac(
+            'sha256',
+            json_encode($mapping, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+            $key,
+        );
     }
 
     /**
@@ -498,16 +452,20 @@ class KnowledgeStore
     private function contextFromLegacyData(string $key, ?array $data): ?array
     {
         if ($data === null) {
-            if (! $this->isGlobalKey($key)) {
-                return null;
-            }
+            $identity = $this->resolver()->resolve($key, []);
 
-            return ['scope' => KnowledgeScope::global(), 'canonical_uri' => $this->structuredUri($key)];
+            return $identity['scope'] === null ? null : [
+                'scope' => $identity['scope'],
+                'canonical_uri' => $identity['canonical_uri'],
+            ];
         }
 
-        $scope = $this->scopeFor($key, $data);
+        $identity = $this->resolver()->resolve($key, $data);
 
-        return $scope === null ? null : ['scope' => $scope, 'canonical_uri' => $this->structuredUri($key)];
+        return $identity['scope'] === null ? null : [
+            'scope' => $identity['scope'],
+            'canonical_uri' => $identity['canonical_uri'],
+        ];
     }
 
     /**

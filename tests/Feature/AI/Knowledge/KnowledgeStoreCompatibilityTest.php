@@ -42,6 +42,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $this->assertFalse(config('services.knowledge.dual_write'));
         $this->assertFalse(config('services.knowledge.project_sync'));
         $this->assertSame(500, config('services.knowledge.lock_wait_milliseconds'));
+        $this->assertSame([], config('services.knowledge.mapping_previous_keys'));
     }
 
     #[Test]
@@ -165,6 +166,11 @@ class KnowledgeStoreCompatibilityTest extends TestCase
         $memory = (new KnowledgeStore)->recall('playbook.resilient');
         $this->assertSame(42, $memory['data']['answer']);
         $this->assertDatabaseCount('knowledge_documents', 0);
+        Storage::disk('local')->assertExists($this->mappingPath('playbook.resilient'));
+        Storage::disk('local')->delete($this->legacyPath('playbook.resilient'));
+        (new KnowledgeStore(new StructuredKnowledgeRepository))->forget('playbook.resilient');
+        Storage::disk('local')->assertMissing($this->mappingPath('playbook.resilient'));
+        $this->assertSame(0, KnowledgeDocument::query()->where('status', 'active')->count());
     }
 
     #[Test]
@@ -350,7 +356,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
             config()->set('services.knowledge.dual_write', $enabled);
 
             if ($enabled) {
-                Log::shouldReceive('notice')->times(count($keys) * 2)->with(
+                Log::shouldReceive('notice')->times(count($keys))->with(
                     'Structured knowledge mirror skipped.',
                     Mockery::on(fn (array $context): bool => isset($context['key_hash'], $context['reason'])
                         && ! array_key_exists('key', $context)),
@@ -513,6 +519,50 @@ class KnowledgeStoreCompatibilityTest extends TestCase
     }
 
     #[Test]
+    public function mapping_false_or_exception_skips_store_and_leaves_no_orphan_after_missing_json_forget(): void
+    {
+        Storage::fake('local');
+        $this->enableDualWrite();
+
+        foreach (['false', 'exception'] as $failure) {
+            $key = 'playbook.mapping-'.$failure;
+            $store = new class(new StructuredKnowledgeRepository, $failure) extends KnowledgeStore
+            {
+                public function __construct(StructuredKnowledgeRepository $repository, private readonly string $failure)
+                {
+                    parent::__construct($repository);
+                }
+
+                protected function writeMapping(
+                    FilesystemAdapter $disk,
+                    string $key,
+                    KnowledgeScope $scope,
+                    string $canonicalUri,
+                ): bool {
+                    if ($this->failure === 'exception') {
+                        throw new RuntimeException('simulated map failure');
+                    }
+
+                    return false;
+                }
+            };
+            Log::shouldReceive('warning')->once()->with(
+                'Structured knowledge scope mapping write failed.',
+                ['key_hash' => hash('sha256', $key), 'reason' => 'mapping_write_failed'],
+            );
+
+            $store->remember($key, ['value' => 'authoritative']);
+
+            $this->assertSame('authoritative', $store->recall($key)['data']['value']);
+            $this->assertDatabaseCount('knowledge_sources', 0);
+            Storage::disk('local')->delete($this->legacyPath($key));
+            $store->forget($key);
+            $this->assertDatabaseCount('knowledge_sources', 0);
+            $this->assertSame(0, KnowledgeDocument::query()->where('status', 'active')->count());
+        }
+    }
+
+    #[Test]
     public function durable_scope_mapping_supports_missing_corrupt_and_repeated_tenant_deletes_without_cross_tenant_effects(): void
     {
         Storage::fake('local');
@@ -531,7 +581,8 @@ class KnowledgeStoreCompatibilityTest extends TestCase
             ]);
             $mapping = json_decode(Storage::disk('local')->get($this->mappingPath($key)), true);
             $this->assertSame([
-                'version', 'key_hash', 'canonical_uri', 'visibility', 'account_id', 'workspace_id', 'project_id', 'integrity_hash',
+                'version', 'key_hash', 'path_hash', 'canonical_uri', 'visibility', 'account_id', 'workspace_id', 'project_id',
+                'signing_key_id', 'signature',
             ], array_keys($mapping));
         }
 
@@ -641,7 +692,7 @@ class KnowledgeStoreCompatibilityTest extends TestCase
 
     private function structuredUri(string $key): string
     {
-        return 'legacy://sha256/'.hash('sha256', $key."\0".$this->legacyPath($key));
+        return 'legacy://sha256/'.hash('sha256', $key);
     }
 
     private function lockPath(string $key): string
