@@ -11,14 +11,23 @@ use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class KnowledgeModelIsolationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTruncation;
+
+    protected function beforeTruncatingDatabase(): void
+    {
+        if (DB::getDriverName() === 'sqlite' && config('database.connections.sqlite.database') === ':memory:') {
+            RefreshDatabaseState::$migrated = false;
+        }
+    }
 
     #[Test]
     public function sources_are_isolated_by_scope_and_expose_document_relations(): void

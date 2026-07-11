@@ -2,14 +2,23 @@
 
 namespace Tests\Feature\AI\Knowledge;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class KnowledgeFoundationSchemaTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTruncation;
+
+    protected function beforeTruncatingDatabase(): void
+    {
+        if (DB::getDriverName() === 'sqlite' && config('database.connections.sqlite.database') === ':memory:') {
+            RefreshDatabaseState::$migrated = false;
+        }
+    }
 
     #[Test]
     public function it_creates_the_knowledge_foundation_schema(): void
