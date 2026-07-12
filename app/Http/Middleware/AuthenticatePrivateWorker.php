@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Domain\AI\Worker\Models\IntelligenceWorker;
 use App\Domain\AI\Worker\Models\IntelligenceWorkerNonce;
 use App\Domain\AI\Worker\Security\WorkerSigner;
+use App\Support\Settings\SettingsStore;
 use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -14,11 +15,18 @@ use Throwable;
 
 class AuthenticatePrivateWorker
 {
-    public function __construct(private readonly WorkerSigner $signer) {}
+    public function __construct(
+        private readonly WorkerSigner $signer,
+        private readonly SettingsStore $settings,
+    ) {}
 
     public function handle(Request $request, Closure $next): mixed
     {
-        if (! (bool) config('services.private_worker.enabled', false)) {
+        $runtimeState = $this->settings->getFresh('services.private_worker.enabled');
+        $enabled = is_bool($runtimeState)
+            ? $runtimeState
+            : (bool) config('services.private_worker.enabled', false);
+        if (! $enabled) {
             abort(404);
         }
 

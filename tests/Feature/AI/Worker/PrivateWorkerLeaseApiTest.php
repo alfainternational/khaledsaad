@@ -5,8 +5,10 @@ namespace Tests\Feature\AI\Worker;
 use App\Domain\AI\Worker\Models\IntelligenceJob;
 use App\Domain\AI\Worker\Models\IntelligenceWorker;
 use App\Domain\AI\Worker\Security\WorkerSigner;
+use App\Support\Settings\SettingsStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -81,6 +83,38 @@ class PrivateWorkerLeaseApiTest extends TestCase
             ->assertJsonPath('code', 'WORKER_TIMESTAMP_INVALID');
 
         config()->set('services.private_worker.enabled', false);
+        $this->call(
+            'POST',
+            '/api/v1/private-worker/lease',
+            [],
+            [],
+            [],
+            $this->signedHeaders($worker, $secret, 'POST', '/api/v1/private-worker/lease', $body),
+            $body,
+        )->assertNotFound();
+    }
+
+    #[Test]
+    public function fresh_runtime_setting_overrides_stale_process_configuration(): void
+    {
+        Storage::fake('local');
+        [$worker, $secret] = $this->worker(['ocr']);
+        $body = json_encode(['capabilities' => ['ocr']], JSON_THROW_ON_ERROR);
+
+        config()->set('services.private_worker.enabled', false);
+        app(SettingsStore::class)->set('services.private_worker.enabled', true);
+        $this->call(
+            'POST',
+            '/api/v1/private-worker/lease',
+            [],
+            [],
+            [],
+            $this->signedHeaders($worker, $secret, 'POST', '/api/v1/private-worker/lease', $body),
+            $body,
+        )->assertNoContent();
+
+        config()->set('services.private_worker.enabled', true);
+        app(SettingsStore::class)->set('services.private_worker.enabled', false);
         $this->call(
             'POST',
             '/api/v1/private-worker/lease',

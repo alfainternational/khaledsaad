@@ -55,5 +55,5 @@ for f in "${FILES[@]}"; do
 done
 
 echo "==> تنظيف كاش الـ views والمسارات + إعادة تشغيل opcache"
-ssh $SSHO "$HOST" "cd $RP && php artisan view:clear >/dev/null 2>&1 || true; php artisan route:clear >/dev/null 2>&1 || true; touch .lsphp_restart.txt 2>/dev/null || true; echo cleared"
+ssh $SSHO "$HOST" "cd $RP && php artisan view:clear >/dev/null 2>&1 || true; php artisan route:clear >/dev/null 2>&1 || true; touch ../.lsphp_restart.txt .lsphp_restart.txt public/.lsphp_restart.txt 2>/dev/null || true; echo cleared"
 echo "نشر مكتمل إلى https://khaledsaad.net/"
