@@ -78,8 +78,8 @@ return new class extends Migration
 
         Schema::create('intelligence_evaluation_results', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('intelligence_evaluation_run_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('intelligence_evaluation_case_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('intelligence_evaluation_run_id');
+            $table->unsignedBigInteger('intelligence_evaluation_case_id');
             $table->unsignedSmallInteger('rank')->nullable();
             $table->decimal('reciprocal_rank', 8, 6)->default(0);
             $table->unsignedInteger('latency_ms')->default(0);
@@ -88,6 +88,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['intelligence_evaluation_run_id', 'intelligence_evaluation_case_id'], 'intelligence_evaluation_result_unique');
+            $table->foreign('intelligence_evaluation_run_id', 'evaluation_results_run_fk')
+                ->references('id')->on('intelligence_evaluation_runs')->cascadeOnDelete();
+            $table->foreign('intelligence_evaluation_case_id', 'evaluation_results_case_fk')
+                ->references('id')->on('intelligence_evaluation_cases')->cascadeOnDelete();
         });
     }
 
