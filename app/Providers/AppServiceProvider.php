@@ -181,6 +181,8 @@ class AppServiceProvider extends ServiceProvider
                     || str_starts_with($key, 'services.web_search.')
                     || str_starts_with($key, 'services.nvidia.')
                     || str_starts_with($key, 'services.gemini.')
+                    || str_starts_with($key, 'services.private_worker.')
+                    || str_starts_with($key, 'services.knowledge.')
                 )) {
                     config([$key => $value]);
                 }
