@@ -29,4 +29,6 @@ Run continuously on a private machine:
 
     python worker.py
 
+On Windows, `run_windows_worker.ps1` reads a DPAPI-encrypted credential file and performs one bounded poll. It is suitable for a one-minute Task Scheduler entry; the worker secret is never stored as plaintext or passed on the task command line.
+
 The worker verifies every leased job signature before execution. Logs contain job IDs and error codes only, not prompts, file contents, secrets, or server error bodies.
