@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{ $description ?? 'منصة التسويق الاستراتيجي — من الفكرة إلى التنفيذ' }}">
     <meta name="theme-color" content="#6366f1">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('brand/favicon-512.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('brand/icon-app.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
     <title>{{ $title ?? 'خالد سعد — المنصة الاستراتيجية' }}</title>
 
     {{-- Preconnect for Google Fonts --}}
@@ -23,7 +27,7 @@
         <header class="site-nav" id="main-nav" role="banner">
             {{-- Logo --}}
             <a href="{{ route('home') }}" class="nav-logo" aria-label="{{ config('app.name') }}">
-                <div class="nav-logo-mark" aria-hidden="true">خ</div>
+                <img class="nav-logo-mark" src="{{ asset('brand/icon-app.png') }}" alt="" aria-hidden="true">
                 <span class="nav-logo-name">خالد سعد</span>
             </a>
 
@@ -94,7 +98,7 @@
                 {{-- Brand column --}}
                 <div>
                     <div class="flex items-center gap-3 mb-4">
-                        <div class="nav-logo-mark" aria-hidden="true">خ</div>
+                        <img class="nav-logo-mark" src="{{ asset('brand/icon-app.png') }}" alt="" aria-hidden="true">
                         <span class="footer-brand-name">خالد سعد</span>
                     </div>
                     <p class="footer-brand-desc">

@@ -447,12 +447,9 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 }
 .nav-logo-mark {
     width: 34px; height: 34px;
-    background: linear-gradient(135deg, var(--p), var(--p2));
     border-radius: var(--r-sm);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff;
-    font-weight: 900;
-    font-size: 15px;
+    display: block;
+    object-fit: cover;
     box-shadow: 0 4px 14px var(--p-glow);
     flex-shrink: 0;
 }
@@ -2689,13 +2686,9 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .app-brand-mark {
     width: 42px;
     height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
+    object-fit: cover;
     border-radius: var(--r-md);
-    background: linear-gradient(135deg, var(--p), var(--p2));
-    color: #fff;
-    font-weight: 900;
     box-shadow: 0 10px 28px var(--p-glow);
 }
 .app-nav {

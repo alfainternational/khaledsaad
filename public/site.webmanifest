@@ -1,0 +1,22 @@
+{
+  "name": "خالد سعد",
+  "short_name": "خالد سعد",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b1c",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/brand/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/icon-app.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

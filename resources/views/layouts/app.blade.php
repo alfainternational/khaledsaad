@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#6366f1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="apple-touch-icon" href="{{ asset('brand/icon-app.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
     <title>{{ $title ?? 'لوحة العمل' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -41,7 +44,7 @@
             </div>
 
             <a href="{{ route('dashboard') }}" class="app-brand">
-                <span class="app-brand-mark">خ</span>
+                <img class="app-brand-mark" src="{{ asset('brand/icon-app.png') }}" alt="">
                 <div>
                     <strong>{{ $currentWorkspace?->name ?? 'مساحة العمل' }}</strong>
                     <span>{{ $currentWorkspace?->account?->subscription?->plan?->name_ar ?? 'بدون خطة' }}</span>
