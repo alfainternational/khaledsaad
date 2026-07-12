@@ -6,14 +6,18 @@ from __future__ import annotations
 import argparse
 import hashlib
 import hmac
+import http.client
 import json
 import os
 import pathlib
+import ssl
+import socket
 import subprocess
 import tempfile
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
 import zipfile
 from typing import Any
 from xml.etree import ElementTree
@@ -43,6 +47,15 @@ class Worker:
         self.ollama_url = os.getenv("AI_WORKER_OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
         self.ollama_model = os.getenv("AI_WORKER_OLLAMA_MODEL", "qwen2.5:7b")
         self.timeout = int(os.getenv("AI_WORKER_HTTP_TIMEOUT", "120"))
+        self.http_host = os.getenv("AI_WORKER_HTTP_HOST", "").strip()
+        self.tls_check_hostname = os.getenv("AI_WORKER_TLS_CHECK_HOSTNAME", "true").lower() not in {
+            "0", "false", "no", "off"
+        }
+        self.tls_server_name = os.getenv("AI_WORKER_TLS_SERVER_NAME", "").strip()
+        self.ssl_context: ssl.SSLContext | None = None
+        if self.base_url.startswith("https://") and not self.tls_check_hostname:
+            self.ssl_context = ssl.create_default_context()
+            self.ssl_context.check_hostname = False
 
     def signed_request(
         self,
@@ -66,18 +79,52 @@ class Worker:
             "X-Worker-Version": self.version,
         }
         headers.update(extra_headers or {})
+        if self.http_host:
+            headers["Host"] = self.http_host
         request = urllib.request.Request(
             self.base_url + "/api/v1/private-worker" + path,
             data=body if method.upper() != "GET" else None,
             headers=headers,
             method=method.upper(),
         )
+        if self.tls_server_name:
+            return self.tunneled_https_request(request, body)
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=self.timeout, context=self.ssl_context) as response:
                 return response.status, response.read(), dict(response.headers.items())
         except urllib.error.HTTPError as error:
             content = error.read()
             raise ProtocolError(f"server rejected request with HTTP {error.code}: {safe_error(content)}") from error
+
+    def tunneled_https_request(
+        self, request: urllib.request.Request, body: bytes
+    ) -> tuple[int, bytes, dict[str, str]]:
+        target = urllib.parse.urlsplit(self.base_url)
+        if target.scheme != "https" or not target.hostname or not target.port:
+            raise ProtocolError("TLS server name override requires an explicit HTTPS tunnel port")
+        context = ssl.create_default_context()
+        connection = http.client.HTTPSConnection(
+            self.tls_server_name, 443, timeout=self.timeout, context=context
+        )
+        connection._create_connection = lambda _address, timeout, source_address=None: socket.create_connection(  # type: ignore[method-assign]
+            (target.hostname, target.port), timeout, source_address
+        )
+        try:
+            connection.request(
+                request.get_method(),
+                request.selector,
+                body=body if request.get_method() != "GET" else None,
+                headers=dict(request.header_items()),
+            )
+            response = connection.getresponse()
+            content = response.read()
+            if response.status >= 400:
+                raise ProtocolError(
+                    f"server rejected request with HTTP {response.status}: {safe_error(content)}"
+                )
+            return response.status, content, dict(response.getheaders())
+        finally:
+            connection.close()
 
     def once(self) -> bool:
         status, body, _ = self.signed_request(

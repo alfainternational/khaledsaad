@@ -57,6 +57,27 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual(11, result["vectors"][0]["chunk_id"])
         self.assertNotIn("text", result["vectors"][0])
 
+    def test_signed_requests_support_a_verified_ssh_tunnel_origin(self):
+        os.environ.update(
+            AI_WORKER_SERVER_URL="https://127.0.0.1:18443",
+            AI_WORKER_ID="wrk_test",
+            AI_WORKER_SECRET="secret",
+            AI_WORKER_HTTP_HOST="khaledsaad.net",
+            AI_WORKER_TLS_CHECK_HOSTNAME="true",
+            AI_WORKER_TLS_SERVER_NAME="khaledsaad.net",
+        )
+        response = MagicMock(status=204)
+        response.read.return_value = b""
+        response.getheaders.return_value = []
+        connection = MagicMock()
+        connection.getresponse.return_value = response
+
+        with patch("http.client.HTTPSConnection", return_value=connection) as opened:
+            Worker().signed_request("POST", "/lease", {"capabilities": ["embeddings"]})
+
+        self.assertEqual("khaledsaad.net", opened.call_args.args[0])
+        self.assertEqual("khaledsaad.net", connection.request.call_args.kwargs["headers"]["Host"])
+
 
 if __name__ == "__main__":
     unittest.main()
