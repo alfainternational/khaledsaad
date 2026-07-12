@@ -3,13 +3,18 @@
 namespace App\Domain\AI\Knowledge;
 
 use App\Domain\AI\Knowledge\Models\KnowledgeChunk;
+use App\Domain\AI\Knowledge\Models\KnowledgeEmbedding;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class KnowledgeRetriever
 {
-    public function __construct(private readonly StructuredKnowledgeRepository $repository) {}
+    public function __construct(
+        private readonly StructuredKnowledgeRepository $repository,
+        private readonly QueryEmbeddingBroker $queryEmbeddings,
+        private readonly VectorMath $vectorMath,
+    ) {}
 
     /** @return Collection<int, KnowledgeEvidence> */
     public function retrieve(KnowledgeScope $scope, string $query, int $limit = 8): Collection
@@ -19,21 +24,31 @@ class KnowledgeRetriever
         }
 
         $terms = $this->terms($query);
-        if ($terms === []) {
+        $hybrid = (bool) config('services.knowledge.hybrid_retrieval', false);
+        if ($terms === [] && ! $hybrid) {
             return collect();
         }
 
         $matches = [];
-        foreach ($this->searchScopes($scope) as [$searchScope, $scopeRank]) {
-            foreach ($this->repository->searchTerms($searchScope, $terms, min(100, $limit * 4)) as $chunk) {
-                $id = (int) $chunk->id;
-                $matches[$id] ??= ['chunk' => $chunk, 'scope_rank' => $scopeRank, 'terms' => []];
-                foreach ($terms as $term) {
-                    if (mb_stripos($chunk->content, $term) !== false) {
-                        $matches[$id]['terms'][$term] = true;
+        if ($terms !== []) {
+            foreach ($this->searchScopes($scope) as [$searchScope, $scopeRank]) {
+                foreach ($this->repository->searchTerms($searchScope, $terms, min(100, $limit * 4)) as $chunk) {
+                    $id = (int) $chunk->id;
+                    $matches[$id] ??= ['chunk' => $chunk, 'scope_rank' => $scopeRank, 'terms' => []];
+                    foreach ($terms as $term) {
+                        if (mb_stripos($chunk->content, $term) !== false) {
+                            $matches[$id]['terms'][$term] = true;
+                        }
                     }
                 }
             }
+        }
+
+        $queryVector = $hybrid
+            ? $this->queryEmbeddings->findOrQueue($scope, $query)
+            : null;
+        if (is_array($queryVector)) {
+            $this->addSemanticMatches($matches, $scope, $queryVector);
         }
 
         return collect($matches)
@@ -43,6 +58,7 @@ class KnowledgeRetriever
                 $document = $chunk->document;
                 $source = $document->source;
                 $termScore = count($match['terms']) * 100;
+                $semanticScore = (int) round(max(0.0, (float) ($match['semantic'] ?? 0.0)) * 350);
                 $scopeScore = (int) $match['scope_rank'] * 10;
                 $trust = (int) $source->trust_score;
 
@@ -57,7 +73,7 @@ class KnowledgeRetriever
                     heading: (string) ($chunk->heading ?? ''),
                     excerpt: Str::limit(trim($chunk->content), 900, ''),
                     locator: is_array($chunk->locator_json) ? $chunk->locator_json : [],
-                    score: $termScore + $scopeScore + $trust,
+                    score: $termScore + $semanticScore + $scopeScore + $trust,
                 );
             })
             ->sortBy([
@@ -66,6 +82,47 @@ class KnowledgeRetriever
             ])
             ->take($limit)
             ->values();
+    }
+
+    /** @param array<int, array{chunk: KnowledgeChunk, scope_rank: int, terms: array<string, true>, semantic?: float}> $matches
+     * @param  list<float>  $queryVector
+     */
+    private function addSemanticMatches(array &$matches, KnowledgeScope $scope, array $queryVector): void
+    {
+        $model = (string) config('services.knowledge.embedding_model', 'nomic-embed-text');
+        $version = (string) config('services.knowledge.embedding_model_version', 'v1');
+        $limit = max(1, min(1000, (int) config('services.knowledge.embedding_candidate_limit', 200)));
+        foreach ($this->searchScopes($scope) as [$searchScope, $scopeRank]) {
+            KnowledgeEmbedding::query()
+                ->with('chunk.document.source')
+                ->where('model_name', $model)
+                ->where('model_version', $version)
+                ->where('status', 'active')
+                ->whereHas('chunk', fn ($query) => $query
+                    ->inScope($searchScope)
+                    ->whereHas('document', fn ($document) => $document->where('status', 'active')))
+                ->orderBy('id')
+                ->limit($limit)
+                ->get()
+                ->each(function (KnowledgeEmbedding $embedding) use (&$matches, $queryVector, $scopeRank): void {
+                    $chunk = $embedding->chunk;
+                    if (! hash_equals($embedding->content_hash, hash('sha256', $chunk->content))) {
+                        return;
+                    }
+                    try {
+                        $cosine = $this->vectorMath->cosine($queryVector, $embedding->vector_json);
+                    } catch (InvalidArgumentException) {
+                        return;
+                    }
+                    if ($cosine < (float) config('services.knowledge.embedding_min_similarity', 0.25)) {
+                        return;
+                    }
+                    $id = (int) $chunk->id;
+                    $matches[$id] ??= ['chunk' => $chunk, 'scope_rank' => $scopeRank, 'terms' => []];
+                    $matches[$id]['semantic'] = max((float) ($matches[$id]['semantic'] ?? -1.0), ($cosine + 1.0) / 2.0);
+                    $matches[$id]['scope_rank'] = max($matches[$id]['scope_rank'], $scopeRank);
+                });
+        }
     }
 
     /** @return list<array{KnowledgeScope, int}> */

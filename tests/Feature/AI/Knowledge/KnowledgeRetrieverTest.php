@@ -5,6 +5,9 @@ namespace Tests\Feature\AI\Knowledge;
 use App\Domain\Account\Models\Account;
 use App\Domain\AI\Knowledge\KnowledgeRetriever;
 use App\Domain\AI\Knowledge\KnowledgeScope;
+use App\Domain\AI\Knowledge\Models\KnowledgeDocument;
+use App\Domain\AI\Knowledge\Models\KnowledgeEmbedding;
+use App\Domain\AI\Knowledge\Models\KnowledgeQueryEmbedding;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
@@ -76,6 +79,49 @@ class KnowledgeRetrieverTest extends TestCase
         $this->assertCount(1, $first);
         $this->assertSame('first', $first->first()->sourceTitle);
         $this->assertEquals($first->toArray(), $second->toArray());
+    }
+
+    #[Test]
+    public function hybrid_retrieval_uses_cached_semantics_without_cross_tenant_leaks(): void
+    {
+        config()->set('services.knowledge.hybrid_retrieval', true);
+        config()->set('services.knowledge.embedding_model', 'test-embed');
+        config()->set('services.knowledge.embedding_model_version', 'v1');
+        [$account, $workspace, $project] = $this->tenant('Hybrid');
+        [, $otherWorkspace, $otherProject] = $this->tenant('Other');
+        $scope = KnowledgeScope::forProject($account->id, $workspace->id, $project->id);
+        $otherScope = KnowledgeScope::forProject((int) $otherWorkspace->account_id, $otherWorkspace->id, $otherProject->id);
+        $repository = app(StructuredKnowledgeRepository::class);
+        $this->store($repository, $scope, 'semantic-target', 80, 'برنامج ولاء يرفع الاحتفاظ بالعملاء');
+        $this->store($repository, $otherScope, 'other-secret', 100, 'بيانات خاصة بمنافس بعيد');
+        $target = KnowledgeDocument::query()->where('title', 'semantic-target')->firstOrFail()->chunks()->sole();
+        $secret = KnowledgeDocument::query()->where('title', 'other-secret')->firstOrFail()->chunks()->sole();
+        foreach ([[$target, [1, 0]], [$secret, [1, 0]]] as [$chunk, $vector]) {
+            KnowledgeEmbedding::query()->create([
+                'knowledge_chunk_id' => $chunk->id,
+                'model_name' => 'test-embed',
+                'model_version' => 'v1',
+                'dimensions' => 2,
+                'content_hash' => hash('sha256', $chunk->content),
+                'vector_json' => $vector,
+                'status' => 'active',
+            ]);
+        }
+        $query = 'نز';
+        KnowledgeQueryEmbedding::query()->create([
+            'scope_key' => $scope->key(),
+            'query_hash' => hash('sha256', mb_strtolower($query)),
+            'model_name' => 'test-embed',
+            'model_version' => 'v1',
+            'dimensions' => 2,
+            'vector_json' => [1, 0],
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $evidence = app(KnowledgeRetriever::class)->retrieve($scope, $query, 5);
+
+        $this->assertSame('semantic-target', $evidence->first()?->sourceTitle);
+        $this->assertFalse($evidence->contains(fn ($item): bool => $item->sourceTitle === 'other-secret'));
     }
 
     private function store(

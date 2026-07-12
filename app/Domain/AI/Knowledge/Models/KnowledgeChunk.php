@@ -6,6 +6,7 @@ use App\Domain\AI\Knowledge\KnowledgeScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class KnowledgeChunk extends Model
 {
@@ -27,6 +28,11 @@ class KnowledgeChunk extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(KnowledgeDocument::class, 'knowledge_document_id');
+    }
+
+    public function embeddings(): HasMany
+    {
+        return $this->hasMany(KnowledgeEmbedding::class, 'knowledge_chunk_id');
     }
 
     public function scopeInScope(Builder $query, KnowledgeScope $scope): Builder

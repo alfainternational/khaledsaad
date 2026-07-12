@@ -131,9 +131,45 @@ class Worker:
             return {"echo": job.get("payload", {}), "worker_version": self.version}
         if job_type == "local_llm":
             return self.local_llm(job.get("payload", {}))
+        if job_type == "embeddings":
+            return self.embeddings(job.get("payload", {}))
         if job_type in {"ocr", "document_extract"}:
             return self.extract_document(job, lease_token)
         raise RuntimeError(f"unsupported capability: {job_type}")
+
+    def embeddings(self, payload: dict[str, Any]) -> dict[str, Any]:
+        items = payload.get("items")
+        model = str(payload.get("model_name", "")).strip()
+        version = str(payload.get("model_version", "")).strip()
+        if not model or not version or not isinstance(items, list) or not 1 <= len(items) <= 64:
+            raise RuntimeError("embedding job contract is invalid")
+        texts: list[str] = []
+        for item in items:
+            if not isinstance(item, dict) or not isinstance(item.get("text"), str) or not item["text"].strip():
+                raise RuntimeError("embedding item is invalid")
+            texts.append(item["text"])
+        request_body = canonical_json({"model": model, "input": texts, "truncate": True}).encode()
+        request = urllib.request.Request(
+            self.ollama_url + "/api/embed",
+            data=request_body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            decoded = json.loads(response.read())
+        vectors = decoded.get("embeddings")
+        if not isinstance(vectors, list) or len(vectors) != len(items):
+            raise RuntimeError("local embedding model returned an invalid batch")
+        output_vectors = []
+        for item, vector in zip(items, vectors, strict=True):
+            identity = {key: value for key, value in item.items() if key != "text"}
+            identity["vector"] = vector
+            output_vectors.append(identity)
+        return {
+            "model_name": model,
+            "model_version": version,
+            "vectors": output_vectors,
+        }
 
     def local_llm(self, payload: dict[str, Any]) -> dict[str, Any]:
         prompt = str(payload.get("prompt", "")).strip()

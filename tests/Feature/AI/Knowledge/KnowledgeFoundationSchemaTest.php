@@ -31,6 +31,11 @@ class KnowledgeFoundationSchemaTest extends TestCase
             'knowledge_evidence' => ['knowledge_claim_id', 'knowledge_chunk_id', 'relation', 'quote'],
             'knowledge_reviews' => ['knowledge_claim_id', 'reviewer_user_id', 'decision', 'reason'],
             'intelligence_jobs' => ['workspace_id', 'project_id', 'type', 'status', 'payload_json', 'attempts'],
+            'knowledge_embeddings' => ['knowledge_chunk_id', 'model_name', 'model_version', 'dimensions', 'content_hash', 'vector_json', 'status'],
+            'knowledge_query_embeddings' => ['scope_key', 'query_hash', 'model_name', 'model_version', 'dimensions', 'vector_json', 'expires_at'],
+            'intelligence_evaluation_cases' => ['public_id', 'scope_key', 'account_id', 'workspace_id', 'project_id', 'visibility', 'query', 'expected_chunk_id', 'minimum_rank', 'status'],
+            'intelligence_evaluation_runs' => ['public_id', 'engine', 'model_name', 'recall_at_k', 'mean_reciprocal_rank', 'status'],
+            'intelligence_evaluation_results' => ['intelligence_evaluation_run_id', 'intelligence_evaluation_case_id', 'rank', 'reciprocal_rank', 'latency_ms', 'passed'],
         ];
 
         foreach ($tables as $table => $columns) {

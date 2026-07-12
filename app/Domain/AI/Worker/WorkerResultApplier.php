@@ -3,18 +3,31 @@
 namespace App\Domain\AI\Worker;
 
 use App\Domain\AI\Knowledge\KnowledgeScope;
+use App\Domain\AI\Knowledge\Models\KnowledgeChunk;
+use App\Domain\AI\Knowledge\Models\KnowledgeEmbedding;
+use App\Domain\AI\Knowledge\Models\KnowledgeQueryEmbedding;
 use App\Domain\AI\Knowledge\Models\KnowledgeUpload;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
+use App\Domain\AI\Knowledge\VectorMath;
 use App\Domain\AI\Worker\Models\IntelligenceJob;
 use App\Domain\AI\Worker\Models\IntelligenceWorker;
 
 class WorkerResultApplier
 {
-    public function __construct(private readonly StructuredKnowledgeRepository $repository) {}
+    public function __construct(
+        private readonly StructuredKnowledgeRepository $repository,
+        private readonly VectorMath $vectorMath,
+    ) {}
 
     /** @param array<string, mixed> $result */
     public function apply(IntelligenceJob $job, IntelligenceWorker $worker, array $result): void
     {
+        if ($job->type === 'embeddings') {
+            $this->applyEmbeddings($job, $result);
+
+            return;
+        }
+
         if (! in_array($job->type, ['ocr', 'document_extract'], true)) {
             return;
         }
@@ -67,6 +80,116 @@ class WorkerResultApplier
                 'chunk_count' => count($chunks),
             ],
         ]);
+    }
+
+    /** @param array<string, mixed> $result */
+    private function applyEmbeddings(IntelligenceJob $job, array $result): void
+    {
+        $payload = $job->payload_json;
+        $expectedModel = $payload['model_name'] ?? null;
+        $expectedVersion = $payload['model_version'] ?? null;
+        $items = $payload['items'] ?? null;
+        $vectors = $result['vectors'] ?? null;
+        if (
+            ! is_string($expectedModel) || $expectedModel === ''
+            || ! is_string($expectedVersion) || $expectedVersion === ''
+            || ($result['model_name'] ?? null) !== $expectedModel
+            || ($result['model_version'] ?? null) !== $expectedVersion
+            || ! is_array($items) || ! array_is_list($items)
+            || ! is_array($vectors) || ! array_is_list($vectors)
+            || $items === [] || count($items) !== count($vectors)
+            || count($items) > (int) config('services.knowledge.embedding_batch_size', 16)
+        ) {
+            throw new WorkerProtocolException('WORKER_RESULT_EMBEDDINGS_INVALID', 422, 'The embedding result does not match its job contract.');
+        }
+
+        if (($payload['target'] ?? 'chunks') === 'query') {
+            $this->applyQueryEmbeddings($job, $items, $vectors, $expectedModel, $expectedVersion);
+
+            return;
+        }
+
+        $expected = collect($items)->keyBy(fn ($item) => is_array($item) ? (string) ($item['chunk_id'] ?? '') : '');
+        if ($expected->count() !== count($items) || $expected->has('')) {
+            throw new WorkerProtocolException('WORKER_RESULT_EMBEDDINGS_INVALID', 422, 'The embedding job contains invalid or duplicate items.');
+        }
+
+        $seen = [];
+        foreach ($vectors as $entry) {
+            $chunkId = is_array($entry) ? filter_var($entry['chunk_id'] ?? null, FILTER_VALIDATE_INT) : false;
+            $contentHash = is_array($entry) ? ($entry['content_hash'] ?? null) : null;
+            $vector = is_array($entry) ? ($entry['vector'] ?? null) : null;
+            $contract = $chunkId !== false ? $expected->get((string) $chunkId) : null;
+            if (
+                ! is_array($contract) || isset($seen[$chunkId]) || ! is_string($contentHash)
+                || ! hash_equals((string) ($contract['content_hash'] ?? ''), $contentHash)
+                || ! is_array($vector)
+            ) {
+                throw new WorkerProtocolException('WORKER_RESULT_EMBEDDINGS_INVALID', 422, 'An embedding item does not match its job contract.');
+            }
+
+            $chunk = KnowledgeChunk::query()->with('document.source')->find($chunkId);
+            $source = $chunk?->document?->source;
+            if (
+                ! $chunk || ! $source || $chunk->document->status !== 'active'
+                || $source->account_id !== $job->account_id
+                || $source->workspace_id !== $job->workspace_id
+                || $source->project_id !== $job->project_id
+                || ! hash_equals($contentHash, hash('sha256', $chunk->content))
+            ) {
+                throw new WorkerProtocolException('WORKER_RESULT_TARGET_INVALID', 422, 'An embedding target is stale or outside the job tenant.');
+            }
+
+            try {
+                $normalized = $this->vectorMath->normalize($vector);
+            } catch (\InvalidArgumentException $exception) {
+                throw new WorkerProtocolException('WORKER_RESULT_EMBEDDINGS_INVALID', 422, $exception->getMessage());
+            }
+
+            KnowledgeEmbedding::query()->updateOrCreate(
+                ['knowledge_chunk_id' => $chunk->id, 'model_name' => $expectedModel, 'model_version' => $expectedVersion],
+                ['dimensions' => count($normalized), 'content_hash' => $contentHash, 'vector_json' => $normalized, 'status' => 'active'],
+            );
+            $seen[$chunkId] = true;
+        }
+    }
+
+    /** @param list<mixed> $items
+     * @param  list<mixed>  $vectors
+     */
+    private function applyQueryEmbeddings(IntelligenceJob $job, array $items, array $vectors, string $model, string $version): void
+    {
+        $scope = match (true) {
+            $job->account_id === null && $job->workspace_id === null && $job->project_id === null => KnowledgeScope::global(),
+            $job->account_id !== null && $job->workspace_id !== null && $job->project_id === null => KnowledgeScope::forWorkspace($job->account_id, $job->workspace_id),
+            $job->account_id !== null && $job->workspace_id !== null && $job->project_id !== null => KnowledgeScope::forProject($job->account_id, $job->workspace_id, $job->project_id),
+            default => throw new WorkerProtocolException('WORKER_RESULT_TARGET_INVALID', 422, 'The query embedding tenant is invalid.'),
+        };
+        $seen = [];
+        foreach ($vectors as $index => $entry) {
+            $contract = $items[$index] ?? null;
+            if (
+                ! is_array($contract) || ! is_array($entry)
+                || ! is_string($contract['scope_key'] ?? null) || ! hash_equals($scope->key(), $contract['scope_key'])
+                || ! is_string($contract['query_hash'] ?? null) || strlen($contract['query_hash']) !== 64
+                || ($entry['scope_key'] ?? null) !== $contract['scope_key']
+                || ($entry['query_hash'] ?? null) !== $contract['query_hash']
+                || ! is_array($entry['vector'] ?? null)
+                || isset($seen[$contract['query_hash']])
+            ) {
+                throw new WorkerProtocolException('WORKER_RESULT_EMBEDDINGS_INVALID', 422, 'A query embedding does not match its job contract.');
+            }
+            try {
+                $normalized = $this->vectorMath->normalize($entry['vector']);
+            } catch (\InvalidArgumentException $exception) {
+                throw new WorkerProtocolException('WORKER_RESULT_EMBEDDINGS_INVALID', 422, $exception->getMessage());
+            }
+            KnowledgeQueryEmbedding::query()->updateOrCreate(
+                ['scope_key' => $scope->key(), 'query_hash' => $contract['query_hash'], 'model_name' => $model, 'model_version' => $version],
+                ['dimensions' => count($normalized), 'vector_json' => $normalized, 'expires_at' => now()->addDays((int) config('services.knowledge.query_embedding_ttl_days', 7))],
+            );
+            $seen[$contract['query_hash']] = true;
+        }
     }
 
     /** @return list<array{heading: string|null, content: string, locator: array<string, mixed>}> */

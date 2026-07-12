@@ -1,8 +1,11 @@
 import hashlib
 import hmac
+import json
+import os
 import unittest
+from unittest.mock import MagicMock, patch
 
-from worker import canonical_json, request_signature
+from worker import Worker, canonical_json, request_signature
 
 
 class ProtocolTest(unittest.TestCase):
@@ -27,6 +30,32 @@ class ProtocolTest(unittest.TestCase):
         )
         expected = hmac.new(secret.encode(), canonical.encode(), hashlib.sha256).hexdigest()
         self.assertEqual(expected, signature)
+
+    def test_embedding_batch_preserves_server_identity_contract(self):
+        os.environ.update(
+            AI_WORKER_SERVER_URL="https://example.test",
+            AI_WORKER_ID="wrk_test",
+            AI_WORKER_SECRET="secret",
+        )
+        response = MagicMock()
+        response.read.return_value = json.dumps({"embeddings": [[3, 4], [5, 12]]}).encode()
+        response.__enter__.return_value = response
+        payload = {
+            "model_name": "nomic-embed-text",
+            "model_version": "v1",
+            "items": [
+                {"chunk_id": 11, "content_hash": "a" * 64, "text": "first"},
+                {"chunk_id": 12, "content_hash": "b" * 64, "text": "second"},
+            ],
+        }
+
+        with patch("urllib.request.urlopen", return_value=response) as opened:
+            result = Worker().embeddings(payload)
+
+        request_body = json.loads(opened.call_args.args[0].data)
+        self.assertEqual(["first", "second"], request_body["input"])
+        self.assertEqual(11, result["vectors"][0]["chunk_id"])
+        self.assertNotIn("text", result["vectors"][0])
 
 
 if __name__ == "__main__":

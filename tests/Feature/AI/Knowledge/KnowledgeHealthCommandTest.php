@@ -115,6 +115,13 @@ class KnowledgeHealthCommandTest extends TestCase
             'online_workers' => 0,
             'pending_reconciliations' => 1,
             'stale_documents' => 1,
+            'active_embeddings' => 0,
+            'embedding_coverage_percent' => 0,
+            'stale_embeddings' => 0,
+            'pending_embedding_jobs' => 0,
+            'latest_evaluation_status' => 'none',
+            'latest_evaluation_recall' => null,
+            'latest_evaluation_mrr' => null,
         ], json_decode(trim(Artisan::output()), true, 512, JSON_THROW_ON_ERROR));
     }
 
@@ -138,6 +145,13 @@ class KnowledgeHealthCommandTest extends TestCase
             ->expectsOutput('online_workers: 0')
             ->expectsOutput('pending_reconciliations: 0')
             ->expectsOutput('stale_documents: 0')
+            ->expectsOutput('active_embeddings: 0')
+            ->expectsOutput('embedding_coverage_percent: 0')
+            ->expectsOutput('stale_embeddings: 0')
+            ->expectsOutput('pending_embedding_jobs: 0')
+            ->expectsOutput('latest_evaluation_status: none')
+            ->expectsOutput('latest_evaluation_recall: ')
+            ->expectsOutput('latest_evaluation_mrr: ')
             ->assertSuccessful();
     }
 }

@@ -12,6 +12,7 @@ use App\Domain\AI\Kernel\Skills\InsightSkill;
 use App\Domain\AI\Kernel\Skills\NextStepSkill;
 use App\Domain\AI\Kernel\Skills\ToolAnalysisSkill;
 use App\Domain\AI\Kernel\Skills\WebResearchSkill;
+use App\Domain\AI\Knowledge\VectorMath;
 use App\Domain\AI\Semantic\LexicalSemanticMatcher;
 use App\Domain\AI\Semantic\SemanticMatcher;
 use App\Domain\AI\Services\AiGatewayFactory;
@@ -65,6 +66,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(EntitlementResolver::class);
         $this->app->singleton(FeatureFlagService::class);
         $this->app->singleton(AuditLogger::class);
+        $this->app->singleton(VectorMath::class, fn () => new VectorMath(
+            max(2, (int) config('services.knowledge.embedding_min_dimensions', 2)),
+            max(2, (int) config('services.knowledge.embedding_max_dimensions', 4096)),
+        ));
         $this->app->singleton(AiGatewayInterface::class, function ($app) {
             // Kill Switch: إيقاف فوري لكل نداءات LLM من لوحة الآدمن.
             if ((bool) config('services.ai.kill_switch', false)) {

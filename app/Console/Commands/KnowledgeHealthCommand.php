@@ -13,6 +13,18 @@ class KnowledgeHealthCommand extends Command
 
     public function handle(): int
     {
+        $activeChunks = DB::table('knowledge_chunks')
+            ->join('knowledge_documents', 'knowledge_documents.id', '=', 'knowledge_chunks.knowledge_document_id')
+            ->where('knowledge_documents.status', 'active')
+            ->count();
+        $activeEmbeddings = DB::table('knowledge_embeddings')
+            ->join('knowledge_chunks', 'knowledge_chunks.id', '=', 'knowledge_embeddings.knowledge_chunk_id')
+            ->join('knowledge_documents', 'knowledge_documents.id', '=', 'knowledge_chunks.knowledge_document_id')
+            ->where('knowledge_embeddings.status', 'active')
+            ->where('knowledge_documents.status', 'active')
+            ->distinct()
+            ->count('knowledge_embeddings.knowledge_chunk_id');
+        $latestEvaluation = DB::table('intelligence_evaluation_runs')->orderByDesc('completed_at')->orderByDesc('id')->first();
         $metrics = [
             'sources' => DB::table('knowledge_sources')->count(),
             'documents' => DB::table('knowledge_documents')->count(),
@@ -43,6 +55,19 @@ class KnowledgeHealthCommand extends Command
                 ->whereNotNull('valid_until')
                 ->where('valid_until', '<', now())
                 ->count(),
+            'active_embeddings' => $activeEmbeddings,
+            'embedding_coverage_percent' => $activeChunks > 0 ? round(($activeEmbeddings / $activeChunks) * 100, 2) : 0,
+            'stale_embeddings' => DB::table('knowledge_embeddings')
+                ->join('knowledge_chunks', 'knowledge_chunks.id', '=', 'knowledge_embeddings.knowledge_chunk_id')
+                ->join('knowledge_documents', 'knowledge_documents.id', '=', 'knowledge_chunks.knowledge_document_id')
+                ->where(fn ($query) => $query
+                    ->where('knowledge_embeddings.status', '!=', 'active')
+                    ->orWhere('knowledge_documents.status', '!=', 'active'))
+                ->count(),
+            'pending_embedding_jobs' => DB::table('intelligence_jobs')->where('type', 'embeddings')->whereIn('status', ['queued', 'leased'])->count(),
+            'latest_evaluation_status' => $latestEvaluation?->status ?? 'none',
+            'latest_evaluation_recall' => $latestEvaluation !== null ? (float) $latestEvaluation->recall_at_k : null,
+            'latest_evaluation_mrr' => $latestEvaluation !== null ? (float) $latestEvaluation->mean_reciprocal_rank : null,
         ];
 
         if ($this->option('json')) {

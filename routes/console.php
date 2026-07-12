@@ -94,7 +94,17 @@ if ((bool) config('services.private_worker.enabled', false)) {
         ->everyFiveMinutes()
         ->withoutOverlapping()
         ->name('private-worker-maintenance');
+
+    Schedule::command('knowledge:queue-embeddings --limit=100')
+        ->everyTenMinutes()
+        ->withoutOverlapping()
+        ->name('knowledge-embedding-indexing');
 }
+
+Schedule::command('knowledge:maintain-embeddings')
+    ->dailyAt('03:05')
+    ->withoutOverlapping()
+    ->name('knowledge-embedding-maintenance');
 
 /*
  | Compile-Ahead: يعيد تجميع artifact الذكاء لكل المساحات (ملء أوّلي + شبكة أمان).
