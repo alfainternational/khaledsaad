@@ -27,5 +27,20 @@ return [
             'expected_source_uri' => 'legacy://sha256/9ba31aeecead059ca36b4ccd4172a819e13b78784d2000ea2a51ac6a2c57d5d1',
             'minimum_rank' => 5,
         ],
+        [
+            'query' => 'كيف أحسن تجربة المشتري بعد إتمام الصفقة؟',
+            'expected_source_uri' => 'legacy://sha256/1933a024f20776e0582efa06340adf2085d507d5d5262957452f4b900ab7916d',
+            'minimum_rank' => 5,
+        ],
+        [
+            'query' => 'كيف أعرف أن دراسة السوق تحتاج إلى بيانات أحدث؟',
+            'expected_source_uri' => 'legacy://sha256/6171f3cc902ab2616143c47752ad854fde84c3ff713db365e8327d60f5ba55b3',
+            'minimum_rank' => 5,
+        ],
+        [
+            'query' => 'أي رقم يكشف تجاوب الجمهور مع الرسائل المتكررة؟',
+            'expected_source_uri' => 'legacy://sha256/918b162fad26011635f3776089c5230d82858da77daf86b88b907d17841deb08',
+            'minimum_rank' => 5,
+        ],
     ],
 ];
