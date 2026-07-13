@@ -158,6 +158,13 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => Get.toNamed(Routes.explore),
+                        icon: const Icon(Icons.explore_outlined, size: 18),
+                        label: const Text('استكشف المنصة بلا تسجيل'),
+                      ),
+                    ),
                   ],
                 ),
               ),
