@@ -37,6 +37,12 @@ class WelcomePage extends StatelessWidget {
               onPressed: () => _go(Routes.login),
               child: const Text('تسجيل الدخول'),
             ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () => Get.toNamed(Routes.explore),
+              icon: const Icon(Icons.explore_outlined, size: 18),
+              label: const Text('استكشف المنصة أولاً — بلا تسجيل'),
+            ),
           ],
         ),
       ),

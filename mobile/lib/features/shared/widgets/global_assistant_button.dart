@@ -17,6 +17,7 @@ class GlobalAssistantButton extends StatelessWidget {
   static const _hiddenRoutes = {
     Routes.splash,
     Routes.welcome,
+    Routes.explore,
     Routes.login,
     Routes.register,
     Routes.forgotPassword,

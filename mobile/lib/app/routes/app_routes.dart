@@ -2,6 +2,7 @@
 abstract class Routes {
   static const splash = '/';
   static const welcome = '/welcome';
+  static const explore = '/explore';
   static const login = '/login';
   static const register = '/register';
   static const forgotPassword = '/forgot-password';

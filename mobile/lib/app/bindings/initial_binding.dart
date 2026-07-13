@@ -8,6 +8,7 @@ import '../../data/repositories/billing_repository.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/repositories/project_repository.dart';
+import '../../data/repositories/public_repository.dart';
 import '../../data/repositories/studio_repository.dart';
 import '../../data/repositories/tool_repository.dart';
 import '../../data/repositories/workspace_repository.dart';
@@ -22,6 +23,8 @@ class InitialBinding extends Bindings {
     Get.lazyPut<ApiClient>(() => ApiClient(Get.find<Dio>()), fenix: true);
 
     Get.lazyPut<AuthRepository>(() => AuthRepository(Get.find<ApiClient>()), fenix: true);
+    Get.lazyPut<PublicRepository>(
+        () => PublicRepository(Get.find<ApiClient>()), fenix: true);
     Get.lazyPut<WorkspaceRepository>(
         () => WorkspaceRepository(Get.find<ApiClient>()), fenix: true);
     Get.lazyPut<ProjectRepository>(

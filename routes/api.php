@@ -58,6 +58,10 @@ Route::prefix('v1')->group(function (): void {
 
     Route::get('/ping', PingController::class)->middleware('throttle:60,1');
 
+    // المحتوى العام (تجربة الضيف في التطبيق): قراءة فقط، مُكاش، بلا مصادقة.
+    Route::get('/public/overview', [\App\Http\Controllers\Api\V1\PublicContentController::class, 'overview'])
+        ->middleware('throttle:30,1');
+
     Route::post('/tokens', [TokenController::class, 'store'])
         ->middleware('throttle:5,1');
 

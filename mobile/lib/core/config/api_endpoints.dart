@@ -5,6 +5,9 @@ class ApiEndpoints {
 
   // الصحة والمصادقة
   static const String ping = '/ping';
+
+  // المحتوى العام (تجربة الضيف — بلا مصادقة)
+  static const String publicOverview = '/public/overview';
   static const String tokens = '/tokens';
   static const String register = '/register';
   static const String logout = '/logout';

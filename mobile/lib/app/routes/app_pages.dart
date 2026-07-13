@@ -9,6 +9,7 @@ import '../../features/auth/register_page.dart';
 import '../../features/billing/billing_page.dart';
 import '../../features/clients/clients_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
+import '../../features/explore/explore_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
 import '../../features/team/team_page.dart';
 import '../../features/projects/brief_page.dart';
@@ -32,6 +33,7 @@ class AppPages {
   static final routes = <GetPage>[
     GetPage(name: Routes.splash, page: () => const SplashPage()),
     GetPage(name: Routes.welcome, page: () => const WelcomePage()),
+    GetPage(name: Routes.explore, page: () => const ExplorePage()),
     GetPage(name: Routes.login, page: () => const LoginPage()),
     GetPage(name: Routes.register, page: () => const RegisterPage()),
     GetPage(
