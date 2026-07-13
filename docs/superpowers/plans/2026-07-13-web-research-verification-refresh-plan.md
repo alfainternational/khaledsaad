@@ -108,4 +108,4 @@
 - [x] Add failing evaluation tests for source diversity, citation completeness, stale/conflict labeling, SSRF rejection, and correct abstention.
 - [x] Implement health counters and rollout documentation, then run all AI knowledge/web/worker tests plus Python worker tests.
 - [x] Deploy migrations and code with web research disabled, run a production canary against two public sources, inspect stored provenance and citations, then enable scheduled refresh only after the gate passes.
-- [ ] Update PR #6 with measured production evidence and commit `docs: verify web research rollout`.
+- [x] Update PR #6 with measured production evidence and commit `docs: verify web research rollout`.
