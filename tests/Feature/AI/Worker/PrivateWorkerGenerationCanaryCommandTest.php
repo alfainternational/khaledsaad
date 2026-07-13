@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\AI\Worker;
 
+use App\Contracts\AiGatewayInterface;
 use App\Domain\AI\Services\PrivateWorkerAiGateway;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -25,8 +26,9 @@ class PrivateWorkerGenerationCanaryCommandTest extends TestCase
             }
         };
         $this->app->instance(PrivateWorkerAiGateway::class, $gateway);
+        $this->app->instance(AiGatewayInterface::class, $gateway);
 
-        $this->artisan('private-worker:generation-canary', ['--json' => true])
+        $this->artisan('private-worker:generation-canary', ['--configured' => true, '--json' => true])
             ->assertSuccessful();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\AiGatewayInterface;
 use App\Domain\AI\Services\PrivateWorkerAiGateway;
 use Illuminate\Console\Command;
 
@@ -9,12 +10,15 @@ class PrivateWorkerGenerationCanaryCommand extends Command
 {
     private const MARKER = 'LOCAL_REASONING_CANARY_20260713';
 
-    protected $signature = 'private-worker:generation-canary {--json : Emit machine-readable output}';
+    protected $signature = 'private-worker:generation-canary
+        {--configured : Test the configured application gateway instead of the direct worker gateway}
+        {--json : Emit machine-readable output}';
 
     protected $description = 'Verify synchronous reasoning is completed by the private local model';
 
-    public function handle(PrivateWorkerAiGateway $gateway): int
+    public function handle(PrivateWorkerAiGateway $directGateway, AiGatewayInterface $configuredGateway): int
     {
+        $gateway = $this->option('configured') ? $configuredGateway : $directGateway;
         $started = microtime(true);
         $response = $gateway->requestContent(
             'حلل العبارة التالية بإيجاز: انخفاض الاحتفاظ مع ارتفاع الزيارات. أعد JSON فقط بالمفاتيح canary وanalysis وrecommendation وmetric. اجعل canary مساوية تماماً لـ'.self::MARKER.'.',
