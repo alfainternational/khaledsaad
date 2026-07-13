@@ -27,6 +27,16 @@ class KnowledgeUploadJobDispatcher
             return $job;
         }
 
+        $payload = [
+            'upload_public_id' => $upload->public_id,
+            'mime_type' => $upload->mime_type,
+            'original_name' => $upload->original_name,
+            'expected_sha256' => $upload->sha256,
+        ];
+        if ((bool) config('services.knowledge.structured_extraction', false)) {
+            $payload['extraction_contract'] = DocumentExtractionContract::definition();
+        }
+
         $job = IntelligenceJob::query()->create([
             'public_id' => (string) Str::uuid(),
             'account_id' => $upload->account_id,
@@ -34,13 +44,7 @@ class KnowledgeUploadJobDispatcher
             'project_id' => $upload->project_id,
             'type' => $type,
             'status' => 'queued',
-            'payload_json' => [
-                'upload_public_id' => $upload->public_id,
-                'mime_type' => $upload->mime_type,
-                'original_name' => $upload->original_name,
-                'expected_sha256' => $upload->sha256,
-                'extraction_contract' => DocumentExtractionContract::definition(),
-            ],
+            'payload_json' => $payload,
             'input_hash' => $upload->sha256,
             'available_at' => now(),
             'timeout_seconds' => $type === 'ocr' ? 600 : 300,

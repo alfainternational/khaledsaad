@@ -21,6 +21,7 @@ class DocumentExtractionContractTest extends TestCase
     #[Test]
     public function binary_jobs_publish_the_bounded_v2_extraction_contract(): void
     {
+        config()->set('services.knowledge.structured_extraction', true);
         $upload = $this->upload('application/pdf', 'report.pdf');
 
         $job = app(KnowledgeUploadJobDispatcher::class)->dispatch($upload);
@@ -34,6 +35,18 @@ class DocumentExtractionContractTest extends TestCase
             'xlsx_cell', 'xlsx_row', 'xlsx_table',
         ], $contract['locator_types']);
         $this->assertSame($upload->sha256, $job->payload_json['expected_sha256']);
+    }
+
+    #[Test]
+    public function structured_extraction_contract_is_omitted_until_the_rollout_flag_is_enabled(): void
+    {
+        config()->set('services.knowledge.structured_extraction', false);
+        $job = app(KnowledgeUploadJobDispatcher::class)->dispatch(
+            $this->upload('application/pdf', 'legacy.pdf'),
+        );
+
+        $this->assertArrayNotHasKey('extraction_contract', $job->payload_json);
+        $this->assertSame(hash('sha256', 'contract'), $job->payload_json['expected_sha256']);
     }
 
     #[Test]

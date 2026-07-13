@@ -143,6 +143,7 @@ return [
         'chunk_bytes' => (int) env('AI_KNOWLEDGE_CHUNK_BYTES', 1048576),
         'chunked_max_bytes' => (int) env('AI_KNOWLEDGE_CHUNKED_MAX_BYTES', 52428800),
         'chunk_session_ttl_minutes' => (int) env('AI_KNOWLEDGE_CHUNK_SESSION_TTL_MINUTES', 120),
+        'structured_extraction' => env('AI_KNOWLEDGE_STRUCTURED_EXTRACTION', false),
         'lock_wait_milliseconds' => env('AI_KNOWLEDGE_LOCK_WAIT_MILLISECONDS', 500),
         'mapping_previous_keys' => array_values(array_filter(array_map(
             'trim',
