@@ -19,10 +19,10 @@
 - Test: `tests/Feature/AI/Worker/DocumentExtractionContractTest.php`
 - Test: `worker/private_intelligence_worker/test_worker.py`
 
-- [ ] Write failing tests for version `v2`, bounded chunks, supported locator types, tool/version metadata, and worker capability reporting.
-- [ ] Run focused PHP and Python tests and confirm the v2 contract is absent.
-- [ ] Implement a single schema shared by OCR and document extraction and include required local-tool availability in worker lease metadata.
-- [ ] Re-run tests and commit `feat: define structured document extraction contract`.
+- [x] Write failing tests for version `v2`, bounded chunks, supported locator types, tool/version metadata, and worker capability reporting.
+- [x] Run focused PHP and Python tests and confirm the v2 contract is absent.
+- [x] Implement a single schema shared by OCR and document extraction and include required local-tool availability in worker lease metadata.
+- [x] Re-run tests and commit `feat: define structured document extraction contract`.
 
 ### Task 2: Structured DOCX and XLSX parsing
 
@@ -92,4 +92,3 @@
 - [ ] Deploy code with new extraction disabled, provision tool versions, then run one private canary per format in an isolated project.
 - [ ] Verify citations, tenant isolation, embeddings, health, cleanup, and production HTTP 200 before enabling v2 extraction.
 - [ ] Update PR #6 with measured evidence and commit `docs: verify advanced file understanding rollout`.
-

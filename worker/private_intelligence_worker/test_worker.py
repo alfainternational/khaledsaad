@@ -6,10 +6,21 @@ import unittest
 import time
 from unittest.mock import MagicMock, patch
 
-from worker import LeaseHeartbeat, Worker, canonical_json, request_signature
+from worker import LeaseHeartbeat, Worker, canonical_json, request_signature, runtime_manifest
 
 
 class ProtocolTest(unittest.TestCase):
+    def test_runtime_manifest_reports_local_tools_and_ocr_languages(self):
+        completed = MagicMock(stdout="tesseract 5.5.0\n")
+        with patch("shutil.which", return_value="D:/tools/tesseract.exe"), patch(
+            "subprocess.run", return_value=completed
+        ):
+            manifest = runtime_manifest()
+
+        self.assertIn("python", manifest)
+        self.assertEqual("tesseract 5.5.0", manifest["tools"]["tesseract"])
+        self.assertEqual(["ara", "eng"], manifest["ocr_languages"])
+
     def test_lease_heartbeat_renews_until_stopped(self):
         sent = []
         heartbeat = LeaseHeartbeat(lambda progress: sent.append(progress), interval=0.01)

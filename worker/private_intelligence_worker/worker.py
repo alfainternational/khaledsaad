@@ -13,6 +13,8 @@ import pathlib
 import ssl
 import socket
 import subprocess
+import shutil
+import sys
 import tempfile
 import threading
 import time
@@ -32,6 +34,27 @@ def request_signature(secret: str, method: str, path: str, timestamp: int, nonce
     body_hash = hashlib.sha256(body).hexdigest()
     canonical = "\n".join((method.upper(), "/" + path.lstrip("/"), str(timestamp), nonce, body_hash))
     return hmac.new(secret.encode(), canonical.encode(), hashlib.sha256).hexdigest()
+
+
+def runtime_manifest() -> dict[str, Any]:
+    tools: dict[str, str] = {}
+    for tool in ("tesseract", "pdftotext", "pdfinfo", "pdftoppm"):
+        path = shutil.which(tool)
+        if not path:
+            continue
+        completed = subprocess.run(
+            [path, "--version"], capture_output=True, text=True, encoding="utf-8", timeout=10, check=False
+        )
+        output = (completed.stdout or completed.stderr).strip().splitlines()
+        tools[tool] = output[0][:120] if output else "available"
+    languages = sorted(set(split_env("AI_WORKER_OCR_LANGUAGE", "ara+eng")))
+    if len(languages) == 1 and "+" in languages[0]:
+        languages = sorted(part for part in languages[0].split("+") if part)
+    return {
+        "python": ".".join(map(str, sys.version_info[:3])),
+        "tools": tools,
+        "ocr_languages": languages,
+    }
 
 
 class ProtocolError(RuntimeError):
@@ -162,7 +185,9 @@ class Worker:
 
     def once(self) -> bool:
         status, body, _ = self.signed_request(
-            "POST", "/lease", {"capabilities": self.capabilities, "version": self.version}
+            "POST",
+            "/lease",
+            {"capabilities": self.capabilities, "version": self.version, "runtime": runtime_manifest()},
         )
         if status == 204:
             return False

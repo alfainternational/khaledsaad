@@ -30,7 +30,15 @@ class PrivateWorkerLeaseApiTest extends TestCase
             'input_hash' => hash('sha256', 'input'),
             'available_at' => now(),
         ]);
-        $body = json_encode(['capabilities' => ['ocr'], 'version' => 'worker-test'], JSON_THROW_ON_ERROR);
+        $body = json_encode([
+            'capabilities' => ['ocr'],
+            'version' => 'worker-test',
+            'runtime' => [
+                'python' => '3.13.1',
+                'tools' => ['tesseract' => '5.5.0', 'pdftotext' => '24.08.0'],
+                'ocr_languages' => ['ara', 'eng'],
+            ],
+        ], JSON_THROW_ON_ERROR);
         $headers = $this->signedHeaders($worker, $secret, 'POST', '/api/v1/private-worker/lease', $body);
 
         $response = $this->call('POST', '/api/v1/private-worker/lease', [], [], [], $headers, $body)
@@ -47,6 +55,8 @@ class PrivateWorkerLeaseApiTest extends TestCase
             'intelligence_worker_id' => $worker->id,
             'attempts' => 1,
         ]);
+        $this->assertSame('5.5.0', $worker->fresh()->meta_json['runtime']['tools']['tesseract']);
+        $this->assertSame(['ara', 'eng'], $worker->fresh()->meta_json['runtime']['ocr_languages']);
 
         $this->call('POST', '/api/v1/private-worker/lease', [], [], [], $headers, $body)
             ->assertStatus(409)

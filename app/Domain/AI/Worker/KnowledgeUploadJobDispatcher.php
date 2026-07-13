@@ -22,6 +22,8 @@ class KnowledgeUploadJobDispatcher
                 'upload_public_id' => $upload->public_id,
                 'mime_type' => $upload->mime_type,
                 'original_name' => $upload->original_name,
+                'expected_sha256' => $upload->sha256,
+                'extraction_contract' => DocumentExtractionContract::definition(),
             ],
             'input_hash' => $upload->sha256,
             'available_at' => now(),

@@ -14,14 +14,24 @@ class WorkerJobLeaser
     public function __construct(private readonly WorkerSigner $signer) {}
 
     /** @return array{job: array<string, mixed>, lease_token: string, job_signature: string}|null */
-    public function lease(IntelligenceWorker $worker, string $secret, array $requestedCapabilities): ?array
-    {
+    public function lease(
+        IntelligenceWorker $worker,
+        string $secret,
+        array $requestedCapabilities,
+        array $runtime = [],
+    ): ?array {
         $allowed = array_values(array_intersect(
             $this->capabilities($worker->capabilities_json),
             $this->capabilities($requestedCapabilities),
         ));
         if ($allowed === []) {
             throw new InvalidArgumentException('The worker did not request an allowed capability.');
+        }
+
+        if ($runtime !== []) {
+            $meta = is_array($worker->meta_json) ? $worker->meta_json : [];
+            $meta['runtime'] = $runtime;
+            $worker->update(['meta_json' => $meta]);
         }
 
         return DB::transaction(function () use ($worker, $secret, $allowed): ?array {

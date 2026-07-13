@@ -21,6 +21,12 @@ class PrivateWorkerController extends Controller
             'capabilities' => ['required', 'array', 'min:1', 'max:20'],
             'capabilities.*' => ['required', 'string', 'regex:/\A[a-z0-9_.-]{2,48}\z/D'],
             'version' => ['nullable', 'string', 'max:80'],
+            'runtime' => ['nullable', 'array'],
+            'runtime.python' => ['nullable', 'string', 'max:40'],
+            'runtime.tools' => ['nullable', 'array', 'max:20'],
+            'runtime.tools.*' => ['nullable', 'string', 'max:120'],
+            'runtime.ocr_languages' => ['nullable', 'array', 'max:20'],
+            'runtime.ocr_languages.*' => ['string', 'regex:/\A[a-z0-9_+-]{2,20}\z/D'],
         ]);
 
         try {
@@ -28,6 +34,7 @@ class PrivateWorkerController extends Controller
                 app('currentPrivateWorker'),
                 app('currentPrivateWorkerSecret'),
                 $data['capabilities'],
+                is_array($data['runtime'] ?? null) ? $data['runtime'] : [],
             );
         } catch (InvalidArgumentException $exception) {
             return response()->json([
