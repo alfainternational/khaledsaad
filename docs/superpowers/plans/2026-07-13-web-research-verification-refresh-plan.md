@@ -78,10 +78,10 @@
 - Test: `tests/Feature/AI/Web/WebKnowledgeIngestorTest.php`
 - Test: `tests/Feature/AI/Web/WebResearchServiceTest.php`
 
-- [ ] Write failing tests proving accepted pages create global versioned sources/documents/chunks, unchanged content is idempotent, changed content supersedes old documents, citations retain URL/title/fetch date, and unverified claims remain labeled.
-- [ ] Run focused tests and confirm current link-only `KnowledgeStore` behavior fails them.
-- [ ] Implement ingestion through structured knowledge, dispatch embeddings, return evidence-backed findings, and preserve lexical fallback when the worker is offline.
-- [ ] Re-run tests and commit `feat: ingest cited web evidence into knowledge`.
+- [x] Write failing tests proving accepted pages create global versioned sources/documents/chunks, unchanged content is idempotent, changed content supersedes old documents, citations retain URL/title/fetch date, and unverified claims remain labeled.
+- [x] Run focused tests and confirm current link-only `KnowledgeStore` behavior fails them.
+- [x] Implement ingestion through structured knowledge, dispatch embeddings, return evidence-backed findings, and preserve lexical fallback when the worker is offline.
+- [x] Re-run tests and commit `feat: ingest cited web evidence into knowledge`.
 
 ### Task 6: Shared-hosting research and refresh commands
 

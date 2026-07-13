@@ -36,15 +36,28 @@ class WebResearchSkill implements Skill
 
         $bullets = [];
         foreach (array_slice((array) ($data['findings'] ?? []), 0, 5) as $f) {
-            $bullets[] = sprintf('[%s] %s', $f['category'] ?? 'عام', (string) ($f['title'] ?? ''));
+            $bullets[] = sprintf(
+                '[%s/%s] %s - %s',
+                $f['category'] ?? 'عام',
+                $f['verification_status'] ?? 'unverified',
+                (string) ($f['title'] ?? ''),
+                (string) ($f['url'] ?? ''),
+            );
         }
+
+        $statuses = array_column((array) ($data['findings'] ?? []), 'verification_status');
+        $confidence = empty($statuses)
+            ? 0
+            : (in_array('conflict', $statuses, true)
+                ? 20
+                : (in_array('verified', $statuses, true) ? 85 : 45));
 
         return new SkillResult(
             code: $this->code(),
             headline: (string) ($data['summary'] ?? 'نتائج البحث'),
             body: '',
             bullets: $bullets,
-            confidence: empty($data['findings']) ? 0 : 75,
+            confidence: $confidence,
             source: SkillResult::SOURCE_LOCAL,
             actions: [],
             meta: [
