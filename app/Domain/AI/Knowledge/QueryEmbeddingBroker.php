@@ -17,7 +17,11 @@ class QueryEmbeddingBroker
         }
         $model = (string) config('services.knowledge.embedding_model', 'nomic-embed-text');
         $version = (string) config('services.knowledge.embedding_model_version', 'v1');
-        $queryHash = hash('sha256', $normalized);
+        $instruction = trim((string) config('services.knowledge.embedding_query_instruction', ''));
+        $modelInput = $instruction === ''
+            ? $normalized
+            : "Instruct: {$instruction}\nQuery: {$normalized}";
+        $queryHash = hash('sha256', $modelInput);
         $cached = KnowledgeQueryEmbedding::query()
             ->where('scope_key', $scope->key())
             ->where('query_hash', $queryHash)
@@ -36,7 +40,7 @@ class QueryEmbeddingBroker
             'target' => 'query',
             'model_name' => $model,
             'model_version' => $version,
-            'items' => [['scope_key' => $scope->key(), 'query_hash' => $queryHash, 'text' => $normalized]],
+            'items' => [['scope_key' => $scope->key(), 'query_hash' => $queryHash, 'text' => $modelInput]],
         ];
         IntelligenceJob::query()->create([
             'public_id' => (string) Str::uuid(),

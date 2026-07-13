@@ -145,6 +145,7 @@ return [
         'embedding_batch_size' => (int) env('AI_KNOWLEDGE_EMBEDDING_BATCH_SIZE', 16),
         'embedding_candidate_limit' => (int) env('AI_KNOWLEDGE_EMBEDDING_CANDIDATE_LIMIT', 200),
         'embedding_min_similarity' => (float) env('AI_KNOWLEDGE_EMBEDDING_MIN_SIMILARITY', 0.25),
+        'embedding_query_instruction' => env('AI_KNOWLEDGE_EMBEDDING_QUERY_INSTRUCTION', ''),
         'embedding_min_dimensions' => (int) env('AI_KNOWLEDGE_EMBEDDING_MIN_DIMENSIONS', 2),
         'embedding_max_dimensions' => (int) env('AI_KNOWLEDGE_EMBEDDING_MAX_DIMENSIONS', 4096),
         'query_embedding_ttl_days' => (int) env('AI_KNOWLEDGE_QUERY_EMBEDDING_TTL_DAYS', 7),
