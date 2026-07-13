@@ -295,6 +295,8 @@ class Worker:
         prompt = str(payload.get("prompt", "")).strip()
         if not prompt:
             raise RuntimeError("local model prompt is empty")
+        system_prompt = str(payload.get("system_prompt", "")).strip()
+        model_prompt = f"SYSTEM:\n{system_prompt}\n\nUSER:\n{prompt}" if system_prompt else prompt
         max_tokens = max(64, min(2048, int(payload.get("max_tokens", self.llm_max_tokens))))
         request_body = canonical_json(
             {
@@ -303,7 +305,7 @@ class Worker:
                 "format": "json",
                 "think": False,
                 "options": {"num_predict": max_tokens},
-                "prompt": prompt,
+                "prompt": model_prompt,
             }
         ).encode()
         request = urllib.request.Request(

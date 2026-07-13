@@ -97,11 +97,15 @@ class ProtocolTest(unittest.TestCase):
         response.__enter__.return_value = response
 
         with patch("urllib.request.urlopen", return_value=response) as opened:
-            result = Worker().local_llm({"prompt": "extract claims", "max_tokens": 128})
+            result = Worker().local_llm({
+                "prompt": "extract claims", "system_prompt": "Use evidence only", "max_tokens": 128
+            })
 
         request_body = json.loads(opened.call_args.args[0].data)
         self.assertFalse(request_body["think"])
         self.assertEqual(128, request_body["options"]["num_predict"])
+        self.assertIn("Use evidence only", request_body["prompt"])
+        self.assertIn("extract claims", request_body["prompt"])
         self.assertEqual([], result["claims"])
 
     def test_signed_requests_support_a_verified_ssh_tunnel_origin(self):
