@@ -153,6 +153,28 @@ class KnowledgeUploadApiTest extends TestCase
         $this->assertArrayNotHasKey('disk', $payload);
     }
 
+    #[Test]
+    public function retrying_a_heavy_upload_reuses_its_active_job_and_redispatches_after_failure(): void
+    {
+        Storage::fake('local');
+        [$owner, $workspace, $project] = $this->tenant('Retry Heavy');
+        $token = $owner->createToken('owner')->plainTextToken;
+        $base = '/api/v1/workspaces/'.$workspace->public_id.'/projects/'.$project->public_id.'/knowledge/uploads';
+        $created = $this->withToken($token)->post($base, [
+            'file' => UploadedFile::fake()->create('retry.pdf', 200, 'application/pdf'),
+        ], ['Accept' => 'application/json'])->assertAccepted();
+        $uploadId = $created->json('data.public_id');
+        $job = IntelligenceJob::query()->sole();
+
+        $this->withToken($token)->postJson($base.'/'.$uploadId.'/retry')->assertAccepted();
+        $this->assertDatabaseCount('intelligence_jobs', 1);
+
+        $job->update(['status' => 'failed']);
+        $this->withToken($token)->postJson($base.'/'.$uploadId.'/retry')->assertAccepted();
+        $this->assertDatabaseCount('intelligence_jobs', 2);
+        $this->assertSame(1, IntelligenceJob::query()->where('status', 'queued')->count());
+    }
+
     /** @return array{User, Workspace, Project} */
     private function tenant(string $suffix): array
     {

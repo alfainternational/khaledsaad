@@ -122,13 +122,25 @@ class KnowledgeUploadController extends Controller
             ->setStatusCode(201);
     }
 
-    public function retry(Request $request, KnowledgeUploadIndexer $indexer): KnowledgeUploadResource|JsonResponse
-    {
+    public function retry(
+        Request $request,
+        KnowledgeUploadIndexer $indexer,
+        KnowledgeUploadJobDispatcher $dispatcher,
+        TextKnowledgeExtractor $extractor,
+    ): KnowledgeUploadResource|JsonResponse {
         $project = $this->currentProject();
         $this->authorize('update', $project);
         $upload = $this->upload($project, (string) $request->route('uploadPublicId'));
 
         try {
+            if (! $extractor->supports($upload->mime_type)) {
+                $dispatcher->dispatch($upload);
+
+                return (new KnowledgeUploadResource($upload->fresh()))
+                    ->response()
+                    ->setStatusCode(202);
+            }
+
             return new KnowledgeUploadResource($indexer->index($upload));
         } catch (KnowledgeExtractionException $exception) {
             return $this->extractionFailure($upload->fresh(), $exception);
