@@ -72,6 +72,27 @@ class MonitoringScheduleTest extends TestCase
         }
     }
 
+    #[Test]
+    public function web_refresh_runs_hourly_without_overlapping_only_when_enabled(): void
+    {
+        config()->set('services.web_search.scheduled_refresh', true);
+
+        try {
+            require base_path('routes/console.php');
+            $events = array_values(array_filter(
+                Schedule::events(),
+                fn ($event): bool => str_contains($event->command ?? '', 'knowledge:refresh-web'),
+            ));
+
+            $this->assertCount(1, $events);
+            $this->assertSame('17 * * * *', $events[0]->expression);
+            $this->assertSame('knowledge-web-refresh', $events[0]->description);
+            $this->assertTrue($events[0]->withoutOverlapping);
+        } finally {
+            config()->set('services.web_search.scheduled_refresh', false);
+        }
+    }
+
     /** @return list<Event> */
     private function projectKnowledgeSyncEvents(): array
     {

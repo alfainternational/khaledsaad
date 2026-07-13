@@ -20,7 +20,7 @@ class WebSourcePolicy
             : ($this->isInstitutional($host) ? ['institutional', 90] : ['unknown', 50]);
 
         $freshness = 'unknown';
-        $validUntil = null;
+        $validUntil = CarbonImmutable::now()->addDays(max(1, $this->freshnessDays))->utc()->toIso8601String();
         if ($publishedAt !== null) {
             $published = CarbonImmutable::instance($publishedAt);
             $valid = $published->addDays(max(1, $this->freshnessDays));

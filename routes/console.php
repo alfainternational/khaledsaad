@@ -106,6 +106,13 @@ Schedule::command('knowledge:maintain-embeddings')
     ->withoutOverlapping()
     ->name('knowledge-embedding-maintenance');
 
+if ((bool) config('services.web_search.scheduled_refresh', false)) {
+    Schedule::command('knowledge:refresh-web --limit=10 --deadline=40')
+        ->hourlyAt(17)
+        ->withoutOverlapping()
+        ->name('knowledge-web-refresh');
+}
+
 /*
  | Compile-Ahead: يعيد تجميع artifact الذكاء لكل المساحات (ملء أوّلي + شبكة أمان).
  | العرض اليومي يقرأ الناتج الجاهز فقط — صفر حساب وقت الطلب.

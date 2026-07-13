@@ -92,10 +92,10 @@
 - Test: `tests/Feature/AI/Web/WebResearchCommandsTest.php`
 - Test: `tests/Feature/Intelligence/MonitoringScheduleTest.php`
 
-- [ ] Write failing tests for bounded batches, resumable runs, host rate limits, due-only refresh, retry backoff, stale marking, and disabled rollout behavior.
-- [ ] Run tests and confirm commands/schedules are absent.
-- [ ] Implement cron-safe commands with locks, limits, deadlines, checkpoints, and schedules that fit shared hosting.
-- [ ] Re-run tests and commit `feat: schedule bounded web knowledge refresh`.
+- [x] Write failing tests for bounded batches, resumable runs, host rate limits, due-only refresh, retry backoff, stale marking, and disabled rollout behavior.
+- [x] Run tests and confirm commands/schedules are absent.
+- [x] Implement cron-safe commands with locks, limits, deadlines, checkpoints, and schedules that fit shared hosting.
+- [x] Re-run tests and commit `feat: schedule bounded web knowledge refresh`.
 
 ### Task 7: Evaluation, health, rollout, and production proof
 
