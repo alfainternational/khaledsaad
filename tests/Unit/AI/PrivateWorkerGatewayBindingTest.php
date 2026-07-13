@@ -21,4 +21,16 @@ class PrivateWorkerGatewayBindingTest extends TestCase
 
         $this->assertInstanceOf(PrivateWorkerAiGateway::class, $gateway);
     }
+
+    #[Test]
+    public function external_generation_lock_forces_the_private_worker_even_if_provider_setting_drifts(): void
+    {
+        config()->set('services.ai.provider', 'groq');
+        config()->set('services.ai.external_generation_disabled', true);
+        config()->set('services.ai.cache', false);
+        config()->set('services.private_worker.enabled', true);
+        $this->app->forgetInstance(AiGatewayInterface::class);
+
+        $this->assertInstanceOf(PrivateWorkerAiGateway::class, $this->app->make(AiGatewayInterface::class));
+    }
 }

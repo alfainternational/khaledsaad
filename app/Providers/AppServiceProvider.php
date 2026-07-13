@@ -81,6 +81,9 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $provider = config('services.ai.provider', 'gemini');
+            if ((bool) config('services.ai.external_generation_disabled', true)) {
+                $provider = 'private_worker';
+            }
             $factory = new AiGatewayFactory;
 
             $gateway = match ($provider) {
