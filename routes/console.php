@@ -151,7 +151,9 @@ Artisan::command('ai:distill {limit=8}', function (AiGatewayInterface $gateway, 
 
         return;
     }
-    if (! config('services.gemini.key') && ! config('services.nvidia.key')) {
+    $localReady = config('services.ai.provider') === 'private_worker'
+        && (bool) config('services.private_worker.enabled', false);
+    if (! $localReady && ! config('services.gemini.key') && ! config('services.nvidia.key')) {
         $this->warn('ai:distill — لا مزوّد LLM مهيّأ.');
 
         return;
@@ -216,7 +218,9 @@ Artisan::command('ai:teach {limit=6}', function (AiGatewayInterface $gateway, Kn
 
         return;
     }
-    if (! config('services.gemini.key') && ! config('services.nvidia.key')) {
+    $localReady = config('services.ai.provider') === 'private_worker'
+        && (bool) config('services.private_worker.enabled', false);
+    if (! $localReady && ! config('services.gemini.key') && ! config('services.nvidia.key')) {
         $this->warn('ai:teach — لا مزوّد LLM مهيّأ.');
 
         return;
