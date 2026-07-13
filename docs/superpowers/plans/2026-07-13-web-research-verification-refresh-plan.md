@@ -49,10 +49,10 @@
 - Modify: `app/Providers/AppServiceProvider.php`
 - Test: `tests/Unit/AI/Web/CompositeWebSearchGatewayTest.php`
 
-- [ ] Write failing tests proving deterministic deduplication, canonical URLs, provider fallback, per-domain diversity, and graceful partial failure.
-- [ ] Run the focused test and confirm the composite gateway is absent.
-- [ ] Implement the composite contract with DuckDuckGo enabled by default and optional private SearXNG, never requiring either for stored-knowledge retrieval.
-- [ ] Re-run tests and commit `feat: add resilient web search discovery`.
+- [x] Write failing tests proving deterministic deduplication, canonical URLs, provider fallback, per-domain diversity, and graceful partial failure.
+- [x] Run the focused test and confirm the composite gateway is absent.
+- [x] Implement the composite contract with DuckDuckGo enabled by default and optional private SearXNG, never requiring either for stored-knowledge retrieval.
+- [x] Re-run tests and commit `feat: add resilient web search discovery`.
 
 ### Task 4: Trust, freshness, and multi-source verification
 

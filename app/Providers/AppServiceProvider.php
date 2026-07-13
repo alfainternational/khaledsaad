@@ -25,7 +25,10 @@ use App\Domain\AI\Services\NullAiGateway;
 use App\Domain\AI\Services\NvidiaNimGateway;
 use App\Domain\AI\Services\PrivateWorkerAiGateway;
 use App\Domain\AI\Web\DuckDuckGoSearchGateway;
+use App\Domain\AI\Web\CompositeWebSearchGateway;
 use App\Domain\AI\Web\NullWebSearchGateway;
+use App\Domain\AI\Web\SearxngSearchGateway;
+use App\Domain\AI\Web\WebSearchResultNormalizer;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Client\Models\Client;
@@ -142,9 +145,17 @@ class AppServiceProvider extends ServiceProvider
                 return new NullWebSearchGateway;
             }
 
-            return match (config('services.web_search.provider', 'duckduckgo')) {
-                default => $app->make(DuckDuckGoSearchGateway::class),
-            };
+            $duckDuckGo = $app->make(DuckDuckGoSearchGateway::class);
+            $searxng = new SearxngSearchGateway(config('services.web_search.searxng_url'));
+            $gateways = config('services.web_search.provider', 'duckduckgo') === 'searxng'
+                ? ['searxng' => $searxng, 'duckduckgo' => $duckDuckGo]
+                : ['duckduckgo' => $duckDuckGo, 'searxng' => $searxng];
+
+            return new CompositeWebSearchGateway(
+                $gateways,
+                $app->make(WebSearchResultNormalizer::class),
+                2,
+            );
         });
 
         // كتالوج قدرات الوكلاء الـ25: المصدر الوحيد لـ«الكشف الانتقائي». مفرد
