@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AdminFeatureFlagController;
 use App\Http\Controllers\Api\V1\AgencyBrandingController;
 use App\Http\Controllers\Api\V1\AiAssistController;
+use App\Http\Controllers\Api\AiConversationController;
 use App\Http\Controllers\Api\V1\ApprovalController;
 use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\ClientController;
@@ -145,6 +146,11 @@ Route::prefix('v1')->group(function (): void {
             // مساعد الذكاء (chat/analyze/suggest/research)
             Route::middleware('throttle:ai-assist')->prefix('ai')->group(function (): void {
                 Route::post('/chat', [AiAssistController::class, 'chat']);
+                Route::get('/conversations', [AiConversationController::class, 'index']);
+                Route::post('/conversations', [AiConversationController::class, 'store']);
+                Route::get('/conversations/{conversationPublicId}', [AiConversationController::class, 'show']);
+                Route::post('/conversations/{conversationPublicId}/messages', [AiConversationController::class, 'storeMessage']);
+                Route::get('/conversations/{conversationPublicId}/messages/{messagePublicId}', [AiConversationController::class, 'showMessage']);
                 Route::post('/analyze', [AiAssistController::class, 'analyze']);
                 Route::post('/suggest', [AiAssistController::class, 'suggest']);
                 Route::post('/research', [AiAssistController::class, 'research']);
