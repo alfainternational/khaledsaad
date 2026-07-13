@@ -60,8 +60,9 @@ class AiConversationController extends Controller
         return response()->json(['data' => $this->conversationData($conversation)], 201);
     }
 
-    public function show(Request $request, string $conversationPublicId): JsonResponse
+    public function show(Request $request): JsonResponse
     {
+        $conversationPublicId = (string) $request->route('conversationPublicId');
         $conversation = $this->ownedConversation($request, $conversationPublicId);
         $perPage = min(max($request->integer('per_page', 50), 1), 100);
         $paginator = $conversation->messages()->latest('id')->paginate($perPage);
@@ -79,8 +80,9 @@ class AiConversationController extends Controller
         ]);
     }
 
-    public function storeMessage(Request $request, string $conversationPublicId): JsonResponse
+    public function storeMessage(Request $request): JsonResponse
     {
+        $conversationPublicId = (string) $request->route('conversationPublicId');
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:5000'],
             'client_request_id' => ['required', 'string', 'max:100'],
@@ -102,8 +104,10 @@ class AiConversationController extends Controller
         ]], 202);
     }
 
-    public function showMessage(Request $request, string $conversationPublicId, string $messagePublicId): JsonResponse
+    public function showMessage(Request $request): JsonResponse
     {
+        $conversationPublicId = (string) $request->route('conversationPublicId');
+        $messagePublicId = (string) $request->route('messagePublicId');
         $conversation = $this->ownedConversation($request, $conversationPublicId);
         $message = $conversation->messages()->where('public_id', $messagePublicId)->firstOrFail();
 

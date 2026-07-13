@@ -97,6 +97,13 @@ class AiChatConversationApiTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.public_id', $conversation->public_id);
 
+        $this->withToken($ownerToken)
+            ->getJson($base.'/'.$conversation->public_id)
+            ->assertOk()
+            ->assertJsonPath('data.public_id', $conversation->public_id)
+            ->assertJsonPath('messages.meta.total', 1);
+
+        $this->app['auth']->forgetGuards();
         $this->withToken($otherToken)
             ->getJson($base.'/'.$conversation->public_id)
             ->assertNotFound();
