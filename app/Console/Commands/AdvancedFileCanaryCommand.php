@@ -165,19 +165,22 @@ class AdvancedFileCanaryCommand extends Command
             $locatorTypes = $document?->chunks->pluck('locator_json.type')->filter()->unique()->values()->all() ?? [];
             $scope = KnowledgeScope::forProject($account->id, $project->workspace_id, $project->id);
             $controlScope = KnowledgeScope::forProject($account->id, $control->workspace_id, $control->id);
-            $evidence = $retriever->retrieve($scope, $definition['term'], 3);
-            $leaked = $retriever->retrieve($controlScope, $definition['term'], 3);
+            $sourceUri = 'upload://'.($upload?->public_id ?? 'missing');
+            $evidence = $retriever->retrieve($scope, $definition['term'], 10)
+                ->first(fn ($item) => $item->sourceUri === $sourceUri);
+            $leaked = $retriever->retrieve($controlScope, $definition['term'], 10)
+                ->contains(fn ($item) => $item->sourceUri === $sourceUri);
             $checks[$name] = [
                 'status' => $upload?->status,
                 'contract' => $upload?->extraction_meta_json['contract_version'] ?? null,
                 'locator_types' => $locatorTypes,
-                'citation' => $evidence->first()?->citation,
-                'isolated' => $leaked->isEmpty(),
+                'citation' => $evidence?->citation,
+                'isolated' => ! $leaked,
                 'passed' => $upload?->status === 'indexed'
                     && ($upload?->extraction_meta_json['contract_version'] ?? null) === 'v2'
                     && in_array($definition['locator'], $locatorTypes, true)
-                    && $evidence->isNotEmpty()
-                    && $leaked->isEmpty(),
+                    && $evidence !== null
+                    && ! $leaked,
             ];
         }
         $chunkIds = $uploads->flatMap(fn (KnowledgeUpload $upload) => $upload->source?->documents
