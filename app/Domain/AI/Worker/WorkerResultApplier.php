@@ -9,6 +9,8 @@ use App\Domain\AI\Knowledge\Models\KnowledgeQueryEmbedding;
 use App\Domain\AI\Knowledge\Models\KnowledgeUpload;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use App\Domain\AI\Knowledge\VectorMath;
+use App\Domain\AI\Web\Models\WebResearchRun;
+use App\Domain\AI\Web\WebEvidenceVerifier;
 use App\Domain\AI\Worker\Models\IntelligenceJob;
 use App\Domain\AI\Worker\Models\IntelligenceWorker;
 
@@ -17,6 +19,7 @@ class WorkerResultApplier
     public function __construct(
         private readonly StructuredKnowledgeRepository $repository,
         private readonly VectorMath $vectorMath,
+        private readonly WebEvidenceVerifier $webEvidenceVerifier,
     ) {}
 
     /** @param array<string, mixed> $result */
@@ -24,6 +27,12 @@ class WorkerResultApplier
     {
         if ($job->type === 'embeddings') {
             $this->applyEmbeddings($job, $result);
+
+            return;
+        }
+
+        if ($job->type === 'local_llm' && ($job->payload_json['purpose'] ?? null) === 'web_claim_verification') {
+            $this->applyWebClaims($job, $result);
 
             return;
         }
@@ -80,6 +89,89 @@ class WorkerResultApplier
                 'chunk_count' => count($chunks),
             ],
         ]);
+    }
+
+    /** @param array<string, mixed> $result */
+    private function applyWebClaims(IntelligenceJob $job, array $result): void
+    {
+        $runPublicId = $job->payload_json['run_public_id'] ?? null;
+        $claims = $result['claims'] ?? null;
+        if (! is_string($runPublicId) || ! is_array($claims) || ! array_is_list($claims) || count($claims) > 50) {
+            throw new WorkerProtocolException('WORKER_RESULT_WEB_CLAIMS_INVALID', 422, 'The web claim result contract is invalid.');
+        }
+
+        $run = WebResearchRun::query()->where('public_id', $runPublicId)
+            ->with(['results.knowledgeDocument'])->first();
+        if (! $run) {
+            throw new WorkerProtocolException('WORKER_RESULT_TARGET_INVALID', 422, 'The web research run no longer exists.');
+        }
+        $resultsByUrl = $run->results->keyBy('normalized_url');
+        $verifierInput = [];
+        $resultIdsByClaim = [];
+
+        foreach ($claims as $claim) {
+            $key = is_array($claim) ? trim((string) ($claim['key'] ?? '')) : '';
+            $evidence = is_array($claim) ? ($claim['evidence'] ?? null) : null;
+            if ($key === '' || mb_strlen($key) > 120 || ! is_array($evidence) || ! array_is_list($evidence) || count($evidence) > 10) {
+                throw new WorkerProtocolException('WORKER_RESULT_WEB_CLAIMS_INVALID', 422, 'A web claim entry is invalid.');
+            }
+
+            foreach ($evidence as $entry) {
+                $url = is_array($entry) ? trim((string) ($entry['url'] ?? '')) : '';
+                $value = is_array($entry) ? trim((string) ($entry['value'] ?? '')) : '';
+                $quote = is_array($entry) ? $this->normalizeQuote((string) ($entry['quote'] ?? '')) : '';
+                $webResult = $resultsByUrl->get($url);
+                $documentText = $this->normalizeQuote((string) $webResult?->knowledgeDocument?->content);
+                if (! $webResult || $value === '' || mb_strlen($value) > 500 || $quote === '' || mb_strlen($quote) > 1000
+                    || ! str_contains($documentText, $quote)) {
+                    throw new WorkerProtocolException('WORKER_RESULT_WEB_CLAIMS_INVALID', 422, 'A web claim quote is not grounded in its source.');
+                }
+
+                $verifierInput[] = [
+                    'claim_key' => $key,
+                    'claim_value' => $value,
+                    'domain' => $webResult->domain,
+                    'trust_score' => $webResult->trust_score,
+                    'freshness_status' => $webResult->freshness_status,
+                ];
+                $resultIdsByClaim[$key][$webResult->id] = true;
+            }
+        }
+
+        $findings = $this->webEvidenceVerifier->verify($verifierInput);
+        $statusByResult = [];
+        foreach ($findings as $finding) {
+            foreach (array_keys($resultIdsByClaim[$finding->claimKey] ?? []) as $resultId) {
+                $current = $statusByResult[$resultId] ?? 'unverified';
+                $statusByResult[$resultId] = $finding->status === 'conflict'
+                    ? 'conflict'
+                    : ($finding->status === 'verified' && $current !== 'conflict' ? 'verified' : $current);
+            }
+        }
+
+        foreach ($run->results as $webResult) {
+            $status = $statusByResult[$webResult->id] ?? 'unverified';
+            $meta = is_array($webResult->meta_json) ? $webResult->meta_json : [];
+            $webResult->update([
+                'verification_status' => $status,
+                'meta_json' => array_merge($meta, [
+                    'claim_verification' => array_map(
+                        static fn ($finding): array => $finding->toArray(),
+                        $findings,
+                    ),
+                    'verified_by_worker_job' => $job->public_id,
+                ]),
+            ]);
+        }
+        $run->update([
+            'verified_count' => $run->results()->where('verification_status', 'verified')->count(),
+            'conflict_count' => $run->results()->where('verification_status', 'conflict')->count(),
+        ]);
+    }
+
+    private function normalizeQuote(string $value): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', $value));
     }
 
     /** @param array<string, mixed> $result */

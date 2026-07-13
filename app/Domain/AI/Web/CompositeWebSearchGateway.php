@@ -21,6 +21,7 @@ class CompositeWebSearchGateway implements WebSearchGateway
         $results = [];
         $seen = [];
         $domainCounts = [];
+        $queues = [];
 
         foreach ($this->gateways as $provider => $gateway) {
             try {
@@ -34,21 +35,34 @@ class CompositeWebSearchGateway implements WebSearchGateway
                     continue;
                 }
 
-                $hash = hash('sha256', $normalized['url']);
-                $domain = strtolower((string) parse_url($normalized['url'], PHP_URL_HOST));
-                if (isset($seen[$hash]) || ($domainCounts[$domain] ?? 0) >= max(1, $this->perDomainLimit)) {
-                    continue;
-                }
-
-                $seen[$hash] = true;
-                $domainCounts[$domain] = ($domainCounts[$domain] ?? 0) + 1;
-                $results[] = $normalized + ['provider' => (string) $provider];
-
-                if (count($results) >= $limit) {
-                    return $results;
-                }
+                $queues[(string) $provider][] = $normalized;
             }
         }
+
+        do {
+            $progress = false;
+            foreach ($queues as $provider => &$queue) {
+                while (($normalized = array_shift($queue)) !== null) {
+                    $progress = true;
+                    $hash = hash('sha256', $normalized['url']);
+                    $domain = strtolower((string) parse_url($normalized['url'], PHP_URL_HOST));
+                    if (isset($seen[$hash]) || ($domainCounts[$domain] ?? 0) >= max(1, $this->perDomainLimit)) {
+                        continue;
+                    }
+
+                    $seen[$hash] = true;
+                    $domainCounts[$domain] = ($domainCounts[$domain] ?? 0) + 1;
+                    $results[] = $normalized + ['provider' => (string) $provider];
+
+                    if (count($results) >= $limit) {
+                        return $results;
+                    }
+
+                    break;
+                }
+            }
+            unset($queue);
+        } while ($progress);
 
         return $results;
     }

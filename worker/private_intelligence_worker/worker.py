@@ -14,6 +14,7 @@ import ssl
 import socket
 import subprocess
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -37,6 +38,38 @@ class ProtocolError(RuntimeError):
     pass
 
 
+class LeaseHeartbeat:
+    def __init__(self, send: Any, interval: float = 45.0) -> None:
+        self.send = send
+        self.interval = max(0.01, interval)
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+        self._error: Exception | None = None
+
+    def start(self) -> None:
+        self._thread = threading.Thread(target=self._run, name="worker-lease-heartbeat", daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=max(1.0, self.interval + 1.0))
+
+    def raise_if_failed(self) -> None:
+        if self._error is not None:
+            raise ProtocolError(f"lease heartbeat failed: {self._error}") from self._error
+
+    def _run(self) -> None:
+        progress = 10
+        while not self._stop.wait(self.interval):
+            try:
+                self.send(progress)
+                progress = min(90, progress + 10)
+            except Exception as error:
+                self._error = error
+                self._stop.set()
+
+
 class Worker:
     def __init__(self) -> None:
         self.base_url = required("AI_WORKER_SERVER_URL").rstrip("/")
@@ -46,6 +79,7 @@ class Worker:
         self.version = os.getenv("AI_WORKER_VERSION", "python-stdlib-1")
         self.ollama_url = os.getenv("AI_WORKER_OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
         self.ollama_model = os.getenv("AI_WORKER_OLLAMA_MODEL", "qwen2.5:7b")
+        self.llm_max_tokens = max(64, min(2048, int(os.getenv("AI_WORKER_LLM_MAX_TOKENS", "768"))))
         self.timeout = int(os.getenv("AI_WORKER_HTTP_TIMEOUT", "120"))
         self.http_host = os.getenv("AI_WORKER_HTTP_HOST", "").strip()
         self.tls_check_hostname = os.getenv("AI_WORKER_TLS_CHECK_HOSTNAME", "true").lower() not in {
@@ -147,7 +181,20 @@ class Worker:
             self.signed_request(
                 "POST", f"/jobs/{public_id}/heartbeat", {"lease_token": lease_token, "progress": 5}
             )
-            result = self.execute(job, lease_token)
+            heartbeat = LeaseHeartbeat(
+                lambda progress: self.signed_request(
+                    "POST",
+                    f"/jobs/{public_id}/heartbeat",
+                    {"lease_token": lease_token, "progress": progress},
+                ),
+                interval=float(os.getenv("AI_WORKER_HEARTBEAT_SECONDS", "45")),
+            )
+            heartbeat.start()
+            try:
+                result = self.execute(job, lease_token)
+            finally:
+                heartbeat.stop()
+            heartbeat.raise_if_failed()
             self.signed_request(
                 "POST",
                 f"/jobs/{public_id}/complete",
@@ -223,7 +270,14 @@ class Worker:
         if not prompt:
             raise RuntimeError("local model prompt is empty")
         request_body = canonical_json(
-            {"model": self.ollama_model, "stream": False, "format": "json", "prompt": prompt}
+            {
+                "model": self.ollama_model,
+                "stream": False,
+                "format": "json",
+                "think": False,
+                "options": {"num_predict": self.llm_max_tokens},
+                "prompt": prompt,
+            }
         ).encode()
         request = urllib.request.Request(
             self.ollama_url + "/api/generate",

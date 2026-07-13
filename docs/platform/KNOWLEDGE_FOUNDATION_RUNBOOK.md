@@ -207,3 +207,18 @@ The hourly job processes at most ten due sources for forty seconds, fetches one
 page per host per invocation, and backs failures off for six hours. Disable the
 refresh flag first during an incident; disabling verified research preserves
 all versioned evidence for diagnosis and lexical retrieval.
+
+When at least two independent domains are stored and the private worker is
+online, Laravel queues one bounded `local_llm` claim-verification job. The
+worker sends lease heartbeats while Ollama runs, disables Qwen thinking, and
+caps generated output. Laravel accepts a claim only when every returned URL
+belongs to the research run and every quote occurs verbatim in its stored
+document. Agreement needs two fresh domains; stale, single-source, and
+conflicting evidence remains unverified and requires abstention.
+
+Persist or roll back both production flags without editing `.env`:
+
+```bash
+php artisan web-research:toggle on --refresh=on --json
+php artisan web-research:toggle off --refresh=off --json
+```

@@ -24,8 +24,9 @@ use App\Domain\AI\Services\GeminiGateway;
 use App\Domain\AI\Services\NullAiGateway;
 use App\Domain\AI\Services\NvidiaNimGateway;
 use App\Domain\AI\Services\PrivateWorkerAiGateway;
-use App\Domain\AI\Web\DuckDuckGoSearchGateway;
+use App\Domain\AI\Web\BingRssSearchGateway;
 use App\Domain\AI\Web\CompositeWebSearchGateway;
+use App\Domain\AI\Web\DuckDuckGoSearchGateway;
 use App\Domain\AI\Web\NullWebSearchGateway;
 use App\Domain\AI\Web\SearxngSearchGateway;
 use App\Domain\AI\Web\WebSearchResultNormalizer;
@@ -146,10 +147,11 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $duckDuckGo = $app->make(DuckDuckGoSearchGateway::class);
+            $bing = $app->make(BingRssSearchGateway::class);
             $searxng = new SearxngSearchGateway(config('services.web_search.searxng_url'));
             $gateways = config('services.web_search.provider', 'duckduckgo') === 'searxng'
-                ? ['searxng' => $searxng, 'duckduckgo' => $duckDuckGo]
-                : ['duckduckgo' => $duckDuckGo, 'searxng' => $searxng];
+                ? ['searxng' => $searxng, 'bing_rss' => $bing, 'duckduckgo' => $duckDuckGo]
+                : ['duckduckgo' => $duckDuckGo, 'bing_rss' => $bing, 'searxng' => $searxng];
 
             return new CompositeWebSearchGateway(
                 $gateways,

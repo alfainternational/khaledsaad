@@ -25,7 +25,6 @@ class WebSourcePolicy
             $published = CarbonImmutable::instance($publishedAt);
             $valid = $published->addDays(max(1, $this->freshnessDays));
             $freshness = $valid->isPast() ? 'stale' : 'fresh';
-            $validUntil = $valid->utc()->toIso8601String();
         }
 
         return [

@@ -3,12 +3,25 @@ import hmac
 import json
 import os
 import unittest
+import time
 from unittest.mock import MagicMock, patch
 
-from worker import Worker, canonical_json, request_signature
+from worker import LeaseHeartbeat, Worker, canonical_json, request_signature
 
 
 class ProtocolTest(unittest.TestCase):
+    def test_lease_heartbeat_renews_until_stopped(self):
+        sent = []
+        heartbeat = LeaseHeartbeat(lambda progress: sent.append(progress), interval=0.01)
+
+        heartbeat.start()
+        time.sleep(0.045)
+        heartbeat.stop()
+
+        self.assertGreaterEqual(len(sent), 2)
+        self.assertEqual(sorted(sent), sent)
+        self.assertLessEqual(sent[-1], 90)
+
     def test_canonical_json_is_recursive_and_deterministic(self):
         left = {"z": [{"b": 2, "a": 1}], "a": "عربي"}
         right = {"a": "عربي", "z": [{"a": 1, "b": 2}]}
@@ -56,6 +69,27 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual(["first", "second"], request_body["input"])
         self.assertEqual(11, result["vectors"][0]["chunk_id"])
         self.assertNotIn("text", result["vectors"][0])
+
+    def test_local_llm_disables_thinking_and_bounds_output(self):
+        os.environ.update(
+            AI_WORKER_SERVER_URL="https://example.test",
+            AI_WORKER_ID="wrk_test",
+            AI_WORKER_SECRET="secret",
+            AI_WORKER_LLM_MAX_TOKENS="512",
+        )
+        response = MagicMock()
+        response.read.return_value = json.dumps(
+            {"response": '{"claims":[]}', "model": "qwen3:4b"}
+        ).encode()
+        response.__enter__.return_value = response
+
+        with patch("urllib.request.urlopen", return_value=response) as opened:
+            result = Worker().local_llm({"prompt": "extract claims"})
+
+        request_body = json.loads(opened.call_args.args[0].data)
+        self.assertFalse(request_body["think"])
+        self.assertEqual(512, request_body["options"]["num_predict"])
+        self.assertEqual([], result["claims"])
 
     def test_signed_requests_support_a_verified_ssh_tunnel_origin(self):
         os.environ.update(

@@ -127,7 +127,7 @@ return [
         'scheduled_refresh' => env('AI_WEB_RESEARCH_REFRESH_ENABLED', false),
         'max_results' => (int) env('AI_WEB_RESEARCH_MAX_RESULTS', 8),
         'max_fetches_per_run' => (int) env('AI_WEB_RESEARCH_MAX_FETCHES', 3),
-        'max_response_bytes' => (int) env('AI_WEB_RESEARCH_MAX_RESPONSE_BYTES', 1048576),
+        'max_response_bytes' => (int) env('AI_WEB_RESEARCH_MAX_RESPONSE_BYTES', 2097152),
         'freshness_days' => (int) env('AI_WEB_RESEARCH_FRESHNESS_DAYS', 7),
         'refresh_batch_size' => (int) env('AI_WEB_RESEARCH_REFRESH_BATCH_SIZE', 10),
         'searxng_url' => env('AI_WEB_RESEARCH_SEARXNG_URL'),

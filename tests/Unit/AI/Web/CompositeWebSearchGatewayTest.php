@@ -40,10 +40,10 @@ class CompositeWebSearchGatewayTest extends TestCase
 
         $this->assertSame([
             'https://example.com/page?a=1&b=2',
-            'https://example.com/two',
             'https://official.test/report',
+            'https://example.com/two',
         ], array_column($results, 'url'));
-        $this->assertSame(['first', 'first', 'second'], array_column($results, 'provider'));
+        $this->assertSame(['first', 'second', 'first'], array_column($results, 'provider'));
     }
 
     private function gateway(array $results): WebSearchGateway

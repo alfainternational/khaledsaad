@@ -32,7 +32,9 @@ class WebSourcePolicyTest extends TestCase
         $policy = new WebSourcePolicy(7);
 
         $this->assertSame('fresh', $policy->assess('https://example.com', now()->subDays(6))['freshness_status']);
-        $this->assertSame('stale', $policy->assess('https://example.com', now()->subDays(8))['freshness_status']);
+        $stale = $policy->assess('https://example.com', now()->subDays(8));
+        $this->assertSame('stale', $stale['freshness_status']);
+        $this->assertSame(now()->addDays(7)->utc()->toIso8601String(), $stale['valid_until']);
         $undated = $policy->assess('https://example.com', null);
         $this->assertSame('unknown', $undated['freshness_status']);
         $this->assertSame(now()->addDays(7)->utc()->toIso8601String(), $undated['valid_until']);

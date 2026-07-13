@@ -7,6 +7,7 @@ use GuzzleHttp\Psr7\UriResolver;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Psr\Http\Message\ResponseInterface;
 
 class RemotePageFetcher
 {
@@ -135,6 +136,7 @@ class RemotePageFetcher
     {
         $redirectChain = [];
         $currentUrl = $normalizedUrl;
+        $maxBytes = max(1, (int) config('services.web_search.max_response_bytes', 2097152));
 
         for ($redirectCount = 0; $redirectCount < 5; $redirectCount++) {
             $currentInspection = $this->urlGuard->inspect($currentUrl);
@@ -157,6 +159,17 @@ class RemotePageFetcher
                     'http_errors' => false,
                     'version' => $attempt['http_version'],
                     'curl' => $curlOptions,
+                    'on_headers' => static function (ResponseInterface $response) use ($maxBytes): void {
+                        $length = (int) $response->getHeaderLine('Content-Length');
+                        if ($length > $maxBytes) {
+                            throw new \RuntimeException('response_too_large');
+                        }
+                    },
+                    'progress' => static function (int $downloadTotal, int $downloadedBytes) use ($maxBytes): void {
+                        if ($downloadedBytes > $maxBytes || $downloadTotal > $maxBytes) {
+                            throw new \RuntimeException('response_too_large');
+                        }
+                    },
                 ])
                 ->withHeaders($attempt['headers'])
                 ->get($currentUrl);
@@ -273,7 +286,7 @@ class RemotePageFetcher
             return 'unsupported_content_type';
         }
 
-        $maxBytes = max(1, (int) config('services.web_search.max_response_bytes', 1048576));
+        $maxBytes = max(1, (int) config('services.web_search.max_response_bytes', 2097152));
         if (strlen($response->body()) > $maxBytes) {
             return 'response_too_large';
         }

@@ -6,8 +6,8 @@ use App\Contracts\WebSearchGateway;
 use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\AI\Knowledge\EmbeddingJobDispatcher;
 use App\Domain\AI\Services\AiMetrics;
-use App\Domain\AI\Web\Models\WebResearchRun;
 use App\Domain\AI\Web\Models\WebResearchResult;
+use App\Domain\AI\Web\Models\WebResearchRun;
 use App\Support\Intelligence\RemotePageFetcher;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
@@ -40,6 +40,7 @@ class WebResearchService
         private readonly WebKnowledgeIngestor $webKnowledge,
         private readonly EmbeddingJobDispatcher $embeddings,
         private readonly WebSearchResultNormalizer $resultNormalizer,
+        private readonly WebClaimVerificationDispatcher $claimVerification,
     ) {}
 
     /**
@@ -150,6 +151,7 @@ class WebResearchService
                 $fetch = $this->fetcher->fetch((string) ($result['url'] ?? ''));
                 if (! ($fetch['ok'] ?? false) || ! is_string($fetch['html'] ?? null)) {
                     $this->recordFailure($run, $result, $fetch, (string) ($fetch['error'] ?? 'fetch_failed'));
+
                     continue;
                 }
 
@@ -160,6 +162,7 @@ class WebResearchService
                     $stored = $this->webKnowledge->ingest($run, $result, $fetch, $page, $policy);
                 } catch (\Throwable $exception) {
                     $this->recordFailure($run, $result, $fetch, Str::limit($exception->getMessage(), 80, ''));
+
                     continue;
                 }
 
@@ -192,6 +195,9 @@ class WebResearchService
             ]);
             if ((bool) config('services.private_worker.enabled', false) && $findings !== []) {
                 $this->embeddings->dispatch(count($findings) * 4);
+            }
+            if (count($findings) >= 2) {
+                $this->claimVerification->dispatch($run->fresh());
             }
             $this->metrics->incr($findings === [] ? 'web.fail' : 'web.search');
 
