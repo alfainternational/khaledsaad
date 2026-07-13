@@ -20,8 +20,9 @@ class PrivateWorkerGenerationCanaryCommand extends Command
     {
         $gateway = $this->option('configured') ? $configuredGateway : $directGateway;
         $started = microtime(true);
+        $nonce = bin2hex(random_bytes(8));
         $response = $gateway->requestContent(
-            'حلل العبارة التالية بإيجاز: انخفاض الاحتفاظ مع ارتفاع الزيارات. أعد JSON فقط بالمفاتيح canary وanalysis وrecommendation وmetric. اجعل canary مساوية تماماً لـ'.self::MARKER.'.',
+            'حلل العبارة التالية بإيجاز: انخفاض الاحتفاظ مع ارتفاع الزيارات. أعد JSON فقط بالمفاتيح canary وanalysis وrecommendation وmetric. اجعل canary مساوية تماماً لـ'.self::MARKER.'. nonce='.$nonce,
             'أنت محلل محلي. استنتج سبباً محتملاً، توصية عملية، ومقياس تحقق. لا تستخدم الإنترنت ولا أي مزود خارجي.',
         );
         $content = $response['choices'][0]['message']['content'] ?? null;
