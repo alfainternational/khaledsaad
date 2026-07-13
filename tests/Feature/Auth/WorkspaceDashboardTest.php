@@ -121,7 +121,7 @@ class WorkspaceDashboardTest extends TestCase
             'status' => 'active',
         ]);
 
-        Project::query()->create([
+        $projectOne = Project::query()->create([
             'workspace_id' => $workspace->id,
             'client_id' => $client->id,
             'name' => 'Project One',
@@ -136,6 +136,10 @@ class WorkspaceDashboardTest extends TestCase
             'stage' => 4,
             'status' => 'completed',
         ]);
+
+        // الداشبورد المبسّط يعرض «المشروع الحالي» فقط (الأحدث لمساً) لا قائمة
+        // بكل المشاريع — نجعل Project One هو الأحدث بشكل حتمي.
+        $projectOne->forceFill(['updated_at' => now()->addMinute()])->save();
 
         app(WorkspaceProfileStore::class)->put($workspace, [
             'persona' => 'team',
