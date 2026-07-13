@@ -31,7 +31,7 @@ class PrivateWorkerAiGatewayTest extends TestCase
     {
         config()->set('services.private_worker.enabled', true);
         config()->set('services.private_worker.gateway_wait_seconds', 2);
-        config()->set('services.private_worker.gateway_max_tokens', 128);
+        config()->set('services.private_worker.gateway_max_tokens', 256);
         config()->set('services.private_worker.gateway_model', 'qwen3:1.7b');
         IntelligenceWorker::query()->create([
             'public_id' => 'wrk_'.Str::lower((string) Str::ulid()),
@@ -61,7 +61,7 @@ class PrivateWorkerAiGatewayTest extends TestCase
         $payload = IntelligenceJob::query()->firstOrFail()->payload_json;
         $this->assertSame('حلل هذه البيانات', $payload['prompt']);
         $this->assertSame('أعد JSON', $payload['system_prompt']);
-        $this->assertSame(128, $payload['max_tokens']);
+        $this->assertSame(256, $payload['max_tokens']);
         $this->assertSame('qwen3:1.7b', $payload['model_name']);
     }
 }
