@@ -64,12 +64,16 @@ class AiConversationController extends Controller
     {
         $conversation = $this->ownedConversation($request, $conversationPublicId);
         $perPage = min(max($request->integer('per_page', 50), 1), 100);
-        $paginator = $conversation->messages()->oldest('id')->paginate($perPage);
+        $paginator = $conversation->messages()->latest('id')->paginate($perPage);
 
         return response()->json([
             'data' => $this->conversationData($conversation),
             'messages' => [
-                'data' => $paginator->getCollection()->map(fn (AiChatMessage $message): array => $this->messageData($this->reconcile($message)))->all(),
+                'data' => $paginator->getCollection()
+                    ->reverse()
+                    ->map(fn (AiChatMessage $message): array => $this->messageData($this->reconcile($message)))
+                    ->values()
+                    ->all(),
                 'meta' => $this->paginationMeta($paginator),
             ],
         ]);
