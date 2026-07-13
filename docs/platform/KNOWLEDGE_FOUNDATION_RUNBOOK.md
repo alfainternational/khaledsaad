@@ -1,5 +1,11 @@
 # Knowledge Foundation Production Runbook
 
+## Advanced file rollout gate
+
+Keep `AI_KNOWLEDGE_CHUNKED_UPLOADS=false` until isolated PDF, image, DOCX, and XLSX canaries pass. The direct upload limit remains unchanged; resumable sessions use 1 MB private chunks, a 50 MB total default, SHA-256 verification, a two-hour expiry, and hourly cleanup.
+
+Before enabling resumable uploads, confirm `knowledge:health --json` reports an online private worker, no failed jobs, and no accumulating expired upload sessions. Enable the flag only after verifying tenant isolation, structured locators, OCR confidence, citations, and embedding completion for every canary format.
+
 This runbook deploys the structured knowledge foundation to shared cPanel hosting without replacing the existing JSON memory until every gate passes.
 
 ## Preconditions

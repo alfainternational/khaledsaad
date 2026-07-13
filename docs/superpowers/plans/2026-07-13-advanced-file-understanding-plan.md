@@ -75,10 +75,10 @@
 - Test: `tests/Feature/Api/V1/KnowledgeUploadApiTest.php`
 - Test: `tests/Feature/AI/Knowledge/ProcessKnowledgeUploadsCommandTest.php`
 
-- [ ] Write failing tests proving binary retries redispatch rather than use the text extractor, duplicate active jobs are prevented, failed jobs can resume, and health reports format/OCR outcomes.
-- [ ] Implement idempotent job dispatch and binary-aware retries with stable error codes.
-- [ ] Add resumable 1 MB chunk assembly primitives behind a disabled flag without increasing PHP upload limits.
-- [ ] Re-run tests and commit `feat: make complex file processing resumable`.
+- [x] Write failing tests proving binary retries redispatch rather than use the text extractor, duplicate active jobs are prevented, failed jobs can resume, and health reports format/OCR outcomes.
+- [x] Implement idempotent job dispatch and binary-aware retries with stable error codes.
+- [x] Add resumable 1 MB chunk assembly primitives behind a disabled flag without increasing PHP upload limits.
+- [x] Re-run tests and commit the retry and resumable-upload changes.
 
 ### Task 6: Evaluation, production canaries, and rollout
 
@@ -88,7 +88,17 @@
 - Modify: `docs/superpowers/plans/2026-07-13-advanced-file-understanding-plan.md`
 
 - [ ] Add Arabic/English image, text/scanned PDF, DOCX table, and XLSX formula cases with expected locator and retrieval evidence.
-- [ ] Run all knowledge/worker/web tests and Python extraction tests.
-- [ ] Deploy code with new extraction disabled, provision tool versions, then run one private canary per format in an isolated project.
+- [x] Run all knowledge/worker/web tests and Python extraction tests.
+- [ ] Deploy code with new extraction disabled, provision tool versions, then run one private canary per format in an isolated project. (Code, migration, and worker runtime deployed; isolated canaries remain.)
 - [ ] Verify citations, tenant isolation, embeddings, health, cleanup, and production HTTP 200 before enabling v2 extraction.
 - [ ] Update PR #6 with measured evidence and commit `docs: verify advanced file understanding rollout`.
+
+### Rollout evidence (2026-07-13)
+
+- Server backup: `_deploy_backups/push-20260713-050413`.
+- Migration `2026_07_13_020000_create_knowledge_upload_sessions_table` completed successfully.
+- PHP suite: 425 passed, 3011 assertions, one SQLite/MySQL-specific skip.
+- Python worker suite: 15 passed.
+- Windows scheduled worker completed with result `0`; production reports one active and online worker.
+- Production health: 78 sources, 82 documents, 175 chunks, 167 active embeddings, 100% coverage, zero failed/queued/leased jobs.
+- Production site returned HTTP 200; chunked-upload routes are present while `AI_KNOWLEDGE_CHUNKED_UPLOADS` remains disabled by default.
