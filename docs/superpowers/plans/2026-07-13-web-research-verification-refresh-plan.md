@@ -63,10 +63,10 @@
 - Test: `tests/Unit/AI/Web/WebSourcePolicyTest.php`
 - Test: `tests/Unit/AI/Web/WebEvidenceVerifierTest.php`
 
-- [ ] Write failing tests for first-party/official trust, independent-domain agreement, stale evidence, conflicting claims, and required abstention when evidence is insufficient.
-- [ ] Run the focused tests and confirm the policy/verifier classes are absent.
-- [ ] Implement deterministic trust and freshness scoring, claim-key grouping, independent-domain corroboration, explicit conflicts, and no unsupported winner selection.
-- [ ] Re-run tests and commit `feat: verify web evidence across sources`.
+- [x] Write failing tests for first-party/official trust, independent-domain agreement, stale evidence, conflicting claims, and required abstention when evidence is insufficient.
+- [x] Run the focused tests and confirm the policy/verifier classes are absent.
+- [x] Implement deterministic trust and freshness scoring, claim-key grouping, independent-domain corroboration, explicit conflicts, and no unsupported winner selection.
+- [x] Re-run tests and commit `feat: verify web evidence across sources`.
 
 ### Task 5: Versioned knowledge ingestion and citations
 
