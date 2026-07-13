@@ -191,21 +191,23 @@ class AppServiceProvider extends ServiceProvider
 
         // إعدادات الذكاء من الآدمن تُطبَّق فوق config() (الدستور §32): تلتقطها كل
         // المستهلكات (البوابة، الكاش، الرصيد، البحث) دون إعادة ربط. ملفّية بلا migration.
-        try {
-            foreach ($this->app->make(SettingsStore::class)->all() as $key => $value) {
-                if (is_string($key) && (
-                    str_starts_with($key, 'services.ai.')
-                    || str_starts_with($key, 'services.web_search.')
-                    || str_starts_with($key, 'services.nvidia.')
-                    || str_starts_with($key, 'services.gemini.')
-                    || str_starts_with($key, 'services.private_worker.')
-                    || str_starts_with($key, 'services.knowledge.')
-                )) {
-                    config([$key => $value]);
+        if (! $this->app->environment('testing') || (bool) config('services.ai.apply_settings_in_testing', false)) {
+            try {
+                foreach ($this->app->make(SettingsStore::class)->all() as $key => $value) {
+                    if (is_string($key) && (
+                        str_starts_with($key, 'services.ai.')
+                        || str_starts_with($key, 'services.web_search.')
+                        || str_starts_with($key, 'services.nvidia.')
+                        || str_starts_with($key, 'services.gemini.')
+                        || str_starts_with($key, 'services.private_worker.')
+                        || str_starts_with($key, 'services.knowledge.')
+                    )) {
+                        config([$key => $value]);
+                    }
                 }
+            } catch (\Throwable) {
+                // لا تُسقط الإقلاع إن تعذّر قراءة الإعدادات؛ تُستخدم قيم config الافتراضية.
             }
-        } catch (\Throwable) {
-            // لا تُسقط الإقلاع إن تعذّر قراءة الإعدادات؛ تُستخدم قيم config الافتراضية.
         }
 
         Gate::policy(Workspace::class, WorkspacePolicy::class);

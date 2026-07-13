@@ -8,6 +8,20 @@ Before enabling resumable uploads, confirm `knowledge:health --json` reports an 
 
 The 2026-07-13 rollout passed these gates. Production now has both `AI_KNOWLEDGE_STRUCTURED_EXTRACTION=true` and `AI_KNOWLEDGE_CHUNKED_UPLOADS=true`. Re-run `knowledge:file-canary enqueue`, `status`, and `cleanup` after changing OCR, Poppler, Tesseract languages, locator contracts, embedding models, or worker credentials. Use `setup-api` for an authenticated chunk-assembly canary and revoke it with `cleanup` immediately after verification.
 
+## Exclusive local reasoning
+
+Production generation is locked to `private_worker`; external generation remains disabled even if the provider setting drifts. Internet search is used only to fetch bounded evidence, while claim verification, analysis, recommendations, and synthesis run on local Ollama models.
+
+- `qwen3:1.7b`: synchronous UI analysis and narrative refinement.
+- `qwen3:4b`: deeper background reasoning and web-evidence verification.
+- `qwen3-embedding:0.6b`: document and query embeddings.
+
+The Windows worker runs continuously through `install_windows_worker_task.ps1`, restarts automatically, and keeps an outbound-only SSH/TLS tunnel. `private-worker:generation-canary --configured --json` must return a local model, analysis, recommendation, and metric before changing reasoning configuration.
+
+Measured production evidence on 2026-07-13: the configured Qwen 1.7B canary completed in 25.2 seconds, and the authenticated `/api/v1/workspaces/{workspace}/ai/analyze` flow returned structured analysis with local narrative enrichment in 71.6 seconds, within shared-host request limits. The production learning cycle then processed 135 tool runs across 27 tools, confirmed 19 project snapshots, distilled one playbook locally, rejected weak teacher output, and compiled intelligence for 13 workspaces.
+
+The final suite passed 435 PHP tests with 3078 assertions (one database-specific skip) and 15 Python worker tests.
+
 This runbook deploys the structured knowledge foundation to shared cPanel hosting without replacing the existing JSON memory until every gate passes.
 
 ## Preconditions

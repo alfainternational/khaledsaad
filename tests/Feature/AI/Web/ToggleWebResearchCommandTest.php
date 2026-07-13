@@ -26,6 +26,7 @@ class ToggleWebResearchCommandTest extends TestCase
 
         config()->set('services.web_search.verified_research', false);
         config()->set('services.web_search.scheduled_refresh', false);
+        config()->set('services.ai.apply_settings_in_testing', true);
         (new AppServiceProvider(app()))->boot();
 
         $this->assertTrue((bool) config('services.web_search.verified_research'));

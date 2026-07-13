@@ -27,6 +27,7 @@ class TogglePrivateWorkerCommandTest extends TestCase
         $this->assertTrue(app(SettingsStore::class)->get('services.private_worker.enabled'));
 
         config()->set('services.private_worker.enabled', false);
+        config()->set('services.ai.apply_settings_in_testing', true);
         (new AppServiceProvider(app()))->boot();
         $this->assertTrue((bool) config('services.private_worker.enabled'));
 
