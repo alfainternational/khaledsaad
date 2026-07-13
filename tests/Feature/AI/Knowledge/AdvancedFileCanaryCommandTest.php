@@ -53,4 +53,24 @@ class AdvancedFileCanaryCommandTest extends TestCase
             @rmdir($directory);
         }
     }
+
+    #[Test]
+    public function it_creates_and_revokes_an_isolated_api_canary_token(): void
+    {
+        $user = User::factory()->create();
+
+        $this->artisan('knowledge:file-canary', [
+            'action' => 'setup-api',
+            '--owner-user-id' => $user->id,
+            '--json' => true,
+        ])->assertSuccessful();
+
+        $this->assertDatabaseHas('workspace_members', ['user_id' => $user->id, 'role' => 'owner', 'status' => 'active']);
+        $this->assertDatabaseHas('personal_access_tokens', ['tokenable_id' => $user->id, 'name' => 'advanced-file-canary']);
+
+        $this->artisan('knowledge:file-canary', ['action' => 'cleanup', '--json' => true])->assertSuccessful();
+
+        $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $user->id, 'name' => 'advanced-file-canary']);
+        $this->assertDatabaseMissing('accounts', ['name' => '__AI_ADVANCED_FILE_CANARY__']);
+    }
 }

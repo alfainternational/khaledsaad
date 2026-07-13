@@ -11,6 +11,7 @@ use App\Domain\AI\Worker\KnowledgeUploadJobDispatcher;
 use App\Domain\Client\Models\Client;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
+use App\Domain\Workspace\Models\WorkspaceMember;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,7 @@ class AdvancedFileCanaryCommand extends Command
     ];
 
     protected $signature = 'knowledge:file-canary
-        {action : enqueue, status, or cleanup}
+        {action : enqueue, setup-api, status, or cleanup}
         {--directory= : Absolute directory containing the five canary files}
         {--owner-user-id= : Existing user ID that owns the isolated canary account}
         {--json : Emit machine-readable output}';
@@ -42,6 +43,7 @@ class AdvancedFileCanaryCommand extends Command
     {
         return match ((string) $this->argument('action')) {
             'enqueue' => $this->enqueue($dispatcher),
+            'setup-api' => $this->setupApi(),
             'status' => $this->status($retriever),
             'cleanup' => $this->cleanup(),
             default => $this->invalidAction(),
@@ -67,41 +69,7 @@ class AdvancedFileCanaryCommand extends Command
 
         $originalFlag = config('services.knowledge.structured_extraction');
         try {
-            [$account, $project] = DB::transaction(function () use ($owner): array {
-                $account = Account::query()->create([
-                    'owner_user_id' => $owner->id,
-                    'name' => self::ACCOUNT_NAME,
-                    'billing_email' => $owner->email,
-                    'status' => 'active',
-                ]);
-                $workspace = Workspace::query()->create([
-                    'account_id' => $account->id,
-                    'name' => self::ACCOUNT_NAME,
-                    'type' => 'personal',
-                    'status' => 'active',
-                ]);
-                $client = Client::query()->create([
-                    'workspace_id' => $workspace->id,
-                    'name' => self::ACCOUNT_NAME,
-                    'status' => 'active',
-                ]);
-                $project = Project::query()->create([
-                    'workspace_id' => $workspace->id,
-                    'client_id' => $client->id,
-                    'name' => 'Advanced File Canary',
-                    'stage' => 1,
-                    'status' => 'active',
-                ]);
-                Project::query()->create([
-                    'workspace_id' => $workspace->id,
-                    'client_id' => $client->id,
-                    'name' => 'Canary Isolation Control',
-                    'stage' => 1,
-                    'status' => 'active',
-                ]);
-
-                return [$account, $project];
-            });
+            [$account, , $project] = $this->createTopology($owner);
             config()->set('services.knowledge.structured_extraction', true);
             foreach (self::FILES as $name => $definition) {
                 $source = $directory.DIRECTORY_SEPARATOR.$name;
@@ -139,6 +107,35 @@ class AdvancedFileCanaryCommand extends Command
         } finally {
             config()->set('services.knowledge.structured_extraction', $originalFlag);
         }
+    }
+
+    private function setupApi(): int
+    {
+        if (Account::query()->where('name', self::ACCOUNT_NAME)->exists()) {
+            return $this->result(['ok' => false, 'error' => 'canary_already_exists'], self::FAILURE);
+        }
+        $owner = User::query()->find((int) $this->option('owner-user-id'));
+        if (! $owner) {
+            return $this->result(['ok' => false, 'error' => 'owner_invalid'], self::INVALID);
+        }
+        [$account, $workspace, $project] = $this->createTopology($owner);
+        WorkspaceMember::query()->create([
+            'workspace_id' => $workspace->id,
+            'user_id' => $owner->id,
+            'role' => 'owner',
+            'status' => 'active',
+            'invited_at' => now(),
+            'joined_at' => now(),
+        ]);
+        $token = $owner->createToken('advanced-file-canary')->plainTextToken;
+
+        return $this->result([
+            'ok' => true,
+            'account_id' => $account->id,
+            'workspace_public_id' => $workspace->public_id,
+            'project_public_id' => $project->public_id,
+            'api_token' => $token,
+        ]);
     }
 
     private function status(KnowledgeRetriever $retriever): int
@@ -213,6 +210,7 @@ class AdvancedFileCanaryCommand extends Command
         KnowledgeUpload::query()->where('account_id', $account->id)->get()->each(
             fn (KnowledgeUpload $upload) => Storage::disk($upload->disk)->delete($upload->path),
         );
+        $account->owner?->tokens()->where('name', 'advanced-file-canary')->delete();
         Storage::disk('local')->deleteDirectory('knowledge-uploads/canary');
         $account->forceDelete();
 
@@ -231,5 +229,45 @@ class AdvancedFileCanaryCommand extends Command
     private function invalidAction(): int
     {
         return $this->result(['ok' => false, 'error' => 'invalid_action'], self::INVALID);
+    }
+
+    /** @return array{Account, Workspace, Project} */
+    private function createTopology(User $owner): array
+    {
+        return DB::transaction(function () use ($owner): array {
+            $account = Account::query()->create([
+                'owner_user_id' => $owner->id,
+                'name' => self::ACCOUNT_NAME,
+                'billing_email' => $owner->email,
+                'status' => 'active',
+            ]);
+            $workspace = Workspace::query()->create([
+                'account_id' => $account->id,
+                'name' => self::ACCOUNT_NAME,
+                'type' => 'personal',
+                'status' => 'active',
+            ]);
+            $client = Client::query()->create([
+                'workspace_id' => $workspace->id,
+                'name' => self::ACCOUNT_NAME,
+                'status' => 'active',
+            ]);
+            $project = Project::query()->create([
+                'workspace_id' => $workspace->id,
+                'client_id' => $client->id,
+                'name' => 'Advanced File Canary',
+                'stage' => 1,
+                'status' => 'active',
+            ]);
+            Project::query()->create([
+                'workspace_id' => $workspace->id,
+                'client_id' => $client->id,
+                'name' => 'Canary Isolation Control',
+                'stage' => 1,
+                'status' => 'active',
+            ]);
+
+            return [$account, $workspace, $project];
+        });
     }
 }
