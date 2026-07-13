@@ -47,6 +47,9 @@ class StudioGenerationController extends Controller
             ? Project::query()->where('workspace_id', $workspace->id)->findOrFail($projectId)
             : null;
 
+        // التوليد قد يستدعي LLM مرتين (مسودة + مراجعة جودة) — لا يقتله حد PHP الافتراضي.
+        set_time_limit(180);
+
         $generation = $action->handle(
             workspace: $workspace,
             template: $template,

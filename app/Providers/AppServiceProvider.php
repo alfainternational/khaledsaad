@@ -125,11 +125,22 @@ class AppServiceProvider extends ServiceProvider
             return $gateway;
         });
 
-        // طبقة الفهم الدلالي المحلية: تُربط عبر عقد قابل للترقية لاحقاً لمحرّك تضمينات.
+        // مزوّد التضمينات المضمّن (خادم → API): يتدهور بأمان عند غياب المفتاح.
         $this->app->singleton(
-            SemanticMatcher::class,
-            LexicalSemanticMatcher::class,
+            \App\Contracts\EmbeddingsGateway::class,
+            \App\Domain\AI\Knowledge\OpenAiCompatibleEmbeddingsGateway::class,
         );
+
+        // طبقة الفهم الدلالي: تضمينات عصبية فوق الأساس المعجمي — الترقية الموعودة
+        // في عقد SemanticMatcher. عند غياب مزوّد التضمينات تعمل معجمية خالصة.
+        $this->app->singleton(SemanticMatcher::class, function ($app) {
+            return new \App\Domain\AI\Semantic\EmbeddingSemanticMatcher(
+                $app->make(\App\Contracts\EmbeddingsGateway::class),
+                $app->make(LexicalSemanticMatcher::class),
+                $app->make(VectorMath::class),
+                $app->make(\App\Domain\AI\Semantic\ConceptLexicon::class),
+            );
+        });
 
         $this->app->singleton(HttpCloudClient::class);
 

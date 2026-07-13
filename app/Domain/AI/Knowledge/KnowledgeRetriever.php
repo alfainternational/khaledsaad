@@ -95,8 +95,8 @@ class KnowledgeRetriever
      */
     private function addSemanticMatches(array &$matches, KnowledgeScope $scope, array $queryVector): void
     {
-        $model = (string) config('services.knowledge.embedding_model', 'nomic-embed-text');
-        $version = (string) config('services.knowledge.embedding_model_version', 'v1');
+        $model = EmbeddingIdentity::modelName();
+        $version = EmbeddingIdentity::modelVersion();
         $limit = max(1, min(1000, (int) config('services.knowledge.embedding_candidate_limit', 200)));
         $semantic = [];
         foreach ($this->searchScopes($scope) as [$searchScope, $scopeRank]) {

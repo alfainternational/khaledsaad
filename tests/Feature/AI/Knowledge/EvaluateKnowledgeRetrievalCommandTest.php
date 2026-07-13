@@ -39,8 +39,9 @@ class EvaluateKnowledgeRetrievalCommandTest extends TestCase
 
         $this->artisan('knowledge:evaluate-retrieval', ['--strict' => true])->assertSuccessful();
 
+        // الاسترجاع الهجين هو الافتراضي الآن (يتدهور داخلياً للمعجمي بلا متجهات).
         $this->assertDatabaseHas('intelligence_evaluation_runs', [
-            'engine' => 'lexical',
+            'engine' => 'hybrid',
             'case_count' => 1,
             'recall_at_k' => 1,
             'mean_reciprocal_rank' => 1,

@@ -60,6 +60,9 @@ class AiChatController extends Controller
 
     public function chat(Request $request): JsonResponse
     {
+        // نداء LLM متزامن — لا يقتله حد PHP الافتراضي مع مزوّد أبطأ.
+        set_time_limit(150);
+
         $request->validate([
             'messages' => 'required|array|min:1',
             'messages.*.role' => 'required|string|in:user,assistant,system',

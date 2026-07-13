@@ -52,6 +52,13 @@ class MarketingKnowledgeBase
     public function retrieve(string $query, int $k = 3): array
     {
         $corpus = $this->corpus();
+
+        // تسخين متجهات الذخيرة دفعة واحدة (نداء API واحد بدل نداء لكل مقطع) —
+        // الذخيرة شبه ثابتة فتُضمَّن مرة وتُخدم من الكاش بعدها.
+        if ($this->matcher instanceof \App\Domain\AI\Semantic\EmbeddingSemanticMatcher) {
+            $this->matcher->warm(array_merge([$query], array_column($corpus, 'text')));
+        }
+
         $scored = [];
         foreach ($corpus as $entry) {
             $score = $this->matcher->similarity($query, $entry['text']);

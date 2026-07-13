@@ -19,6 +19,9 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <!-- تضمينات API معطّلة في الاختبارات: تبقى الهوية معجمية/عاملية حتمية،
+             والاختبارات التي تفحص المسار المضمّن تفعّله صراحةً عبر config(). -->
+        <env name="AI_EMBEDDINGS_API_ENABLED" value="false"/>
         <env name="APP_URL" value="http://localhost"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

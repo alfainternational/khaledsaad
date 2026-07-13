@@ -2,16 +2,22 @@
 
 namespace App\Support\Tooling;
 
+use App\Domain\AI\Semantic\SemanticMatcher;
 use App\Domain\AI\Services\QualityJudge;
 use App\Support\AI\WorkspaceGenerationContextBuilder;
 use Illuminate\Support\Collection;
 
 class ToolInputQualityAssessmentService
 {
+    /**
+     * المطابق الدلالي اختياري (افتراضي null): بلا مطابق يبقى التقييم معجمياً
+     * خالصاً كما كان، والحاوية تحقنه تلقائياً في الإنتاج فيفهم المعنى لا الألفاظ.
+     */
     public function __construct(
         private readonly ToolBlueprintCatalog $blueprints,
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
         private readonly QualityJudge $judge,
+        private readonly ?SemanticMatcher $semantic = null,
     ) {}
 
     /**
@@ -29,6 +35,17 @@ class ToolInputQualityAssessmentService
         $blueprint = $this->blueprints->for($toolCode);
         $context = $this->contextBuilder->buildForIds($workspaceId, $projectId);
         $fields = $this->resolveFields($blueprint, $mode, $inputs);
+
+        // تسخين متجهات الدلالة دفعة واحدة (إجابات + تعليمات الحقول) بنداء API واحد.
+        if ($this->semantic instanceof \App\Domain\AI\Semantic\EmbeddingSemanticMatcher) {
+            $warm = [];
+            foreach ($fields as $key => $field) {
+                $warm[] = trim((string) ($inputs[$key] ?? ''));
+                $warm[] = trim((string) ($field['answer_tip'] ?? '')).' '.(string) ($field['label'] ?? '');
+            }
+            $this->semantic->warm(array_filter($warm));
+        }
+
         $fieldAssessments = $this->assessFields($fields, $inputs, $context);
 
         // تقييم كل حقل دلالياً عبر Gemini بنداء واحد (مُكاش): يحكم هل تُجيب الإجابة
@@ -283,7 +300,12 @@ class ToolInputQualityAssessmentService
 
         $score = 55;
         $overlap = $this->keywordOverlap($inputText, $contextText);
-        $score += min(30, $overlap * 6);
+        $lexicalBonus = min(30, $overlap * 6);
+        // الدلالي يكمل المعجمي: توافق المعنى مع سياق المشروع يُحتسب ولو اختلفت الألفاظ.
+        $semanticBonus = $this->semantic !== null
+            ? (int) round($this->semantic->similarity($inputText, $contextText) * 30)
+            : 0;
+        $score += max($lexicalBonus, min(30, $semanticBonus));
 
         $weakCount = $fieldAssessments->filter(fn (array $assessment): bool => $assessment['status'] === 'weak')->count();
         $score -= min(20, $weakCount * 5);
@@ -625,8 +647,15 @@ class ToolInputQualityAssessmentService
         $instruction = preg_replace('/مثال\s*:.*/u', '', $instruction) ?? $instruction;
 
         $overlap = $this->keywordOverlap($value, $instruction);
+        $lexicalPoints = max(0, min(20, $overlap * 7));
 
-        return max(0, min(20, $overlap * 7));
+        // الفهم الدلالي (إن توفر): إجابة بمفردات مختلفة لكنها في صلب السؤال
+        // تستحق نقاط الصلة حتى لو صفر تقاطع كلمات.
+        $semanticPoints = $this->semantic !== null
+            ? (int) round($this->semantic->similarity($value, $instruction) * 20)
+            : 0;
+
+        return max($lexicalPoints, min(20, $semanticPoints));
     }
 
     private function echoesLabel(string $label, string $value): bool

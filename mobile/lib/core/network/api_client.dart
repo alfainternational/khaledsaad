@@ -21,6 +21,22 @@ class ApiClient {
   }) =>
       _request(() => _dio.post(path, data: body));
 
+  /// نداء POST لعمليات التوليد الطويلة (استوديو/مستشار/تحليل): مهلة استقبال
+  /// موسّعة حتى لا يقطع التطبيق الاتصال قبل اكتمال الرد من مزوّد أبطأ.
+  Future<Map<String, dynamic>> postGenerative(
+    String path, {
+    Object? body,
+    Duration receiveTimeout = const Duration(seconds: 150),
+  }) =>
+      _request(() => _dio.post(
+            path,
+            data: body,
+            options: Options(
+              receiveTimeout: receiveTimeout,
+              sendTimeout: const Duration(seconds: 30),
+            ),
+          ));
+
   Future<Map<String, dynamic>> put(
     String path, {
     Object? body,

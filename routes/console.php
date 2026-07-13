@@ -106,8 +106,10 @@ if ((bool) config('services.private_worker.enabled', false)) {
         ->name('knowledge-embedding-indexing');
 }
 
+// كل ساعة (كانت يومية): المسار المضمّن يضمّن المقاطع الجديدة أولاً بأول،
+// والتشغيلة رخيصة — تخرج فوراً عندما لا يوجد معلّق.
 Schedule::command('knowledge:maintain-embeddings')
-    ->dailyAt('03:05')
+    ->hourly()
     ->withoutOverlapping()
     ->name('knowledge-embedding-maintenance');
 

@@ -2,12 +2,18 @@
 
 namespace App\Domain\AI\Knowledge;
 
+use App\Contracts\EmbeddingsGateway;
 use App\Domain\AI\Knowledge\Models\KnowledgeQueryEmbedding;
 use App\Domain\AI\Worker\Models\IntelligenceJob;
 use Illuminate\Support\Str;
 
 class QueryEmbeddingBroker
 {
+    public function __construct(
+        private readonly EmbeddingsGateway $embeddings,
+        private readonly VectorMath $vectorMath,
+    ) {}
+
     /** @return list<float>|null */
     public function findOrQueue(KnowledgeScope $scope, string $query): ?array
     {
@@ -15,8 +21,8 @@ class QueryEmbeddingBroker
         if ($normalized === '') {
             return null;
         }
-        $model = (string) config('services.knowledge.embedding_model', 'nomic-embed-text');
-        $version = (string) config('services.knowledge.embedding_model_version', 'v1');
+        $model = EmbeddingIdentity::modelName();
+        $version = EmbeddingIdentity::modelVersion();
         $instruction = trim((string) config('services.knowledge.embedding_query_instruction', ''));
         $modelInput = $instruction === ''
             ? $normalized
@@ -31,6 +37,30 @@ class QueryEmbeddingBroker
             ->first();
         if ($cached) {
             return $cached->vector_json;
+        }
+
+        // المسار المضمّن: تضمين فوري من الخادم عبر API (بلا عامل خارجي).
+        if (EmbeddingIdentity::inlineApiActive()) {
+            $vectors = $this->embeddings->embed([$modelInput], 'query');
+            $vector = $vectors[0] ?? null;
+            if (! is_array($vector)) {
+                return null;
+            }
+            try {
+                $normalizedVector = $this->vectorMath->normalize($vector);
+            } catch (\InvalidArgumentException) {
+                return null;
+            }
+            KnowledgeQueryEmbedding::query()->updateOrCreate(
+                ['scope_key' => $scope->key(), 'query_hash' => $queryHash, 'model_name' => $model, 'model_version' => $version],
+                [
+                    'dimensions' => count($normalizedVector),
+                    'vector_json' => $normalizedVector,
+                    'expires_at' => now()->addDays((int) config('services.knowledge.query_embedding_ttl_days', 7)),
+                ],
+            );
+
+            return $normalizedVector;
         }
 
         if (! (bool) config('services.private_worker.enabled', false) || $this->alreadyQueued($scope->key(), $queryHash)) {

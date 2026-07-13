@@ -29,7 +29,8 @@ class StudioRepository {
     String? projectId,
     String? brief,
   }) async {
-    final res = await _api.post(ApiEndpoints.studioGenerations(ws), body: {
+    final res =
+        await _api.postGenerative(ApiEndpoints.studioGenerations(ws), body: {
       'template_id': templateId,
       'project_public_id': ?projectId,
       'brief': ?brief,

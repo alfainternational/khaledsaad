@@ -35,7 +35,12 @@ class StrategicDiagnosisBuilder
      */
     public function __construct(?SemanticMatcher $matcher = null)
     {
-        $this->matcher = $matcher ?? new LexicalSemanticMatcher(new ArabicNormalizer, new ConceptLexicon);
+        // نفضّل ربط الحاوية (قد يكون محرّك تضمينات) ونسقط للمعجمي خارجها.
+        try {
+            $this->matcher = $matcher ?? app(SemanticMatcher::class);
+        } catch (\Throwable) {
+            $this->matcher = new LexicalSemanticMatcher(new ArabicNormalizer, new ConceptLexicon);
+        }
     }
 
     /**

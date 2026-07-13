@@ -51,8 +51,9 @@ class AiAssistRepository {
     required String content,
     required String clientRequestId,
   }) async {
-    final res = await _api.post(
+    final res = await _api.postGenerative(
       ApiEndpoints.aiConversationMessages(ws, conversationId),
+      receiveTimeout: const Duration(seconds: 120),
       body: {'content': content, 'client_request_id': clientRequestId},
     );
     return AiChatSendResult.fromJson(res);
@@ -78,8 +79,9 @@ class AiAssistRepository {
     String? toolKey,
     String? projectPublicId,
   }) async {
-    final res = await _api.post(
+    final res = await _api.postGenerative(
       ApiEndpoints.aiChat(ws),
+      receiveTimeout: const Duration(seconds: 120),
       body: {
         'messages': messages,
         'tool_key': ?toolKey,
@@ -99,8 +101,9 @@ class AiAssistRepository {
     String? projectPublicId,
     bool enrich = true,
   }) async {
-    final res = await _api.post(
+    final res = await _api.postGenerative(
       ApiEndpoints.aiAnalyze(ws),
+      receiveTimeout: const Duration(seconds: 120),
       body: {
         'tool_code': toolCode,
         'tool_name': toolName,
@@ -124,8 +127,9 @@ class AiAssistRepository {
     String? mode,
     String? projectPublicId,
   }) async {
-    final res = await _api.post(
+    final res = await _api.postGenerative(
       ApiEndpoints.aiSuggest(ws),
+      receiveTimeout: const Duration(seconds: 120),
       body: {
         'tool_code': toolCode,
         'tool_name': toolName,
@@ -143,7 +147,7 @@ class AiAssistRepository {
     String query, {
     int depth = 3,
   }) async {
-    final res = await _api.post(
+    final res = await _api.postGenerative(
       ApiEndpoints.aiResearch(ws),
       body: {'query': query, 'depth': depth},
     );

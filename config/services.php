@@ -154,8 +154,27 @@ return [
         'upload_max_bytes' => (int) env('AI_KNOWLEDGE_UPLOAD_MAX_BYTES', 8388608),
         'upload_chunk_chars' => (int) env('AI_KNOWLEDGE_UPLOAD_CHUNK_CHARS', 3500),
         'upload_max_text_chars' => (int) env('AI_KNOWLEDGE_UPLOAD_MAX_TEXT_CHARS', 350000),
-        'hybrid_retrieval' => env('AI_KNOWLEDGE_HYBRID_RETRIEVAL', false),
+        /*
+         | الاسترجاع الهجين مفعّل افتراضياً: يتدهور بأمان للمعجمي البحت عندما
+         | لا توجد متجهات (لا عامل ولا مفتاح API) — فلا خطر من تفعيله دائماً.
+         */
+        'hybrid_retrieval' => env('AI_KNOWLEDGE_HYBRID_RETRIEVAL', true),
         'embedding_model' => env('AI_KNOWLEDGE_EMBEDDING_MODEL', 'nomic-embed-text'),
+        /*
+         | عميل التضمينات المضمّن (من الخادم، بلا عامل خارجي): OpenAI-compatible
+         | /v1/embeddings. الافتراضي NVIDIA NIM بنموذج bge-m3 متعدد اللغات وبنفس
+         | مفتاح NVIDIA المستخدم للتوليد. هوية النموذج تُحسم في EmbeddingIdentity.
+         */
+        'embedding_api' => [
+            'enabled' => env('AI_EMBEDDINGS_API_ENABLED', true),
+            'base_url' => env('AI_EMBEDDINGS_API_BASE_URL', 'https://integrate.api.nvidia.com/v1'),
+            'key' => env('AI_EMBEDDINGS_API_KEY', env('NVIDIA_API_KEY')),
+            'model' => env('AI_EMBEDDINGS_API_MODEL', 'baai/bge-m3'),
+            'send_input_type' => env('AI_EMBEDDINGS_API_SEND_INPUT_TYPE', true),
+            'connect_timeout' => (int) env('AI_EMBEDDINGS_API_CONNECT_TIMEOUT', 10),
+            'timeout' => (int) env('AI_EMBEDDINGS_API_TIMEOUT', 30),
+            'batch' => (int) env('AI_EMBEDDINGS_API_BATCH', 32),
+        ],
         'embedding_model_version' => env('AI_KNOWLEDGE_EMBEDDING_MODEL_VERSION', 'v1'),
         'embedding_batch_size' => (int) env('AI_KNOWLEDGE_EMBEDDING_BATCH_SIZE', 16),
         'embedding_candidate_limit' => (int) env('AI_KNOWLEDGE_EMBEDDING_CANDIDATE_LIMIT', 200),
