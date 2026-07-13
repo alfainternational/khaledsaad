@@ -13,13 +13,15 @@ class PrivateWorkerGenerationCanaryCommandTest extends TestCase
     {
         $gateway = new class extends PrivateWorkerAiGateway
         {
-            public function generateText(string $prompt, ?string $systemPrompt = null): ?string
+            public function requestContent(string $prompt, ?string $systemPrompt = null): ?array
             {
-                return json_encode([
-                    'canary' => 'LOCAL_REASONING_CANARY_20260713',
-                    'analysis' => 'سبب واضح وتوصية قابلة للقياس',
-                    '_model_name' => 'qwen-local',
-                ], JSON_UNESCAPED_UNICODE);
+                return [
+                    'choices' => [['message' => ['content' => json_encode([
+                        'canary' => 'LOCAL_REASONING_CANARY_20260713',
+                        'analysis' => 'سبب واضح وتوصية قابلة للقياس',
+                    ], JSON_UNESCAPED_UNICODE)]]],
+                    'model' => 'qwen-local',
+                ];
             }
         };
         $this->app->instance(PrivateWorkerAiGateway::class, $gateway);

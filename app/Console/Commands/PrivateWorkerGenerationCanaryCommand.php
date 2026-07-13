@@ -16,20 +16,22 @@ class PrivateWorkerGenerationCanaryCommand extends Command
     public function handle(PrivateWorkerAiGateway $gateway): int
     {
         $started = microtime(true);
-        $response = $gateway->generateText(
+        $response = $gateway->requestContent(
             'حلل العبارة التالية بإيجاز: انخفاض الاحتفاظ مع ارتفاع الزيارات. أعد JSON فقط بالمفاتيح canary وanalysis وrecommendation وmetric. اجعل canary مساوية تماماً لـ'.self::MARKER.'.',
             'أنت محلل محلي. استنتج سبباً محتملاً، توصية عملية، ومقياس تحقق. لا تستخدم الإنترنت ولا أي مزود خارجي.',
         );
-        $decoded = is_string($response) ? json_decode($response, true) : null;
+        $content = $response['choices'][0]['message']['content'] ?? null;
+        $model = $response['model'] ?? null;
+        $decoded = is_string($content) ? json_decode($content, true) : null;
         $ok = is_array($decoded)
             && ($decoded['canary'] ?? null) === self::MARKER
             && is_string($decoded['analysis'] ?? null)
             && trim($decoded['analysis']) !== ''
-            && is_string($decoded['_model_name'] ?? null)
-            && trim($decoded['_model_name']) !== '';
+            && is_string($model)
+            && trim($model) !== '';
         $payload = [
             'ok' => $ok,
-            'model' => is_array($decoded) ? ($decoded['_model_name'] ?? null) : null,
+            'model' => $model,
             'latency_milliseconds' => (int) round((microtime(true) - $started) * 1000),
             'has_analysis' => is_array($decoded) && trim((string) ($decoded['analysis'] ?? '')) !== '',
             'has_recommendation' => is_array($decoded) && trim((string) ($decoded['recommendation'] ?? '')) !== '',
