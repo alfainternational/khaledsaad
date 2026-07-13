@@ -57,8 +57,14 @@ class KnowledgeRetriever
                 $chunk = $match['chunk'];
                 $document = $chunk->document;
                 $source = $document->source;
-                $termScore = count($match['terms']) * 100;
-                $semanticScore = (int) round(max(0.0, (float) ($match['semantic'] ?? 0.0)) * 350);
+                $termScore = min(
+                    max(1, (int) config('services.knowledge.lexical_term_score_cap', 3)),
+                    count($match['terms']),
+                ) * 100;
+                $semanticRank = max(1, (int) ($match['semantic_rank'] ?? PHP_INT_MAX));
+                $semanticScore = isset($match['semantic_rank'])
+                    ? (int) round((int) config('services.knowledge.semantic_rank_weight', 400) / sqrt($semanticRank))
+                    : 0;
                 $scopeScore = (int) $match['scope_rank'] * 10;
                 $trust = (int) $source->trust_score;
 
@@ -84,7 +90,7 @@ class KnowledgeRetriever
             ->values();
     }
 
-    /** @param array<int, array{chunk: KnowledgeChunk, scope_rank: int, terms: array<string, true>, semantic?: float}> $matches
+    /** @param array<int, array{chunk: KnowledgeChunk, scope_rank: int, terms: array<string, true>, semantic_rank?: int}> $matches
      * @param  list<float>  $queryVector
      */
     private function addSemanticMatches(array &$matches, KnowledgeScope $scope, array $queryVector): void
@@ -92,6 +98,7 @@ class KnowledgeRetriever
         $model = (string) config('services.knowledge.embedding_model', 'nomic-embed-text');
         $version = (string) config('services.knowledge.embedding_model_version', 'v1');
         $limit = max(1, min(1000, (int) config('services.knowledge.embedding_candidate_limit', 200)));
+        $semantic = [];
         foreach ($this->searchScopes($scope) as [$searchScope, $scopeRank]) {
             KnowledgeEmbedding::query()
                 ->with('chunk.document.source')
@@ -104,7 +111,7 @@ class KnowledgeRetriever
                 ->orderBy('id')
                 ->limit($limit)
                 ->get()
-                ->each(function (KnowledgeEmbedding $embedding) use (&$matches, $queryVector, $scopeRank): void {
+                ->each(function (KnowledgeEmbedding $embedding) use (&$semantic, $queryVector, $scopeRank): void {
                     $chunk = $embedding->chunk;
                     if (! hash_equals($embedding->content_hash, hash('sha256', $chunk->content))) {
                         return;
@@ -118,10 +125,18 @@ class KnowledgeRetriever
                         return;
                     }
                     $id = (int) $chunk->id;
-                    $matches[$id] ??= ['chunk' => $chunk, 'scope_rank' => $scopeRank, 'terms' => []];
-                    $matches[$id]['semantic'] = max((float) ($matches[$id]['semantic'] ?? -1.0), ($cosine + 1.0) / 2.0);
-                    $matches[$id]['scope_rank'] = max($matches[$id]['scope_rank'], $scopeRank);
+                    if (! isset($semantic[$id]) || $cosine > $semantic[$id]['similarity']) {
+                        $semantic[$id] = ['chunk' => $chunk, 'scope_rank' => $scopeRank, 'similarity' => $cosine];
+                    }
                 });
+        }
+        uasort($semantic, static fn (array $left, array $right): int => [$right['similarity'], -$right['chunk']->id] <=> [$left['similarity'], -$left['chunk']->id]);
+        $rank = 0;
+        foreach ($semantic as $id => $candidate) {
+            $rank++;
+            $matches[$id] ??= ['chunk' => $candidate['chunk'], 'scope_rank' => $candidate['scope_rank'], 'terms' => []];
+            $matches[$id]['semantic_rank'] = $rank;
+            $matches[$id]['scope_rank'] = max($matches[$id]['scope_rank'], $candidate['scope_rank']);
         }
     }
 

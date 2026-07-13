@@ -124,6 +124,49 @@ class KnowledgeRetrieverTest extends TestCase
         $this->assertFalse($evidence->contains(fn ($item): bool => $item->sourceTitle === 'other-secret'));
     }
 
+    #[Test]
+    public function hybrid_rank_prevents_keyword_stuffing_from_hiding_the_top_semantic_evidence(): void
+    {
+        config()->set('services.knowledge.hybrid_retrieval', true);
+        config()->set('services.knowledge.embedding_model', 'test-embed');
+        config()->set('services.knowledge.embedding_model_version', 'v1');
+        [$account, $workspace, $project] = $this->tenant('Fusion');
+        $scope = KnowledgeScope::forProject($account->id, $workspace->id, $project->id);
+        $repository = app(StructuredKnowledgeRepository::class);
+        $this->store($repository, $scope, 'semantic-answer', 80, 'دليل مختلف الألفاظ لكنه يجيب عن المقصود');
+        $this->store($repository, $scope, 'keyword-stuffing', 100, 'خفض معدل مغادرة جمهور رسائل');
+        $documents = KnowledgeDocument::query()
+            ->whereIn('title', ['semantic-answer', 'keyword-stuffing'])
+            ->get()
+            ->keyBy('title');
+        foreach ([['semantic-answer', [1, 0]], ['keyword-stuffing', [0, 1]]] as [$title, $vector]) {
+            $chunk = $documents[$title]->chunks()->sole();
+            KnowledgeEmbedding::query()->create([
+                'knowledge_chunk_id' => $chunk->id,
+                'model_name' => 'test-embed',
+                'model_version' => 'v1',
+                'dimensions' => 2,
+                'content_hash' => hash('sha256', $chunk->content),
+                'vector_json' => $vector,
+                'status' => 'active',
+            ]);
+        }
+        $query = 'خفض معدل مغادرة جمهور رسائل';
+        KnowledgeQueryEmbedding::query()->create([
+            'scope_key' => $scope->key(),
+            'query_hash' => hash('sha256', $query),
+            'model_name' => 'test-embed',
+            'model_version' => 'v1',
+            'dimensions' => 2,
+            'vector_json' => [1, 0],
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $evidence = app(KnowledgeRetriever::class)->retrieve($scope, $query, 2);
+
+        $this->assertSame(['semantic-answer', 'keyword-stuffing'], $evidence->pluck('sourceTitle')->all());
+    }
+
     private function store(
         StructuredKnowledgeRepository $repository,
         KnowledgeScope $scope,
