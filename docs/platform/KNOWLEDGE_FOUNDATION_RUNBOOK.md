@@ -175,3 +175,35 @@ Disable a compromised or retired worker immediately:
 This releases active leases. Rotate by provisioning a new worker; never reuse the old secret. Set AI_PRIVATE_WORKER_ENABLED=false for a global shutdown. The existing deterministic and external fallbacks remain available.
 
 For OCR, install Tesseract Arabic language data and pdftotext on the private machine. DOCX and XLSX extraction use the Python standard library. Ollama remains bound to localhost and is never exposed to the public network.
+
+## Verified Web Research Rollout
+
+Deploy the web research migration with both flags disabled:
+
+```dotenv
+AI_WEB_RESEARCH_ENABLED=false
+AI_WEB_RESEARCH_REFRESH_ENABLED=false
+```
+
+Run `php artisan migrate --force`, clear Laravel and LiteSpeed PHP caches, then
+confirm `php artisan knowledge:health --json` includes zeroed `web_*` metrics.
+Enable `AI_WEB_RESEARCH_ENABLED` first and run a bounded canary:
+
+```bash
+php artisan knowledge:research-web "Saudi SME digital market 2026" --depth=2
+php artisan knowledge:health --json
+```
+
+Inspect both stored results. Each accepted page must link to a global
+`web_page` source and active document, expose URL/title/fetch time in its
+citation, and remain `unverified` unless two independent fresh domains support
+the same extracted claim. A conflict must remain visible and require
+abstention. Failed fetches must have `fetch_status=failed` and no linked
+knowledge document.
+
+After the canary passes, enable `AI_WEB_RESEARCH_REFRESH_ENABLED`. Confirm
+`knowledge-web-refresh` appears at minute 17 in `php artisan schedule:list`.
+The hourly job processes at most ten due sources for forty seconds, fetches one
+page per host per invocation, and backs failures off for six hours. Disable the
+refresh flag first during an incident; disabling verified research preserves
+all versioned evidence for diagnosis and lexical retrieval.

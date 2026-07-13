@@ -7,6 +7,7 @@ use App\Domain\AI\Kernel\Knowledge\KnowledgeStore;
 use App\Domain\AI\Knowledge\EmbeddingJobDispatcher;
 use App\Domain\AI\Services\AiMetrics;
 use App\Domain\AI\Web\Models\WebResearchRun;
+use App\Domain\AI\Web\Models\WebResearchResult;
 use App\Support\Intelligence\RemotePageFetcher;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
@@ -38,6 +39,7 @@ class WebResearchService
         private readonly WebSourcePolicy $sourcePolicy,
         private readonly WebKnowledgeIngestor $webKnowledge,
         private readonly EmbeddingJobDispatcher $embeddings,
+        private readonly WebSearchResultNormalizer $resultNormalizer,
     ) {}
 
     /**
@@ -147,6 +149,7 @@ class WebResearchService
                 $result['rank'] = $index + 1;
                 $fetch = $this->fetcher->fetch((string) ($result['url'] ?? ''));
                 if (! ($fetch['ok'] ?? false) || ! is_string($fetch['html'] ?? null)) {
+                    $this->recordFailure($run, $result, $fetch, (string) ($fetch['error'] ?? 'fetch_failed'));
                     continue;
                 }
 
@@ -155,7 +158,8 @@ class WebResearchService
                     $publishedAt = filled($page['published_at']) ? CarbonImmutable::parse($page['published_at']) : null;
                     $policy = $this->sourcePolicy->assess((string) $page['canonical_url'], $publishedAt);
                     $stored = $this->webKnowledge->ingest($run, $result, $fetch, $page, $policy);
-                } catch (\Throwable) {
+                } catch (\Throwable $exception) {
+                    $this->recordFailure($run, $result, $fetch, Str::limit($exception->getMessage(), 80, ''));
                     continue;
                 }
 
@@ -216,6 +220,43 @@ class WebResearchService
                 'research_run_id' => $run->public_id,
             ];
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     * @param  array<string, mixed>  $fetch
+     */
+    private function recordFailure(WebResearchRun $run, array $result, array $fetch, string $error): void
+    {
+        $originalUrl = (string) ($result['url'] ?? '');
+        $normalizedUrl = $this->resultNormalizer->normalizeUrl($originalUrl);
+        if ($normalizedUrl === null) {
+            return;
+        }
+
+        WebResearchResult::query()->updateOrCreate(
+            [
+                'web_research_run_id' => $run->id,
+                'normalized_url_hash' => hash('sha256', $normalizedUrl),
+            ],
+            [
+                'provider' => (string) ($result['provider'] ?? 'unknown'),
+                'rank' => max(1, (int) ($result['rank'] ?? 1)),
+                'title' => (string) ($result['title'] ?? ''),
+                'original_url' => $originalUrl,
+                'normalized_url' => $normalizedUrl,
+                'domain' => strtolower((string) parse_url($normalizedUrl, PHP_URL_HOST)),
+                'snippet' => (string) ($result['snippet'] ?? ''),
+                'fetch_status' => 'failed',
+                'http_status' => isset($fetch['status']) ? (int) $fetch['status'] : null,
+                'trust_tier' => 'unknown',
+                'trust_score' => 0,
+                'freshness_status' => 'unknown',
+                'verification_status' => 'unverified',
+                'fetched_at' => now(),
+                'meta_json' => ['error' => $error],
+            ],
+        );
     }
 
     private function extract(string $url): string

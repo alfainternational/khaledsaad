@@ -122,6 +122,13 @@ class KnowledgeHealthCommandTest extends TestCase
             'latest_evaluation_status' => 'none',
             'latest_evaluation_recall' => null,
             'latest_evaluation_mrr' => null,
+            'web_sources' => 0,
+            'web_results' => 0,
+            'web_results_verified' => 0,
+            'web_results_unverified' => 0,
+            'web_results_conflict' => 0,
+            'web_fetch_failures' => 0,
+            'web_sources_due_refresh' => 0,
         ], json_decode(trim(Artisan::output()), true, 512, JSON_THROW_ON_ERROR));
     }
 
@@ -152,6 +159,13 @@ class KnowledgeHealthCommandTest extends TestCase
             ->expectsOutput('latest_evaluation_status: none')
             ->expectsOutput('latest_evaluation_recall: ')
             ->expectsOutput('latest_evaluation_mrr: ')
+            ->expectsOutput('web_sources: 0')
+            ->expectsOutput('web_results: 0')
+            ->expectsOutput('web_results_verified: 0')
+            ->expectsOutput('web_results_unverified: 0')
+            ->expectsOutput('web_results_conflict: 0')
+            ->expectsOutput('web_fetch_failures: 0')
+            ->expectsOutput('web_sources_due_refresh: 0')
             ->assertSuccessful();
     }
 }

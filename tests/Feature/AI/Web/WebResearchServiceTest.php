@@ -4,6 +4,7 @@ namespace Tests\Feature\AI\Web;
 
 use App\Contracts\WebSearchGateway;
 use App\Domain\AI\Web\Models\WebResearchRun;
+use App\Domain\AI\Web\Models\WebResearchResult;
 use App\Domain\AI\Web\WebResearchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -43,6 +44,32 @@ class WebResearchServiceTest extends TestCase
         $this->assertSame('completed', WebResearchRun::query()->sole()->status);
         $this->assertDatabaseCount('knowledge_sources', 2);
         $this->assertDatabaseCount('knowledge_documents', 2);
+    }
+
+    #[Test]
+    public function failed_fetches_are_durable_without_becoming_knowledge(): void
+    {
+        config()->set('services.web_search.verified_research', true);
+        $this->app->instance(WebSearchGateway::class, new class implements WebSearchGateway
+        {
+            public function search(string $query, int $limit = 5): array
+            {
+                return [[
+                    'provider' => 'test', 'title' => 'Unavailable',
+                    'url' => 'https://down.test/report', 'snippet' => '',
+                ]];
+            }
+        });
+        Http::fake(['https://down.test/report' => Http::response('', 503, ['Content-Type' => 'text/html'])]);
+
+        $result = app(WebResearchService::class)->research('خبر حديث', 1);
+
+        $this->assertSame([], $result['findings']);
+        $failed = WebResearchResult::query()->sole();
+        $this->assertSame('failed', $failed->fetch_status);
+        $this->assertSame(503, $failed->http_status);
+        $this->assertNull($failed->knowledge_document_id);
+        $this->assertDatabaseCount('knowledge_sources', 0);
     }
 
     private function html(string $title, string $text): string

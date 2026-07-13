@@ -68,6 +68,20 @@ class KnowledgeHealthCommand extends Command
             'latest_evaluation_status' => $latestEvaluation?->status ?? 'none',
             'latest_evaluation_recall' => $latestEvaluation !== null ? (float) $latestEvaluation->recall_at_k : null,
             'latest_evaluation_mrr' => $latestEvaluation !== null ? (float) $latestEvaluation->mean_reciprocal_rank : null,
+            'web_sources' => DB::table('knowledge_sources')->where('kind', 'web_page')->count(),
+            'web_results' => DB::table('web_research_results')->count(),
+            'web_results_verified' => DB::table('web_research_results')->where('verification_status', 'verified')->count(),
+            'web_results_unverified' => DB::table('web_research_results')->where('verification_status', 'unverified')->count(),
+            'web_results_conflict' => DB::table('web_research_results')->where('verification_status', 'conflict')->count(),
+            'web_fetch_failures' => DB::table('web_research_results')->where('fetch_status', 'failed')->count(),
+            'web_sources_due_refresh' => DB::table('knowledge_documents')
+                ->join('knowledge_sources', 'knowledge_sources.id', '=', 'knowledge_documents.knowledge_source_id')
+                ->where('knowledge_sources.kind', 'web_page')
+                ->where('knowledge_documents.status', 'active')
+                ->whereNotNull('knowledge_documents.valid_until')
+                ->where('knowledge_documents.valid_until', '<=', now())
+                ->distinct()
+                ->count('knowledge_sources.id'),
         ];
 
         if ($this->option('json')) {

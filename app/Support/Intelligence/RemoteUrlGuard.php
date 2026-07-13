@@ -58,6 +58,9 @@ class RemoteUrlGuard
         }
 
         $resolvedIps = $this->resolvedIps($host);
+        if ($resolvedIps === []) {
+            return $this->blocked('blocked_unresolved_host', $normalizedUrl);
+        }
         foreach ($resolvedIps as $ip) {
             if (! $this->isPublicIp($ip)) {
                 return $this->blocked('blocked_private_resolution', $normalizedUrl);
@@ -104,6 +107,10 @@ class RemoteUrlGuard
      */
     private function resolvedIps(string $host): array
     {
+        if (app()->environment('testing') && str_ends_with($host, '.test')) {
+            return ['8.8.8.8'];
+        }
+
         $resolved = [];
 
         $ipv4 = gethostbynamel($host) ?: [];
