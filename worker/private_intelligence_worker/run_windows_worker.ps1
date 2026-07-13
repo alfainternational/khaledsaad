@@ -1,7 +1,8 @@
 param(
     [string] $CredentialPath = (Join-Path $PSScriptRoot 'worker.credentials.dpapi'),
     [string] $PythonExe = 'python',
-    [string] $WorkerScript = (Join-Path $PSScriptRoot 'worker.py')
+    [string] $WorkerScript = (Join-Path $PSScriptRoot 'worker.py'),
+    [switch] $Continuous
 )
 
 $ErrorActionPreference = 'Stop'
@@ -58,7 +59,8 @@ try {
         }
     }
 
-    & $PythonExe $WorkerScript --once
+    $workerArguments = if ($Continuous) { @() } else { @('--once') }
+    & $PythonExe $WorkerScript @workerArguments
     exit $LASTEXITCODE
 } finally {
     if ($tunnel -and -not $tunnel.HasExited) {

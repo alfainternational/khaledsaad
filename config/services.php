@@ -42,7 +42,7 @@ return [
     | fallback: جرّب Google Gemini أولاً ثم NVIDIA NIM عند الفشل أو غياب المفتاح.
     */
     'ai' => [
-        'provider' => env('AI_PROVIDER', 'gemini'),
+        'provider' => env('AI_PROVIDER', 'private_worker'),
         /* الكاش لتقليل الإنفاق على الـ API (انظر CachingAiGateway). */
         'cache' => env('AI_CACHE', true),
         'cache_ttl_minutes' => env('AI_CACHE_TTL_MINUTES', 1440),

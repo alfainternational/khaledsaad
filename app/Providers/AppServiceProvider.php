@@ -84,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
             $factory = new AiGatewayFactory;
 
             $gateway = match ($provider) {
+                'private_worker' => $app->make(PrivateWorkerAiGateway::class),
                 // سلسلة مزوّدات مرتّبة (Groq→Cerebras→NVIDIA…) — الصمود والجودة.
                 'chain' => $factory->chain(array_filter(array_map(
                     'trim',
