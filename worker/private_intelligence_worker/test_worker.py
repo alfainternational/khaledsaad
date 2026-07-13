@@ -155,6 +155,33 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual("v2", result["contract_version"])
         self.assertEqual("docx_paragraph", result["chunks"][0]["locator"]["type"])
 
+    def test_worker_routes_pdf_and_images_through_structured_extractors(self):
+        os.environ.update(
+            AI_WORKER_SERVER_URL="https://example.test",
+            AI_WORKER_ID="wrk_test",
+            AI_WORKER_SECRET="secret",
+        )
+        contract = {"version": "v2", "max_chunks": 100, "max_text_chars": 350000, "max_chunk_chars": 3500}
+        expected = {"contract_version": "v2", "text": "evidence", "chunks": [{
+            "content": "evidence", "heading": None, "locator": {"type": "page", "page": 1}
+        }]}
+        for mime, name, patch_target in [
+            ("application/pdf", "report.pdf", "worker.extract_pdf"),
+            ("image/png", "scan.png", "worker.extract_image"),
+        ]:
+            content = b"private-file"
+            worker = Worker()
+            worker.signed_request = MagicMock(return_value=(200, content, {"Content-Type": mime}))
+            job = {"public_id": "job-file", "payload": {
+                "mime_type": mime, "original_name": name,
+                "expected_sha256": hashlib.sha256(content).hexdigest(),
+                "extraction_contract": contract,
+            }}
+            with patch(patch_target, return_value=expected) as extractor:
+                result = worker.extract_document(job, "lease-token")
+            self.assertEqual("v2", result["contract_version"])
+            extractor.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

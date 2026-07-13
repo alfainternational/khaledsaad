@@ -2,14 +2,67 @@ import pathlib
 import tempfile
 import unittest
 import zipfile
+import subprocess
+from types import SimpleNamespace
 
-from document_extractors import extract_docx, extract_xlsx
+from document_extractors import extract_docx, extract_image, extract_pdf, extract_xlsx
 
 
 CONTRACT = {"max_chunks": 100, "max_text_chars": 350000, "max_chunk_chars": 3500}
 
 
 class StructuredOfficeExtractionTest(unittest.TestCase):
+    def test_pdf_preserves_pages_and_uses_ocr_only_for_scanned_pages(self):
+        path = self.plain_file(b"%PDF-fixture", ".pdf")
+        calls = []
+
+        def runner(command):
+            calls.append(command)
+            if command[0] == "pdfinfo":
+                return SimpleNamespace(stdout="Pages: 2\n", stderr="", returncode=0)
+            if command[0] == "pdftotext" and command[2] == "1":
+                return SimpleNamespace(stdout="Page one contains enough searchable market evidence for indexing.", stderr="", returncode=0)
+            if command[0] == "pdftotext":
+                return SimpleNamespace(stdout="x", stderr="", returncode=0)
+            if command[0] == "pdftoppm":
+                pathlib.Path(command[-1] + "-2.png").write_bytes(b"png")
+                return SimpleNamespace(stdout="", stderr="", returncode=0)
+            if command[0] == "tesseract":
+                return SimpleNamespace(stdout=self.ocr_tsv("Scanned Arabic evidence", 91), stderr="", returncode=0)
+            raise AssertionError(command)
+
+        result = extract_pdf(path, CONTRACT, runner=runner)
+
+        self.assertEqual([1, 2], [chunk["locator"]["page"] for chunk in result["chunks"]])
+        self.assertEqual("page", result["chunks"][0]["locator"]["type"])
+        self.assertEqual("image_region", result["chunks"][1]["locator"]["type"])
+        self.assertEqual("ocr", result["chunks"][1]["locator"]["method"])
+        self.assertEqual(91.0, result["chunks"][1]["locator"]["confidence"])
+        self.assertEqual(1, result["metadata"]["ocr_pages"])
+        self.assertEqual(1, sum(1 for call in calls if call[0] == "tesseract"))
+
+    def test_image_ocr_returns_normalized_regions_and_confidence(self):
+        path = self.plain_file(b"png", ".png")
+        runner = lambda command: SimpleNamespace(
+            stdout=self.ocr_tsv("Arabic market evidence", 87), stderr="", returncode=0
+        )
+
+        result = extract_image(path, CONTRACT, runner=runner)
+
+        locator = result["chunks"][0]["locator"]
+        self.assertEqual("image_region", locator["type"])
+        self.assertEqual([0.1, 0.2, 0.5, 0.3], locator["bbox"])
+        self.assertEqual(87.0, locator["confidence"])
+        self.assertEqual(87.0, result["metadata"]["mean_confidence"])
+
+    def test_pdf_reports_missing_tools_and_local_command_timeouts(self):
+        path = self.plain_file(b"%PDF-fixture", ".pdf")
+
+        with self.assertRaises(FileNotFoundError):
+            extract_pdf(path, CONTRACT, runner=lambda command: (_ for _ in ()).throw(FileNotFoundError("pdfinfo")))
+        with self.assertRaises(subprocess.TimeoutExpired):
+            extract_pdf(path, CONTRACT, runner=lambda command: (_ for _ in ()).throw(subprocess.TimeoutExpired(command, 1)))
+
     def test_docx_preserves_headings_paragraphs_and_table_rows(self):
         document = """<?xml version="1.0" encoding="UTF-8"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
@@ -82,6 +135,24 @@ class StructuredOfficeExtractionTest(unittest.TestCase):
                 archive.writestr(name, content)
         self.addCleanup(path.unlink, missing_ok=True)
         return path
+
+    def plain_file(self, content: bytes, suffix: str) -> pathlib.Path:
+        handle = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+        handle.write(content)
+        handle.close()
+        path = pathlib.Path(handle.name)
+        self.addCleanup(path.unlink, missing_ok=True)
+        return path
+
+    def ocr_tsv(self, text: str, confidence: int) -> str:
+        words = text.split()
+        rows = [
+            "level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext",
+            "1\t1\t0\t0\t0\t0\t0\t0\t1000\t1000\t-1\t",
+        ]
+        for index, word in enumerate(words, start=1):
+            rows.append(f"5\t1\t1\t1\t1\t{index}\t100\t200\t400\t100\t{confidence}\t{word}")
+        return "\n".join(rows)
 
 
 if __name__ == "__main__":

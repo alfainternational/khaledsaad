@@ -5,6 +5,11 @@ from __future__ import annotations
 import pathlib
 import posixpath
 import re
+import csv
+import io
+import os
+import subprocess
+import tempfile
 import zipfile
 from typing import Any
 from xml.etree import ElementTree
@@ -14,6 +19,119 @@ WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 SHEET_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
 OFFICE_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
+
+def extract_pdf(path: pathlib.Path, contract: dict[str, Any], runner: Any = None) -> dict[str, Any]:
+    runner = runner or run_local
+    info = checked(runner(["pdfinfo", str(path)]))
+    match = re.search(r"^Pages:\s*(\d+)\s*$", info.stdout, re.MULTILINE | re.IGNORECASE)
+    if not match:
+        raise RuntimeError("PDF page count is unavailable")
+    pages = int(match.group(1))
+    if pages < 1 or pages > 500:
+        raise RuntimeError("PDF page count exceeds extraction limit")
+
+    chunks: list[dict[str, Any]] = []
+    ocr_pages = 0
+    min_text = max(10, int(contract.get("pdf_min_text_chars", 40)))
+    for page in range(1, pages + 1):
+        extracted = checked(runner([
+            "pdftotext", "-f", str(page), "-l", str(page), "-layout", str(path), "-"
+        ])).stdout.strip()
+        if len(extracted) >= min_text:
+            add_chunk(chunks, extracted, f"Page {page}", {
+                "type": "page", "page": page, "method": "text",
+            }, contract)
+            continue
+
+        with tempfile.TemporaryDirectory(prefix="private-worker-pdf-") as temporary:
+            prefix = str(pathlib.Path(temporary) / "page")
+            checked(runner([
+                "pdftoppm", "-f", str(page), "-l", str(page), "-png", "-r", "200", str(path), prefix
+            ]))
+            images = sorted(pathlib.Path(temporary).glob("page-*.png"))
+            if not images:
+                raise RuntimeError("PDF rasterization produced no page image")
+            page_chunks, _ = ocr_chunks(images[0], runner, page=page)
+            for chunk in page_chunks:
+                add_chunk(chunks, chunk["content"], chunk.get("heading"), chunk["locator"], contract)
+            ocr_pages += 1
+
+    return result("pdf", chunks, contract, {"pages": pages, "ocr_pages": ocr_pages})
+
+
+def extract_image(path: pathlib.Path, contract: dict[str, Any], runner: Any = None) -> dict[str, Any]:
+    runner = runner or run_local
+    chunks, confidence = ocr_chunks(path, runner)
+    bounded: list[dict[str, Any]] = []
+    for chunk in chunks:
+        add_chunk(bounded, chunk["content"], chunk.get("heading"), chunk["locator"], contract)
+    return result("image", bounded, contract, {"mean_confidence": confidence, "regions": len(bounded)})
+
+
+def ocr_chunks(path: pathlib.Path, runner: Any, page: int | None = None) -> tuple[list[dict[str, Any]], float]:
+    languages = os.getenv("AI_WORKER_OCR_LANGUAGE", "ara+eng")
+    output = checked(runner(["tesseract", str(path), "stdout", "-l", languages, "tsv"])).stdout
+    rows = list(csv.DictReader(io.StringIO(output), delimiter="\t"))
+    page_row = next((row for row in rows if row.get("level") == "1"), None)
+    width = max(1, int((page_row or {}).get("width", "1") or 1))
+    height = max(1, int((page_row or {}).get("height", "1") or 1))
+    blocks: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for row in rows:
+        text = (row.get("text") or "").strip()
+        try:
+            confidence = float(row.get("conf", "-1") or -1)
+        except ValueError:
+            confidence = -1
+        if not text or confidence < 0:
+            continue
+        key = (row.get("block_num", "0"), row.get("par_num", "0"), row.get("line_num", "0"))
+        blocks.setdefault(key, []).append({**row, "confidence_value": confidence})
+
+    chunks: list[dict[str, Any]] = []
+    all_confidences: list[float] = []
+    for block_number, words in enumerate(blocks.values(), start=1):
+        left = min(int(word["left"]) for word in words)
+        top = min(int(word["top"]) for word in words)
+        right = max(int(word["left"]) + int(word["width"]) for word in words)
+        bottom = max(int(word["top"]) + int(word["height"]) for word in words)
+        confidences = [float(word["confidence_value"]) for word in words]
+        all_confidences.extend(confidences)
+        locator: dict[str, Any] = {
+            "type": "image_region",
+            "region": block_number,
+            "bbox": [round(left / width, 4), round(top / height, 4), round(right / width, 4), round(bottom / height, 4)],
+            "confidence": round(sum(confidences) / len(confidences), 2),
+            "method": "ocr",
+        }
+        if page is not None:
+            locator["page"] = page
+        chunks.append({
+            "heading": f"Page {page}" if page is not None else None,
+            "content": " ".join(str(word["text"]) for word in words),
+            "locator": locator,
+        })
+    if not chunks:
+        raise RuntimeError("OCR found no text")
+    mean = round(sum(all_confidences) / len(all_confidences), 2)
+    return chunks, mean
+
+
+def run_local(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=int(os.getenv("AI_WORKER_COMMAND_TIMEOUT", "180")),
+        check=False,
+    )
+
+
+def checked(completed: Any) -> Any:
+    if completed.returncode != 0:
+        raise RuntimeError(f"local extractor exited with code {completed.returncode}")
+    return completed
 
 
 def extract_docx(path: pathlib.Path, contract: dict[str, Any]) -> dict[str, Any]:

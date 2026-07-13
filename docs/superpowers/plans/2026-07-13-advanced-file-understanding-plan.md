@@ -44,11 +44,11 @@
 - Test: `worker/private_intelligence_worker/test_document_extractors.py`
 - Create: `worker/private_intelligence_worker/install_windows_tools.ps1`
 
-- [ ] Write failing tests around mocked Poppler/Tesseract output for per-page text, scanned-page OCR fallback, image block coordinates, confidence, language, timeouts, and missing tools.
-- [ ] Implement page-wise `pdftotext`; rasterize only pages with insufficient text and run Tesseract TSV locally.
-- [ ] Implement direct image OCR with normalized bounding boxes and confidence summaries.
-- [ ] Install verified Windows tools and Arabic/English language data outside the repository, then record versions in worker metadata.
-- [ ] Re-run tests and commit `feat: add page aware local OCR`.
+- [x] Write failing tests around mocked Poppler/Tesseract output for per-page text, scanned-page OCR fallback, image block coordinates, confidence, language, timeouts, and missing tools.
+- [x] Implement page-wise `pdftotext`; rasterize only pages with insufficient text and run Tesseract TSV locally.
+- [x] Implement direct image OCR with normalized bounding boxes and confidence summaries.
+- [x] Install verified Windows tools and Arabic/English language data outside the repository, then record versions in worker metadata.
+- [x] Re-run tests and commit `feat: add page aware local OCR`.
 
 ### Task 4: Server-side validation, injection flags, and indexing
 

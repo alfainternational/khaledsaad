@@ -24,7 +24,7 @@ import urllib.parse
 import zipfile
 from typing import Any
 from xml.etree import ElementTree
-from document_extractors import extract_docx, extract_xlsx
+from document_extractors import extract_docx, extract_image, extract_pdf, extract_xlsx
 
 
 def canonical_json(value: Any) -> str:
@@ -349,6 +349,10 @@ class Worker:
                 return extract_docx(temporary, contract)
             if mime.endswith("spreadsheetml.sheet"):
                 return extract_xlsx(temporary, contract)
+            if mime == "application/pdf":
+                return extract_pdf(temporary, contract)
+            if mime.startswith("image/"):
+                return extract_image(temporary, contract)
             text = extract_text(temporary, mime)
         finally:
             temporary.unlink(missing_ok=True)
