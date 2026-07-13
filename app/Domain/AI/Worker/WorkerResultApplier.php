@@ -2,6 +2,7 @@
 
 namespace App\Domain\AI\Worker;
 
+use App\Domain\AI\Chat\ChatMessageLifecycle;
 use App\Domain\AI\Knowledge\EmbeddingJobDispatcher;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\Models\KnowledgeChunk;
@@ -24,11 +25,18 @@ class WorkerResultApplier
         private readonly WebEvidenceVerifier $webEvidenceVerifier,
         private readonly UntrustedInstructionScanner $instructionScanner,
         private readonly EmbeddingJobDispatcher $embeddingJobs,
+        private readonly ChatMessageLifecycle $chatMessages,
     ) {}
 
     /** @param array<string, mixed> $result */
     public function apply(IntelligenceJob $job, IntelligenceWorker $worker, array $result): void
     {
+        if ($job->type === 'local_llm' && ($job->payload_json['purpose'] ?? null) === 'user_chat') {
+            $this->chatMessages->complete($job, $result);
+
+            return;
+        }
+
         if ($job->type === 'embeddings') {
             $this->applyEmbeddings($job, $result);
 

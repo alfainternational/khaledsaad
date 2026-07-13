@@ -2,6 +2,7 @@
 
 namespace App\Domain\AI\Worker;
 
+use App\Domain\AI\Chat\ChatMessageLifecycle;
 use App\Domain\AI\Knowledge\Models\KnowledgeUpload;
 use App\Domain\AI\Worker\Models\IntelligenceJob;
 use App\Domain\AI\Worker\Models\IntelligenceWorker;
@@ -13,6 +14,7 @@ class WorkerJobLifecycle
     public function __construct(
         private readonly WorkerSigner $signer,
         private readonly WorkerResultApplier $resultApplier,
+        private readonly ChatMessageLifecycle $chatMessages,
     ) {}
 
     public function heartbeat(
@@ -119,6 +121,9 @@ class WorkerJobLifecycle
                 'available_at' => $terminal ? null : now()->addSeconds(min(300, (2 ** $job->attempts) * 15)),
                 'last_error' => $errorCode.': '.mb_substr($message, 0, 800),
             ]);
+            if ($terminal && $job->type === 'local_llm' && ($job->payload_json['purpose'] ?? null) === 'user_chat') {
+                $this->chatMessages->fail($job);
+            }
 
             return $job->fresh();
         }, 3);
