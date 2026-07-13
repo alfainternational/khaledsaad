@@ -89,6 +89,8 @@ class DuckDuckGoSearchGateway implements WebSearchGateway
         parse_str($parts['query'] ?? '', $q);
         if (isset($q['uddg']) && is_string($q['uddg'])) {
             $href = $q['uddg'];
+        } elseif (str_ends_with(strtolower((string) ($parts['host'] ?? '')), 'duckduckgo.com')) {
+            return null;
         }
 
         return filter_var($href, FILTER_VALIDATE_URL) ? $href : null;

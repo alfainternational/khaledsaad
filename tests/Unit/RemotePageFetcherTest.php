@@ -55,4 +55,37 @@ class RemotePageFetcherTest extends TestCase
         $this->assertSame('blocked_private_ip', $result['error']);
         Http::assertSentCount(1);
     }
+
+    #[Test]
+    public function it_rejects_non_html_content_before_it_reaches_the_research_pipeline(): void
+    {
+        Http::fake([
+            'https://safe-site.test' => Http::response('%PDF', 200, [
+                'Content-Type' => 'application/pdf',
+            ]),
+        ]);
+
+        $result = (new RemotePageFetcher)->fetch('https://safe-site.test');
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('unsupported_content_type', $result['error']);
+        $this->assertSame('', $result['html']);
+    }
+
+    #[Test]
+    public function it_rejects_html_larger_than_the_configured_limit(): void
+    {
+        config()->set('services.web_search.max_response_bytes', 32);
+        Http::fake([
+            'https://safe-site.test' => Http::response(str_repeat('x', 33), 200, [
+                'Content-Type' => 'text/html; charset=UTF-8',
+            ]),
+        ]);
+
+        $result = (new RemotePageFetcher)->fetch('https://safe-site.test');
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('response_too_large', $result['error']);
+        $this->assertSame('', $result['html']);
+    }
 }

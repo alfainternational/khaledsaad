@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Api\ApiExceptionRenderer;
+use App\Http\Middleware\AuthenticatePrivateWorker;
 use App\Http\Middleware\CheckEntitlement;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureApiProjectInWorkspace;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => EnsureAdmin::class,
+            'private.worker' => AuthenticatePrivateWorker::class,
             'entitlement' => CheckEntitlement::class,
             'api.workspace' => EnsureApiWorkspaceMember::class,
             'api.project' => EnsureApiProjectInWorkspace::class,

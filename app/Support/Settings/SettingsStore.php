@@ -43,6 +43,13 @@ class SettingsStore
         return $this->all()[$key] ?? $default;
     }
 
+    public function getFresh(string $key, mixed $default = null): mixed
+    {
+        $this->cache = null;
+
+        return $this->get($key, $default);
+    }
+
     public function set(string $key, mixed $value): void
     {
         $data = $this->all();

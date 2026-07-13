@@ -75,6 +75,49 @@ Schedule::command('ai:learn')
     ->withoutOverlapping()
     ->name('ai-continuous-learning');
 
+if ((bool) config('services.knowledge.project_sync', false)) {
+    Schedule::command('knowledge:sync-projects')
+        ->dailyAt('03:15')
+        ->withoutOverlapping()
+        ->name('knowledge-project-sync');
+}
+
+if ((bool) config('services.knowledge.upload_processing', false)) {
+    Schedule::command('knowledge:process-uploads --limit=20')
+        ->everyTenMinutes()
+        ->withoutOverlapping()
+        ->name('knowledge-upload-processing');
+}
+
+Schedule::command('knowledge:cleanup-upload-sessions --limit=100')
+    ->hourly()
+    ->withoutOverlapping()
+    ->name('knowledge-upload-session-cleanup');
+
+if ((bool) config('services.private_worker.enabled', false)) {
+    Schedule::command('private-worker:maintain')
+        ->everyFiveMinutes()
+        ->withoutOverlapping()
+        ->name('private-worker-maintenance');
+
+    Schedule::command('knowledge:queue-embeddings --limit=100')
+        ->everyTenMinutes()
+        ->withoutOverlapping()
+        ->name('knowledge-embedding-indexing');
+}
+
+Schedule::command('knowledge:maintain-embeddings')
+    ->dailyAt('03:05')
+    ->withoutOverlapping()
+    ->name('knowledge-embedding-maintenance');
+
+if ((bool) config('services.web_search.scheduled_refresh', false)) {
+    Schedule::command('knowledge:refresh-web --limit=10 --deadline=40')
+        ->hourlyAt(17)
+        ->withoutOverlapping()
+        ->name('knowledge-web-refresh');
+}
+
 /*
  | Compile-Ahead: يعيد تجميع artifact الذكاء لكل المساحات (ملء أوّلي + شبكة أمان).
  | العرض اليومي يقرأ الناتج الجاهز فقط — صفر حساب وقت الطلب.
@@ -108,7 +151,9 @@ Artisan::command('ai:distill {limit=8}', function (AiGatewayInterface $gateway, 
 
         return;
     }
-    if (! config('services.gemini.key') && ! config('services.nvidia.key')) {
+    $localReady = config('services.ai.provider') === 'private_worker'
+        && (bool) config('services.private_worker.enabled', false);
+    if (! $localReady && ! config('services.gemini.key') && ! config('services.nvidia.key')) {
         $this->warn('ai:distill — لا مزوّد LLM مهيّأ.');
 
         return;
@@ -173,7 +218,9 @@ Artisan::command('ai:teach {limit=6}', function (AiGatewayInterface $gateway, Kn
 
         return;
     }
-    if (! config('services.gemini.key') && ! config('services.nvidia.key')) {
+    $localReady = config('services.ai.provider') === 'private_worker'
+        && (bool) config('services.private_worker.enabled', false);
+    if (! $localReady && ! config('services.gemini.key') && ! config('services.nvidia.key')) {
         $this->warn('ai:teach — لا مزوّد LLM مهيّأ.');
 
         return;
@@ -199,7 +246,7 @@ Artisan::command('ai:teach {limit=6}', function (AiGatewayInterface $gateway, Kn
             if (trim($inputs) === '') {
                 continue;
             }
-            $samples[] = "مدخلات المستخدم: ".$inputs."\nمخرج النظام المحلي: ".trim($headline.' | '.$bullets);
+            $samples[] = 'مدخلات المستخدم: '.$inputs."\nمخرج النظام المحلي: ".trim($headline.' | '.$bullets);
         }
 
         if ($samples === []) {

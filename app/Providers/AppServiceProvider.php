@@ -2,12 +2,9 @@
 
 namespace App\Providers;
 
-use App\Contracts\AiGatewayInterface;
 use App\Application\Integration\CloudIntegrationService;
+use App\Contracts\AiGatewayInterface;
 use App\Contracts\CloudClientContract;
-use App\Domain\Integration\Services\CloudIntegrationGate;
-use App\Domain\Integration\Services\HttpCloudClient;
-use App\Domain\Integration\Services\NullCloudClient;
 use App\Contracts\WebSearchGateway;
 use App\Domain\AI\Kernel\Agents\AgentCatalog;
 use App\Domain\AI\Kernel\SkillRegistry;
@@ -15,31 +12,44 @@ use App\Domain\AI\Kernel\Skills\InsightSkill;
 use App\Domain\AI\Kernel\Skills\NextStepSkill;
 use App\Domain\AI\Kernel\Skills\ToolAnalysisSkill;
 use App\Domain\AI\Kernel\Skills\WebResearchSkill;
+use App\Domain\AI\Knowledge\VectorMath;
+use App\Domain\AI\Semantic\LexicalSemanticMatcher;
+use App\Domain\AI\Semantic\SemanticMatcher;
+use App\Domain\AI\Services\AiGatewayFactory;
 use App\Domain\AI\Services\AiMetrics;
-use App\Domain\AI\Services\NullAiGateway;
-use App\Domain\AI\Web\DuckDuckGoSearchGateway;
-use App\Domain\AI\Web\NullWebSearchGateway;
-use App\Http\View\Composers\AmbientAdvisorComposer;
-use App\Support\Settings\SettingsStore;
 use App\Domain\AI\Services\CachingAiGateway;
+use App\Domain\AI\Services\ChainAiGateway;
 use App\Domain\AI\Services\FallbackAiGateway;
 use App\Domain\AI\Services\GeminiGateway;
+use App\Domain\AI\Services\NullAiGateway;
 use App\Domain\AI\Services\NvidiaNimGateway;
+use App\Domain\AI\Services\PrivateWorkerAiGateway;
+use App\Domain\AI\Web\BingRssSearchGateway;
+use App\Domain\AI\Web\CompositeWebSearchGateway;
+use App\Domain\AI\Web\DuckDuckGoSearchGateway;
+use App\Domain\AI\Web\NullWebSearchGateway;
+use App\Domain\AI\Web\SearxngSearchGateway;
+use App\Domain\AI\Web\WebSearchResultNormalizer;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Client\Models\Client;
 use App\Domain\Entitlement\Services\EntitlementResolver;
 use App\Domain\FeatureFlag\Services\FeatureFlagService;
+use App\Domain\Integration\Services\CloudIntegrationGate;
+use App\Domain\Integration\Services\HttpCloudClient;
+use App\Domain\Integration\Services\NullCloudClient;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
 use App\Domain\Workspace\Models\WorkspaceInvitation;
 use App\Domain\Workspace\Models\WorkspaceMember;
+use App\Http\View\Composers\AmbientAdvisorComposer;
 use App\Policies\ApprovalPolicy;
 use App\Policies\ClientPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\WorkspaceInvitationPolicy;
 use App\Policies\WorkspaceMemberPolicy;
 use App\Policies\WorkspacePolicy;
+use App\Support\Settings\SettingsStore;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -60,6 +70,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(EntitlementResolver::class);
         $this->app->singleton(FeatureFlagService::class);
         $this->app->singleton(AuditLogger::class);
+        $this->app->singleton(VectorMath::class, fn () => new VectorMath(
+            max(2, (int) config('services.knowledge.embedding_min_dimensions', 2)),
+            max(2, (int) config('services.knowledge.embedding_max_dimensions', 4096)),
+        ));
         $this->app->singleton(AiGatewayInterface::class, function ($app) {
             // Kill Switch: إيقاف فوري لكل نداءات LLM من لوحة الآدمن.
             if ((bool) config('services.ai.kill_switch', false)) {
@@ -67,9 +81,13 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $provider = config('services.ai.provider', 'gemini');
-            $factory = new \App\Domain\AI\Services\AiGatewayFactory;
+            if ((bool) config('services.ai.external_generation_disabled', true)) {
+                $provider = 'private_worker';
+            }
+            $factory = new AiGatewayFactory;
 
             $gateway = match ($provider) {
+                'private_worker' => $app->make(PrivateWorkerAiGateway::class),
                 // سلسلة مزوّدات مرتّبة (Groq→Cerebras→NVIDIA…) — الصمود والجودة.
                 'chain' => $factory->chain(array_filter(array_map(
                     'trim',
@@ -83,6 +101,17 @@ class AppServiceProvider extends ServiceProvider
                 ),
                 default => new GeminiGateway,
             };
+
+            if (
+                $provider !== 'private_worker'
+                && (bool) config('services.private_worker.enabled', false)
+                && (bool) config('services.private_worker.prefer_for_generation', true)
+            ) {
+                $gateway = new ChainAiGateway(
+                    $app->make(PrivateWorkerAiGateway::class),
+                    $gateway,
+                );
+            }
 
             // Phase هـ: cache identical prompts to cut paid AI spend.
             if ((bool) config('services.ai.cache', true)) {
@@ -98,8 +127,8 @@ class AppServiceProvider extends ServiceProvider
 
         // طبقة الفهم الدلالي المحلية: تُربط عبر عقد قابل للترقية لاحقاً لمحرّك تضمينات.
         $this->app->singleton(
-            \App\Domain\AI\Semantic\SemanticMatcher::class,
-            \App\Domain\AI\Semantic\LexicalSemanticMatcher::class,
+            SemanticMatcher::class,
+            LexicalSemanticMatcher::class,
         );
 
         $this->app->singleton(HttpCloudClient::class);
@@ -121,9 +150,18 @@ class AppServiceProvider extends ServiceProvider
                 return new NullWebSearchGateway;
             }
 
-            return match (config('services.web_search.provider', 'duckduckgo')) {
-                default => $app->make(DuckDuckGoSearchGateway::class),
-            };
+            $duckDuckGo = $app->make(DuckDuckGoSearchGateway::class);
+            $bing = $app->make(BingRssSearchGateway::class);
+            $searxng = new SearxngSearchGateway(config('services.web_search.searxng_url'));
+            $gateways = config('services.web_search.provider', 'duckduckgo') === 'searxng'
+                ? ['searxng' => $searxng, 'bing_rss' => $bing, 'duckduckgo' => $duckDuckGo]
+                : ['duckduckgo' => $duckDuckGo, 'bing_rss' => $bing, 'searxng' => $searxng];
+
+            return new CompositeWebSearchGateway(
+                $gateways,
+                $app->make(WebSearchResultNormalizer::class),
+                2,
+            );
         });
 
         // كتالوج قدرات الوكلاء الـ25: المصدر الوحيد لـ«الكشف الانتقائي». مفرد
@@ -153,19 +191,23 @@ class AppServiceProvider extends ServiceProvider
 
         // إعدادات الذكاء من الآدمن تُطبَّق فوق config() (الدستور §32): تلتقطها كل
         // المستهلكات (البوابة، الكاش، الرصيد، البحث) دون إعادة ربط. ملفّية بلا migration.
-        try {
-            foreach ($this->app->make(SettingsStore::class)->all() as $key => $value) {
-                if (is_string($key) && (
-                    str_starts_with($key, 'services.ai.')
-                    || str_starts_with($key, 'services.web_search.')
-                    || str_starts_with($key, 'services.nvidia.')
-                    || str_starts_with($key, 'services.gemini.')
-                )) {
-                    config([$key => $value]);
+        if (! $this->app->environment('testing') || (bool) config('services.ai.apply_settings_in_testing', false)) {
+            try {
+                foreach ($this->app->make(SettingsStore::class)->all() as $key => $value) {
+                    if (is_string($key) && (
+                        str_starts_with($key, 'services.ai.')
+                        || str_starts_with($key, 'services.web_search.')
+                        || str_starts_with($key, 'services.nvidia.')
+                        || str_starts_with($key, 'services.gemini.')
+                        || str_starts_with($key, 'services.private_worker.')
+                        || str_starts_with($key, 'services.knowledge.')
+                    )) {
+                        config([$key => $value]);
+                    }
                 }
+            } catch (\Throwable) {
+                // لا تُسقط الإقلاع إن تعذّر قراءة الإعدادات؛ تُستخدم قيم config الافتراضية.
             }
-        } catch (\Throwable) {
-            // لا تُسقط الإقلاع إن تعذّر قراءة الإعدادات؛ تُستخدم قيم config الافتراضية.
         }
 
         Gate::policy(Workspace::class, WorkspacePolicy::class);

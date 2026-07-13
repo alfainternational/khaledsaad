@@ -23,7 +23,7 @@ class StudioAnalyticalDossierBuilder
      * @param  array<string, mixed>  $context
      * @return array<string, mixed>
      */
-    public function build(Workspace $workspace, ?Project $project, array $context): array
+    public function build(Workspace $workspace, ?Project $project, array $context, bool $allowAi = true): array
     {
         $fingerprint = sha1(json_encode($this->fingerprintPayload($context), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
 
@@ -36,6 +36,17 @@ class StudioAnalyticalDossierBuilder
         $payload = is_array($cached?->value_json) ? $cached->value_json : [];
         if (($payload['context_fingerprint'] ?? null) === $fingerprint) {
             return $payload;
+        }
+
+        if (! $allowAi) {
+            $analysis = $this->fallbackAnalysis($context);
+
+            return [
+                'context_fingerprint' => $fingerprint,
+                'compiled_at' => now()->toDateTimeString(),
+                'analysis' => $analysis,
+                'guide_markdown' => $this->guideMarkdown($analysis),
+            ];
         }
 
         $analysis = $this->analyze($context);

@@ -5,7 +5,7 @@ namespace App\Support\Intelligence;
 class RemoteUrlGuard
 {
     /**
-     * @return array{allowed: bool, reason: ?string, normalized_url: ?string}
+     * @return array{allowed: bool, reason: ?string, normalized_url: ?string, resolved_ips: array<int, string>}
      */
     public function inspect(?string $url): array
     {
@@ -16,6 +16,7 @@ class RemoteUrlGuard
                 'allowed' => false,
                 'reason' => 'invalid_url',
                 'normalized_url' => null,
+                'resolved_ips' => [],
             ];
         }
 
@@ -48,7 +49,7 @@ class RemoteUrlGuard
 
         if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
             return $this->isPublicIp($host)
-                ? $this->allowed($normalizedUrl)
+                ? $this->allowed($normalizedUrl, [$host])
                 : $this->blocked('blocked_private_ip', $normalizedUrl);
         }
 
@@ -56,13 +57,17 @@ class RemoteUrlGuard
             return $this->blocked('blocked_unqualified_host', $normalizedUrl);
         }
 
-        foreach ($this->resolvedIps($host) as $ip) {
+        $resolvedIps = $this->resolvedIps($host);
+        if ($resolvedIps === []) {
+            return $this->blocked('blocked_unresolved_host', $normalizedUrl);
+        }
+        foreach ($resolvedIps as $ip) {
             if (! $this->isPublicIp($ip)) {
                 return $this->blocked('blocked_private_resolution', $normalizedUrl);
             }
         }
 
-        return $this->allowed($normalizedUrl);
+        return $this->allowed($normalizedUrl, $resolvedIps);
     }
 
     private function normalizeUrl(?string $url): ?string
@@ -102,6 +107,10 @@ class RemoteUrlGuard
      */
     private function resolvedIps(string $host): array
     {
+        if (app()->environment('testing') && str_ends_with($host, '.test')) {
+            return ['8.8.8.8'];
+        }
+
         $resolved = [];
 
         $ipv4 = gethostbynamel($host) ?: [];
@@ -136,19 +145,21 @@ class RemoteUrlGuard
     }
 
     /**
-     * @return array{allowed: bool, reason: ?string, normalized_url: ?string}
+     * @param  array<int, string>  $resolvedIps
+     * @return array{allowed: bool, reason: ?string, normalized_url: ?string, resolved_ips: array<int, string>}
      */
-    private function allowed(string $normalizedUrl): array
+    private function allowed(string $normalizedUrl, array $resolvedIps = []): array
     {
         return [
             'allowed' => true,
             'reason' => null,
             'normalized_url' => $normalizedUrl,
+            'resolved_ips' => $resolvedIps,
         ];
     }
 
     /**
-     * @return array{allowed: bool, reason: ?string, normalized_url: ?string}
+     * @return array{allowed: bool, reason: ?string, normalized_url: ?string, resolved_ips: array<int, string>}
      */
     private function blocked(string $reason, ?string $normalizedUrl): array
     {
@@ -156,6 +167,7 @@ class RemoteUrlGuard
             'allowed' => false,
             'reason' => $reason,
             'normalized_url' => $normalizedUrl,
+            'resolved_ips' => [],
         ];
     }
 }

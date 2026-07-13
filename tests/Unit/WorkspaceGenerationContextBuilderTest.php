@@ -4,6 +4,9 @@ namespace Tests\Unit;
 
 use App\Contracts\AiGatewayInterface;
 use App\Domain\Account\Models\Account;
+use App\Domain\AI\Knowledge\KnowledgeRetriever;
+use App\Domain\AI\Knowledge\KnowledgeScope;
+use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
 use App\Domain\Approval\Models\Approval;
 use App\Domain\Client\Models\Client;
 use App\Domain\Comment\Models\Comment;
@@ -49,6 +52,46 @@ class WorkspaceGenerationContextBuilderTest extends TestCase
         $this->assertStringContainsString('لا يحب الوعود المبالغ فيها.', $promptBlock);
         $this->assertStringContainsString('راجع الاعتراضات قبل اعتماد النص النهائي.', $promptBlock);
         $this->assertStringContainsString('عدّل الزاوية البيعية لتكون أوضح.', $promptBlock);
+    }
+
+    #[Test]
+    public function it_injects_scoped_knowledge_evidence_with_citation_rules_when_enabled(): void
+    {
+        config()->set('services.knowledge.retrieval', true);
+        ['workspace' => $workspace, 'project' => $project] = $this->makeWorkspaceScenario();
+        $content = 'الدليل يعتمد مؤشر الفيروز وقيمته 91 وفق الملف المرفق.';
+        app(StructuredKnowledgeRepository::class)->storeDocument(
+            KnowledgeScope::forProject((int) $workspace->account_id, $workspace->id, $project->id),
+            'uploaded_file',
+            'upload://context-proof',
+            'ملف دليل الفيروز',
+            $content,
+            [['heading' => 'القياس', 'content' => $content, 'locator' => ['line_start' => 4, 'line_end' => 4]]],
+            85,
+        );
+        $this->assertCount(1, app(KnowledgeRetriever::class)->retrieve(
+            KnowledgeScope::forProject((int) $workspace->account_id, $workspace->id, $project->id),
+            'مؤشر الفيروز',
+        ));
+
+        $context = $this->makeContextBuilder()->build($workspace, $project, 'ما قيمة مؤشر الفيروز؟');
+
+        $this->assertCount(1, $context['knowledge_evidence']);
+        $this->assertStringContainsString('ملف دليل الفيروز', $context['prompt_block']);
+        $this->assertStringContainsString('[KB:', $context['prompt_block']);
+        $this->assertStringContainsString('ميّز بوضوح بين الدليل والاستنتاج', $context['prompt_block']);
+    }
+
+    #[Test]
+    public function retrieval_flag_off_preserves_the_prompt_without_an_evidence_block(): void
+    {
+        config()->set('services.knowledge.retrieval', false);
+        ['workspace' => $workspace, 'project' => $project] = $this->makeWorkspaceScenario();
+
+        $context = $this->makeContextBuilder()->build($workspace, $project);
+
+        $this->assertSame([], $context['knowledge_evidence']);
+        $this->assertStringNotContainsString('=== أدلة قاعدة المعرفة ===', $context['prompt_block']);
     }
 
     private function makeContextBuilder(): WorkspaceGenerationContextBuilder

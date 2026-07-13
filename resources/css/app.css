@@ -5442,6 +5442,24 @@ details[open] .onb-advanced-summary {
     background: color-mix(in srgb, var(--accent) 6%, var(--surface));
 }
 
+.ai-chat-heading {
+    min-width: 0;
+}
+
+.ai-chat-heading strong,
+.ai-chat-heading small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-chat-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+}
+
 .ai-chat-header strong {
     display: block;
     font-size: var(--fs-sm);
@@ -5454,7 +5472,8 @@ details[open] .onb-advanced-summary {
     color: var(--text-2);
 }
 
-.ai-chat-close {
+.ai-chat-close,
+.ai-chat-icon-button {
     background: none;
     border: none;
     color: var(--text-2);
@@ -5466,9 +5485,62 @@ details[open] .onb-advanced-summary {
     justify-content: center;
 }
 
-.ai-chat-close:hover {
+.ai-chat-close:hover,
+.ai-chat-icon-button:hover {
     color: var(--text);
     background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.ai-chat-history {
+    flex: 1;
+    min-height: 260px;
+    overflow-y: auto;
+    background: var(--surface);
+}
+
+.ai-chat-history-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.ai-chat-history-item {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.ai-chat-history-item:hover {
+    background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.ai-chat-history-item strong,
+.ai-chat-history-item small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-chat-history-item strong {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+}
+
+.ai-chat-history-item small,
+.ai-chat-history-empty {
+    margin: 0.25rem 0 0;
+    color: var(--text-2);
+    font-size: var(--fs-xs);
+}
+
+.ai-chat-history-empty {
+    padding: 1rem;
 }
 
 .ai-chat-messages {
@@ -5480,6 +5552,25 @@ details[open] .onb-advanced-summary {
     gap: 0.75rem;
     min-height: 200px;
     max-height: 340px;
+}
+
+.ai-chat-load-older {
+    align-self: center;
+    padding: 0.35rem 0.7rem;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: var(--fs-xs);
+    cursor: pointer;
+}
+
+.ai-chat-load-older:hover {
+    text-decoration: underline;
+}
+
+.ai-chat-load-older:disabled {
+    opacity: 0.5;
 }
 
 .ai-chat-msg {

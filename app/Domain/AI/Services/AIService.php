@@ -4,6 +4,7 @@ namespace App\Domain\AI\Services;
 
 use App\Contracts\AiGatewayInterface;
 use App\Support\AI\WorkspaceGenerationContextBuilder;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AIService
@@ -54,7 +55,6 @@ class AIService
      */
     public function analyzeToolInputs(string $toolCode, string $toolName, array $inputs, ?int $workspaceId = null, ?int $projectId = null): array
     {
-        $contextBlock = $this->contextBuilder->promptBlockForIds($workspaceId, $projectId);
         $toolFocus = $this->toolAnalysisFocus($toolCode);
 
         $inputBlock = collect($inputs)
@@ -65,6 +65,8 @@ class AIService
         if (trim($inputBlock) === '') {
             return ['success' => false, 'error' => 'لا توجد مدخلات كافية للتحليل.'];
         }
+
+        $contextBlock = $this->contextBuilder->promptBlockForIds($workspaceId, $projectId, $inputBlock);
 
         $prompt = <<<PROMPT
         أنت مستشار أعمال وتسويق استراتيجي بخبرة 15 سنة. مهمتك تحليل مدخلات أداة "{$toolName}" وتقديم تحليل خبير يساعد المستخدم فعلاً.
@@ -288,8 +290,7 @@ class AIService
         array $sourceContext = [],
         ?int $workspaceId = null,
         ?int $projectId = null,
-    ): ?string
-    {
+    ): ?string {
         $inputBlock = collect($inputs)
             ->filter(fn ($v) => is_string($v) && trim($v) !== '')
             ->map(fn ($v, $k) => "- {$k}: {$v}")
@@ -303,7 +304,7 @@ class AIService
         $persona = $profile['persona'] ?? 'غير محدد';
         $goal = $profile['primary_goal'] ?? 'غير محدد';
         $toolDirective = $this->toolSummaryDirective($toolCode);
-        $contextBlock = $this->buildGenerationContextBlock($workspaceId, $projectId, $sourceContext);
+        $contextBlock = $this->buildGenerationContextBlock($workspaceId, $projectId, $sourceContext, $inputBlock);
 
         $prompt = <<<PROMPT
         أنت محلل استراتيجي محترف. مهمتك تحليل مدخلات أداة "{$toolName}" وإنتاج تقرير مختصر يفيد المستخدم فعلاً.
@@ -388,7 +389,10 @@ class AIService
         ?string $toolOutcomeHint = null,
         ?string $modeLabel = null,
     ): array {
-        $contextBlock = $this->contextBuilder->promptBlockForIds($workspaceId, $projectId);
+        $knowledgeQuery = collect($currentInputs)
+            ->filter(fn ($value): bool => is_string($value) && trim($value) !== '')
+            ->implode(' ');
+        $contextBlock = $this->contextBuilder->promptBlockForIds($workspaceId, $projectId, $knowledgeQuery);
         if (trim($contextBlock) === '') {
             $contextBlock = 'لا توجد بيانات سابقة لهذا المشروع.';
         }
@@ -504,7 +508,7 @@ class AIService
         $parsed = $this->looseJsonDecode($text);
 
         if (! is_array($parsed)) {
-            \Illuminate\Support\Facades\Log::warning('AI field suggestions: JSON parse failed', [
+            Log::warning('AI field suggestions: JSON parse failed', [
                 'tool' => $toolCode,
                 'raw' => mb_substr($text, 0, 600),
             ]);
@@ -567,7 +571,10 @@ class AIService
             return null;
         }
 
-        $contextBlock = $this->contextBuilder->promptBlockForIds($workspaceId, $projectId);
+        $knowledgeQuery = collect($inputs)
+            ->filter(fn ($value): bool => is_string($value) && trim($value) !== '')
+            ->implode(' ');
+        $contextBlock = $this->contextBuilder->promptBlockForIds($workspaceId, $projectId, $knowledgeQuery);
         if (trim($contextBlock) === '') {
             $contextBlock = 'لا توجد بيانات سابقة مفصّلة.';
         }
@@ -783,10 +790,14 @@ class AIService
     /**
      * @param  array<string, mixed>  $sourceContext
      */
-    private function buildGenerationContextBlock(?int $workspaceId, ?int $projectId, array $sourceContext = []): string
-    {
+    private function buildGenerationContextBlock(
+        ?int $workspaceId,
+        ?int $projectId,
+        array $sourceContext = [],
+        ?string $knowledgeQuery = null,
+    ): string {
         $blocks = array_filter([
-            $this->contextBuilder->promptBlockForIds($workspaceId, $projectId),
+            $this->contextBuilder->promptBlockForIds($workspaceId, $projectId, $knowledgeQuery),
             $this->formatSourceContextBlock($sourceContext),
         ]);
 
