@@ -54,8 +54,8 @@ class StudioGenerationController extends Controller
         AIGeneration $aiGeneration,
         SpecialistReviewService $specialistReview,
     ): View {
-        $workspace = $this->currentWorkspace($request);
-        abort_unless($aiGeneration->workspace_id === $workspace->id, 403);
+        // عضو مساحة المخرج يصل إليه دائماً — تُبدَّل الجلسة تلقائياً عند اللزوم.
+        $this->workspaceForItem($request, $aiGeneration->workspace_id);
 
         $aiGeneration->load(['template', 'project.client', 'author', 'workspace']);
 
@@ -111,8 +111,7 @@ class StudioGenerationController extends Controller
 
     public function export(Request $request, AIGeneration $aiGeneration, string $format): Response
     {
-        $workspace = $this->currentWorkspace($request);
-        abort_unless($aiGeneration->workspace_id === $workspace->id, 403);
+        $this->workspaceForItem($request, $aiGeneration->workspace_id);
 
         $aiGeneration->load('template');
 
@@ -128,8 +127,7 @@ class StudioGenerationController extends Controller
 
     public function destroy(Request $request, AIGeneration $aiGeneration, FlashMessageCatalog $flash): RedirectResponse
     {
-        $workspace = $this->currentWorkspace($request);
-        abort_unless($aiGeneration->workspace_id === $workspace->id, 403);
+        $this->workspaceForItem($request, $aiGeneration->workspace_id);
 
         $aiGeneration->delete();
 
