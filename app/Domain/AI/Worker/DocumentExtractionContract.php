@@ -53,6 +53,78 @@ final class DocumentExtractionContract
                 || ! in_array($locator['type'] ?? null, self::LOCATOR_TYPES, true)) {
                 throw new InvalidArgumentException('A structured extraction chunk or locator is invalid.');
             }
+            self::validateLocator($locator);
         }
+    }
+
+    /** @param array<string, mixed> $locator */
+    private static function validateLocator(array $locator): void
+    {
+        if (self::containsForbiddenKey($locator)) {
+            throw new InvalidArgumentException('Structured extraction locators contain a forbidden key.');
+        }
+
+        $positiveInt = static fn (mixed $value): bool => is_int($value) && $value > 0;
+        $valid = match ($locator['type']) {
+            'page' => $positiveInt($locator['page'] ?? null)
+                && ($locator['page'] <= 500)
+                && in_array($locator['method'] ?? 'text', ['text', 'ocr'], true),
+            'image_region' => self::validImageRegion($locator),
+            'docx_paragraph' => $positiveInt($locator['paragraph'] ?? null),
+            'docx_table' => $positiveInt($locator['table'] ?? null)
+                && $positiveInt($locator['row'] ?? null),
+            'xlsx_cell' => is_string($locator['sheet'] ?? null)
+                && preg_match('/\A[A-Z]{1,3}[1-9][0-9]{0,6}\z/D', (string) ($locator['cell'] ?? '')) === 1,
+            'xlsx_row', 'xlsx_table' => self::validSpreadsheetRange($locator),
+            default => false,
+        };
+        if (! $valid) {
+            throw new InvalidArgumentException('A structured extraction locator is outside its allowed bounds.');
+        }
+    }
+
+    /** @param array<string, mixed> $locator */
+    private static function validImageRegion(array $locator): bool
+    {
+        $bbox = $locator['bbox'] ?? null;
+        $confidence = $locator['confidence'] ?? null;
+        if (! is_array($bbox) || ! array_is_list($bbox) || count($bbox) !== 4
+            || ! is_numeric($confidence) || $confidence < 0 || $confidence > 100) {
+            return false;
+        }
+        $values = array_map('floatval', $bbox);
+
+        return collect($values)->every(fn (float $value): bool => $value >= 0 && $value <= 1)
+            && $values[0] < $values[2] && $values[1] < $values[3]
+            && (! isset($locator['page']) || (is_int($locator['page']) && $locator['page'] > 0 && $locator['page'] <= 500));
+    }
+
+    /** @param array<string, mixed> $locator */
+    private static function validSpreadsheetRange(array $locator): bool
+    {
+        if (! is_string($locator['sheet'] ?? null) || trim($locator['sheet']) === ''
+            || mb_strlen($locator['sheet']) > 100
+            || ! is_int($locator['row'] ?? null) || $locator['row'] < 1 || $locator['row'] > 1_048_576) {
+            return false;
+        }
+        foreach ((array) ($locator['cells'] ?? []) as $cell) {
+            if (! is_string($cell) || preg_match('/\A[A-Z]{1,3}[1-9][0-9]{0,6}\z/D', $cell) !== 1) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function containsForbiddenKey(array $value): bool
+    {
+        foreach ($value as $key => $item) {
+            if (in_array(strtolower((string) $key), ['path', 'disk', 'secret', 'token', 'password'], true)
+                || (is_array($item) && self::containsForbiddenKey($item))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

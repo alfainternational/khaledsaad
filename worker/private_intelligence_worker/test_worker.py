@@ -154,6 +154,7 @@ class ProtocolTest(unittest.TestCase):
 
         self.assertEqual("v2", result["contract_version"])
         self.assertEqual("docx_paragraph", result["chunks"][0]["locator"]["type"])
+        self.assertEqual(hashlib.sha256(content).hexdigest(), result["input_sha256"])
 
     def test_worker_routes_pdf_and_images_through_structured_extractors(self):
         os.environ.update(

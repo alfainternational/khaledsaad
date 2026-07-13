@@ -2,12 +2,14 @@
 
 namespace App\Domain\AI\Worker;
 
+use App\Domain\AI\Knowledge\EmbeddingJobDispatcher;
 use App\Domain\AI\Knowledge\KnowledgeScope;
 use App\Domain\AI\Knowledge\Models\KnowledgeChunk;
 use App\Domain\AI\Knowledge\Models\KnowledgeEmbedding;
 use App\Domain\AI\Knowledge\Models\KnowledgeQueryEmbedding;
 use App\Domain\AI\Knowledge\Models\KnowledgeUpload;
 use App\Domain\AI\Knowledge\StructuredKnowledgeRepository;
+use App\Domain\AI\Knowledge\Uploads\UntrustedInstructionScanner;
 use App\Domain\AI\Knowledge\VectorMath;
 use App\Domain\AI\Web\Models\WebResearchRun;
 use App\Domain\AI\Web\WebEvidenceVerifier;
@@ -20,6 +22,8 @@ class WorkerResultApplier
         private readonly StructuredKnowledgeRepository $repository,
         private readonly VectorMath $vectorMath,
         private readonly WebEvidenceVerifier $webEvidenceVerifier,
+        private readonly UntrustedInstructionScanner $instructionScanner,
+        private readonly EmbeddingJobDispatcher $embeddingJobs,
     ) {}
 
     /** @param array<string, mixed> $result */
@@ -55,6 +59,23 @@ class WorkerResultApplier
             throw new WorkerProtocolException('WORKER_RESULT_TARGET_INVALID', 422, 'The result target does not match the job tenant.');
         }
 
+        $structured = ($job->payload_json['extraction_contract']['version'] ?? null) === DocumentExtractionContract::VERSION;
+        if ($structured) {
+            try {
+                DocumentExtractionContract::validateResult($result);
+            } catch (\InvalidArgumentException $exception) {
+                throw new WorkerProtocolException('WORKER_RESULT_DOCUMENT_INVALID', 422, $exception->getMessage());
+            }
+            $resultHash = $result['input_sha256'] ?? null;
+            $expectedHash = $job->payload_json['expected_sha256'] ?? null;
+            if (! is_string($resultHash) || ! is_string($expectedHash)
+                || ! hash_equals($upload->sha256, $expectedHash)
+                || ! hash_equals($expectedHash, $resultHash)
+                || ! hash_equals((string) $job->input_hash, $expectedHash)) {
+                throw new WorkerProtocolException('WORKER_RESULT_DOCUMENT_INVALID', 422, 'The extracted document hash does not match its job contract.');
+            }
+        }
+
         $text = $result['text'] ?? null;
         if (
             ! is_string($text)
@@ -66,7 +87,7 @@ class WorkerResultApplier
             throw new WorkerProtocolException('WORKER_RESULT_TEXT_INVALID', 422, 'The extracted text is invalid or exceeds its limit.');
         }
         $text = trim(str_replace(["\r\n", "\r"], "\n", $text));
-        $chunks = $this->chunks($result['chunks'] ?? null, $text);
+        $chunks = $this->chunks($result['chunks'] ?? null, $text, $structured);
         $scope = KnowledgeScope::forProject($upload->account_id, $upload->workspace_id, $upload->project_id);
         $document = $this->repository->storeDocument(
             $scope,
@@ -77,18 +98,37 @@ class WorkerResultApplier
             $chunks,
             80,
         );
+        $metadata = $structured && is_array($result['metadata'] ?? null)
+            ? array_intersect_key($result['metadata'], array_flip([
+                'format', 'pages', 'ocr_pages', 'paragraphs', 'tables', 'sheets',
+                'regions', 'mean_confidence', 'chunk_count', 'tools',
+            ]))
+            : [];
+        if ($structured) {
+            $document->update([
+                'language' => mb_substr((string) ($result['language'] ?? 'und'), 0, 12),
+                'meta_json' => ['extraction' => $metadata + [
+                    'contract_version' => DocumentExtractionContract::VERSION,
+                    'worker_id' => $worker->public_id,
+                ]],
+            ]);
+        }
         $upload->update([
             'knowledge_source_id' => $document->knowledge_source_id,
             'status' => 'indexed',
             'error_code' => null,
-            'extraction_meta_json' => [
+            'extraction_meta_json' => ($structured ? $metadata : []) + [
                 'format' => $job->type,
+                'contract_version' => $structured ? DocumentExtractionContract::VERSION : 'legacy',
                 'worker_id' => $worker->public_id,
                 'model_name' => $result['model_name'] ?? null,
                 'language' => $result['language'] ?? null,
                 'chunk_count' => count($chunks),
             ],
         ]);
+        if ($structured && (bool) config('services.private_worker.enabled', false)) {
+            $this->embeddingJobs->dispatch(100);
+        }
     }
 
     /** @param array<string, mixed> $result */
@@ -285,22 +325,30 @@ class WorkerResultApplier
     }
 
     /** @return list<array{heading: string|null, content: string, locator: array<string, mixed>}> */
-    private function chunks(mixed $provided, string $text): array
+    private function chunks(mixed $provided, string $text, bool $structured = false): array
     {
         if (is_array($provided) && $provided !== []) {
             if (count($provided) > 100) {
                 throw new WorkerProtocolException('WORKER_RESULT_CHUNKS_INVALID', 422, 'The result contains too many chunks.');
             }
 
-            return collect($provided)->values()->map(function ($chunk, int $position): array {
+            return collect($provided)->values()->map(function ($chunk, int $position) use ($structured): array {
                 if (! is_array($chunk) || ! is_string($chunk['content'] ?? null) || trim($chunk['content']) === '') {
                     throw new WorkerProtocolException('WORKER_RESULT_CHUNKS_INVALID', 422, 'A result chunk is invalid.');
+                }
+
+                $locator = is_array($chunk['locator'] ?? null) ? $chunk['locator'] : ['position' => $position];
+                if ($structured) {
+                    $flags = $this->instructionScanner->scan((string) $chunk['content']);
+                    if ($flags !== []) {
+                        $locator['untrusted_instruction_flags'] = $flags;
+                    }
                 }
 
                 return [
                     'heading' => is_string($chunk['heading'] ?? null) ? mb_substr($chunk['heading'], 0, 255) : null,
                     'content' => trim($chunk['content']),
-                    'locator' => is_array($chunk['locator'] ?? null) ? $chunk['locator'] : ['position' => $position],
+                    'locator' => $locator,
                 ];
             })->all();
         }

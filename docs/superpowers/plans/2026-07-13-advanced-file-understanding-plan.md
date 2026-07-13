@@ -59,11 +59,11 @@
 - Test: `tests/Feature/AI/Worker/StructuredDocumentWorkerResultTest.php`
 - Test: `tests/Unit/AI/Knowledge/UntrustedInstructionScannerTest.php`
 
-- [ ] Write failing tests for tenant binding, content hash, locator validation, page/sheet bounds, duplicate positions, text limits, OCR confidence, and prompt-injection phrases.
-- [ ] Reject malformed or cross-tenant results atomically; store valid chunks with their locators and extraction provenance.
-- [ ] Flag instruction-like text in chunk/document metadata without deleting evidence or following it.
-- [ ] Queue embeddings only after a valid active document is committed.
-- [ ] Re-run tests and commit `feat: validate and index structured file evidence`.
+- [x] Write failing tests for tenant binding, content hash, locator validation, page/sheet bounds, duplicate positions, text limits, OCR confidence, and prompt-injection phrases.
+- [x] Reject malformed or cross-tenant results atomically; store valid chunks with their locators and extraction provenance.
+- [x] Flag instruction-like text in chunk/document metadata without deleting evidence or following it.
+- [x] Queue embeddings only after a valid active document is committed.
+- [x] Re-run tests and commit `feat: validate and index structured file evidence`.
 
 ### Task 5: Retry, chunked-upload readiness, and health
 

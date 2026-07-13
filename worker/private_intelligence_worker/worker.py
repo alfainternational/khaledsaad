@@ -346,16 +346,23 @@ class Worker:
             temporary = pathlib.Path(handle.name)
         try:
             if mime.endswith("wordprocessingml.document"):
-                return extract_docx(temporary, contract)
-            if mime.endswith("spreadsheetml.sheet"):
-                return extract_xlsx(temporary, contract)
-            if mime == "application/pdf":
-                return extract_pdf(temporary, contract)
-            if mime.startswith("image/"):
-                return extract_image(temporary, contract)
-            text = extract_text(temporary, mime)
+                structured = extract_docx(temporary, contract)
+            elif mime.endswith("spreadsheetml.sheet"):
+                structured = extract_xlsx(temporary, contract)
+            elif mime == "application/pdf":
+                structured = extract_pdf(temporary, contract)
+            elif mime.startswith("image/"):
+                structured = extract_image(temporary, contract)
+            else:
+                text = extract_text(temporary, mime)
+                structured = None
         finally:
             temporary.unlink(missing_ok=True)
+        if structured is not None:
+            structured["input_sha256"] = hashlib.sha256(content).hexdigest()
+            metadata = structured.setdefault("metadata", {})
+            metadata["tools"] = runtime_manifest()["tools"]
+            return structured
         if not text.strip():
             raise RuntimeError("document extraction returned no text")
         return {"text": text.strip(), "language": os.getenv("AI_WORKER_OCR_LANGUAGE", "ara+eng")}
