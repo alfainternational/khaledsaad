@@ -37,6 +37,7 @@ class WebClaimVerificationDispatcher
             'run_public_id' => $run->public_id,
             'response_format' => 'json',
             'max_tokens' => 768,
+            'model_name' => (string) config('services.private_worker.reasoning_model', 'qwen3:4b'),
             'prompt' => $prompt,
             'source_contract' => array_map(
                 static fn (array $source): array => ['url' => $source['url'], 'content_hash' => $source['content_hash']],

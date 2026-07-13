@@ -89,6 +89,8 @@ class ProtocolTest(unittest.TestCase):
             AI_WORKER_ID="wrk_test",
             AI_WORKER_SECRET="secret",
             AI_WORKER_LLM_MAX_TOKENS="512",
+            AI_WORKER_OLLAMA_MODEL="qwen3:4b",
+            AI_WORKER_OLLAMA_MODELS="qwen3:1.7b,qwen3:4b",
         )
         response = MagicMock()
         response.read.return_value = json.dumps(
@@ -98,12 +100,14 @@ class ProtocolTest(unittest.TestCase):
 
         with patch("urllib.request.urlopen", return_value=response) as opened:
             result = Worker().local_llm({
-                "prompt": "extract claims", "system_prompt": "Use evidence only", "max_tokens": 128
+                "prompt": "extract claims", "system_prompt": "Use evidence only",
+                "max_tokens": 128, "model_name": "qwen3:1.7b"
             })
 
         request_body = json.loads(opened.call_args.args[0].data)
         self.assertFalse(request_body["think"])
         self.assertEqual(128, request_body["options"]["num_predict"])
+        self.assertEqual("qwen3:1.7b", request_body["model"])
         self.assertIn("Use evidence only", request_body["prompt"])
         self.assertIn("extract claims", request_body["prompt"])
         self.assertEqual([], result["claims"])

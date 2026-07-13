@@ -103,6 +103,9 @@ class Worker:
         self.version = os.getenv("AI_WORKER_VERSION", "python-stdlib-1")
         self.ollama_url = os.getenv("AI_WORKER_OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
         self.ollama_model = os.getenv("AI_WORKER_OLLAMA_MODEL", "qwen2.5:7b")
+        self.ollama_models = split_env("AI_WORKER_OLLAMA_MODELS", self.ollama_model)
+        if self.ollama_model not in self.ollama_models:
+            self.ollama_models.append(self.ollama_model)
         self.llm_max_tokens = max(64, min(2048, int(os.getenv("AI_WORKER_LLM_MAX_TOKENS", "768"))))
         self.timeout = int(os.getenv("AI_WORKER_HTTP_TIMEOUT", "120"))
         self.http_host = os.getenv("AI_WORKER_HTTP_HOST", "").strip()
@@ -297,10 +300,13 @@ class Worker:
             raise RuntimeError("local model prompt is empty")
         system_prompt = str(payload.get("system_prompt", "")).strip()
         model_prompt = f"SYSTEM:\n{system_prompt}\n\nUSER:\n{prompt}" if system_prompt else prompt
+        model_name = str(payload.get("model_name", self.ollama_model)).strip()
+        if model_name not in self.ollama_models:
+            raise RuntimeError("requested local model is not allowed")
         max_tokens = max(64, min(2048, int(payload.get("max_tokens", self.llm_max_tokens))))
         request_body = canonical_json(
             {
-                "model": self.ollama_model,
+                "model": model_name,
                 "stream": False,
                 "format": "json",
                 "think": False,
@@ -323,8 +329,8 @@ class Worker:
             structured = json.loads(text)
         except json.JSONDecodeError:
             structured = {"text": text}
-        structured["_model_name"] = self.ollama_model
-        structured["_model_version"] = str(decoded.get("model", self.ollama_model))
+        structured["_model_name"] = model_name
+        structured["_model_version"] = str(decoded.get("model", model_name))
         return structured
 
     def extract_document(self, job: dict[str, Any], lease_token: str) -> dict[str, Any]:

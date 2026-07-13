@@ -21,6 +21,7 @@ try {
     $env:AI_WORKER_CAPABILITIES = [string] $credentials.capabilities
     $env:AI_WORKER_OLLAMA_URL = [string] $credentials.ollama_url
     $env:AI_WORKER_OLLAMA_MODEL = [string] $credentials.ollama_model
+    $env:AI_WORKER_OLLAMA_MODELS = [string] $credentials.ollama_models
     $env:AI_WORKER_HTTP_TIMEOUT = [string] $credentials.http_timeout
     $env:AI_WORKER_HTTP_HOST = [string] $credentials.http_host
     $env:AI_WORKER_TLS_CHECK_HOSTNAME = [string] $credentials.tls_check_hostname
