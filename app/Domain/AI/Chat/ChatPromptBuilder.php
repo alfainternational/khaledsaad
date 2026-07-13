@@ -31,6 +31,7 @@ class ChatPromptBuilder
             $conversation->workspace_id,
             $conversation->project_id,
             $currentMessage,
+            false,
         );
         $system = implode("\n\n", array_filter([
             'أنت المستشار الذكي في منصة التسويق الاستراتيجي. أجب بالعربية بوضوح ودفء مهني، وقدّم توصية عملية دقيقة دون تكرار السؤال.',

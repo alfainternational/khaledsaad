@@ -29,6 +29,7 @@ class AsyncChatServiceTest extends TestCase
         $service = app(AsyncChatService::class);
         $conversation = $service->createConversation($user, $workspace, null, 'general');
 
+        $startedAt = microtime(true);
         $result = $service->send(
             $user,
             $workspace,
@@ -36,6 +37,7 @@ class AsyncChatServiceTest extends TestCase
             'كيف أرتب أولوياتي هذا الأسبوع؟',
             'request-1',
         );
+        $elapsed = microtime(true) - $startedAt;
 
         $this->assertSame('completed', $result['user_message']->status);
         $this->assertSame('queued', $result['assistant_message']->status);
@@ -49,6 +51,8 @@ class AsyncChatServiceTest extends TestCase
         $this->assertSame($result['assistant_message']->public_id, $job->payload_json['chat_message_public_id']);
         $this->assertSame($workspace->id, $job->workspace_id);
         $this->assertSame($job->id, $result['assistant_message']->intelligence_job_id);
+        $this->assertSame(1, IntelligenceJob::query()->where('type', 'local_llm')->count());
+        $this->assertLessThan(2.0, $elapsed, 'Dispatch must not wait for a second AI generation.');
     }
 
     #[Test]

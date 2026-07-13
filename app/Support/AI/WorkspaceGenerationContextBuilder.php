@@ -54,7 +54,12 @@ class WorkspaceGenerationContextBuilder
     /**
      * @return array<string, mixed>
      */
-    public function buildForIds(?int $workspaceId, ?int $projectId = null, ?string $knowledgeQuery = null): array
+    public function buildForIds(
+        ?int $workspaceId,
+        ?int $projectId = null,
+        ?string $knowledgeQuery = null,
+        bool $allowAiDossier = true,
+    ): array
     {
         if (! $workspaceId) {
             return $this->emptyContext();
@@ -72,13 +77,18 @@ class WorkspaceGenerationContextBuilder
                 ->find($projectId)
             : null;
 
-        return $this->build($workspace, $project, $knowledgeQuery);
+        return $this->build($workspace, $project, $knowledgeQuery, $allowAiDossier);
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function build(Workspace $workspace, ?Project $project = null, ?string $knowledgeQuery = null): array
+    public function build(
+        Workspace $workspace,
+        ?Project $project = null,
+        ?string $knowledgeQuery = null,
+        bool $allowAiDossier = true,
+    ): array
     {
         if ($project) {
             $project->loadMissing('client');
@@ -152,16 +162,31 @@ class WorkspaceGenerationContextBuilder
             $context['knowledge_evidence_prompt'] = $knowledge['prompt_block'];
         }
 
-        $context['analytical_dossier'] = $this->dossierBuilder->build($workspace, $project, $context);
+        $context['analytical_dossier'] = $this->dossierBuilder->build(
+            $workspace,
+            $project,
+            $context,
+            $allowAiDossier,
+        );
 
         $context['prompt_block'] = $this->buildPromptBlock($context);
 
         return $context;
     }
 
-    public function promptBlockForIds(?int $workspaceId, ?int $projectId = null, ?string $knowledgeQuery = null): string
+    public function promptBlockForIds(
+        ?int $workspaceId,
+        ?int $projectId = null,
+        ?string $knowledgeQuery = null,
+        bool $allowAiDossier = true,
+    ): string
     {
-        return $this->buildForIds($workspaceId, $projectId, $knowledgeQuery)['prompt_block'] ?? '';
+        return $this->buildForIds(
+            $workspaceId,
+            $projectId,
+            $knowledgeQuery,
+            $allowAiDossier,
+        )['prompt_block'] ?? '';
     }
 
     /**
