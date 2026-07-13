@@ -36,6 +36,7 @@ class TogglePrivateWorkerCommand extends Command
         if ($exclusive) {
             $values += [
                 'services.ai.provider' => 'private_worker',
+                'services.ai.quality_judge' => false,
                 'services.private_worker.prefer_for_generation' => true,
                 'services.private_worker.gateway_wait_seconds' => $wait,
             ];

@@ -58,6 +58,7 @@ class TogglePrivateWorkerCommandTest extends TestCase
         $this->assertSame('private_worker', $settings->get('services.ai.provider'));
         $this->assertTrue($settings->get('services.private_worker.prefer_for_generation'));
         $this->assertSame(90, $settings->get('services.private_worker.gateway_wait_seconds'));
+        $this->assertFalse($settings->get('services.ai.quality_judge'));
         $this->assertSame('private_worker', config('services.ai.provider'));
     }
 }
