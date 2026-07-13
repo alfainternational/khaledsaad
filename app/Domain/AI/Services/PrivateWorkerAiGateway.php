@@ -27,7 +27,7 @@ class PrivateWorkerAiGateway implements AiGatewayInterface
             'prompt' => $prompt,
             'system_prompt' => $systemPrompt,
             'response_format' => 'json',
-            'max_tokens' => max(64, min(1024, (int) config('services.private_worker.gateway_max_tokens', 256))),
+            'max_tokens' => max(64, min(1024, (int) config('services.private_worker.gateway_max_tokens', 192))),
         ];
         $job = IntelligenceJob::query()->create([
             'public_id' => (string) Str::uuid(),
