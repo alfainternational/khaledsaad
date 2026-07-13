@@ -123,6 +123,14 @@ return [
         'provider' => env('AI_SEARCH_PROVIDER', 'duckduckgo'),
         /* حقن إشارات سوق حيّة داخل تحليل الأدوات المعتمدة على بيانات السوق. */
         'enrich_tools' => env('AI_SEARCH_ENRICH_TOOLS', true),
+        'verified_research' => env('AI_WEB_RESEARCH_ENABLED', false),
+        'scheduled_refresh' => env('AI_WEB_RESEARCH_REFRESH_ENABLED', false),
+        'max_results' => (int) env('AI_WEB_RESEARCH_MAX_RESULTS', 8),
+        'max_fetches_per_run' => (int) env('AI_WEB_RESEARCH_MAX_FETCHES', 3),
+        'max_response_bytes' => (int) env('AI_WEB_RESEARCH_MAX_RESPONSE_BYTES', 1048576),
+        'freshness_days' => (int) env('AI_WEB_RESEARCH_FRESHNESS_DAYS', 7),
+        'refresh_batch_size' => (int) env('AI_WEB_RESEARCH_REFRESH_BATCH_SIZE', 10),
+        'searxng_url' => env('AI_WEB_RESEARCH_SEARXNG_URL'),
     ],
 
     'knowledge' => [
