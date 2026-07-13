@@ -222,6 +222,8 @@ class AdvancedFileCanaryCommand extends Command
         );
         $account->owner?->tokens()->where('name', 'advanced-file-canary')->delete();
         Storage::disk('local')->deleteDirectory('knowledge-uploads/canary');
+        $workspaceIds = Workspace::withTrashed()->where('account_id', $account->id)->pluck('id');
+        DB::table('workspace_data')->whereIn('workspace_id', $workspaceIds)->delete();
         $account->forceDelete();
 
         return true;

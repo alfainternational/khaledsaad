@@ -67,10 +67,18 @@ class AdvancedFileCanaryCommandTest extends TestCase
 
         $this->assertDatabaseHas('workspace_members', ['user_id' => $user->id, 'role' => 'owner', 'status' => 'active']);
         $this->assertDatabaseHas('personal_access_tokens', ['tokenable_id' => $user->id, 'name' => 'advanced-file-canary']);
+        $workspaceId = (int) \App\Domain\Workspace\Models\Workspace::query()->where('name', '__AI_ADVANCED_FILE_CANARY__')->value('id');
+        \App\Domain\WorkspaceData\Models\WorkspaceData::query()->create([
+            'workspace_id' => $workspaceId,
+            'project_id' => null,
+            'key' => 'canary.cleanup',
+            'value_json' => ['created' => true],
+        ]);
 
         $this->artisan('knowledge:file-canary', ['action' => 'cleanup', '--json' => true])->assertSuccessful();
 
         $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $user->id, 'name' => 'advanced-file-canary']);
         $this->assertDatabaseMissing('accounts', ['name' => '__AI_ADVANCED_FILE_CANARY__']);
+        $this->assertDatabaseMissing('workspace_data', ['workspace_id' => $workspaceId]);
     }
 }
