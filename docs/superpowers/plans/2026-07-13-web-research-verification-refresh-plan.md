@@ -34,10 +34,10 @@
 - Test: `tests/Unit/AI/Web/WebPageExtractorTest.php`
 - Test: `tests/Unit/RemotePageFetcherTest.php`
 
-- [ ] Write failing tests for HTML title, canonical URL, visible text, language, publication date, oversized responses, disallowed content types, redirects, and DNS-rebinding-safe target validation.
-- [ ] Run both focused test files and confirm failures describe the missing limits and extractor.
-- [ ] Implement DOM-based extraction and enforce configured byte, redirect, timeout, content-type, per-host, and DNS checks before accepting content.
-- [ ] Re-run tests and commit `feat: extract bounded web evidence safely`.
+- [x] Write failing tests for HTML title, canonical URL, visible text, language, publication date, oversized responses, disallowed content types, redirects, and DNS-rebinding-safe target validation.
+- [x] Run both focused test files and confirm failures describe the missing limits and extractor.
+- [x] Implement DOM-based extraction and enforce configured byte, redirect, timeout, content-type, per-host, and DNS checks before accepting content.
+- [x] Re-run tests and commit `feat: extract bounded web evidence safely`.
 
 ### Task 3: Search resilience and result normalization
 

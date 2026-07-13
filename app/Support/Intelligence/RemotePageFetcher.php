@@ -50,20 +50,21 @@ class RemotePageFetcher
                 $responseMeta = $this->requestWithRedirects($normalizedUrl, $attempt);
                 $response = $responseMeta['response'];
                 $effectiveUrl = $responseMeta['effective_url'];
+                $bodyError = $response->successful() ? $this->bodyError($response) : null;
 
                 $lastResult = [
-                    'ok' => $response->successful(),
+                    'ok' => $response->successful() && $bodyError === null,
                     'url' => $effectiveUrl,
                     'requested_url' => $normalizedUrl,
                     'status' => $response->status(),
-                    'html' => $response->body(),
+                    'html' => $bodyError === null ? $response->body() : '',
                     'duration_ms' => (int) round((microtime(true) - $started) * 1000),
                     'content_type' => $response->header('Content-Type'),
-                    'error' => $response->successful() ? null : 'http_'.$response->status(),
+                    'error' => $response->successful() ? $bodyError : 'http_'.$response->status(),
                     'attempts' => array_merge($attemptLog, [[
                         'profile' => $attempt['name'],
                         'status' => $response->status(),
-                        'ok' => $response->successful(),
+                        'ok' => $response->successful() && $bodyError === null,
                     ]]),
                     'redirect_chain' => $responseMeta['redirect_chain'],
                 ];
@@ -136,15 +137,26 @@ class RemotePageFetcher
         $currentUrl = $normalizedUrl;
 
         for ($redirectCount = 0; $redirectCount < 5; $redirectCount++) {
+            $currentInspection = $this->urlGuard->inspect($currentUrl);
+            if ($currentInspection['allowed'] !== true) {
+                throw new \RuntimeException($currentInspection['reason'] ?? 'blocked_request_target');
+            }
+
+            $curlOptions = [
+                CURLOPT_HTTP_VERSION => $attempt['curl_http_version'],
+            ];
+            $resolve = $this->pinnedResolution($currentUrl, (array) ($currentInspection['resolved_ips'] ?? []));
+            if ($resolve !== []) {
+                $curlOptions[CURLOPT_RESOLVE] = $resolve;
+            }
+
             $response = Http::timeout((int) $attempt['timeout'])
                 ->connectTimeout((int) $attempt['connect_timeout'])
                 ->withOptions([
                     'allow_redirects' => false,
                     'http_errors' => false,
                     'version' => $attempt['http_version'],
-                    'curl' => [
-                        CURLOPT_HTTP_VERSION => $attempt['curl_http_version'],
-                    ],
+                    'curl' => $curlOptions,
                 ])
                 ->withHeaders($attempt['headers'])
                 ->get($currentUrl);
@@ -252,5 +264,43 @@ class RemotePageFetcher
     private function isSocialUrl(string $url): bool
     {
         return preg_match('/instagram\.com|facebook\.com|linkedin\.com|tiktok\.com|x\.com|twitter\.com|youtube\.com/i', $url) === 1;
+    }
+
+    private function bodyError(Response $response): ?string
+    {
+        $contentType = strtolower(trim(explode(';', (string) $response->header('Content-Type'))[0]));
+        if (! in_array($contentType, ['text/html', 'application/xhtml+xml'], true)) {
+            return 'unsupported_content_type';
+        }
+
+        $maxBytes = max(1, (int) config('services.web_search.max_response_bytes', 1048576));
+        if (strlen($response->body()) > $maxBytes) {
+            return 'response_too_large';
+        }
+
+        return null;
+    }
+
+    /**
+     * Pin cURL to the addresses that passed the guard so DNS cannot change
+     * between validation and connection.
+     *
+     * @param  array<int, string>  $resolvedIps
+     * @return array<int, string>
+     */
+    private function pinnedResolution(string $url, array $resolvedIps): array
+    {
+        $parts = parse_url($url);
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        if ($host === '' || filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return [];
+        }
+
+        $port = (int) ($parts['port'] ?? (($parts['scheme'] ?? '') === 'http' ? 80 : 443));
+
+        return array_map(
+            static fn (string $ip): string => sprintf('%s:%d:%s', $host, $port, str_contains($ip, ':') ? '['.$ip.']' : $ip),
+            array_values(array_filter($resolvedIps, 'is_string')),
+        );
     }
 }
