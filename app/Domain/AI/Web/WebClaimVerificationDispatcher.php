@@ -36,6 +36,7 @@ class WebClaimVerificationDispatcher
             'purpose' => 'web_claim_verification',
             'run_public_id' => $run->public_id,
             'response_format' => 'json',
+            'max_tokens' => 768,
             'prompt' => $prompt,
             'source_contract' => array_map(
                 static fn (array $source): array => ['url' => $source['url'], 'content_hash' => $source['content_hash']],

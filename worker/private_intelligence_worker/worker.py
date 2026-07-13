@@ -295,13 +295,14 @@ class Worker:
         prompt = str(payload.get("prompt", "")).strip()
         if not prompt:
             raise RuntimeError("local model prompt is empty")
+        max_tokens = max(64, min(2048, int(payload.get("max_tokens", self.llm_max_tokens))))
         request_body = canonical_json(
             {
                 "model": self.ollama_model,
                 "stream": False,
                 "format": "json",
                 "think": False,
-                "options": {"num_predict": self.llm_max_tokens},
+                "options": {"num_predict": max_tokens},
                 "prompt": prompt,
             }
         ).encode()
