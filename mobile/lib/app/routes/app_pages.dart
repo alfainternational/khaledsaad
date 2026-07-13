@@ -22,6 +22,7 @@ import '../../features/splash/splash_page.dart';
 import '../../features/studio/generation_detail_page.dart';
 import '../../features/studio/studio_page.dart';
 import '../../features/tool_runner/tool_runner_page.dart';
+import '../../features/welcome/welcome_page.dart';
 import 'app_routes.dart';
 
 /// سجل صفحات التطبيق.
@@ -30,21 +31,37 @@ class AppPages {
 
   static final routes = <GetPage>[
     GetPage(name: Routes.splash, page: () => const SplashPage()),
+    GetPage(name: Routes.welcome, page: () => const WelcomePage()),
     GetPage(name: Routes.login, page: () => const LoginPage()),
     GetPage(name: Routes.register, page: () => const RegisterPage()),
-    GetPage(name: Routes.forgotPassword, page: () => const ForgotPasswordPage()),
+    GetPage(
+      name: Routes.forgotPassword,
+      page: () => const ForgotPasswordPage(),
+    ),
     GetPage(name: Routes.dashboard, page: () => const DashboardPage()),
     GetPage(name: Routes.onboarding, page: () => const OnboardingPage()),
     GetPage(name: Routes.projects, page: () => const ProjectsPage()),
     GetPage(name: Routes.projectDetail, page: () => const ProjectDetailPage()),
     GetPage(name: Routes.projectTools, page: () => const ProjectToolsPage()),
     GetPage(name: Routes.projectBrief, page: () => const BriefPage()),
-    GetPage(name: Routes.projectIntelligence, page: () => const IntelligencePage()),
-    GetPage(name: Routes.projectReports, page: () => const ProjectReportsPage()),
-    GetPage(name: Routes.executionPackage, page: () => const ExecutionPackagePage()),
+    GetPage(
+      name: Routes.projectIntelligence,
+      page: () => const IntelligencePage(),
+    ),
+    GetPage(
+      name: Routes.projectReports,
+      page: () => const ProjectReportsPage(),
+    ),
+    GetPage(
+      name: Routes.executionPackage,
+      page: () => const ExecutionPackagePage(),
+    ),
     GetPage(name: Routes.toolRunner, page: () => const ToolRunnerPage()),
     GetPage(name: Routes.studio, page: () => const StudioPage()),
-    GetPage(name: Routes.studioGeneration, page: () => const GenerationDetailPage()),
+    GetPage(
+      name: Routes.studioGeneration,
+      page: () => const GenerationDetailPage(),
+    ),
     GetPage(name: Routes.team, page: () => const TeamPage()),
     GetPage(name: Routes.approvals, page: () => const ApprovalsPage()),
     GetPage(name: Routes.account, page: () => const AccountPage()),

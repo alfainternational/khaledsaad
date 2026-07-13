@@ -21,7 +21,8 @@ class ApiEndpoints {
 
   // الفريق
   static String team(String ws) => '/workspaces/$ws/team';
-  static String teamInvitations(String ws) => '/workspaces/$ws/team/invitations';
+  static String teamInvitations(String ws) =>
+      '/workspaces/$ws/team/invitations';
 
   // المشاريع
   static String projects(String ws) => '/workspaces/$ws/projects';
@@ -61,6 +62,17 @@ class ApiEndpoints {
 
   // مساعد الذكاء
   static String aiChat(String ws) => '/workspaces/$ws/ai/chat';
+  static String aiConversations(String ws) =>
+      '/workspaces/$ws/ai/conversations';
+  static String aiConversation(String ws, String conversation) =>
+      '/workspaces/$ws/ai/conversations/$conversation';
+  static String aiConversationMessages(String ws, String conversation) =>
+      '/workspaces/$ws/ai/conversations/$conversation/messages';
+  static String aiConversationMessage(
+    String ws,
+    String conversation,
+    String message,
+  ) => '/workspaces/$ws/ai/conversations/$conversation/messages/$message';
   static String aiAnalyze(String ws) => '/workspaces/$ws/ai/analyze';
   static String aiSuggest(String ws) => '/workspaces/$ws/ai/suggest';
   static String aiResearch(String ws) => '/workspaces/$ws/ai/research';
@@ -80,6 +92,7 @@ class ApiEndpoints {
 
   // الفوترة
   static String billing(String ws) => '/workspaces/$ws/billing';
-  static String billingSubscribe(String ws) => '/workspaces/$ws/billing/subscribe';
+  static String billingSubscribe(String ws) =>
+      '/workspaces/$ws/billing/subscribe';
   static String billingCancel(String ws) => '/workspaces/$ws/billing/cancel';
 }

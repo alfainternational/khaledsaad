@@ -1,6 +1,7 @@
 /// أسماء المسارات في التطبيق.
 abstract class Routes {
   static const splash = '/';
+  static const welcome = '/welcome';
   static const login = '/login';
   static const register = '/register';
   static const forgotPassword = '/forgot-password';

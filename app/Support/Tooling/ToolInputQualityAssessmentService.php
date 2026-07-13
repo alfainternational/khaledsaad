@@ -2,6 +2,7 @@
 
 namespace App\Support\Tooling;
 
+use App\Domain\AI\Services\QualityJudge;
 use App\Support\AI\WorkspaceGenerationContextBuilder;
 use Illuminate\Support\Collection;
 
@@ -10,7 +11,7 @@ class ToolInputQualityAssessmentService
     public function __construct(
         private readonly ToolBlueprintCatalog $blueprints,
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
-        private readonly \App\Domain\AI\Services\QualityJudge $judge,
+        private readonly QualityJudge $judge,
     ) {}
 
     /**
@@ -334,7 +335,7 @@ class ToolInputQualityAssessmentService
         }
 
         if ($value < 60) {
-            $items[] = 'بعض إجاباتك ما زالت عامة، ولا تعطيك مادة كافية لتبني عليها قرارك.';
+            $items[] = 'بعض إجاباتك ما زالت عامة، ولا توضّح القيمة العملية أو تعطيك مادة كافية لتبني عليها قرارك.';
         }
 
         if ($coherence < 60) {
@@ -458,14 +459,20 @@ class ToolInputQualityAssessmentService
 
         if ($this->isAudienceField($field) && $this->looksGenericAudience($value)) {
             $adjustment -= 25;
+        } elseif ($this->isAudienceField($field) && $this->wordCount($value) >= 6) {
+            $adjustment += 18;
         }
 
         if ($this->isGoalLikeField($field) && ! preg_match('/\d|خلال|أول|أسبوع|شهر|طلبات|عملاء|مبيعات|حجوزات/u', $value)) {
             $adjustment -= 15;
+        } elseif ($this->isGoalLikeField($field)) {
+            $adjustment += 18;
         }
 
         if ($this->isProblemLikeField($field) && mb_strlen($value) < 20) {
             $adjustment -= 12;
+        } elseif ($this->isProblemLikeField($field) && preg_match('/لأن|بسبب|يؤدي|يمنع|يؤخر|يكلف/u', $value)) {
+            $adjustment += 18;
         }
 
         if ($this->isDifferentiationField($field) && preg_match('/إدارة محتوى|شراكة نمو|حلول عملية|خدمة متكاملة/u', $value)) {
@@ -604,7 +611,7 @@ class ToolInputQualityAssessmentService
      * يعالج الكلمات الدالة في "ما هو مطلوب" مقابل ما كتبه المستخدم.
      *
      * @param  array<string, mixed>  $field
-     * @return int  0..20
+     * @return int 0..20
      */
     private function instructionRelevance(array $field, string $value): int
     {

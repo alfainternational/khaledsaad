@@ -75,7 +75,13 @@ class AiChatController extends Controller
 
         $contextParts = ['أنت المستشار الذكي في منصة التسويق الاستراتيجي.'];
 
-        $contextBlock = $this->contextBuilder->promptBlockForIds($workspace?->id, $projectId);
+        $knowledgeQuery = collect($messages)
+            ->where('role', 'user')
+            ->pluck('content')
+            ->filter(fn ($content): bool => is_string($content))
+            ->take(-3)
+            ->implode(' ');
+        $contextBlock = $this->contextBuilder->promptBlockForIds($workspace?->id, $projectId, $knowledgeQuery);
         if (trim($contextBlock) !== '') {
             $contextParts[] = $contextBlock;
         }

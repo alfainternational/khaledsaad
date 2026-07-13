@@ -1,0 +1,246 @@
+# Knowledge Foundation Production Runbook
+
+## Advanced file rollout gate
+
+Keep `AI_KNOWLEDGE_CHUNKED_UPLOADS=false` until isolated PDF, image, DOCX, and XLSX canaries pass. The direct upload limit remains unchanged; resumable sessions use 1 MB private chunks, a 50 MB total default, SHA-256 verification, a two-hour expiry, and hourly cleanup.
+
+Before enabling resumable uploads, confirm `knowledge:health --json` reports an online private worker, no failed jobs, and no accumulating expired upload sessions. Enable the flag only after verifying tenant isolation, structured locators, OCR confidence, citations, and embedding completion for every canary format.
+
+The 2026-07-13 rollout passed these gates. Production now has both `AI_KNOWLEDGE_STRUCTURED_EXTRACTION=true` and `AI_KNOWLEDGE_CHUNKED_UPLOADS=true`. Re-run `knowledge:file-canary enqueue`, `status`, and `cleanup` after changing OCR, Poppler, Tesseract languages, locator contracts, embedding models, or worker credentials. Use `setup-api` for an authenticated chunk-assembly canary and revoke it with `cleanup` immediately after verification.
+
+## Exclusive local reasoning
+
+Production generation is locked to `private_worker`; external generation remains disabled even if the provider setting drifts. Internet search is used only to fetch bounded evidence, while claim verification, analysis, recommendations, and synthesis run on local Ollama models.
+
+- `qwen3:1.7b`: synchronous UI analysis and narrative refinement.
+- `qwen3:4b`: deeper background reasoning and web-evidence verification.
+- `qwen3-embedding:0.6b`: document and query embeddings.
+
+The Windows worker runs continuously through `install_windows_worker_task.ps1`, restarts automatically, and keeps an outbound-only SSH/TLS tunnel. `private-worker:generation-canary --configured --json` must return a local model, analysis, recommendation, and metric before changing reasoning configuration.
+
+Measured production evidence on 2026-07-13: the configured Qwen 1.7B canary completed in 25.2 seconds, and the authenticated `/api/v1/workspaces/{workspace}/ai/analyze` flow returned structured analysis with local narrative enrichment in 71.6 seconds, within shared-host request limits. The production learning cycle then processed 135 tool runs across 27 tools, confirmed 19 project snapshots, distilled one playbook locally, rejected weak teacher output, and compiled intelligence for 13 workspaces.
+
+The final suite passed 435 PHP tests with 3078 assertions (one database-specific skip) and 15 Python worker tests.
+
+This runbook deploys the structured knowledge foundation to shared cPanel hosting without replacing the existing JSON memory until every gate passes.
+
+## Preconditions
+
+- Keep PHP memory at or below the hosting limit; commands use chunks and count queries.
+- Confirm the scheduler runs once per minute: `php artisan schedule:run`.
+- Keep these flags disabled for the initial deployment:
+
+```dotenv
+AI_KNOWLEDGE_STRUCTURED_STORE=false
+AI_KNOWLEDGE_DUAL_WRITE=false
+AI_KNOWLEDGE_PROJECT_SYNC=false
+```
+
+- Record the current commit, database size, failed-job count, and `/up` status.
+- Back up the database and `storage/app/ai-knowledge` before migration.
+
+## 1. Deploy With Flags Disabled
+
+Upload the release using `deploy/cpanel-push.sh`, including migrations, commands, domain classes, configuration, routes, tests excluded from production if desired, and updated documentation. Then run on the server:
+
+```bash
+php artisan down --retry=60
+php artisan config:clear
+php artisan migrate --force
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan up
+php artisan knowledge:health --json
+php artisan queue:failed
+```
+
+Gate: `/up` returns HTTP 200, JSON health parses, `failed_jobs` does not increase, and the existing JSON intelligence remains functional. If migration fails, restore the database backup and the deployment backup before bringing traffic back.
+
+## 2. Import Existing JSON Memory
+
+Run the import twice:
+
+```bash
+php artisan knowledge:import-legacy
+php artisan knowledge:import-legacy
+php artisan knowledge:health --json
+```
+
+Gate: the second run reports only unchanged valid memories, counts remain stable, `pending_reconciliations` is zero, and no credentials appear in stored chunks or logs.
+
+## 3. Enable Structured Storage
+
+Set only:
+
+```dotenv
+AI_KNOWLEDGE_STRUCTURED_STORE=true
+AI_KNOWLEDGE_DUAL_WRITE=false
+AI_KNOWLEDGE_PROJECT_SYNC=false
+```
+
+Then run:
+
+```bash
+php artisan config:cache
+php artisan knowledge:health --json
+php artisan queue:failed
+```
+
+Gate: no failed jobs, no stale documents, no pending reconciliation, memory stays within the hosting limit, and `/up` returns 200. Roll this flag back to `false` on any regression.
+
+## 4. Enable Dual Write
+
+Set `AI_KNOWLEDGE_DUAL_WRITE=true`, rebuild config cache, perform one harmless knowledge-producing workflow, and run:
+
+```bash
+php artisan config:cache
+php artisan knowledge:health --json
+php artisan queue:failed
+```
+
+Compare the JSON file with its structured source. The source must have one active document and the same tenant scope. `pending_reconciliations` must return to zero. If it does not, disable dual write; JSON remains authoritative.
+
+## 5. Synchronize One Real Project
+
+Choose a low-risk real project ID and keep the schedule disabled:
+
+```bash
+php artisan knowledge:sync-projects --project=PROJECT_ID
+php artisan knowledge:sync-projects --project=PROJECT_ID
+php artisan knowledge:health --json
+```
+
+Gate: the second run is unchanged, one project-scoped source is active, its content is searchable only inside the same account/workspace/project, Arabic text is intact, and no credential or signed URL value is stored.
+
+## 6. Enable Daily Project Synchronization
+
+Set `AI_KNOWLEDGE_PROJECT_SYNC=true` and run:
+
+```bash
+php artisan config:cache
+php artisan schedule:list
+php artisan knowledge:health --json
+```
+
+Confirm `knowledge-project-sync` appears at `03:15` and is protected by `withoutOverlapping`. Monitor logs, memory, execution time, failed jobs, stale documents, and pending reconciliation for 24 hours.
+
+## Health Interpretation
+
+- `sources`, `documents`, `chunks`: inventory counts; unexpected drops or spikes require investigation.
+- `candidate_claims`: claims awaiting review; growth is expected only when claim extraction is enabled.
+- `failed_jobs`: failed records in `intelligence_jobs`; must not increase during rollout.
+- `pending_reconciliations`: authoritative JSON writes not yet reflected in structured storage; should return to zero.
+- `stale_documents`: active documents past `valid_until`; must be zero before enabling the next flag.
+
+## Rollback
+
+Disable flags in reverse order and rebuild config cache:
+
+```dotenv
+AI_KNOWLEDGE_PROJECT_SYNC=false
+AI_KNOWLEDGE_DUAL_WRITE=false
+AI_KNOWLEDGE_STRUCTURED_STORE=false
+```
+
+```bash
+php artisan config:cache
+php artisan knowledge:health --json
+php artisan queue:failed
+```
+
+Disabling all flags restores the original JSON-based runtime path. Do not delete structured tables during an incident; preserve them for diagnosis. Restore the database only for migration corruption or confirmed data damage.
+
+## APP_KEY Rotation
+
+Before changing `APP_KEY`, put the previous key in `AI_KNOWLEDGE_MAPPING_PREVIOUS_KEYS`, rotate the key, rebuild config cache, and verify tenant deletion mappings. Remove the previous key only after all legacy mappings have been rewritten under the new key.
+## Text Upload And Retrieval Rollout
+
+Keep these flags disabled while the upload migration is applied:
+
+    AI_KNOWLEDGE_UPLOAD_PROCESSING=false
+    AI_KNOWLEDGE_RETRIEVAL=false
+
+Run the migration, then verify knowledge:health reports zero stored, failed, and unlinked uploads. Enable upload processing first and confirm knowledge:process-uploads exits successfully. Upload one small UTF-8 text file to a canary project through the project knowledge API and verify it becomes indexed.
+
+Enable retrieval only after the canary query returns the uploaded marker with a KB citation. Confirm that the same query in another project does not return it. Retrieval can be disabled immediately without removing uploads or indexed documents.
+
+Do not enable config caching on hosting environments that replace database environment values with placeholders. Use config:clear after each flag change.
+
+## Private Worker Control Plane
+
+Deploy the worker migration and routes with AI_PRIVATE_WORKER_ENABLED=false. Verify knowledge:health reports zero active and online workers before provisioning.
+
+Provision a worker:
+
+    php artisan private-worker:provision "Owner Laptop" \
+      --capability=deterministic_echo \
+      --capability=ocr \
+      --capability=document_extract \
+      --capability=local_llm --json
+
+The command prints the secret once. Store it only on the private machine. The database contains Laravel-encrypted ciphertext, and HTTP logs must never contain the secret.
+
+Enable the control plane with AI_PRIVATE_WORKER_ENABLED=true and clear configuration. Run the Python worker with --once for a deterministic canary. Confirm:
+
+- the request is accepted only with a fresh timestamp, nonce, and HMAC;
+- one queued job becomes completed;
+- replaying the signed request is rejected;
+- knowledge:health reports one online worker;
+- private-worker:maintain is scheduled every five minutes.
+
+Disable a compromised or retired worker immediately:
+
+    php artisan private-worker:disable WORKER_ID
+
+This releases active leases. Rotate by provisioning a new worker; never reuse the old secret. Set AI_PRIVATE_WORKER_ENABLED=false for a global shutdown. The existing deterministic and external fallbacks remain available.
+
+For OCR, install Tesseract Arabic language data and pdftotext on the private machine. DOCX and XLSX extraction use the Python standard library. Ollama remains bound to localhost and is never exposed to the public network.
+
+## Verified Web Research Rollout
+
+Deploy the web research migration with both flags disabled:
+
+```dotenv
+AI_WEB_RESEARCH_ENABLED=false
+AI_WEB_RESEARCH_REFRESH_ENABLED=false
+```
+
+Run `php artisan migrate --force`, clear Laravel and LiteSpeed PHP caches, then
+confirm `php artisan knowledge:health --json` includes zeroed `web_*` metrics.
+Enable `AI_WEB_RESEARCH_ENABLED` first and run a bounded canary:
+
+```bash
+php artisan knowledge:research-web "Saudi SME digital market 2026" --depth=2
+php artisan knowledge:health --json
+```
+
+Inspect both stored results. Each accepted page must link to a global
+`web_page` source and active document, expose URL/title/fetch time in its
+citation, and remain `unverified` unless two independent fresh domains support
+the same extracted claim. A conflict must remain visible and require
+abstention. Failed fetches must have `fetch_status=failed` and no linked
+knowledge document.
+
+After the canary passes, enable `AI_WEB_RESEARCH_REFRESH_ENABLED`. Confirm
+`knowledge-web-refresh` appears at minute 17 in `php artisan schedule:list`.
+The hourly job processes at most ten due sources for forty seconds, fetches one
+page per host per invocation, and backs failures off for six hours. Disable the
+refresh flag first during an incident; disabling verified research preserves
+all versioned evidence for diagnosis and lexical retrieval.
+
+When at least two independent domains are stored and the private worker is
+online, Laravel queues one bounded `local_llm` claim-verification job. The
+worker sends lease heartbeats while Ollama runs, disables Qwen thinking, and
+caps generated output. Laravel accepts a claim only when every returned URL
+belongs to the research run and every quote occurs verbatim in its stored
+document. Agreement needs two fresh domains; stale, single-source, and
+conflicting evidence remains unverified and requires abstention.
+
+Persist or roll back both production flags without editing `.env`:
+
+```bash
+php artisan web-research:toggle on --refresh=on --json
+php artisan web-research:toggle off --refresh=off --json
+```

@@ -4,7 +4,12 @@
 <section class="app-grid app-two-col mb-8">
     <article class="card">
         <div class="app-section-head">
-            <h3 class="heading-sm">تفاصيل المشروع</h3>
+            <div class="flex items-center gap-3">
+                @if ($project->logo_path)
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($project->logo_path) }}" alt="شعار {{ $project->name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border);">
+                @endif
+                <h3 class="heading-sm mb-0">تفاصيل المشروع</h3>
+            </div>
             <a href="{{ route('projects.edit', $project) }}" class="btn btn-secondary btn-sm">تعديل</a>
         </div>
         <div class="app-meta-grid">

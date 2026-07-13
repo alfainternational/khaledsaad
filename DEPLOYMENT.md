@@ -192,6 +192,14 @@ php artisan storage:link
 
 ## 5. ما بعد النشر — Post-Deploy Verification
 
+### 5.0 إطلاق قاعدة المعرفة المنظمة
+
+قاعدة المعرفة تُطلق تدريجياً على الاستضافة المشتركة، ولا تُفعّل أعلامها الثلاثة دفعة واحدة. اتبع
+[`docs/platform/KNOWLEDGE_FOUNDATION_RUNBOOK.md`](docs/platform/KNOWLEDGE_FOUNDATION_RUNBOOK.md)
+بالترتيب. قبل تغيير أي علم شغّل `php artisan knowledge:health --json`، وبعده أعد بناء كاش الإعدادات
+وتحقق من `/up` والوظائف الفاشلة واستهلاك الذاكرة. أي زيادة في `failed_jobs` أو
+`pending_reconciliations` توقف الانتقال إلى الخطوة التالية.
+
 ### 5.1 فحوصات سريعة
 - [ ] `https://your-domain.com/up` يعيد 200 (Laravel health check).
 - [ ] تسجيل دخول بمستخدم تجريبي يعمل.

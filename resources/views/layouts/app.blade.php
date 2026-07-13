@@ -172,7 +172,7 @@
         aria-expanded="false"
         aria-controls="ai-chat-panel"
         aria-label="المستشار الذكي"
-        data-chat-url="{{ route('api.ai.chat') }}"
+        data-conversations-url="{{ route('api.ai.conversations.index') }}"
         data-research-url="{{ route('api.ai.research') }}"
     >
         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -183,16 +183,29 @@
 
     <aside class="ai-chat-panel" id="ai-chat-panel" hidden>
         <header class="ai-chat-header">
-            <div>
-                <strong>المستشار الذكي</strong>
+            <div class="ai-chat-heading">
+                <strong id="ai-chat-title">المستشار الذكي</strong>
                 <small>مستشار استراتيجي يعرف سياق مشروعك</small>
             </div>
-            <button type="button" class="ai-chat-close" id="ai-chat-close" aria-label="إغلاق">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
+            <div class="ai-chat-header-actions">
+                <button type="button" class="ai-chat-icon-button" id="ai-chat-history-toggle" aria-label="المحادثات السابقة" title="المحادثات السابقة">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8m0-5v5h5M12 7v5l3 2"/></svg>
+                </button>
+                <button type="button" class="ai-chat-icon-button" id="ai-chat-new" aria-label="محادثة جديدة" title="محادثة جديدة">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 5v14M5 12h14"/></svg>
+                </button>
+                <button type="button" class="ai-chat-icon-button" id="ai-chat-close" aria-label="إغلاق">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
         </header>
 
+        <section class="ai-chat-history" id="ai-chat-history" hidden aria-label="المحادثات السابقة">
+            <div class="ai-chat-history-list" id="ai-chat-history-list"></div>
+        </section>
+
         <div class="ai-chat-messages" id="ai-chat-messages">
+            <button type="button" class="ai-chat-load-older" id="ai-chat-load-older" hidden>عرض رسائل أقدم</button>
             @if (! empty($ambientAdvisor))
                 <div class="ai-chat-msg ai-chat-msg-assistant ai-chat-msg-nextstep">
                     @if (! empty($ambientAdvisor['insight_headline']))

@@ -11,7 +11,7 @@ class PlatformPagesTest extends TestCase
     public function all_core_platform_pages_are_available(): void
     {
         $pages = [
-            '/' => 'منصة التسويق الاستراتيجي',
+            '/' => 'منصة تحليل التسويق',
             '/paths' => 'المسارات',
             '/tools' => 'أدوات التحليل',
             '/studio' => 'الاستوديو الذكي',

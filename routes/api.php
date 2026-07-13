@@ -4,15 +4,20 @@ use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AdminFeatureFlagController;
 use App\Http\Controllers\Api\V1\AgencyBrandingController;
 use App\Http\Controllers\Api\V1\AiAssistController;
+use App\Http\Controllers\Api\AiConversationController;
 use App\Http\Controllers\Api\V1\ApprovalController;
 use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\ClientController;
+use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\ExecutionPackageController;
+use App\Http\Controllers\Api\V1\KnowledgeUploadController;
+use App\Http\Controllers\Api\V1\KnowledgeUploadSessionController;
 use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\PasswordController;
 use App\Http\Controllers\Api\V1\PingController;
+use App\Http\Controllers\Api\V1\PrivateWorkerController;
 use App\Http\Controllers\Api\V1\ProjectAuditController;
 use App\Http\Controllers\Api\V1\ProjectBriefController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -22,8 +27,8 @@ use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\StudioGenerationController;
 use App\Http\Controllers\Api\V1\StudioTemplateController;
 use App\Http\Controllers\Api\V1\TeamController;
-use App\Http\Controllers\Api\V1\ToolIndexController;
 use App\Http\Controllers\Api\V1\TokenController;
+use App\Http\Controllers\Api\V1\ToolIndexController;
 use App\Http\Controllers\Api\V1\WorkspaceDashboardController;
 use App\Http\Controllers\Api\V1\WorkspaceIndexController;
 use App\Http\Controllers\Api\V1\WorkspaceToolController;
@@ -41,6 +46,16 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->group(function (): void {
+    Route::middleware(['private.worker', 'throttle:120,1'])
+        ->prefix('private-worker')
+        ->group(function (): void {
+            Route::post('/lease', [PrivateWorkerController::class, 'lease']);
+            Route::post('/jobs/{jobPublicId}/heartbeat', [PrivateWorkerController::class, 'heartbeat']);
+            Route::get('/jobs/{jobPublicId}/input', [PrivateWorkerController::class, 'input']);
+            Route::post('/jobs/{jobPublicId}/complete', [PrivateWorkerController::class, 'complete']);
+            Route::post('/jobs/{jobPublicId}/fail', [PrivateWorkerController::class, 'fail']);
+        });
+
     Route::get('/ping', PingController::class)->middleware('throttle:60,1');
 
     Route::post('/tokens', [TokenController::class, 'store'])
@@ -59,8 +74,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/logout', [LogoutController::class, 'store']);
 
         // أجهزة الإشعارات (B5)
-        Route::post('/devices', [\App\Http\Controllers\Api\V1\DeviceTokenController::class, 'store']);
-        Route::delete('/devices', [\App\Http\Controllers\Api\V1\DeviceTokenController::class, 'destroy']);
+        Route::post('/devices', [DeviceTokenController::class, 'store']);
+        Route::delete('/devices', [DeviceTokenController::class, 'destroy']);
         Route::get('/workspaces', [WorkspaceIndexController::class, 'index']);
 
         Route::middleware('api.super_admin')->prefix('admin')->group(function (): void {
@@ -97,6 +112,16 @@ Route::prefix('v1')->group(function (): void {
                     ->middleware('entitlement:outputs.can_export');
 
                 Route::post('/approvals', [ApprovalController::class, 'store']);
+
+                Route::get('/knowledge/uploads', [KnowledgeUploadController::class, 'index']);
+                Route::post('/knowledge/uploads', [KnowledgeUploadController::class, 'store'])
+                    ->middleware('throttle:10,1');
+                Route::post('/knowledge/uploads/{uploadPublicId}/retry', [KnowledgeUploadController::class, 'retry'])
+                    ->middleware('throttle:10,1');
+                Route::delete('/knowledge/uploads/{uploadPublicId}', [KnowledgeUploadController::class, 'destroy']);
+                Route::post('/knowledge/upload-sessions', [KnowledgeUploadSessionController::class, 'store'])->middleware('throttle:10,1');
+                Route::put('/knowledge/upload-sessions/{sessionPublicId}/chunks/{index}', [KnowledgeUploadSessionController::class, 'chunk'])->whereNumber('index');
+                Route::post('/knowledge/upload-sessions/{sessionPublicId}/complete', [KnowledgeUploadSessionController::class, 'complete'])->middleware('throttle:10,1');
             });
 
             // حزم التنفيذ
@@ -121,6 +146,11 @@ Route::prefix('v1')->group(function (): void {
             // مساعد الذكاء (chat/analyze/suggest/research)
             Route::middleware('throttle:ai-assist')->prefix('ai')->group(function (): void {
                 Route::post('/chat', [AiAssistController::class, 'chat']);
+                Route::get('/conversations', [AiConversationController::class, 'index']);
+                Route::post('/conversations', [AiConversationController::class, 'store']);
+                Route::get('/conversations/{conversationPublicId}', [AiConversationController::class, 'show']);
+                Route::post('/conversations/{conversationPublicId}/messages', [AiConversationController::class, 'storeMessage']);
+                Route::get('/conversations/{conversationPublicId}/messages/{messagePublicId}', [AiConversationController::class, 'showMessage']);
                 Route::post('/analyze', [AiAssistController::class, 'analyze']);
                 Route::post('/suggest', [AiAssistController::class, 'suggest']);
                 Route::post('/research', [AiAssistController::class, 'research']);

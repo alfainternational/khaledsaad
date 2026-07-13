@@ -6,12 +6,13 @@
 #  الاستخدام:
 #    ./deploy/cpanel-push.sh <ملف1> <ملف2> ...        # رفع ملفات نصّية/كود
 #    ./deploy/cpanel-push.sh --build <ملفات...>        # يبني الأصول ويرفع public/build أيضاً
+#    ./deploy/cpanel-push.sh --migrate <ملفات...>      # يرفع ثم يشغل الهجرات الآمنة
 #
 #  يقرأ الإعداد من deploy/cpanel.env (سري، خارج git) ويستخدم مفتاحاً بلا عبارة
 #  مرور deploy/cpanel_deploy.key للنشر غير التفاعلي.
 #
 #  ما ينفّذه: نسخة احتياطية على الخادم → رفع → php artisan view:clear → إعادة
-#  تشغيل opcache. لا يلمس .env ولا ينفّذ هجرات.
+#  تشغيل opcache. لا يلمس .env، والهجرات لا تعمل إلا مع --migrate.
 # ============================================================================
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -28,8 +29,14 @@ HOST="${USER_NAME}@${HOST_ADDR}"
 SSHO="-i $KEY -p $PORT -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new"
 SCPO="-i $KEY -P $PORT -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new"
 
-BUILD=0; FILES=()
-for a in "$@"; do [ "$a" = "--build" ] && BUILD=1 || FILES+=("$a"); done
+BUILD=0; MIGRATE=0; FILES=()
+for a in "$@"; do
+  case "$a" in
+    --build) BUILD=1 ;;
+    --migrate) MIGRATE=1 ;;
+    *) FILES+=("$a") ;;
+  esac
+done
 
 # بوّابة ما قبل النشر: كشف تعارض حالة الأحرف (يعمل على ويندوز ويفشل على Linux).
 # تخطٍّ اختياري: SKIP_CASE_CHECK=1
@@ -54,6 +61,11 @@ for f in "${FILES[@]}"; do
   scp $SCPO -r "$f" "$HOST:$RP/$(dirname "$f")/" >/dev/null && echo "   UP  $f"
 done
 
-echo "==> تنظيف كاش الـ views + إعادة تشغيل opcache"
-ssh $SSHO "$HOST" "cd $RP && php artisan view:clear >/dev/null 2>&1 || true; touch .lsphp_restart.txt 2>/dev/null || true; echo cleared"
+if [ "$MIGRATE" = "1" ]; then
+  echo "==> تشغيل هجرات قاعدة البيانات"
+  ssh $SSHO "$HOST" "cd $RP && php artisan migrate --force"
+fi
+
+echo "==> تنظيف كاش الـ views والمسارات + إعادة تشغيل opcache"
+ssh $SSHO "$HOST" "cd $RP && php artisan view:clear >/dev/null 2>&1 || true; php artisan route:clear >/dev/null 2>&1 || true; touch ../.lsphp_restart.txt .lsphp_restart.txt public/.lsphp_restart.txt 2>/dev/null || true; echo cleared"
 echo "نشر مكتمل إلى https://khaledsaad.net/"

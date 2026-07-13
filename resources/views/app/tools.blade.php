@@ -1,8 +1,13 @@
 @extends('layouts.app', ['title' => 'الأدوات', 'pageTitle' => 'الأدوات', 'pageKicker' => ''])
 
 @php
-    $groupedTools = $tools->groupBy('stage');
     $currentStage = $journeySnapshot['current_stage'] ?? $currentProject?->stage;
+    $recommendedNowTools = $tools
+        ->filter(fn ($tool) => $tool->unlocked && ! $tool->completed_in_current_project && (int) $tool->stage === (int) $currentStage)
+        ->values();
+    $groupedTools = $tools
+        ->reject(fn ($tool) => $recommendedNowTools->contains(fn ($recommended) => $recommended->id === $tool->id))
+        ->groupBy('stage');
     $recommendedNowCount = $tools
         ->filter(fn ($tool) => $tool->unlocked && ! $tool->completed_in_current_project && (int) $tool->stage === (int) $currentStage)
         ->count();
@@ -68,6 +73,24 @@
     </div>
 </section>
 
+@if ($recommendedNowTools->isNotEmpty())
+    <x-app.card title="ابدأ بهذه الآن" class="mb-8">
+        <p class="text-muted mb-4">هذه الأدوات هي الأقرب لما يجب أن يقوم به العميل تالياً في المشروع الحالي.</p>
+        <div class="app-card-grid">
+            @foreach ($recommendedNowTools as $tool)
+                <x-app.tool-card
+                    :name="\App\Support\Tooling\ToolDisplayCatalog::label($tool->code, $tool->name ?: $tool->code)"
+                    :description="\App\Support\Tooling\ToolDisplayCatalog::shortDescription($tool->code, $tool->description ?: '')"
+                    status="recommended"
+                    action-text="ابدأ الآن"
+                    :href="route('tools.show', $tool)"
+                    :latest-summary="$tool->latest_current_project_summary"
+                />
+            @endforeach
+        </div>
+    </x-app.card>
+@endif
+
 @foreach ($groupedTools as $stage => $stageTools)
     <x-app.card title="{{ \App\Support\Dashboard\StageCatalog::label((int) $stage) }}" class="mb-8">
         <div class="app-card-grid">
@@ -83,8 +106,8 @@
                     }
                 @endphp
                 <x-app.tool-card
-                    :name="$tool->name ?: $tool->code"
-                    :description="$tool->description ?: ''"
+                    :name="\App\Support\Tooling\ToolDisplayCatalog::label($tool->code, $tool->name ?: $tool->code)"
+                    :description="\App\Support\Tooling\ToolDisplayCatalog::shortDescription($tool->code, $tool->description ?: '')"
                     :status="$state"
                     :action-text="$tool->completed_in_current_project ? 'عرض النتيجة' : 'فتح'"
                     :href="route('tools.show', $tool)"

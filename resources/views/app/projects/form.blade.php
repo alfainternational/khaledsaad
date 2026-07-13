@@ -4,7 +4,7 @@
 @php($verifiedProfiles = old('verified_social_profiles_json', $project->verified_social_profiles_json ?? []))
 @php($verifiedProfiles = is_array($verifiedProfiles) ? array_values($verifiedProfiles) : [])
 @php($verifiedProfiles = $verifiedProfiles === [] ? [[], [], []] : array_pad($verifiedProfiles, max(3, count($verifiedProfiles)), []))
-<form method="POST" action="{{ $action }}" class="app-form-grid">
+<form method="POST" action="{{ $action }}" class="app-form-grid" enctype="multipart/form-data">
     @csrf
     @if ($method !== 'POST')
         @method($method)
@@ -56,6 +56,15 @@
             <label class="app-field cols-span-2">
                 <span>الدومين الأساسي</span>
                 <input class="app-input" name="primary_domain" value="{{ old('primary_domain', $project->primary_domain) }}" placeholder="example.com أو https://example.com">
+            </label>
+            <label class="app-field cols-span-2">
+                <span>شعار المشروع</span>
+                <input class="app-input" type="file" name="logo" accept="image/*">
+                @if ($project->logo_path)
+                    <small class="text-caption">الشعار الحالي محفوظ. رفع شعار جديد سيستبدله.</small>
+                @else
+                    <small class="text-caption">ارفع شعاراً مربعاً أو أفقياً واضحاً ليظهر في تقارير المشروع والتطبيق.</small>
+                @endif
             </label>
             <label class="app-field cols-span-2">
                 <span>الروابط الرسمية للسوشيال</span>

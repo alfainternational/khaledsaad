@@ -37,7 +37,9 @@ class ProjectDetailPage extends StatelessWidget {
         final project = c.project.value;
         if (project == null) {
           return AppStateView.empty(
-              icon: Icons.folder_off_outlined, title: 'المشروع غير متاح');
+            icon: Icons.folder_off_outlined,
+            title: 'المشروع غير متاح',
+          );
         }
         final theme = Theme.of(context);
         return RefreshIndicator(
@@ -54,10 +56,27 @@ class ProjectDetailPage extends StatelessWidget {
                     children: [
                       Row(
                         children: [
+                          if (project.logoUrl?.isNotEmpty == true) ...[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                project.logoUrl!,
+                                width: 48,
+                                height: 48,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    const SizedBox.shrink(),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                          ],
                           Expanded(
-                            child: Text(project.name,
-                                style: theme.textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w800)),
+                            child: Text(
+                              project.name,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
                           StatusBadge(status: project.status),
                         ],
@@ -67,11 +86,20 @@ class ProjectDetailPage extends StatelessWidget {
                         spacing: 16,
                         runSpacing: 4,
                         children: [
-                          _Meta(icon: Icons.flag_outlined, text: 'المرحلة ${project.stage}'),
+                          _Meta(
+                            icon: Icons.flag_outlined,
+                            text: 'المرحلة ${project.stage}',
+                          ),
                           if (project.sector != null)
-                            _Meta(icon: Icons.category_outlined, text: project.sector!),
+                            _Meta(
+                              icon: Icons.category_outlined,
+                              text: project.sector!,
+                            ),
                           if (project.client != null)
-                            _Meta(icon: Icons.badge_outlined, text: project.client!.name),
+                            _Meta(
+                              icon: Icons.badge_outlined,
+                              text: project.client!.name,
+                            ),
                         ],
                       ),
                     ],
@@ -84,26 +112,31 @@ class ProjectDetailPage extends StatelessWidget {
                 icon: Icons.build_outlined,
                 title: 'الأدوات',
                 subtitle: 'اشتغل على مشروعك خطوة بخطوة',
-                onTap: () => Get.toNamed(Routes.projectTools, arguments: publicId),
+                onTap: () =>
+                    Get.toNamed(Routes.projectTools, arguments: publicId),
               ),
               _GateTile(
                 icon: Icons.description_outlined,
                 title: 'ملف المشروع',
                 subtitle: 'المعلومات الأساسية التي تغذّي كل الأدوات',
-                onTap: () => Get.toNamed(Routes.projectBrief, arguments: publicId),
+                onTap: () =>
+                    Get.toNamed(Routes.projectBrief, arguments: publicId),
               ),
               _GateTile(
                 icon: Icons.query_stats_outlined,
                 title: 'التحليل والتوصيات',
                 subtitle: 'حلّل حضورك واحصل على خطوات عملية',
-                onTap: () =>
-                    Get.toNamed(Routes.projectIntelligence, arguments: publicId),
+                onTap: () => Get.toNamed(
+                  Routes.projectIntelligence,
+                  arguments: publicId,
+                ),
               ),
               _GateTile(
                 icon: Icons.analytics_outlined,
                 title: 'التقارير',
                 subtitle: 'التقرير الشامل ودليل المشروع + PDF',
-                onTap: () => Get.toNamed(Routes.projectReports, arguments: publicId),
+                onTap: () =>
+                    Get.toNamed(Routes.projectReports, arguments: publicId),
               ),
             ],
           ),
@@ -157,9 +190,12 @@ class _GateTile extends StatelessWidget {
           backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
           child: Icon(icon, color: theme.colorScheme.primary),
         ),
-        title: Text(title,
-            style:
-                theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+        title: Text(
+          title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
         trailing: const Icon(Icons.chevron_left),
         onTap: onTap,

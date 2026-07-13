@@ -2151,21 +2151,94 @@ function wireAiChatWidget() {
     const toggle = document.getElementById('ai-chat-toggle');
     const panel = document.getElementById('ai-chat-panel');
     const closeBtn = document.getElementById('ai-chat-close');
+    const newBtn = document.getElementById('ai-chat-new');
+    const historyBtn = document.getElementById('ai-chat-history-toggle');
+    const historyPanel = document.getElementById('ai-chat-history');
+    const historyList = document.getElementById('ai-chat-history-list');
+    const title = document.getElementById('ai-chat-title');
     const input = document.getElementById('ai-chat-input');
     const sendBtn = document.getElementById('ai-chat-send');
     const messagesContainer = document.getElementById('ai-chat-messages');
+    const loadOlderBtn = document.getElementById('ai-chat-load-older');
     const suggestionsContainer = document.getElementById('ai-chat-suggestions');
+    const footer = panel?.querySelector('.ai-chat-footer');
 
-    if (!toggle || !panel || !input || !sendBtn || !messagesContainer) return;
+    if (!toggle || !panel || !input || !sendBtn || !messagesContainer || !loadOlderBtn) return;
 
     let chatOpen = false;
-    const messages = [];
+    let initialized = false;
+    let currentConversation = null;
+    let messagePage = 1;
+    let hasOlderMessages = false;
+    const activePolls = new Set();
+    const conversationsUrl = toggle.dataset.conversationsUrl || '/api/ai/conversations';
 
-    const toggleChat = () => {
+    const requestJson = async (url, options = {}) => {
+        const response = await fetch(url, {
+            credentials: 'same-origin',
+            ...options,
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                ...(options.headers || {}),
+            },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.error || data.message || 'تعذر إكمال الطلب.');
+        }
+
+        return data;
+    };
+
+    const conversationUrl = (conversationId) => `${conversationsUrl}/${encodeURIComponent(conversationId)}`;
+
+    const showConversationView = () => {
+        if (historyPanel) historyPanel.hidden = true;
+        messagesContainer.hidden = false;
+        if (footer) footer.hidden = false;
+    };
+
+    const showHistoryView = async () => {
+        if (!historyPanel || !historyList) return;
+        historyPanel.hidden = false;
+        messagesContainer.hidden = true;
+        if (footer) footer.hidden = true;
+        historyList.innerHTML = '<p class="ai-chat-history-empty">جارٍ تحميل المحادثات...</p>';
+
+        try {
+            const result = await requestJson(conversationsUrl);
+            const conversations = Array.isArray(result.data) ? result.data : [];
+            historyList.innerHTML = '';
+            if (!conversations.length) {
+                historyList.innerHTML = '<p class="ai-chat-history-empty">لا توجد محادثات سابقة.</p>';
+                return;
+            }
+            conversations.forEach((conversation) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'ai-chat-history-item';
+                button.innerHTML = `<strong>${escapeHtml(conversation.title || 'محادثة')}</strong><small>${escapeHtml(conversation.project?.name || 'محادثة عامة')}</small>`;
+                button.addEventListener('click', () => loadConversation(conversation.public_id));
+                historyList.appendChild(button);
+            });
+        } catch (error) {
+            historyList.innerHTML = `<p class="ai-chat-history-empty">${escapeHtml(error.message)}</p>`;
+        }
+    };
+
+    const toggleChat = async () => {
         chatOpen = !chatOpen;
         panel.hidden = !chatOpen;
         toggle.setAttribute('aria-expanded', String(chatOpen));
-        if (chatOpen) input.focus();
+        if (chatOpen) {
+            if (!initialized) {
+                initialized = true;
+                await initializeConversation();
+            }
+            input.focus();
+        }
     };
 
     toggle.addEventListener('click', toggleChat);
@@ -2179,13 +2252,124 @@ function wireAiChatWidget() {
         if (suggestionsContainer) suggestionsContainer.hidden = true;
     };
 
-    const appendMessage = (role, text) => {
+    const appendMessage = (role, text, publicId = null, prepend = false) => {
         const div = document.createElement('div');
         div.className = `ai-chat-msg ai-chat-msg-${role}`;
         div.innerHTML = text.split('\n').filter(l => l.trim()).map(l => `<p>${escapeHtml(l)}</p>`).join('');
-        messagesContainer.appendChild(div);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        if (publicId) div.dataset.messageId = publicId;
+        if (prepend) {
+            loadOlderBtn.insertAdjacentElement('afterend', div);
+        } else {
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        return div;
     };
+
+    const renderStoredMessage = (message, prepend = false) => {
+        const existing = messagesContainer.querySelector(`[data-message-id="${CSS.escape(message.public_id)}"]`);
+        if (existing) existing.remove();
+        if (message.status === 'failed') {
+            return appendMessage('assistant', message.error_message || 'تعذر إكمال الرد.', message.public_id, prepend);
+        }
+        if (message.status !== 'completed') {
+            const node = appendMessage('loading', 'يفكر...', message.public_id, prepend);
+            pollMessage(message.public_id);
+            return node;
+        }
+
+        return appendMessage(message.role, message.content || '', message.public_id, prepend);
+    };
+
+    const resetMessages = () => {
+        messagesContainer.replaceChildren(loadOlderBtn);
+        loadOlderBtn.hidden = true;
+    };
+
+    const renderWelcome = () => {
+        resetMessages();
+        appendMessage('assistant', 'أنا المستشار الذكي. اسألني عن مشروعك أو عن الخطوة العملية التالية.');
+        if (suggestionsContainer) {
+            suggestionsContainer.hidden = false;
+            messagesContainer.appendChild(suggestionsContainer);
+        }
+    };
+
+    async function createConversation() {
+        const toolForm = document.querySelector('[data-tool-ajax-form]');
+        const projectSelect = document.querySelector('[name="project_id"]');
+        const result = await requestJson(conversationsUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+                tool_key: toolForm?.dataset.toolCode || 'general',
+                project_id: projectSelect?.value || null,
+            }),
+        });
+        currentConversation = result.data;
+        title.textContent = currentConversation.title;
+        messagePage = 1;
+        hasOlderMessages = false;
+        showConversationView();
+        renderWelcome();
+
+        return currentConversation;
+    }
+
+    async function initializeConversation() {
+        try {
+            const result = await requestJson(conversationsUrl);
+            const conversations = Array.isArray(result.data) ? result.data : [];
+            if (conversations.length) {
+                await loadConversation(conversations[0].public_id);
+            } else {
+                await createConversation();
+            }
+        } catch (error) {
+            showConversationView();
+            resetMessages();
+            appendMessage('assistant', error.message || 'تعذر تحميل المحادثات.');
+        }
+    }
+
+    async function loadConversation(conversationId, page = 1, prepend = false) {
+        const result = await requestJson(`${conversationUrl(conversationId)}?per_page=50&page=${page}`);
+        currentConversation = result.data;
+        title.textContent = currentConversation.title || 'المستشار الذكي';
+        messagePage = result.messages?.meta?.current_page || page;
+        hasOlderMessages = messagePage < (result.messages?.meta?.last_page || 1);
+        showConversationView();
+
+        const storedMessages = Array.isArray(result.messages?.data) ? result.messages.data : [];
+        if (!prepend) resetMessages();
+        const orderedMessages = prepend ? [...storedMessages].reverse() : storedMessages;
+        orderedMessages.forEach((message) => renderStoredMessage(message, prepend));
+        loadOlderBtn.hidden = !hasOlderMessages;
+        if (!prepend) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    async function pollMessage(messageId) {
+        if (!currentConversation || activePolls.has(messageId)) return;
+        activePolls.add(messageId);
+        const conversationId = currentConversation.public_id;
+
+        for (let attempt = 0; attempt < 80; attempt += 1) {
+            await new Promise((resolve) => window.setTimeout(resolve, 2500));
+            try {
+                const result = await requestJson(`${conversationUrl(conversationId)}/messages/${encodeURIComponent(messageId)}`);
+                if (result.data?.status === 'completed' || result.data?.status === 'failed') {
+                    renderStoredMessage(result.data);
+                    activePolls.delete(messageId);
+                    return;
+                }
+            } catch (_) {
+                // Keep the pending message visible through transient network failures.
+            }
+        }
+        activePolls.delete(messageId);
+        const node = messagesContainer.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+        if (node) node.textContent = 'لا يزال الرد قيد المعالجة. سيظهر عند فتح المحادثة مرة أخرى.';
+    }
 
     const sendMessage = async (overrideText) => {
         const text = (overrideText || input.value).trim();
@@ -2193,41 +2377,31 @@ function wireAiChatWidget() {
 
         input.value = '';
         hideSuggestions();
+        if (!currentConversation) {
+            try {
+                await createConversation();
+            } catch (error) {
+                appendMessage('assistant', error.message);
+                return;
+            }
+        }
         appendMessage('user', text);
-        messages.push({ role: 'user', content: text });
 
         sendBtn.disabled = true;
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'ai-chat-msg ai-chat-msg-loading';
-        loadingDiv.innerHTML = '<span class="btn-spinner"></span> يفكر...';
-        messagesContainer.appendChild(loadingDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         try {
-            const toolForm = document.querySelector('[data-tool-ajax-form]');
-            const toolKey = toolForm?.dataset.toolCode || 'general';
-            const projectSelect = document.querySelector('[name="project_id"]');
-            const projectId = projectSelect ? projectSelect.value : null;
-
-            const chatUrl = toggle.dataset.chatUrl || '/api/ai/chat';
-            const response = await fetchPost(chatUrl, {
-                messages: messages.slice(-10),
-                tool_key: toolKey,
-                project_id: projectId,
+            const result = await requestJson(`${conversationUrl(currentConversation.public_id)}/messages`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    content: text,
+                    client_request_id: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+                }),
             });
-
-            const result = await response.json();
-            loadingDiv.remove();
-
-            if (result.response) {
-                appendMessage('assistant', result.response);
-                messages.push({ role: 'assistant', content: result.response });
-            } else {
-                appendMessage('assistant', result.error || 'تعذر الحصول على رد حالياً.');
-            }
+            currentConversation = result.data.conversation;
+            title.textContent = currentConversation.title;
+            renderStoredMessage(result.data.assistant_message);
         } catch (err) {
-            loadingDiv.remove();
-            appendMessage('assistant', 'حدث خطأ في الاتصال. حاول مرة أخرى.');
+            appendMessage('assistant', err.message || 'حدث خطأ في الاتصال. حاول مرة أخرى.');
         } finally {
             sendBtn.disabled = false;
             input.focus();
@@ -2294,6 +2468,25 @@ function wireAiChatWidget() {
     if (researchBtn) {
         researchBtn.addEventListener('click', () => runResearch());
     }
+
+    if (historyBtn) historyBtn.addEventListener('click', showHistoryView);
+    if (newBtn) newBtn.addEventListener('click', async () => {
+        try {
+            await createConversation();
+            input.focus();
+        } catch (error) {
+            appendMessage('assistant', error.message);
+        }
+    });
+    loadOlderBtn.addEventListener('click', async () => {
+        if (!currentConversation || !hasOlderMessages) return;
+        loadOlderBtn.disabled = true;
+        try {
+            await loadConversation(currentConversation.public_id, messagePage + 1, true);
+        } finally {
+            loadOlderBtn.disabled = false;
+        }
+    });
 
     sendBtn.addEventListener('click', () => sendMessage());
     input.addEventListener('keydown', (e) => {

@@ -30,6 +30,7 @@ class Project extends Model
         'sector',
         'market_country',
         'primary_domain',
+        'logo_path',
         'official_social_links_json',
         'verified_social_profiles_json',
         'competitors_json',
