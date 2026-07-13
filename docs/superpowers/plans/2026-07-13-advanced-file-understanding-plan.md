@@ -87,11 +87,11 @@
 - Modify: `docs/platform/KNOWLEDGE_FOUNDATION_RUNBOOK.md`
 - Modify: `docs/superpowers/plans/2026-07-13-advanced-file-understanding-plan.md`
 
-- [ ] Add Arabic/English image, text/scanned PDF, DOCX table, and XLSX formula cases with expected locator and retrieval evidence.
+- [x] Add Arabic/English image, text/scanned PDF, DOCX table, and XLSX formula cases with expected locator and retrieval evidence.
 - [x] Run all knowledge/worker/web tests and Python extraction tests.
-- [ ] Deploy code with new extraction disabled, provision tool versions, then run one private canary per format in an isolated project. (Code, migration, and worker runtime deployed; isolated canaries remain.)
-- [ ] Verify citations, tenant isolation, embeddings, health, cleanup, and production HTTP 200 before enabling v2 extraction.
-- [ ] Update PR #6 with measured evidence and commit `docs: verify advanced file understanding rollout`.
+- [x] Deploy code with new extraction disabled, provision tool versions, then run one private canary per format in an isolated project.
+- [x] Verify citations, tenant isolation, embeddings, health, cleanup, and production HTTP 200 before enabling v2 extraction.
+- [x] Update PR #6 with measured evidence and commit `docs: verify advanced file understanding rollout`.
 
 ### Rollout evidence (2026-07-13)
 
@@ -102,3 +102,8 @@
 - Windows scheduled worker completed with result `0`; production reports one active and online worker.
 - Production health: 78 sources, 82 documents, 175 chunks, 167 active embeddings, 100% coverage, zero failed/queued/leased jobs.
 - Production site returned HTTP 200; chunked-upload routes are present while `AI_KNOWLEDGE_CHUNKED_UPLOADS` remains disabled by default.
+- Real isolated production canaries passed for Arabic/English image OCR, text PDF, scanned PDF OCR, DOCX table, and XLSX formula: five indexed uploads, ten structured chunks, exact locator types, KB citations, project isolation, and 100% embedding coverage.
+- The authenticated resumable-upload canary assembled and SHA-256 verified a 1,114,113-byte PDF from two chunks through the public API, then produced a v2 page citation with project isolation and 100% embedding coverage.
+- Both canary accounts, API token, sessions, files, jobs, sources, documents, chunks, and embeddings were removed. Production returned to 78 sources, 82 documents, 175 chunks, 167 active embeddings, zero queued/leased/failed jobs, and HTTP 200.
+- `AI_KNOWLEDGE_STRUCTURED_EXTRACTION=true` and `AI_KNOWLEDGE_CHUNKED_UPLOADS=true` are enabled after both rollout gates passed.
+- Final verification: PHP 430 passed, 3062 assertions, one SQLite/MySQL-specific skip; Python worker 15 passed.

@@ -6,6 +6,8 @@ Keep `AI_KNOWLEDGE_CHUNKED_UPLOADS=false` until isolated PDF, image, DOCX, and X
 
 Before enabling resumable uploads, confirm `knowledge:health --json` reports an online private worker, no failed jobs, and no accumulating expired upload sessions. Enable the flag only after verifying tenant isolation, structured locators, OCR confidence, citations, and embedding completion for every canary format.
 
+The 2026-07-13 rollout passed these gates. Production now has both `AI_KNOWLEDGE_STRUCTURED_EXTRACTION=true` and `AI_KNOWLEDGE_CHUNKED_UPLOADS=true`. Re-run `knowledge:file-canary enqueue`, `status`, and `cleanup` after changing OCR, Poppler, Tesseract languages, locator contracts, embedding models, or worker credentials. Use `setup-api` for an authenticated chunk-assembly canary and revoke it with `cleanup` immediately after verification.
+
 This runbook deploys the structured knowledge foundation to shared cPanel hosting without replacing the existing JSON memory until every gate passes.
 
 ## Preconditions
