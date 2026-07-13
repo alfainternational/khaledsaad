@@ -370,4 +370,3 @@ Create a temporary user-scoped conversation, assert send returns HTTP 202 within
 - [ ] **Step 9: Verify source parity**
 
 Confirm GitHub `main`, deployed release metadata, and the production code SHA are identical. Confirm the public site returns HTTP 200 and the Windows worker remains running.
-

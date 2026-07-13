@@ -126,4 +126,3 @@ The message creation response includes `poll_after_ms`. Poll responses use stabl
 4. Deploy that exact `main` SHA to production, run migrations, clear route/config/view caches, and refresh PHP workers.
 5. Run the authenticated production canary and confirm the public site remains healthy.
 6. Build the updated Flutter release artifact from the merged `main` source and verify its chat workflow against production.
-
