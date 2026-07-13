@@ -31,6 +31,10 @@ class AdvancedFileCanaryCommand extends Command
         'formula.xlsx' => ['mime' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'term' => 'CANARYXLSXQ4', 'locator' => 'xlsx_row'],
     ];
 
+    private const API_FILE = [
+        'mime' => 'application/pdf', 'term' => 'CANARYTEXTPDF84', 'locator' => 'page',
+    ];
+
     protected $signature = 'knowledge:file-canary
         {action : enqueue, setup-api, status, or cleanup}
         {--directory= : Absolute directory containing the five canary files}
@@ -156,8 +160,13 @@ class AdvancedFileCanaryCommand extends Command
             ->get()
             ->keyBy('original_name');
         $checks = [];
-        foreach (self::FILES as $name => $definition) {
-            $upload = $uploads->get($name);
+        foreach ($uploads as $name => $upload) {
+            $definition = self::FILES[$name] ?? ($name === 'chunk-canary.pdf' ? self::API_FILE : null);
+            if ($definition === null) {
+                $checks[$name] = ['status' => $upload->status, 'passed' => false, 'error' => 'unexpected_canary_file'];
+
+                continue;
+            }
             $document = $upload?->source?->documents->firstWhere('status', 'active');
             $locatorTypes = $document?->chunks->pluck('locator_json.type')->filter()->unique()->values()->all() ?? [];
             $scope = KnowledgeScope::forProject($account->id, $project->workspace_id, $project->id);
@@ -183,7 +192,8 @@ class AdvancedFileCanaryCommand extends Command
         $chunkIds = $uploads->flatMap(fn (KnowledgeUpload $upload) => $upload->source?->documents
             ->where('status', 'active')->flatMap->chunks->pluck('id') ?? collect())->unique();
         $embedded = KnowledgeEmbedding::query()->whereIn('knowledge_chunk_id', $chunkIds)->where('status', 'active')->distinct()->count('knowledge_chunk_id');
-        $allPassed = collect($checks)->every('passed') && $chunkIds->count() > 0 && $embedded === $chunkIds->count();
+        $allPassed = $checks !== [] && collect($checks)->every('passed')
+            && $chunkIds->count() > 0 && $embedded === $chunkIds->count();
 
         return $this->result([
             'ok' => $allPassed,
