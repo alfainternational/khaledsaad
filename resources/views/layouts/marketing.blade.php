@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{ $description ?? 'منصة التسويق الاستراتيجي — من الفكرة إلى التنفيذ' }}">
     <meta name="theme-color" content="#6366f1">
+    <script>
+        document.documentElement.classList.add('js');
+    </script>
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('brand/favicon-512.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('brand/icon-app.png') }}">
@@ -17,6 +20,13 @@
 
     {{-- Vite compiled assets (CSS + JS) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script data-reveal-fallback>
+        window.setTimeout(function () {
+            document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(function (element) {
+                element.classList.add('visible');
+            });
+        }, 1200);
+    </script>
 
     @stack('head')
 </head>

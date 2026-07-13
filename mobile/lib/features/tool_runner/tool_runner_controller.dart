@@ -33,6 +33,7 @@ class ToolRunnerController extends GetxController {
   final isAnalyzing = false.obs;
   final error = RxnString();
   final Rxn<ToolRunResult> result = Rxn<ToolRunResult>();
+  final Rxn<ToolBriefing> briefing = Rxn<ToolBriefing>();
 
   /// نتيجة تحليل جودة المدخلات (verdict/strategic_note/...).
   final Rxn<Map<String, dynamic>> analysis = Rxn<Map<String, dynamic>>();
@@ -40,8 +41,9 @@ class ToolRunnerController extends GetxController {
   /// يزداد عند تعبئة قيم خارجية (اقتراحات) لإجبار حقول النص على إعادة البناء.
   final formEpoch = 0.obs;
 
-  ToolMode? get currentMode =>
-      selectedMode.value == null ? null : form.value?.modeByKey(selectedMode.value!);
+  ToolMode? get currentMode => selectedMode.value == null
+      ? null
+      : form.value?.modeByKey(selectedMode.value!);
 
   @override
   void onReady() {
@@ -60,9 +62,13 @@ class ToolRunnerController extends GetxController {
     try {
       final res = await _tools.load(ws, projectPublicId, toolCode);
       form.value = res.form;
-      selectedMode.value = res.form.defaultMode ??
+      selectedMode.value =
+          res.form.defaultMode ??
           (res.form.modes.isNotEmpty ? res.form.modes.first.key : null);
-      result.value = (res.lastRun != null && !res.lastRun!.isEmpty) ? res.lastRun : null;
+      result.value = (res.lastRun != null && !res.lastRun!.isEmpty)
+          ? res.lastRun
+          : null;
+      briefing.value = res.briefing;
       _seedValuesFromLastRun(res.lastRun);
     } on ApiException catch (e) {
       error.value = e.message;

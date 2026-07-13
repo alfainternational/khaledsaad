@@ -15,7 +15,7 @@ class StudioTemplateController
     public function index(Request $request): AnonymousResourceCollection
     {
         $templates = AITemplate::query()
-            ->where('status', 'active')
+            ->where('status', 'published')
             ->orderBy('module')
             ->orderBy('name')
             ->get();

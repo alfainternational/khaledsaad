@@ -12,7 +12,6 @@ use App\Jobs\WarmProjectReportSynthesisJob;
 use App\Support\AI\WorkspaceGenerationContextBuilder;
 use App\Support\Dashboard\StageCatalog;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 /**
  * تقرير شامل على مستوى المشروع: يجمع مخرجات كل الأدوات المنجزة، يرتّبها بالمراحل
@@ -71,7 +70,7 @@ class BuildProjectReportAction
                 'tool' => $run->tool_code,
                 'tool_name' => (string) $tool->name,
                 'headline' => $headline !== '' ? $headline : (string) $tool->name,
-                'points' => array_slice($bullets, 0, 4),
+                'points' => $bullets,
                 'score' => $score,
             ];
             $completedCodes[] = $run->tool_code;
@@ -107,7 +106,7 @@ class BuildProjectReportAction
             $stages[$s]['items'] = $stages[$s]['items'] ?? [];
             $stages[$s]['missing'] = $missing;
             if ($missing !== []) {
-                $gaps[] = 'المرحلة «'.StageCatalog::label($s).'» تنقصها: '.implode('، ', array_slice($missing, 0, 4));
+                $gaps[] = 'المرحلة «'.StageCatalog::label($s).'» تنقصها: '.implode('، ', $missing);
             }
         }
         ksort($stages);
@@ -197,10 +196,10 @@ class BuildProjectReportAction
         // الأولويات من المشاكل المُشخّصة (محتوى متميّز)، لا تكراراً لقائمة الفجوات.
         $priorities = array_values(array_filter(array_map(
             fn ($p): string => trim((string) ($p['problem'] ?? '')),
-            array_slice((array) ($diagnosis['problems'] ?? []), 0, 3),
+            (array) ($diagnosis['problems'] ?? []),
         )));
         if ($priorities === []) {
-            $priorities = array_slice($gaps, 0, 3);
+            $priorities = $gaps;
         }
 
         return [
@@ -229,10 +228,10 @@ class BuildProjectReportAction
         }
 
         $r = (array) $audit->report_json;
-        $strList = static fn ($v): array => array_slice(array_values(array_filter(
+        $strList = static fn ($v): array => array_values(array_filter(
             array_map(fn ($x): string => trim((string) $x), (array) $v),
             fn (string $x): bool => $x !== '',
-        )), 0, 6);
+        ));
 
         $problems = data_get($r, 'top_5_problems', data_get($r, 'honest_diagnosis.top_5_problems', []));
         $pa = data_get($r, 'priority_actions', data_get($r, 'honest_diagnosis.priority_actions', []));
@@ -356,17 +355,17 @@ class BuildProjectReportAction
         // إزالة أي أولوية كرّرت نص فجوة حرفياً (يظهر خلاف ذلك مرّتين: أولويات + فجوات).
         $gapSet = array_map(fn ($g): string => trim((string) $g), (array) ($base['gaps'] ?? []));
         $priorities = array_values(array_filter(
-            array_slice($list($parsed['priorities'] ?? []), 0, 5),
+            $list($parsed['priorities'] ?? []),
             fn (string $p): bool => ! in_array(trim($p), $gapSet, true),
         ));
 
         return [
-            'executive_summary' => Str::limit(trim((string) $parsed['executive_summary']), 1200, '…'),
+            'executive_summary' => trim((string) $parsed['executive_summary']),
             'priorities' => $priorities,
             'plan' => [
-                'quick_wins_7' => array_slice($list(data_get($parsed, 'plan.quick_wins_7', [])), 0, 6),
-                'improvements_30' => array_slice($list(data_get($parsed, 'plan.improvements_30', [])), 0, 6),
-                'strategic_90' => array_slice($list(data_get($parsed, 'plan.strategic_90', [])), 0, 6),
+                'quick_wins_7' => $list(data_get($parsed, 'plan.quick_wins_7', [])),
+                'improvements_30' => $list(data_get($parsed, 'plan.improvements_30', [])),
+                'strategic_90' => $list(data_get($parsed, 'plan.strategic_90', [])),
             ],
             'synthesis_source' => 'llm',
         ];

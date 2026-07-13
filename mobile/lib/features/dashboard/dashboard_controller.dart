@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/error/api_exception.dart';
+import '../../core/l10n/ar_labels.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/session_service.dart';
@@ -64,4 +65,37 @@ class DashboardController extends GetxController {
   }
 
   void openProjects() => Get.toNamed(Routes.projects);
+
+  /// بطاقة «الخطوة التالية» من لقطة الداشبورد الذكية.
+  Map<String, dynamic>? get nextStep {
+    final raw = dashboardData.value?['nextStep'];
+    return raw is Map ? Map<String, dynamic>.from(raw) : null;
+  }
+
+  /// ينفّذ إجراء الخطوة التالية: يفتح الأداة المرشّحة مباشرة إن وُجدت،
+  /// وإلا يوجّه للوجهة المناسبة (الإعداد أو المشاريع).
+  void openNextStep() {
+    final next = nextStep;
+    if (next == null) {
+      openProjects();
+      return;
+    }
+    final type = next['action_type']?.toString();
+    final toolCode = next['tool_code']?.toString() ?? '';
+    final projectId = next['project_public_id']?.toString() ?? '';
+
+    if (type == 'tool' && toolCode.isNotEmpty && projectId.isNotEmpty) {
+      Get.toNamed(Routes.toolRunner, arguments: {
+        'project_public_id': projectId,
+        'tool_code': toolCode,
+        'tool_name': ArLabels.toolNames[toolCode] ?? toolCode,
+      });
+      return;
+    }
+    if (type == 'onboarding') {
+      Get.toNamed(Routes.onboarding);
+      return;
+    }
+    openProjects();
+  }
 }

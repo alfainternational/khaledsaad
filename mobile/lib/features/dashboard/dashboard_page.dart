@@ -65,6 +65,16 @@ class DashboardPage extends StatelessWidget {
                       'تابع مشروعك، شغّل الأداة المناسبة، وحوّل التشخيص إلى تنفيذ قابل للقياس.',
                 ),
                 const SizedBox(height: 14),
+                Obx(() {
+                  final next = c.nextStep;
+                  if (next == null) return const SizedBox.shrink();
+                  return Column(
+                    children: [
+                      _NextStepCard(next: next, onStart: c.openNextStep),
+                      const SizedBox(height: 14),
+                    ],
+                  );
+                }),
                 _WorkspaceCard(service: c.workspaces),
                 const SizedBox(height: 16),
                 Text(
@@ -144,6 +154,94 @@ class DashboardPage extends StatelessWidget {
             ),
           );
         }),
+      ),
+    );
+  }
+}
+
+/// بطاقة الخطوة التالية: ماذا تفعل الآن بالضبط، ولماذا، وزر ينقلك إليها مباشرة.
+class _NextStepCard extends StatelessWidget {
+  const _NextStepCard({required this.next, required this.onStart});
+
+  final Map<String, dynamic> next;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final title = next['title']?.toString() ?? 'خطوتك التالية';
+    final summary = next['summary']?.toString() ?? '';
+    final details = (next['details'] is List)
+        ? (next['details'] as List)
+            .map((e) => e.toString())
+            .where((s) => s.trim().isNotEmpty)
+            .toList()
+        : const <String>[];
+    final actionLabel = next['action_label']?.toString() ?? 'ابدأ الآن';
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.flag_outlined, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'الخطوة التالية',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            if (summary.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(summary,
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.6)),
+            ],
+            if (details.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              for (final d in details)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.check, size: 16,
+                          color: theme.colorScheme.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(d,
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(height: 1.5)),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: onStart,
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: Text(actionLabel),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

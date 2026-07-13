@@ -6,10 +6,11 @@ import '../models/tool_run_model.dart';
 
 /// نتيجة تحميل أداة: مخطط النموذج + آخر تشغيل (إن وُجد).
 class ToolLoadResult {
-  const ToolLoadResult({required this.form, this.lastRun});
+  const ToolLoadResult({required this.form, this.lastRun, this.briefing});
 
   final ToolForm form;
   final ToolRunResult? lastRun;
+  final ToolBriefing? briefing;
 }
 
 class ToolRepository {
@@ -46,7 +47,13 @@ class ToolRepository {
         ? ToolRunResult.fromJson(Map<String, dynamic>.from(data))
         : null;
 
-    return ToolLoadResult(form: form, lastRun: lastRun);
+    final briefing = res['tool_briefing'] is Map
+        ? ToolBriefing.fromJson(
+            Map<String, dynamic>.from(res['tool_briefing'] as Map),
+          )
+        : null;
+
+    return ToolLoadResult(form: form, lastRun: lastRun, briefing: briefing);
   }
 
   Future<ToolRunResult> run(

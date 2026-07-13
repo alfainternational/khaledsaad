@@ -52,6 +52,38 @@ class StudioPage extends StatelessWidget {
                   body:
                       'اختر قالباً مناسباً، وأضف موجز التنفيذ لتحصل على محتوى أو صفحة أو حملة قابلة للاستخدام.',
                 ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'كيف يعمل الاستوديو؟',
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 8),
+                        const _StudioStep(
+                          number: '1',
+                          text:
+                              'القالب هو وصفة جاهزة لمخرج تسويقي محدد: إعلان، تسلسل إيميل، رسائل واتساب، خطة محتوى...',
+                        ),
+                        const _StudioStep(
+                          number: '2',
+                          text:
+                              'اختر قالباً من القائمة أدناه، وأضف ملاحظاتك إن أردت، ثم اضغط «توليد».',
+                        ),
+                        const _StudioStep(
+                          number: '3',
+                          text:
+                              'يقرأ الاستوديو بيانات مشروعك من الأدوات التي أكملتها ويسلّمك مخرجاً جاهزاً للاستخدام يظهر في «أحدث المخرجات».',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 if (initialBrief != null && initialBrief.trim().isNotEmpty) ...[
                   Card(
@@ -78,9 +110,30 @@ class StudioPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 if (c.templates.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text('لا توجد قوالب متاحة حالياً.'),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        children: [
+                          Icon(Icons.description_outlined,
+                              size: 36,
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.6)),
+                          const SizedBox(height: 8),
+                          Text(
+                            'تعذر تحميل القوالب حالياً. اسحب الشاشة للأسفل للتحديث، وإن استمرت المشكلة تواصل مع الدعم.',
+                            style: theme.textTheme.bodyMedium,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            onPressed: c.load,
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('إعادة التحميل'),
+                          ),
+                        ],
+                      ),
+                    ),
                   )
                 else
                   ...c.templates.map(
@@ -109,9 +162,12 @@ class StudioPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 if (c.generations.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text('لم تُنشئ أي مخرجات بعد.'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'لم تُنشئ أي مخرجات بعد. اختر قالباً من قائمة القوالب أعلاه واضغط «توليد» — وسيظهر المخرج هنا.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
                   )
                 else
                   ...c.generations.map(
@@ -171,6 +227,48 @@ class StudioPage extends StatelessWidget {
     if (ok == true) {
       await c.deleteGeneration(g);
     }
+  }
+}
+
+/// خطوة مرقّمة في بطاقة «كيف يعمل الاستوديو؟».
+class _StudioStep extends StatelessWidget {
+  const _StudioStep({required this.number, required this.text});
+
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              number,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text,
+                style: theme.textTheme.bodySmall?.copyWith(height: 1.6)),
+          ),
+        ],
+      ),
+    );
   }
 }
 

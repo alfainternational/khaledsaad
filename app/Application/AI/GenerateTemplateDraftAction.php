@@ -2,6 +2,7 @@
 
 namespace App\Application\AI;
 
+use App\Application\Approval\AutoRequestApprovalAction;
 use App\Contracts\AiGatewayInterface;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\AI\Models\AITemplate;
@@ -32,6 +33,7 @@ class GenerateTemplateDraftAction
         private readonly StudioTemplateContractRegistry $contractRegistry,
         private readonly StudioTemplateReadinessGate $readinessGate,
         private readonly AiCreditService $credits,
+        private readonly AutoRequestApprovalAction $autoRequestApproval,
     ) {}
 
     /** تقدير توكن واقعي (الحرف العربي ≈ توكن لكل ~4 محارف) بدل عدّ الكلمات المضلّل. */
@@ -264,6 +266,15 @@ class GenerateTemplateDraftAction
                 Log::warning('AI credit consume failed: '.$e->getMessage());
             }
         }
+
+        // كل مخرج مكتمل يدخل طابور الموافقات تلقائياً ليراجعه صاحب القرار.
+        $this->autoRequestApproval->forItem(
+            $workspace->id,
+            $project?->id,
+            'ai_generation',
+            $generation->id,
+            'طلب تلقائي: مخرج استوديو جديد بانتظار المراجعة.',
+        );
 
         return $generation;
     }

@@ -1450,9 +1450,9 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 .footer-legal a:hover { color: var(--text-muted); }
 
 /* ─────────────────── SCROLL REVEAL ─────────────────── */
-.reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
-.reveal-left  { opacity: 0; transform: translateX(-30px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
-.reveal-right { opacity: 0; transform: translateX(30px);  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
+.js .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
+.js .reveal-left  { opacity: 0; transform: translateX(-30px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
+.js .reveal-right { opacity: 0; transform: translateX(30px);  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
 .reveal.visible, .reveal-left.visible, .reveal-right.visible { opacity: 1; transform: none; }
 .d-1 { transition-delay: 0.08s; }
 .d-2 { transition-delay: 0.16s; }
@@ -3548,7 +3548,8 @@ button { cursor: pointer; font-family: var(--font); border: none; background: no
 }
 .admin-content,
 .app-content {
-    padding: 0;
+    padding: 0 0 calc(var(--sp-10) + env(safe-area-inset-bottom, 0px));
+    scroll-padding-bottom: calc(var(--sp-12) + env(safe-area-inset-bottom, 0px));
 }
 .admin-brand,
 .app-brand {

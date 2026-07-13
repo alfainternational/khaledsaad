@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Application\Billing\FinalizePayPalSubscriptionAction;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
+use App\Domain\Billing\Services\BillingAccessService;
 use App\Enums\PlanStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\Concerns\InteractsWithWorkspaceContext;
@@ -31,7 +32,7 @@ class BillingController extends Controller
         $workspace = $this->currentWorkspace($request);
         $account = $workspace->account()->with(['subscription.plan'])->firstOrFail();
         $subscription = $account->subscription;
-        $isOwner = $request->user()->id === $account->owner_user_id;
+        $isOwner = app(BillingAccessService::class)->canManage($request->user(), $account, $workspace);
 
         $freePlan = Plan::query()->where('code', 'free')->first();
 
@@ -61,7 +62,7 @@ class BillingController extends Controller
         $workspace = $this->currentWorkspace($request);
         $account = $workspace->account()->firstOrFail();
 
-        abort_unless($request->user()->id === $account->owner_user_id, 403);
+        abort_unless(app(BillingAccessService::class)->canManage($request->user(), $account, $workspace), 403);
 
         $plan = Plan::query()
             ->where('code', $request->validated('plan_code'))
@@ -164,7 +165,7 @@ class BillingController extends Controller
         $workspace = $this->currentWorkspace($request);
         $account = $workspace->account()->firstOrFail();
 
-        abort_unless($request->user()->id === $account->owner_user_id, 403);
+        abort_unless(app(BillingAccessService::class)->canManage($request->user(), $account, $workspace), 403);
 
         $paypalSubId = (string) ($request->query('subscription_id') ?? $request->query('token') ?? '');
         if ($paypalSubId === '') {
@@ -205,7 +206,7 @@ class BillingController extends Controller
         $workspace = $this->currentWorkspace($request);
         $account = $workspace->account()->firstOrFail();
 
-        abort_unless($request->user()->id === $account->owner_user_id, 403);
+        abort_unless(app(BillingAccessService::class)->canManage($request->user(), $account, $workspace), 403);
 
         $subscription = $account->subscription;
         if ($subscription === null || ! filled($subscription->paypal_subscription_id)) {

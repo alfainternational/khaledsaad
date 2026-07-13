@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 
+import '../features/shared/widgets/global_assistant_button.dart';
 import 'bindings/initial_binding.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
@@ -30,10 +31,23 @@ class KsGrowthApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // فرض الاتجاه RTL على كامل الشجرة.
+      // تتبّع المسار الحالي ليقرّر زر المساعد العائم ظهوره.
+      routingCallback: (routing) {
+        final current = routing?.current;
+        if (current != null && current.isNotEmpty) {
+          GlobalAssistantButton.currentRoute.value = current;
+        }
+      },
+      // فرض الاتجاه RTL على كامل الشجرة + زر المساعد الذكي العائم
+      // فوق كل الشاشات بعد تسجيل الدخول.
       builder: (context, child) => Directionality(
         textDirection: TextDirection.rtl,
-        child: child ?? const SizedBox.shrink(),
+        child: Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const GlobalAssistantButton(),
+          ],
+        ),
       ),
     );
   }

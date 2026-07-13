@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Application\Billing\FinalizePayPalSubscriptionAction;
 use App\Domain\AI\Services\AiCreditService;
 use App\Domain\Billing\Models\Plan;
+use App\Domain\Billing\Services\BillingAccessService;
 use App\Domain\Billing\Models\Subscription;
 use App\Enums\PlanStatus;
 use App\Http\Api\ApiException;
@@ -52,7 +53,7 @@ class BillingController extends Controller
                     'current_period_end' => optional($subscription->current_period_end)->toIso8601String(),
                     'has_paypal' => filled($subscription->paypal_subscription_id),
                 ] : null,
-                'is_owner' => $request->user()->id === $account->owner_user_id,
+                'is_owner' => app(BillingAccessService::class)->canManage($request->user(), $account, $workspace),
                 'ai_credits_balance' => $credits->balanceFor($account),
                 'paypal_ready' => $paypal->isConfigured(),
             ],
@@ -74,8 +75,8 @@ class BillingController extends Controller
         $workspace = app('currentWorkspace');
         $account = $workspace->account()->firstOrFail();
 
-        if ($request->user()->id !== $account->owner_user_id) {
-            throw ApiException::forbidden('إدارة الفوترة متاحة لمالك الحساب فقط.');
+        if (! app(BillingAccessService::class)->canManage($request->user(), $account, $workspace)) {
+            throw ApiException::forbidden('إدارة الفوترة متاحة لمالك الحساب أو مالك مساحة العمل فقط.');
         }
 
         $plan = Plan::query()
@@ -185,8 +186,8 @@ class BillingController extends Controller
         $workspace = app('currentWorkspace');
         $account = $workspace->account()->firstOrFail();
 
-        if ($request->user()->id !== $account->owner_user_id) {
-            throw ApiException::forbidden('إدارة الفوترة متاحة لمالك الحساب فقط.');
+        if (! app(BillingAccessService::class)->canManage($request->user(), $account, $workspace)) {
+            throw ApiException::forbidden('إدارة الفوترة متاحة لمالك الحساب أو مالك مساحة العمل فقط.');
         }
 
         $subscription = Subscription::query()
@@ -238,8 +239,8 @@ class BillingController extends Controller
         $workspace = app('currentWorkspace');
         $account = $workspace->account()->firstOrFail();
 
-        if ($request->user()->id !== $account->owner_user_id) {
-            throw ApiException::forbidden('إدارة الفوترة متاحة لمالك الحساب فقط.');
+        if (! app(BillingAccessService::class)->canManage($request->user(), $account, $workspace)) {
+            throw ApiException::forbidden('إدارة الفوترة متاحة لمالك الحساب أو مالك مساحة العمل فقط.');
         }
 
         $subscription = $account->subscription;

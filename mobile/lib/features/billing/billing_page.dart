@@ -219,8 +219,8 @@ class _BillingPageState extends State<BillingPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Text(
-                      'إدارة الفوترة متاحة لمالك الحساب فقط.',
-                      style: theme.textTheme.bodyMedium,
+                      'إدارة الفوترة متاحة لمالك الحساب أو مالك مساحة العمل فقط. يمكنك الاطلاع على الباقات هنا، وللترقية أو الإلغاء تواصل مع مالك الحساب.',
+                      style: theme.textTheme.bodyMedium?.copyWith(height: 1.7),
                     ),
                   ),
                 )

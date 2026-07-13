@@ -166,6 +166,7 @@ TXT;
             app(StudioTemplateContractRegistry::class),
             app(StudioTemplateReadinessGate::class),
             app(AiCreditService::class),
+            app(\App\Application\Approval\AutoRequestApprovalAction::class),
         );
 
         $generation = $action->handle(
@@ -301,6 +302,7 @@ TXT;
             app(StudioTemplateContractRegistry::class),
             app(StudioTemplateReadinessGate::class),
             app(AiCreditService::class),
+            app(\App\Application\Approval\AutoRequestApprovalAction::class),
         );
 
         $generation = $action->handle(
@@ -424,6 +426,7 @@ TXT;
             app(StudioTemplateContractRegistry::class),
             app(StudioTemplateReadinessGate::class),
             app(AiCreditService::class),
+            app(\App\Application\Approval\AutoRequestApprovalAction::class),
         );
 
         $generation = $action->handle(

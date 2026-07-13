@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/error/api_exception.dart';
+import '../../core/l10n/ar_labels.dart';
 import '../../data/models/collab_models.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/workspace_service.dart';
@@ -109,10 +110,26 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
               if (_approvals.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 32),
-                  child: Text(
-                    'لا توجد موافقات هنا.',
-                    style: theme.textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
+                  child: Column(
+                    children: [
+                      Icon(Icons.fact_check_outlined,
+                          size: 40,
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.6)),
+                      const SizedBox(height: 12),
+                      Text(
+                        'لا توجد موافقات هنا بعد.',
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'كل مخرج جديد من الاستوديو الذكي وكل حزمة تنفيذ تدخل هذا الطابور تلقائياً لتراجعها وتعتمدها قبل استخدامها. ولّد مخرجاً من الاستوديو أو حوّل توصية إلى حزمة تنفيذ وستجده هنا.',
+                        style: theme.textTheme.bodyMedium?.copyWith(height: 1.7),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 )
               else
@@ -202,7 +219,7 @@ class _ApprovalCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     ApprovalModel.itemTypeLabels[approval.itemType] ??
-                        approval.itemType,
+                        ArLabels.of(approval.itemType),
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),

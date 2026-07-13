@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/l10n/ar_labels.dart';
 import '../../../data/models/tool_run_model.dart';
 
 /// يعرض نتيجة تشغيل الأداة: نسبة الاكتمال، الملخّص، المخرجات، والخطوات التالية.
 class ToolResultView extends StatelessWidget {
-  const ToolResultView({super.key, required this.result});
+  const ToolResultView({
+    super.key,
+    required this.result,
+    this.briefing,
+    this.onNextAction,
+  });
 
   final ToolRunResult result;
+  final ToolBriefing? briefing;
+  final ValueChanged<ToolNextAction>? onNextAction;
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +29,12 @@ class ToolResultView extends StatelessWidget {
               children: [
                 Icon(Icons.check_circle, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                Text('النتيجة',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w800)),
+                Text(
+                  'النتيجة',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const Spacer(),
                 if (result.completenessScore != null)
                   _CompletenessBadge(score: result.completenessScore!),
@@ -33,18 +44,25 @@ class ToolResultView extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Icon(Icons.auto_awesome,
-                      size: 14, color: theme.colorScheme.tertiary),
+                  Icon(
+                    Icons.auto_awesome,
+                    size: 14,
+                    color: theme.colorScheme.tertiary,
+                  ),
                   const SizedBox(width: 4),
-                  Text('نُقّح بالذكاء الاصطناعي',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.colorScheme.tertiary)),
+                  Text(
+                    'نُقّح بالذكاء الاصطناعي',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.tertiary,
+                    ),
+                  ),
                 ],
               ),
             ],
             const Divider(height: 24),
             ..._renderSummary(theme),
             ..._renderOutput(theme),
+            ..._renderBriefingAction(theme),
             ..._renderNextActions(theme),
           ],
         ),
@@ -58,8 +76,14 @@ class ToolResultView extends StatelessWidget {
     final headline = summary['headline']?.toString();
     final text = summary['text']?.toString();
     if (headline != null && headline.isNotEmpty) {
-      widgets.add(Text(headline,
-          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)));
+      widgets.add(
+        Text(
+          headline,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
       widgets.add(const SizedBox(height: 4));
     }
     if (text != null && text.isNotEmpty) {
@@ -76,21 +100,42 @@ class ToolResultView extends StatelessWidget {
     output.forEach((key, value) {
       final rendered = _stringifyValue(value);
       if (rendered.trim().isEmpty) return;
-      widgets.add(Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_humanizeKey(key),
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(color: theme.colorScheme.primary)),
-            const SizedBox(height: 2),
-            Text(rendered, style: theme.textTheme.bodyMedium),
-          ],
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _humanizeKey(key),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(rendered, style: theme.textTheme.bodyMedium),
+            ],
+          ),
         ),
-      ));
+      );
     });
     return widgets;
+  }
+
+  List<Widget> _renderBriefingAction(ThemeData theme) {
+    final action = briefing?.nextAction;
+    if (action == null || !action.hasCta) return const [];
+
+    return [
+      const Divider(height: 24),
+      FilledButton.icon(
+        onPressed: onNextAction == null
+            ? null
+            : () => onNextAction!.call(action),
+        icon: const Icon(Icons.open_in_new_rounded),
+        label: Text(action.displayLabel),
+      ),
+    ];
   }
 
   List<Widget> _renderNextActions(ThemeData theme) {
@@ -98,8 +143,12 @@ class ToolResultView extends StatelessWidget {
     if (actions.isEmpty) return const [];
     return [
       const Divider(height: 24),
-      Text('الخطوات التالية',
-          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+      Text(
+        'الخطوات التالية',
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       const SizedBox(height: 8),
       ...actions.map((a) {
         final label = a is Map
@@ -111,7 +160,11 @@ class ToolResultView extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.arrow_left, size: 18, color: theme.colorScheme.primary),
+              Icon(
+                Icons.arrow_left,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
               const SizedBox(width: 4),
               Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
             ],
@@ -130,13 +183,16 @@ class ToolResultView extends StatelessWidget {
     }
     if (value is Map) {
       return value.entries
-          .map((e) => '${_humanizeKey(e.key.toString())}: ${_stringifyValue(e.value)}')
+          .map(
+            (e) =>
+                '${_humanizeKey(e.key.toString())}: ${_stringifyValue(e.value)}',
+          )
           .join('\n');
     }
     return value.toString();
   }
 
-  String _humanizeKey(String key) => key.replaceAll('_', ' ');
+  String _humanizeKey(String key) => ArLabels.of(key);
 }
 
 class _CompletenessBadge extends StatelessWidget {
@@ -149,16 +205,22 @@ class _CompletenessBadge extends StatelessWidget {
     final color = score >= 70
         ? const Color(0xFF16A34A)
         : score >= 40
-            ? const Color(0xFFD97706)
-            : const Color(0xFFDC2626);
+        ? const Color(0xFFD97706)
+        : const Color(0xFFDC2626);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text('الاكتمال $score%',
-          style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+      child: Text(
+        'الاكتمال $score%',
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }

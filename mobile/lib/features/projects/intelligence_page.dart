@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
 import '../../core/error/api_exception.dart';
+import '../../core/l10n/ar_labels.dart';
 import '../../data/models/lifecycle_models.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/services/workspace_service.dart';
@@ -194,11 +195,33 @@ class IntelligencePage extends StatelessWidget {
               if (c.recommendations.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Text(
-                    'لا توجد توصيات بعد. شغّل التحليل أولاً وستظهر هنا.',
-                    style: theme.textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
+                  child: Obx(() {
+                    final inProgress = c.auditInProgress.value;
+                    return Column(
+                      children: [
+                        Icon(Icons.tips_and_updates_outlined,
+                            size: 40,
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.6)),
+                        const SizedBox(height: 12),
+                        Text(
+                          inProgress
+                              ? 'التحليل يعمل الآن... ستظهر التوصيات هنا فور اكتماله.'
+                              : 'لا توجد توصيات بعد. شغّل التحليل وسنفحص حضور مشروعك التسويقي ونعطيك توصيات مرتّبة بالأولوية.',
+                          style: theme.textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        if (!inProgress) ...[
+                          const SizedBox(height: 14),
+                          FilledButton.icon(
+                            onPressed: c.runAudit,
+                            icon: const Icon(Icons.query_stats, size: 18),
+                            label: const Text('شغّل التحليل الآن'),
+                          ),
+                        ],
+                      ],
+                    );
+                  }),
                 )
               else
                 ...c.recommendations.map((rec) => _RecommendationCard(
@@ -237,7 +260,7 @@ class _RecommendationCard extends StatelessWidget {
         title: Text(rec.title,
             style:
                 theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-        subtitle: rec.area != null ? Text(rec.area!) : null,
+        subtitle: rec.area != null ? Text(ArLabels.of(rec.area!)) : null,
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
           if (rec.rationale != null && rec.rationale!.isNotEmpty)

@@ -141,7 +141,7 @@ class ProjectDossierBuilder
             'completeness' => (int) ($run->completeness_score ?? 0),
             'answered_at' => optional($run->created_at)->toDateString(),
             'headline' => trim((string) data_get($run->summary_json, 'headline', '')),
-            'bullets' => array_slice($bullets, 0, 6),
+            'bullets' => $bullets,
             'answers' => $answers,
         ];
     }

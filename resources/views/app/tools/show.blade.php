@@ -175,6 +175,7 @@
     >
         <article class="card panel-modern tool-form-panel">
             <form
+                id="tool-form"
                 method="POST"
                 action="{{ route('tools.run', $tool) }}"
                 class="app-form-grid"

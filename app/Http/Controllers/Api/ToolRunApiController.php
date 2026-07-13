@@ -225,9 +225,14 @@ class ToolRunApiController extends Controller
         $ctaUrl = null;
         $ctaLabel = null;
 
+        if ($actionType === 'current_tool') {
+            $ctaUrl = '#tool-form';
+            $ctaLabel = 'ابدأ تشغيل الأداة الآن';
+        }
+
         if ($actionType === 'brief') {
             $ctaUrl = route('projects.brief.edit', $project);
-            $ctaLabel = 'تحرير brief المشروع';
+            $ctaLabel = 'تعديل ملف المشروع';
         }
 
         if ($actionType === 'tool' && ! empty($nextAction['recommended_tool_code'])) {
@@ -240,6 +245,11 @@ class ToolRunApiController extends Controller
                 $ctaUrl = route('tools.show', $recommendedTool);
                 $ctaLabel = 'افتح '.($nextAction['recommended_tool_label'] ?? $recommendedTool->name ?? $recommendedTool->code);
             }
+        }
+
+        if ($actionType === 'tool' && empty($nextAction['recommended_tool_code']) && ! $ctaUrl) {
+            $ctaUrl = route('projects.brief.edit', $project);
+            $ctaLabel = 'تعديل ملف المشروع';
         }
 
         $toolBriefing['next_action'] = [

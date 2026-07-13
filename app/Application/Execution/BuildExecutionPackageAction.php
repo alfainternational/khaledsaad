@@ -2,6 +2,7 @@
 
 namespace App\Application\Execution;
 
+use App\Application\Approval\AutoRequestApprovalAction;
 use App\Domain\Execution\Models\ExecutionAsset;
 use App\Domain\Execution\Models\ExecutionPackage;
 use App\Domain\Execution\Models\ExecutionTask;
@@ -17,6 +18,10 @@ use Illuminate\Support\Str;
  */
 class BuildExecutionPackageAction
 {
+    public function __construct(
+        private readonly AutoRequestApprovalAction $autoRequestApproval,
+    ) {}
+
     public function handle(Recommendation $recommendation, ?User $actor = null): ExecutionPackage
     {
         return DB::transaction(function () use ($recommendation, $actor): ExecutionPackage {
@@ -61,6 +66,15 @@ class BuildExecutionPackageAction
             ]);
 
             $recommendation->update(['status' => 'accepted']);
+
+            // حزمة التنفيذ الجديدة تدخل طابور الموافقات تلقائياً.
+            $this->autoRequestApproval->forItem(
+                $package->workspace_id,
+                $package->project_id,
+                'execution_package',
+                $package->id,
+                'طلب تلقائي: حزمة تنفيذ جديدة بانتظار الاعتماد.',
+            );
 
             return $package->load(['tasks', 'assets']);
         });

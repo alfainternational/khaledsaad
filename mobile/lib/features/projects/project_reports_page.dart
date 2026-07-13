@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/error/api_exception.dart';
+import '../../core/l10n/ar_labels.dart';
 import '../../core/utils/file_exporter.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/services/workspace_service.dart';
@@ -198,17 +199,54 @@ class _ReportCard extends StatelessWidget {
   }
 }
 
-/// عرض هادئ لوثيقة JSON (تقرير/دليل): يعرض الأقسام النصية فقط دون زحمة تقنية.
+/// كتلة عرض واحدة داخل الوثيقة: نص أو جدول أو مؤشر نسبة.
+class _DocBlock {
+  const _DocBlock.text(this.title, this.text)
+      : tableHeaders = null,
+        tableRows = null,
+        percent = null;
+
+  const _DocBlock.table(this.title, this.tableHeaders, this.tableRows)
+      : text = null,
+        percent = null;
+
+  const _DocBlock.metric(this.title, this.percent)
+      : text = null,
+        tableHeaders = null,
+        tableRows = null;
+
+  final String title;
+  final String? text;
+  final List<String>? tableHeaders;
+  final List<List<String>>? tableRows;
+  final int? percent;
+}
+
+/// عرض وثيقة JSON (تقرير/دليل) بعناوين معرّبة، مؤشرات، جداول،
+/// والمحتوى كاملاً دون أي اقتصاص.
 class _DocumentView extends StatelessWidget {
   const _DocumentView({required this.title, required this.document});
 
   final String title;
   final Map<String, dynamic> document;
 
+  /// المفاتيح الرقمية التي تُعرض كمؤشر نسبة مئوية.
+  static const _percentKeys = {
+    'completion',
+    'avg_quality',
+    'content_quality',
+    'completeness',
+    'executive_score',
+    'score',
+  };
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final blocks = _flatten(document);
+    final metrics = blocks.where((b) => b.percent != null).toList();
+    final content = blocks.where((b) => b.percent == null).toList();
+
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: blocks.isEmpty
@@ -216,54 +254,82 @@ class _DocumentView extends StatelessWidget {
               child: Text('لا يوجد محتوى بعد — أكمل بعض الأدوات أولاً.',
                   style: theme.textTheme.bodyMedium),
             )
-          : ListView.builder(
+          : ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: blocks.length,
-              itemBuilder: (_, i) {
-                final block = blocks[i];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (block.$1.isNotEmpty)
-                        Text(block.$1,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: theme.colorScheme.primary)),
-                      const SizedBox(height: 4),
-                      SelectableText(block.$2,
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(height: 1.7)),
-                    ],
+              children: [
+                if (metrics.isNotEmpty) ...[
+                  _MetricsGrid(metrics: metrics),
+                  const SizedBox(height: 18),
+                ],
+                for (final block in content)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (block.title.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(block.title,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.colorScheme.primary)),
+                          ),
+                        if (block.text != null)
+                          SelectableText(block.text!,
+                              style: theme.textTheme.bodyMedium
+                                  ?.copyWith(height: 1.7)),
+                        if (block.tableRows != null)
+                          _DocTable(
+                            headers: block.tableHeaders!,
+                            rows: block.tableRows!,
+                          ),
+                      ],
+                    ),
                   ),
-                );
-              },
+              ],
             ),
     );
   }
 
-  /// يسطّح الوثيقة إلى أزواج (عنوان، نص) — يتجاهل الحقول التقنية والفارغة.
-  List<(String, String)> _flatten(Map<String, dynamic> doc,
-      [String prefix = '']) {
-    final blocks = <(String, String)>[];
+  /// يسطّح الوثيقة إلى كتل عرض — يعرّب العناوين ويخفي الحقول التقنية
+  /// ويحوّل قوائم العناصر المتجانسة إلى جداول.
+  List<_DocBlock> _flatten(Map<String, dynamic> doc, [String prefix = '']) {
+    final blocks = <_DocBlock>[];
     doc.forEach((key, value) {
-      if (key.startsWith('_') || key == 'meta') return;
-      final label = _humanize(key);
-      if (value is String && value.trim().isNotEmpty) {
-        blocks.add((label, value.trim()));
-      } else if (value is num || value is bool) {
-        blocks.add((label, value.toString()));
+      if (key.startsWith('_') || key == 'meta' || ArLabels.isHidden(key)) {
+        return;
+      }
+      final label = ArLabels.of(key);
+
+      if (value is num && _percentKeys.contains(key)) {
+        blocks.add(_DocBlock.metric(label, value.clamp(0, 100).toInt()));
+      } else if (value is String && value.trim().isNotEmpty) {
+        blocks.add(_DocBlock.text(label, ArLabels.value(value.trim())));
+      } else if (value is num) {
+        blocks.add(_DocBlock.text(label, value.toString()));
+      } else if (value is bool) {
+        blocks.add(_DocBlock.text(label, value ? 'نعم' : 'لا'));
       } else if (value is List && value.isNotEmpty) {
-        final text = value
-            .map((e) => e is Map
-                ? _flatten(Map<String, dynamic>.from(e))
-                    .map((b) => b.$1.isEmpty ? b.$2 : '${b.$1}: ${b.$2}')
-                    .join('\n')
-                : '• $e')
-            .where((s) => s.trim().isNotEmpty)
-            .join('\n');
-        if (text.isNotEmpty) blocks.add((label, text));
+        final table = _tryTable(label, value);
+        if (table != null) {
+          blocks.add(table);
+        } else {
+          final text = value
+              .map((e) => e is Map
+                  ? _flatten(Map<String, dynamic>.from(e))
+                      .map((b) {
+                        final v = b.percent != null ? '${b.percent}%' : b.text;
+                        if (v == null || v.trim().isEmpty) return '';
+                        return b.title.isEmpty ? v : '${b.title}: $v';
+                      })
+                      .where((s) => s.trim().isNotEmpty)
+                      .join('\n')
+                  : '• ${ArLabels.value(e.toString())}')
+              .where((s) => s.trim().isNotEmpty)
+              .join('\n');
+          if (text.isNotEmpty) blocks.add(_DocBlock.text(label, text));
+        }
       } else if (value is Map && value.isNotEmpty) {
         blocks.addAll(_flatten(Map<String, dynamic>.from(value), label));
       }
@@ -271,5 +337,136 @@ class _DocumentView extends StatelessWidget {
     return blocks;
   }
 
-  String _humanize(String key) => key.replaceAll('_', ' ');
+  /// قائمة من عناصر Map متجانسة المفاتيح وقيمها بسيطة → جدول.
+  _DocBlock? _tryTable(String label, List<dynamic> value) {
+    if (value.length < 2 || !value.every((e) => e is Map)) return null;
+
+    final maps = value.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    // مفاتيح مشتركة بقيم بسيطة فقط (نص/رقم/منطقي).
+    final keys = maps.first.keys
+        .where((k) =>
+            !k.startsWith('_') &&
+            !ArLabels.isHidden(k) &&
+            maps.every((m) =>
+                m[k] == null || m[k] is String || m[k] is num || m[k] is bool))
+        .toList();
+    if (keys.length < 2) return null;
+
+    final rows = maps
+        .map((m) => keys
+            .map((k) => switch (m[k]) {
+                  null => '—',
+                  final bool b => b ? 'نعم' : 'لا',
+                  final v => ArLabels.value(v.toString()),
+                })
+            .toList())
+        .toList();
+
+    return _DocBlock.table(
+      label,
+      keys.map(ArLabels.of).toList(),
+      rows,
+    );
+  }
+}
+
+/// شبكة مؤشرات النسب — رسم تقدم دائري مبسط لكل مؤشر.
+class _MetricsGrid extends StatelessWidget {
+  const _MetricsGrid({required this.metrics});
+
+  final List<_DocBlock> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Wrap(
+          spacing: 16,
+          runSpacing: 14,
+          children: [
+            for (final m in metrics)
+              SizedBox(
+                width: 140,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 34,
+                          height: 34,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                value: (m.percent ?? 0) / 100,
+                                strokeWidth: 4,
+                                backgroundColor: theme
+                                    .colorScheme.surfaceContainerHighest,
+                              ),
+                              Text('${m.percent}',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(m.title,
+                              style: theme.textTheme.labelMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// جدول وثيقة قابل للتمرير أفقياً — يعرض كل الأعمدة دون اقتصاص.
+class _DocTable extends StatelessWidget {
+  const _DocTable({required this.headers, required this.rows});
+
+  final List<String> headers;
+  final List<List<String>> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        headingRowHeight: 40,
+        dataRowMinHeight: 36,
+        dataRowMaxHeight: double.infinity,
+        headingTextStyle: theme.textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+          color: theme.colorScheme.primary,
+        ),
+        columns: [
+          for (final h in headers) DataColumn(label: Text(h)),
+        ],
+        rows: [
+          for (final r in rows)
+            DataRow(cells: [
+              for (final cell in r)
+                DataCell(ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 260),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text(cell, softWrap: true),
+                  ),
+                )),
+            ]),
+        ],
+      ),
+    );
+  }
 }
