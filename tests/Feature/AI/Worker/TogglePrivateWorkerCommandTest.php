@@ -44,4 +44,20 @@ class TogglePrivateWorkerCommandTest extends TestCase
 
         $this->assertNull(app(SettingsStore::class)->get('services.private_worker.enabled'));
     }
+
+    #[Test]
+    public function exclusive_mode_persists_the_local_provider_without_an_external_fallback(): void
+    {
+        Storage::fake('local');
+
+        $this->artisan('private-worker:toggle', [
+            'state' => 'on', '--exclusive' => true, '--wait' => 90, '--json' => true,
+        ])->assertSuccessful();
+
+        $settings = app(SettingsStore::class);
+        $this->assertSame('private_worker', $settings->get('services.ai.provider'));
+        $this->assertTrue($settings->get('services.private_worker.prefer_for_generation'));
+        $this->assertSame(90, $settings->get('services.private_worker.gateway_wait_seconds'));
+        $this->assertSame('private_worker', config('services.ai.provider'));
+    }
 }
