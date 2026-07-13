@@ -31,10 +31,10 @@
 - Modify: `worker/private_intelligence_worker/worker.py`
 - Test: `worker/private_intelligence_worker/test_document_extractors.py`
 
-- [ ] Generate minimal DOCX/XLSX fixtures in tests and assert headings, paragraphs, tables, sheets, rows, cells, formulas, inline/shared strings, and exact locators.
-- [ ] Confirm current flattening fails the tests.
-- [ ] Implement bounded ZIP/XML parsing with archive path validation, expansion limits, deterministic order, merged-cell awareness, and structured chunks.
-- [ ] Re-run tests and commit `feat: preserve word and spreadsheet structure`.
+- [x] Generate minimal DOCX/XLSX fixtures in tests and assert headings, paragraphs, tables, sheets, rows, cells, formulas, inline/shared strings, and exact locators.
+- [x] Confirm current flattening fails the tests.
+- [x] Implement bounded ZIP/XML parsing with archive path validation, expansion limits, deterministic order, merged-cell awareness, and structured chunks.
+- [x] Re-run tests and commit `feat: preserve word and spreadsheet structure`.
 
 ### Task 3: Page-aware PDF and confidence-aware OCR
 

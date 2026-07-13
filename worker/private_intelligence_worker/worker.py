@@ -24,6 +24,7 @@ import urllib.parse
 import zipfile
 from typing import Any
 from xml.etree import ElementTree
+from document_extractors import extract_docx, extract_xlsx
 
 
 def canonical_json(value: Any) -> str:
@@ -332,12 +333,22 @@ class Worker:
         )
         if status != 200:
             raise RuntimeError("input download failed")
+        expected_sha256 = str(job.get("payload", {}).get("expected_sha256", "")).strip()
+        if expected_sha256 and not hmac.compare_digest(expected_sha256, hashlib.sha256(content).hexdigest()):
+            raise RuntimeError("downloaded input hash does not match its job contract")
         mime = str(job.get("payload", {}).get("mime_type", headers.get("Content-Type", ""))).split(";")[0]
+        contract = job.get("payload", {}).get("extraction_contract", {})
+        if not isinstance(contract, dict) or contract.get("version") != "v2":
+            raise RuntimeError("document extraction contract is invalid")
         suffix = pathlib.Path(str(job.get("payload", {}).get("original_name", "input.bin"))).suffix
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as handle:
             handle.write(content)
             temporary = pathlib.Path(handle.name)
         try:
+            if mime.endswith("wordprocessingml.document"):
+                return extract_docx(temporary, contract)
+            if mime.endswith("spreadsheetml.sheet"):
+                return extract_xlsx(temporary, contract)
             text = extract_text(temporary, mime)
         finally:
             temporary.unlink(missing_ok=True)

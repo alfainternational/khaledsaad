@@ -4,6 +4,8 @@ import json
 import os
 import unittest
 import time
+import io
+import zipfile
 from unittest.mock import MagicMock, patch
 
 from worker import LeaseHeartbeat, Worker, canonical_json, request_signature, runtime_manifest
@@ -122,6 +124,36 @@ class ProtocolTest(unittest.TestCase):
 
         self.assertEqual("khaledsaad.net", opened.call_args.args[0])
         self.assertEqual("khaledsaad.net", connection.request.call_args.kwargs["headers"]["Host"])
+
+    def test_worker_routes_docx_through_the_v2_structured_extractor(self):
+        os.environ.update(
+            AI_WORKER_SERVER_URL="https://example.test",
+            AI_WORKER_ID="wrk_test",
+            AI_WORKER_SECRET="secret",
+        )
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr(
+                "word/document.xml",
+                '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Structured evidence</w:t></w:r></w:p></w:body></w:document>',
+            )
+        content = buffer.getvalue()
+        worker = Worker()
+        worker.signed_request = MagicMock(return_value=(
+            200, content, {"Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+        ))
+        contract = {"version": "v2", "max_chunks": 100, "max_text_chars": 350000, "max_chunk_chars": 3500}
+        job = {"public_id": "job-docx", "payload": {
+            "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "original_name": "report.docx",
+            "expected_sha256": hashlib.sha256(content).hexdigest(),
+            "extraction_contract": contract,
+        }}
+
+        result = worker.extract_document(job, "lease-token")
+
+        self.assertEqual("v2", result["contract_version"])
+        self.assertEqual("docx_paragraph", result["chunks"][0]["locator"]["type"])
 
 
 if __name__ == "__main__":
