@@ -89,6 +89,11 @@ if ((bool) config('services.knowledge.upload_processing', false)) {
         ->name('knowledge-upload-processing');
 }
 
+Schedule::command('knowledge:cleanup-upload-sessions --limit=100')
+    ->hourly()
+    ->withoutOverlapping()
+    ->name('knowledge-upload-session-cleanup');
+
 if ((bool) config('services.private_worker.enabled', false)) {
     Schedule::command('private-worker:maintain')
         ->everyFiveMinutes()

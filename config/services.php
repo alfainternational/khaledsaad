@@ -139,6 +139,10 @@ return [
         'project_sync' => env('AI_KNOWLEDGE_PROJECT_SYNC', false),
         'retrieval' => env('AI_KNOWLEDGE_RETRIEVAL', false),
         'upload_processing' => env('AI_KNOWLEDGE_UPLOAD_PROCESSING', false),
+        'chunked_uploads' => env('AI_KNOWLEDGE_CHUNKED_UPLOADS', false),
+        'chunk_bytes' => (int) env('AI_KNOWLEDGE_CHUNK_BYTES', 1048576),
+        'chunked_max_bytes' => (int) env('AI_KNOWLEDGE_CHUNKED_MAX_BYTES', 52428800),
+        'chunk_session_ttl_minutes' => (int) env('AI_KNOWLEDGE_CHUNK_SESSION_TTL_MINUTES', 120),
         'lock_wait_milliseconds' => env('AI_KNOWLEDGE_LOCK_WAIT_MILLISECONDS', 500),
         'mapping_previous_keys' => array_values(array_filter(array_map(
             'trim',

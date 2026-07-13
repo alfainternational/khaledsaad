@@ -106,6 +106,11 @@ class KnowledgeHealthCommandTest extends TestCase
             'uploads_indexed' => 0,
             'uploads_stored' => 0,
             'uploads_failed' => 0,
+            'uploads_needing_worker' => 0,
+            'structured_file_uploads' => 0,
+            'ocr_uploads_indexed' => 0,
+            'open_upload_sessions' => 0,
+            'expired_upload_sessions' => 0,
             'unlinked_uploads' => 0,
             'candidate_claims' => 1,
             'failed_jobs' => 1,
@@ -143,6 +148,11 @@ class KnowledgeHealthCommandTest extends TestCase
             ->expectsOutput('uploads_indexed: 0')
             ->expectsOutput('uploads_stored: 0')
             ->expectsOutput('uploads_failed: 0')
+            ->expectsOutput('uploads_needing_worker: 0')
+            ->expectsOutput('structured_file_uploads: 0')
+            ->expectsOutput('ocr_uploads_indexed: 0')
+            ->expectsOutput('open_upload_sessions: 0')
+            ->expectsOutput('expired_upload_sessions: 0')
             ->expectsOutput('unlinked_uploads: 0')
             ->expectsOutput('candidate_claims: 0')
             ->expectsOutput('failed_jobs: 0')

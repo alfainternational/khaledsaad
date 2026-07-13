@@ -33,6 +33,22 @@ class KnowledgeHealthCommand extends Command
             'uploads_indexed' => DB::table('knowledge_uploads')->where('status', 'indexed')->count(),
             'uploads_stored' => DB::table('knowledge_uploads')->where('status', 'stored')->count(),
             'uploads_failed' => DB::table('knowledge_uploads')->where('status', 'failed')->count(),
+            'uploads_needing_worker' => DB::table('knowledge_uploads')->where('status', 'needs_worker')->count(),
+            'structured_file_uploads' => DB::table('knowledge_uploads')
+                ->whereIn('extension', ['pdf', 'docx', 'xlsx', 'png', 'jpg', 'jpeg', 'webp', 'tif', 'tiff'])
+                ->count(),
+            'ocr_uploads_indexed' => DB::table('knowledge_uploads')
+                ->where('mime_type', 'like', 'image/%')
+                ->where('status', 'indexed')
+                ->count(),
+            'open_upload_sessions' => DB::table('knowledge_upload_sessions')
+                ->where('status', 'open')
+                ->where('expires_at', '>=', now())
+                ->count(),
+            'expired_upload_sessions' => DB::table('knowledge_upload_sessions')
+                ->where('status', 'open')
+                ->where('expires_at', '<', now())
+                ->count(),
             'unlinked_uploads' => DB::table('knowledge_uploads')
                 ->where('status', 'indexed')
                 ->whereNull('knowledge_source_id')

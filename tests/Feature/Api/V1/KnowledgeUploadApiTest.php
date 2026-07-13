@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\V1;
 
 use App\Domain\Account\Models\Account;
 use App\Domain\AI\Worker\Models\IntelligenceJob;
+use App\Domain\AI\Knowledge\Models\KnowledgeUploadSession;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Client\Models\Client;
@@ -173,6 +174,93 @@ class KnowledgeUploadApiTest extends TestCase
         $this->withToken($token)->postJson($base.'/'.$uploadId.'/retry')->assertAccepted();
         $this->assertDatabaseCount('intelligence_jobs', 2);
         $this->assertSame(1, IntelligenceJob::query()->where('status', 'queued')->count());
+    }
+
+    #[Test]
+    public function chunked_upload_routes_are_hidden_while_the_feature_is_disabled(): void
+    {
+        config()->set('services.knowledge.chunked_uploads', false);
+        [$owner, $workspace, $project] = $this->tenant('Chunk Disabled');
+        $base = '/api/v1/workspaces/'.$workspace->public_id.'/projects/'.$project->public_id.'/knowledge/upload-sessions';
+
+        $this->withToken($owner->createToken('owner')->plainTextToken)
+            ->postJson($base, [
+                'original_name' => 'large.pdf',
+                'mime_type' => 'application/pdf',
+                'byte_size' => 4,
+                'sha256' => hash('sha256', 'test'),
+            ])
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function a_chunked_upload_is_assembled_verified_and_dispatched(): void
+    {
+        Storage::fake('local');
+        config()->set('services.knowledge.chunked_uploads', true);
+        config()->set('services.knowledge.chunk_bytes', 3);
+        [$owner, $workspace, $project] = $this->tenant('Chunk Complete');
+        $token = $owner->createToken('owner')->plainTextToken;
+        $base = '/api/v1/workspaces/'.$workspace->public_id.'/projects/'.$project->public_id.'/knowledge/upload-sessions';
+        $content = 'abcdef';
+
+        $created = $this->withToken($token)->postJson($base, [
+            'original_name' => 'large.pdf',
+            'mime_type' => 'application/pdf',
+            'byte_size' => strlen($content),
+            'sha256' => hash('sha256', $content),
+        ])->assertCreated()->assertJsonPath('data.chunk_size', 3);
+        $sessionId = $created->json('data.public_id');
+
+        $this->withToken($token)->call('PUT', $base.'/'.$sessionId.'/chunks/1', [], [], [], [
+            'CONTENT_TYPE' => 'application/octet-stream',
+        ], 'def')->assertNoContent();
+        $this->withToken($token)->call('PUT', $base.'/'.$sessionId.'/chunks/0', [], [], [], [
+            'CONTENT_TYPE' => 'application/octet-stream',
+        ], 'abc')->assertNoContent();
+
+        $completed = $this->withToken($token)->postJson($base.'/'.$sessionId.'/complete')
+            ->assertAccepted()
+            ->assertJsonPath('data.status', 'needs_worker');
+
+        $this->assertDatabaseHas('knowledge_uploads', [
+            'public_id' => $completed->json('data.public_id'),
+            'sha256' => hash('sha256', $content),
+            'byte_size' => strlen($content),
+        ]);
+        $this->assertDatabaseHas('knowledge_upload_sessions', ['public_id' => $sessionId, 'status' => 'completed']);
+        $this->assertDatabaseHas('intelligence_jobs', ['project_id' => $project->id, 'type' => 'document_extract']);
+    }
+
+    #[Test]
+    public function expired_chunked_upload_sessions_are_removed_from_private_storage(): void
+    {
+        Storage::fake('local');
+        [$owner, $workspace, $project] = $this->tenant('Chunk Cleanup');
+        $session = KnowledgeUploadSession::query()->create([
+            'public_id' => 'ups_expired',
+            'account_id' => $workspace->account_id,
+            'workspace_id' => $workspace->id,
+            'project_id' => $project->id,
+            'uploaded_by_user_id' => $owner->id,
+            'disk' => 'local',
+            'path' => 'knowledge-upload-sessions/expired',
+            'original_name' => 'expired.pdf',
+            'mime_type' => 'application/pdf',
+            'extension' => 'pdf',
+            'byte_size' => 3,
+            'chunk_size' => 3,
+            'chunk_count' => 1,
+            'sha256' => hash('sha256', 'old'),
+            'status' => 'open',
+            'expires_at' => now()->subMinute(),
+        ]);
+        Storage::disk('local')->put($session->path.'/chunks/0.part', 'old');
+
+        $this->artisan('knowledge:cleanup-upload-sessions')->expectsOutput('Removed: 1')->assertSuccessful();
+
+        $this->assertDatabaseMissing('knowledge_upload_sessions', ['public_id' => 'ups_expired']);
+        Storage::disk('local')->assertMissing($session->path.'/chunks/0.part');
     }
 
     /** @return array{User, Workspace, Project} */

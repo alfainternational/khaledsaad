@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\ExecutionPackageController;
 use App\Http\Controllers\Api\V1\KnowledgeUploadController;
+use App\Http\Controllers\Api\V1\KnowledgeUploadSessionController;
 use App\Http\Controllers\Api\V1\LogoutController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\OnboardingController;
@@ -117,6 +118,9 @@ Route::prefix('v1')->group(function (): void {
                 Route::post('/knowledge/uploads/{uploadPublicId}/retry', [KnowledgeUploadController::class, 'retry'])
                     ->middleware('throttle:10,1');
                 Route::delete('/knowledge/uploads/{uploadPublicId}', [KnowledgeUploadController::class, 'destroy']);
+                Route::post('/knowledge/upload-sessions', [KnowledgeUploadSessionController::class, 'store'])->middleware('throttle:10,1');
+                Route::put('/knowledge/upload-sessions/{sessionPublicId}/chunks/{index}', [KnowledgeUploadSessionController::class, 'chunk'])->whereNumber('index');
+                Route::post('/knowledge/upload-sessions/{sessionPublicId}/complete', [KnowledgeUploadSessionController::class, 'complete'])->middleware('throttle:10,1');
             });
 
             // حزم التنفيذ
