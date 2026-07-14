@@ -22,6 +22,7 @@ class DynamicFormField extends StatefulWidget {
 
 class _DynamicFormFieldState extends State<DynamicFormField> {
   late final TextEditingController _text;
+  late final FocusNode _focus;
 
   ToolField get field => widget.field;
   ToolRunnerController get c => widget.controller;
@@ -30,10 +31,18 @@ class _DynamicFormFieldState extends State<DynamicFormField> {
   void initState() {
     super.initState();
     _text = TextEditingController(text: c.values[field.key] ?? '');
+    _focus = FocusNode();
+    // المُحاوِر الذكي: عند مغادرة حقل مهم بإجابة، اطلب سؤال متابعة لرفع دقّتها.
+    _focus.addListener(() {
+      if (!_focus.hasFocus) {
+        c.challengeField(field);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _focus.dispose();
     _text.dispose();
     super.dispose();
   }
@@ -171,6 +180,36 @@ class _DynamicFormFieldState extends State<DynamicFormField> {
               ],
             ),
           ],
+          // المُحاوِر الذكي: سؤال متابعة لرفع دقّة الإجابة (تحسين اختياري).
+          Obx(() {
+            final question = c.challenges[field.key];
+            if (question == null || question.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(10),
+                border: BorderDirectional(
+                  start: BorderSide(color: theme.colorScheme.primary, width: 3),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.psychology_outlined,
+                      size: 16, color: theme.colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text('لتوضيح أدق: $question',
+                        style: theme.textTheme.bodySmall),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -179,6 +218,7 @@ class _DynamicFormFieldState extends State<DynamicFormField> {
   Widget _buildText() {
     return TextField(
       controller: _text,
+      focusNode: _focus,
       onChanged: _onChanged,
       minLines: field.isTextarea ? 3 : 1,
       maxLines: field.isTextarea ? 8 : 1,

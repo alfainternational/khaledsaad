@@ -86,6 +86,27 @@ class ToolRepository {
     );
   }
 
+  /// المُحاوِر الذكي: يعيد سؤال متابعة لإجابة حقل (أو null إن كانت محدّدة كفايةً).
+  Future<String?> challenge(
+    String ws,
+    String project,
+    String tcode, {
+    required String field,
+    required String value,
+    required String mode,
+  }) async {
+    final res = await _api.post(
+      ApiEndpoints.toolChallenge(ws, project, tcode),
+      body: {'field': field, 'value': value, 'mode': mode},
+    );
+    final data = res['data'];
+    if (data is Map && data['question'] is String) {
+      final q = (data['question'] as String).trim();
+      return q.isEmpty ? null : q;
+    }
+    return null;
+  }
+
   Future<ToolRunResult> run(
     String ws,
     String project,

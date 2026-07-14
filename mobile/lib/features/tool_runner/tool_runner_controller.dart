@@ -218,6 +218,39 @@ class ToolRunnerController extends GetxController {
     }
   }
 
+  /// المُحاوِر الذكي: سؤال متابعة لكل حقل (مفتاح الحقل ← السؤال) لرفع دقّة الإجابة.
+  final challenges = <String, String>{}.obs;
+  final _challengedValues = <String, String>{}; // dedup: آخر قيمة سُئل عنها
+
+  /// يُستدعى عند مغادرة حقل مهم بإجابة غير فارغة — يطلب سؤال متابعة إن لزم.
+  Future<void> challengeField(ToolField field) async {
+    if (!field.isCritical) return;
+    final ws = _workspaces.activeId;
+    final mode = selectedMode.value;
+    final value = (values[field.key] ?? '').trim();
+    if (ws == null || mode == null || value.length < 3) return;
+    if (_challengedValues[field.key] == value) return; // لا نكرّر لنفس القيمة
+    _challengedValues[field.key] = value;
+
+    try {
+      final question = await _tools.challenge(
+        ws,
+        projectPublicId,
+        toolCode,
+        field: field.key,
+        value: value,
+        mode: mode,
+      );
+      if (question != null && question.isNotEmpty) {
+        challenges[field.key] = question;
+      } else {
+        challenges.remove(field.key);
+      }
+    } on ApiException {
+      // تحسين اختياري — نتجاهل الفشل بصمت.
+    }
+  }
+
   /// إدخال صوتي: يفرّغ تسجيلاً ويوزّعه على حقول الأداة (تكلّم بدل الكتابة).
   final isTranscribing = false.obs;
 
