@@ -13,6 +13,7 @@ use App\Domain\Workspace\Models\Workspace;
 use App\Models\User;
 use App\Support\AI\StudioTemplateContractRegistry;
 use App\Support\AI\WorkspaceGenerationContextBuilder;
+use App\Support\AI\SectionedGenerationService;
 use App\Support\AI\StudioTemplateReadinessGate;
 use App\Support\Dashboard\ContentLocaleCatalog;
 use App\Support\Dashboard\GoalCatalog;
@@ -36,6 +37,7 @@ class GenerateTemplateDraftAction
         private readonly StudioTemplateReadinessGate $readinessGate,
         private readonly AiCreditService $credits,
         private readonly AutoRequestApprovalAction $autoRequestApproval,
+        private readonly ?SectionedGenerationService $sectionedService = null,
     ) {}
 
     /** تقدير توكن واقعي (الحرف العربي ≈ توكن لكل ~4 محارف) بدل عدّ الكلمات المضلّل. */
@@ -179,6 +181,75 @@ class GenerateTemplateDraftAction
         $gateway = $usingByoKey
             ? ($this->gatewayFactory->makeForAccount($account) ?? $this->aiGateway)
             : $this->aiGateway;
+
+        // مسار التوليد المتوازي بالأقسام (اختياري ومبوّب): يولّد كل قسم بالتوازي من نفس السياق
+        // فيسرّع الملفات متعددة الأقسام. عند النجاح نعتمده؛ وإلا نسقط بالكامل للمسار الأحادي دون تغيير.
+        $sectionTitles = is_array($template->output_contract_json['sections'] ?? null)
+            ? $template->output_contract_json['sections']
+            : [];
+        $sectionedOutput = null;
+        if (
+            (bool) config('services.ai.sectioned_generation', false)
+            && ! $usingByoKey
+            && count($sectionTitles) >= (int) config('services.ai.sectioned_min_sections', 4)
+        ) {
+            $sectionedOutput = ($this->sectionedService ?? app(SectionedGenerationService::class))
+                ->generate($aiPrompt, $systemPrompt, $sectionTitles);
+        }
+
+        if ($sectionedOutput !== null) {
+            $output = $sectionedOutput;
+
+            $generation = AIGeneration::query()->create([
+                'account_id' => $workspace->account_id,
+                'workspace_id' => $workspace->id,
+                'project_id' => $project?->id,
+                'template_id' => $template->id,
+                'created_by' => $actor->id,
+                'inputs_json' => [
+                    'brief' => $brief,
+                    'profile' => $profile,
+                    'journey_snapshot' => $journeySnapshot,
+                    'readiness_snapshot' => $readiness,
+                    'tool_summaries' => $toolSummaries,
+                    'analysis_dossier' => $analysisDossier,
+                    'generation_context' => Arr::except($generationContext, ['prompt_block']),
+                    'template_meta' => [
+                        'code' => $template->code,
+                        'domain' => $template->domain,
+                        'output_contract' => $template->output_contract_json,
+                    ],
+                    'readiness_assessment' => $readinessAssessment,
+                    'generation_mode' => 'sectioned',
+                ],
+                'output' => $output,
+                'tokens_used' => $this->estimateTokens($aiPrompt.' '.$output),
+                'status' => 'completed',
+            ]);
+
+            if ($account !== null && ! $usingByoKey) {
+                try {
+                    $this->credits->consume(
+                        $account,
+                        max(1, (int) $template->credit_cost),
+                        'ai_studio.generation',
+                        (string) ($generation->public_id ?? $generation->id),
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning('AI credit consume failed: '.$e->getMessage());
+                }
+            }
+
+            $this->autoRequestApproval->forItem(
+                $workspace->id,
+                $project?->id,
+                'ai_generation',
+                $generation->id,
+                'طلب تلقائي: مخرج استوديو جديد بانتظار المراجعة.',
+            );
+
+            return $generation;
+        }
 
         $generationResult = $this->generateHighQualityOutput($template, $aiPrompt, $systemPrompt, $gateway);
 

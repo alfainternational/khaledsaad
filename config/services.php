@@ -45,6 +45,10 @@ return [
         'provider' => env('AI_PROVIDER', 'private_worker'),
         'external_generation_disabled' => env('AI_EXTERNAL_GENERATION_DISABLED', true),
         'apply_settings_in_testing' => false,
+        /* التوليد المتوازي بالأقسام (fan-out) لتسريع الملفات متعددة الأقسام. off افتراضياً؛
+           يُفعّل من settings بعد التحقق، ويسقط تلقائياً للمسار الأحادي عند أي فشل جزئي. */
+        'sectioned_generation' => env('AI_SECTIONED_GENERATION', false),
+        'sectioned_min_sections' => env('AI_SECTIONED_MIN_SECTIONS', 4),
         /* الكاش لتقليل الإنفاق على الـ API (انظر CachingAiGateway). */
         'cache' => env('AI_CACHE', true),
         'cache_ttl_minutes' => env('AI_CACHE_TTL_MINUTES', 1440),
