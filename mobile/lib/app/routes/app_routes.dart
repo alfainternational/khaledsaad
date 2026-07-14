@@ -16,6 +16,7 @@ abstract class Routes {
   static const projectDetail = '/projects/detail';
   static const projectTools = '/projects/tools';
   static const projectBrief = '/projects/brief';
+  static const founderInterview = '/projects/interview';
   static const projectIntelligence = '/projects/intelligence';
   static const projectReports = '/projects/reports';
   static const knowledge = '/projects/knowledge';

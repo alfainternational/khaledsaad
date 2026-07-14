@@ -94,6 +94,7 @@ class WorkspaceToolController extends Controller
                     'smart_placeholder' => $meta['smart_placeholder'] ?? null,
                     'suggested_value' => $meta['suggested_value'] ?? null,
                     'suggestion_label' => $meta['suggestion_label'] ?? null,
+                    'suggestion_source' => $meta['suggestion_source'] ?? null,
                     'quality' => [
                         'min_length' => (int) ($meta['quality']['min_length'] ?? 0),
                         'generic_terms' => array_values((array) ($meta['quality']['generic_terms'] ?? [])),

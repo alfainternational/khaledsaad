@@ -33,6 +33,8 @@ use App\Http\Controllers\Api\V1\TokenController;
 use App\Http\Controllers\Api\V1\ToolIndexController;
 use App\Http\Controllers\Api\V1\WorkspaceDashboardController;
 use App\Http\Controllers\Api\V1\WorkspaceIndexController;
+use App\Http\Controllers\Api\V1\FounderInterviewController as ApiFounderInterviewController;
+use App\Http\Controllers\Api\V1\ToolAssistController;
 use App\Http\Controllers\Api\V1\WorkspaceToolController;
 use Illuminate\Support\Facades\Route;
 
@@ -110,6 +112,15 @@ Route::prefix('v1')->group(function (): void {
                 Route::get('/tools/{tcode}', [WorkspaceToolController::class, 'load']);
                 Route::post('/tools/{tcode}/run', [WorkspaceToolController::class, 'run'])
                     ->middleware('idempotency:tool_run');
+                // إدخال متقدّم (تطابق الويب): تفريغ صوتي يوزّع على الحقول + محاوِر ذكي.
+                Route::post('/tools/{tcode}/transcribe', [ToolAssistController::class, 'transcribe'])
+                    ->middleware('throttle:ai-assist');
+                Route::post('/tools/{tcode}/challenge', [ToolAssistController::class, 'challenge'])
+                    ->middleware('throttle:ai-assist');
+
+                // مقابلة المؤسِّس (المرحلة 4): تملأ أساس المشروع فتُلقّم الأدوات تلقائياً.
+                Route::get('/interview', [ApiFounderInterviewController::class, 'show']);
+                Route::post('/interview', [ApiFounderInterviewController::class, 'store']);
 
                 // دورة المشروع الكاملة (B3)
                 Route::get('/brief', [ProjectBriefController::class, 'show']);

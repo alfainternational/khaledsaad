@@ -18,6 +18,7 @@ import '../../features/onboarding/onboarding_page.dart';
 import '../../features/search/global_search_page.dart';
 import '../../features/shell/home_shell.dart';
 import '../../features/team/team_page.dart';
+import '../../features/interview/founder_interview_page.dart';
 import '../../features/projects/brief_page.dart';
 import '../../features/projects/execution_package_page.dart';
 import '../../features/projects/intelligence_page.dart';
@@ -62,6 +63,10 @@ class AppPages {
     GetPage(name: Routes.projectDetail, page: () => const ProjectDetailPage()),
     GetPage(name: Routes.projectTools, page: () => const ProjectToolsPage()),
     GetPage(name: Routes.projectBrief, page: () => const BriefPage()),
+    GetPage(
+      name: Routes.founderInterview,
+      page: () => const FounderInterviewPage(),
+    ),
     GetPage(
       name: Routes.projectIntelligence,
       page: () => const IntelligencePage(),

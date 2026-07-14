@@ -66,6 +66,14 @@ class ApiEndpoints {
       '/workspaces/$ws/projects/$p/tools/$tcode';
   static String toolRun(String ws, String p, String tcode) =>
       '/workspaces/$ws/projects/$p/tools/$tcode/run';
+  static String toolTranscribe(String ws, String p, String tcode) =>
+      '/workspaces/$ws/projects/$p/tools/$tcode/transcribe';
+  static String toolChallenge(String ws, String p, String tcode) =>
+      '/workspaces/$ws/projects/$p/tools/$tcode/challenge';
+
+  // مقابلة المؤسِّس (تملأ أساس المشروع فتُلقّم الأدوات تلقائياً)
+  static String interview(String ws, String p) =>
+      '/workspaces/$ws/projects/$p/interview';
 
   // الاستوديو الذكي
   static String studioTemplates(String ws) => '/workspaces/$ws/templates';

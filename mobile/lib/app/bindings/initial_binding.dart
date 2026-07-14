@@ -6,6 +6,7 @@ import '../../data/repositories/ai_assist_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/billing_repository.dart';
 import '../../data/repositories/collab_repository.dart';
+import '../../data/repositories/interview_repository.dart';
 import '../../data/repositories/knowledge_repository.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/repositories/project_repository.dart';
@@ -45,6 +46,8 @@ class InitialBinding extends Bindings {
         () => CollabRepository(Get.find<ApiClient>()), fenix: true);
     Get.lazyPut<KnowledgeRepository>(
         () => KnowledgeRepository(Get.find<ApiClient>()), fenix: true);
+    Get.lazyPut<InterviewRepository>(
+        () => InterviewRepository(Get.find<ApiClient>()), fenix: true);
     Get.lazyPut<BillingRepository>(
         () => BillingRepository(Get.find<ApiClient>()), fenix: true);
 

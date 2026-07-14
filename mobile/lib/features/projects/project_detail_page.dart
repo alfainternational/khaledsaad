@@ -227,6 +227,13 @@ class ProjectDetailPage extends StatelessWidget {
                       Get.toNamed(Routes.projectBrief, arguments: publicId),
                 ),
                 ActionTile(
+                  icon: Icons.record_voice_over_outlined,
+                  title: 'مقابلة التعريف',
+                  subtitle: 'أجب مرة واحدة، فتُلقّم كل الأدوات تلقائياً',
+                  onTap: () =>
+                      Get.toNamed(Routes.founderInterview, arguments: publicId),
+                ),
+                ActionTile(
                   icon: Icons.query_stats_outlined,
                   title: 'التحليل والتوصيات',
                   subtitle: 'حلّل حضورك واحصل على خطوات عملية',
