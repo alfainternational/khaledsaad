@@ -5,6 +5,7 @@ import '../../core/error/api_exception.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// تعريف حقل في ملف المشروع.
 class _BriefField {
@@ -78,6 +79,9 @@ class _BriefPageState extends State<BriefPage> {
   ];
 
   final _controllers = <String, TextEditingController>{};
+
+  /// عدّاد محلي لكل قسم — يُحدَّث وحده دون إعادة بناء القائمة كاملة.
+  final _groupFilled = <String, ValueNotifier<int>>{};
   final _loading = true.obs;
   final _saving = false.obs;
   final _error = RxnString();
@@ -91,6 +95,7 @@ class _BriefPageState extends State<BriefPage> {
   void initState() {
     super.initState();
     for (final group in _groups) {
+      _groupFilled[group.title] = ValueNotifier<int>(0);
       for (final field in group.fields) {
         _controllers[field.key] = TextEditingController();
       }
@@ -103,17 +108,37 @@ class _BriefPageState extends State<BriefPage> {
     for (final c in _controllers.values) {
       c.dispose();
     }
+    for (final n in _groupFilled.values) {
+      n.dispose();
+    }
     super.dispose();
+  }
+
+  /// يعيد حساب عدّاد قسم واحد فقط (عند تعديل أحد حقوله).
+  void _refreshGroupCount(_BriefGroup group) {
+    _groupFilled[group.title]?.value = _filledIn(group);
+  }
+
+  /// يعيد حساب عدّادات كل الأقسام (بعد التحميل/الحفظ).
+  void _refreshAllCounts() {
+    for (final group in _groups) {
+      _refreshGroupCount(group);
+    }
   }
 
   Future<void> _load() async {
     final ws = _workspaces.activeId;
-    if (ws == null) return;
+    if (ws == null) {
+      _loading.value = false;
+      _error.value = 'لا توجد مساحة عمل نشطة.';
+      return;
+    }
     _loading.value = true;
     _error.value = null;
     try {
       final result = await _repo.brief(ws, _projectId);
       _fill(result.brief);
+      _refreshAllCounts();
       _assessment.value = result.assessment;
     } on ApiException catch (e) {
       _error.value = e.message;
@@ -147,11 +172,9 @@ class _BriefPageState extends State<BriefPage> {
     try {
       final result = await _repo.updateBrief(ws, _projectId, _payload());
       _assessment.value = result.assessment;
-      Get.snackbar('ملف المشروع', 'تم الحفظ بنجاح.',
-          snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.success('تم الحفظ بنجاح.', title: 'ملف المشروع');
     } on ApiException catch (e) {
-      Get.snackbar('ملف المشروع', e.message,
-          snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message, title: 'ملف المشروع');
     } finally {
       _saving.value = false;
     }
@@ -227,9 +250,12 @@ class _BriefPageState extends State<BriefPage> {
                     title: Text(group.title,
                         style: theme.textTheme.titleSmall
                             ?.copyWith(fontWeight: FontWeight.w700)),
-                    subtitle: Text(
-                      '${_filledIn(group)} من ${group.fields.length} معبّأ',
-                      style: theme.textTheme.bodySmall,
+                    subtitle: ValueListenableBuilder<int>(
+                      valueListenable: _groupFilled[group.title]!,
+                      builder: (_, filled, _) => Text(
+                        '$filled من ${group.fields.length} معبّأ',
+                        style: theme.textTheme.bodySmall,
+                      ),
                     ),
                     childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: group.fields
@@ -239,7 +265,7 @@ class _BriefPageState extends State<BriefPage> {
                                 controller: _controllers[f.key],
                                 minLines: f.long ? 3 : 1,
                                 maxLines: f.long ? 6 : 1,
-                                onChanged: (_) => setState(() {}),
+                                onChanged: (_) => _refreshGroupCount(group),
                                 decoration: InputDecoration(labelText: f.label),
                               ),
                             ))

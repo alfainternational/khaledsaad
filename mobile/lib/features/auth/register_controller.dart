@@ -37,7 +37,7 @@ class RegisterController extends GetxController {
       if (result.defaultWorkspacePublicId != null) {
         await _session.setActiveWorkspace(result.defaultWorkspacePublicId!);
       }
-      Get.offAllNamed(Routes.dashboard);
+      Get.offAllNamed(Routes.home);
     } on ApiException catch (e) {
       if (e.isValidation) {
         fieldErrors.assignAll(

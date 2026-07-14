@@ -1,16 +1,21 @@
 import 'package:get/get.dart';
 
 import '../../features/account/account_page.dart';
+import '../../features/account/ai_key_page.dart';
 import '../../features/agency/branding_page.dart';
 import '../../features/approvals/approvals_page.dart';
 import '../../features/auth/forgot_password_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/register_page.dart';
+import '../../features/auth/reset_password_page.dart';
 import '../../features/billing/billing_page.dart';
 import '../../features/clients/clients_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/explore/explore_page.dart';
+import '../../features/notifications/notifications_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
+import '../../features/search/global_search_page.dart';
+import '../../features/shell/home_shell.dart';
 import '../../features/team/team_page.dart';
 import '../../features/projects/brief_page.dart';
 import '../../features/projects/execution_package_page.dart';
@@ -40,7 +45,17 @@ class AppPages {
       name: Routes.forgotPassword,
       page: () => const ForgotPasswordPage(),
     ),
+    GetPage(
+      name: Routes.resetPassword,
+      page: () => const ResetPasswordPage(),
+    ),
+    GetPage(name: Routes.home, page: () => const HomeShell()),
     GetPage(name: Routes.dashboard, page: () => const DashboardPage()),
+    GetPage(name: Routes.search, page: () => const GlobalSearchPage()),
+    GetPage(
+      name: Routes.notifications,
+      page: () => const NotificationsPage(),
+    ),
     GetPage(name: Routes.onboarding, page: () => const OnboardingPage()),
     GetPage(name: Routes.projects, page: () => const ProjectsPage()),
     GetPage(name: Routes.projectDetail, page: () => const ProjectDetailPage()),
@@ -67,6 +82,7 @@ class AppPages {
     GetPage(name: Routes.team, page: () => const TeamPage()),
     GetPage(name: Routes.approvals, page: () => const ApprovalsPage()),
     GetPage(name: Routes.account, page: () => const AccountPage()),
+    GetPage(name: Routes.aiKey, page: () => const AiKeyPage()),
     GetPage(name: Routes.clients, page: () => const ClientsPage()),
     GetPage(name: Routes.agencyBranding, page: () => const BrandingPage()),
     GetPage(name: Routes.billing, page: () => const BillingPage()),

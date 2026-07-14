@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../app/routes/app_routes.dart';
 import '../../core/error/api_exception.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../shared/widgets/animated_app_background.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -43,7 +45,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('استعادة كلمة المرور')),
-      body: SafeArea(
+      body: AnimatedAppBackground(
+        child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
@@ -82,6 +85,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.email],
+                  onFieldSubmitted: (_) => _submit(),
                   decoration: const InputDecoration(
                     labelText: 'البريد الإلكتروني',
                     prefixIcon: Icon(Icons.mail_outline),
@@ -100,9 +106,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             )
                           : const Text('إرسال الرابط'),
                     )),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Get.toNamed(
+                    Routes.resetPassword,
+                    arguments: {'email': _email.text.trim()},
+                  ),
+                  child: const Text('لديّ رمز بالفعل — أدخله'),
+                ),
               ],
             ),
           ),
+        ),
         ),
       ),
     );

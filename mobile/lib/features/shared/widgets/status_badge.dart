@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// شارة حالة ملوّنة موحّدة (نشط/متوقف/مكتمل/مؤرشف...).
+import '../../../app/theme/app_semantic_colors.dart';
+
+/// شارة حالة ملوّنة موحّدة (نشط/متوقف/مكتمل/مؤرشف/معلّقة/معتمدة/مرفوضة...).
+///
+/// الألوان تُشتق من [AppSemanticColors] لتتكيّف مع الوضعين، ولحالة «مؤرشف»
+/// تُستخدم درجة محايدة بنص واضح (لا باهت) لتباين كافٍ.
 class StatusBadge extends StatelessWidget {
   const StatusBadge({super.key, required this.status});
 
@@ -12,35 +17,34 @@ class StatusBadge extends StatelessWidget {
     'completed': 'مكتمل',
     'archived': 'مؤرشف',
     'draft': 'مسودة',
+    'pending': 'معلّقة',
+    'approved': 'معتمدة',
+    'rejected': 'مرفوضة',
   };
-
-  Color _color(BuildContext context) {
-    switch (status) {
-      case 'active':
-        return const Color(0xFF16A34A);
-      case 'paused':
-        return const Color(0xFFD97706);
-      case 'completed':
-        return const Color(0xFF0EA5E9);
-      case 'archived':
-        return Theme.of(context).colorScheme.outline;
-      default:
-        return Theme.of(context).colorScheme.primary;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    final color = _color(context);
+    final sem = AppSemanticColors.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
+    final (Color fg, Color bg) = switch (status) {
+      'active' || 'approved' => (sem.success, sem.successContainer),
+      'paused' || 'pending' || 'draft' => (sem.warning, sem.warningContainer),
+      'rejected' => (sem.danger, sem.dangerContainer),
+      'completed' => (sem.info, sem.infoContainer),
+      'archived' => (sem.neutral, sem.neutralContainer),
+      _ => (scheme.primary, scheme.primaryContainer),
+    };
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: bg,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         _labels[status] ?? status,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700),
       ),
     );
   }

@@ -25,9 +25,16 @@ class ActionTile extends StatelessWidget {
         ? theme.colorScheme.primary
         : theme.colorScheme.secondary;
 
+    // أيقونة اتجاهية صحيحة: تشير للأمام حسب اتجاه اللغة (يسار في RTL).
+    final forwardIcon = Directionality.of(context) == TextDirection.rtl
+        ? Icons.chevron_left
+        : Icons.chevron_right;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
+      child: Tooltip(
+        message: title,
+        child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
@@ -85,11 +92,12 @@ class ActionTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Icon(
-                Icons.chevron_left,
+                forwardIcon,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
           ),
+        ),
         ),
       ),
     );

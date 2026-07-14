@@ -15,11 +15,18 @@ class ApiClient {
   }) =>
       _request(() => _dio.get(path, queryParameters: query));
 
+  /// [idempotencyKey]: مفتاح ثابت للعملية عبر إعادة المحاولات؛ حين يُمرَّر
+  /// لا يولّد الـ interceptor مفتاحاً عشوائياً جديداً، فتُمنَع النسخ المكررة.
   Future<Map<String, dynamic>> post(
     String path, {
     Object? body,
+    String? idempotencyKey,
   }) =>
-      _request(() => _dio.post(path, data: body));
+      _request(() => _dio.post(
+            path,
+            data: body,
+            options: _idempotencyOptions(idempotencyKey),
+          ));
 
   /// نداء POST لعمليات التوليد الطويلة (استوديو/مستشار/تحليل): مهلة استقبال
   /// موسّعة حتى لا يقطع التطبيق الاتصال قبل اكتمال الرد من مزوّد أبطأ.
@@ -27,6 +34,7 @@ class ApiClient {
     String path, {
     Object? body,
     Duration receiveTimeout = const Duration(seconds: 150),
+    String? idempotencyKey,
   }) =>
       _request(() => _dio.post(
             path,
@@ -34,8 +42,15 @@ class ApiClient {
             options: Options(
               receiveTimeout: receiveTimeout,
               sendTimeout: const Duration(seconds: 30),
+              headers: idempotencyKey == null
+                  ? null
+                  : {'Idempotency-Key': idempotencyKey},
             ),
           ));
+
+  Options? _idempotencyOptions(String? key) => key == null
+      ? null
+      : Options(headers: {'Idempotency-Key': key});
 
   Future<Map<String, dynamic>> put(
     String path, {

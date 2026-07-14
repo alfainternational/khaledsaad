@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/error/api_exception.dart';
 import '../../data/repositories/collab_repository.dart';
+import '../../data/services/session_service.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// إعداد مساحة العمل (Onboarding) — خطوات هادئة في شاشة واحدة قابلة للطي.
 class OnboardingPage extends StatefulWidget {
@@ -19,6 +21,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   late final CollabRepository _repo = Get.find<CollabRepository>();
   late final WorkspaceService _workspaces = Get.find<WorkspaceService>();
 
+  final _formKey = GlobalKey<FormState>();
   final _loading = true.obs;
   final _saving = false.obs;
   final _error = RxnString();
@@ -74,7 +77,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     try {
       final data = await _repo.onboarding(wsId);
       if (data['completed'] == true) {
-        Get.offAllNamed(Routes.dashboard);
+        Get.offAllNamed(Routes.home);
         return;
       }
       final workspace = data['workspace'] is Map
@@ -130,9 +133,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return const [];
   }
 
+  Future<void> _logout() async {
+    await Get.find<SessionService>().clear();
+    Get.offAllNamed(Routes.login);
+  }
+
   Future<void> _submit() async {
     final ws = _workspaces.activeId;
     if (ws == null || _saving.value) return;
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      UiFeedback.error('يرجى إكمال الحقول المطلوبة قبل المتابعة.');
+      return;
+    }
     _saving.value = true;
     try {
       await _repo.completeOnboarding(ws, {
@@ -159,11 +171,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
             : _text['primary_domain']!.text.trim(),
       });
       await _workspaces.loadWorkspaces();
-      Get.offAllNamed(Routes.dashboard);
+      Get.offAllNamed(Routes.home);
     } on ApiException catch (e) {
       final firstError =
           e.errors.isNotEmpty ? e.errors.values.first.first : e.message;
-      Get.snackbar('الإعداد', firstError, snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(firstError, title: 'الإعداد');
+    } catch (_) {
+      UiFeedback.error(
+        'تعذّر إكمال الإعداد. تحقق من اتصالك وحاول مجدداً.',
+        title: 'الإعداد',
+      );
     } finally {
       _saving.value = false;
     }
@@ -173,13 +190,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('إعداد مساحتك'), automaticallyImplyLeading: false),
+      appBar: AppBar(
+        title: const Text('إعداد مساحتك'),
+        automaticallyImplyLeading: false,
+        actions: [
+          TextButton.icon(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout, size: 18),
+            label: const Text('تسجيل خروج'),
+          ),
+        ],
+      ),
       body: Obx(() {
         if (_loading.value) return AppStateView.loading();
         if (_error.value != null) {
           return AppStateView.error(message: _error.value, onRetry: _load);
         }
-        return ListView(
+        return Form(
+          key: _formKey,
+          child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
             Text(
@@ -188,8 +217,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
             const SizedBox(height: 16),
             _group('حسابك ومساحتك', Icons.badge_outlined, [
-              _field('account_name', 'اسم الحساب'),
-              _field('workspace_name', 'اسم مساحة العمل'),
+              _field('account_name', 'اسم الحساب', required: true),
+              _field('workspace_name', 'اسم مساحة العمل', required: true),
               _dropdown('workspace_type', 'نوع المساحة'),
             ], initiallyExpanded: true),
             _group('من أنت وماذا تريد؟', Icons.psychology_outlined, [
@@ -203,7 +232,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ]),
             _group('مشروعك الأول', Icons.rocket_launch_outlined, [
               _field('client_name', 'اسم العميل/النشاط'),
-              _field('project_name', 'اسم المشروع'),
+              _field('project_name', 'اسم المشروع', required: true),
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Obx(() => DropdownButtonFormField<int>(
@@ -232,6 +261,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   label: Text(_saving.value ? 'جارٍ الإعداد...' : 'ابدأ الآن'),
                 )),
           ],
+          ),
         );
       }),
     );
@@ -245,6 +275,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         initiallyExpanded: initiallyExpanded,
+        // إبقاء الحقول في الشجرة حتى عند الطي كي يعمل التحقق من النموذج.
+        maintainState: true,
         leading: Icon(icon, color: theme.colorScheme.primary, size: 22),
         title: Text(title,
             style:
@@ -255,11 +287,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _field(String key, String label) => Padding(
+  Widget _field(String key, String label, {bool required = false}) => Padding(
         padding: const EdgeInsets.only(top: 12),
-        child: TextField(
+        child: TextFormField(
           controller: _text[key],
           decoration: InputDecoration(labelText: label),
+          validator: required
+              ? (v) => (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null
+              : null,
         ),
       );
 
@@ -269,14 +304,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
           final options = _options[key] ?? const <MapEntry<String, String>>[];
           final current = _select[key]!.value;
           final valid = options.any((o) => o.key == current) ? current : null;
+          final isEmpty = options.isEmpty;
           return DropdownButtonFormField<String>(
             initialValue: valid,
             isExpanded: true,
-            decoration: InputDecoration(labelText: label),
+            decoration: InputDecoration(
+              labelText: label,
+              helperText: isEmpty ? 'غير متاح حالياً' : null,
+            ),
             items: options
                 .map((o) => DropdownMenuItem(value: o.key, child: Text(o.value)))
                 .toList(),
-            onChanged: (v) => _select[key]!.value = v,
+            // تعطيل القائمة عند عدم توفر خيارات.
+            onChanged: isEmpty ? null : (v) => _select[key]!.value = v,
           );
         }),
       );

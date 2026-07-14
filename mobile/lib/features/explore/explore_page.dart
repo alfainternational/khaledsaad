@@ -7,6 +7,7 @@ import '../../data/repositories/public_repository.dart';
 import '../shared/widgets/animated_app_background.dart';
 import '../shared/widgets/app_state_view.dart';
 import '../shared/widgets/brand_mark.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// الواجهات العامة (تجربة الضيف): الرئيسية، الأدوات، القوالب، الباقات —
 /// نفس محتوى صفحات الويب العامة، متاحة قبل تسجيل الدخول، بدعوة دائمة للبدء.
@@ -32,12 +33,25 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   Future<void> _load() async {
-    _loading.value = true;
+    // عند وجود بيانات سابقة (سحب للتحديث) لا نُظهر شاشة تحميل كاملة.
+    final hasData = _data.value != null;
+    if (!hasData) _loading.value = true;
     _error.value = null;
     try {
       _data.value = await _repo.overview();
     } on ApiException catch (e) {
-      _error.value = e.message;
+      if (hasData) {
+        UiFeedback.error(e.message);
+      } else {
+        _error.value = e.message;
+      }
+    } catch (_) {
+      const message = 'تعذّر تحميل المحتوى. تحقق من اتصالك وحاول مجدداً.';
+      if (hasData) {
+        UiFeedback.error(message);
+      } else {
+        _error.value = message;
+      }
     } finally {
       _loading.value = false;
     }
@@ -119,7 +133,7 @@ class _StartCta extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: FilledButton.icon(
         onPressed: () => Get.toNamed(Routes.register),
-        icon: const Icon(Icons.arrow_back),
+        icon: const Icon(Icons.rocket_launch_outlined),
         label: Text(label),
       ),
     );

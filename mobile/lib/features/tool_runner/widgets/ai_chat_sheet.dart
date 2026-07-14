@@ -21,11 +21,17 @@ class AiChatSheet extends StatefulWidget {
 
 class _AiChatSheetState extends State<AiChatSheet> {
   final _input = TextEditingController();
-  final _scroll = ScrollController();
+
+  /// وحدة التمرير التي يمرّرها DraggableScrollableSheet — استخدامها ضروري
+  /// كي تعمل إيماءة سحب الورقة مع تمرير القائمة معاً.
+  ScrollController? _listScroll;
   final _uuid = const Uuid();
   final _messages = <AiChatMessage>[];
   final _conversations = <AiChatConversation>[];
   Timer? _pollTimer;
+  // سقف استطلاع الرد المؤجّل: 30 محاولة × 3ث = 90ث، كي لا يستمر بلا نهاية.
+  static const int _maxPollAttempts = 30;
+  int _pollAttempts = 0;
   AiChatConversation? _conversation;
   bool _loading = true;
   bool _sending = false;
@@ -49,7 +55,7 @@ class _AiChatSheetState extends State<AiChatSheet> {
   void dispose() {
     _pollTimer?.cancel();
     _input.dispose();
-    _scroll.dispose();
+    // _listScroll مملوك من DraggableScrollableSheet — لا نتخلّص منه هنا.
     super.dispose();
   }
 
@@ -143,6 +149,7 @@ class _AiChatSheetState extends State<AiChatSheet> {
         _messageLastPage = thread.lastPage;
         _loading = false;
       });
+      _pollAttempts = 0; // فتح محادثة → صفّر عدّاد الاستطلاع.
       _schedulePendingPoll();
       if (!prepend) _scrollToEnd();
     } on ApiException catch (error) {
@@ -193,6 +200,7 @@ class _AiChatSheetState extends State<AiChatSheet> {
         _messages.addAll([result.userMessage, result.assistantMessage]);
       });
       _scrollToEnd();
+      _pollAttempts = 0; // رسالة جديدة → ابدأ عدّ الاستطلاع من الصفر.
       _schedulePendingPoll();
     } on ApiException catch (error) {
       _setError(error.message);
@@ -205,6 +213,8 @@ class _AiChatSheetState extends State<AiChatSheet> {
     _pollTimer?.cancel();
     final pending = _messages.where((message) => message.isPending).firstOrNull;
     if (pending == null || _conversation == null) return;
+    // توقّف بعد السقف حتى لا نستطلع رسالة عالقة على الخادم إلى ما لا نهاية.
+    if (_pollAttempts >= _maxPollAttempts) return;
     _pollTimer = Timer(const Duration(seconds: 3), () => _poll(pending));
   }
 
@@ -226,6 +236,7 @@ class _AiChatSheetState extends State<AiChatSheet> {
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
     }
+    _pollAttempts++;
     if (mounted) _schedulePendingPoll();
   }
 
@@ -240,9 +251,10 @@ class _AiChatSheetState extends State<AiChatSheet> {
 
   void _scrollToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) {
-        _scroll.animateTo(
-          _scroll.position.maxScrollExtent,
+      final scroll = _listScroll;
+      if (scroll != null && scroll.hasClients) {
+        scroll.animateTo(
+          scroll.position.maxScrollExtent,
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
@@ -257,12 +269,15 @@ class _AiChatSheetState extends State<AiChatSheet> {
       expand: false,
       initialChildSize: 0.85,
       minChildSize: 0.5,
-      builder: (context, scrollController) => Padding(
+      builder: (context, scrollController) {
+        _listScroll = scrollController;
+        return Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Column(
           children: [
+            const _SheetDragHandle(),
             Padding(
               padding: const EdgeInsets.all(12),
               child: Row(
@@ -301,12 +316,13 @@ class _AiChatSheetState extends State<AiChatSheet> {
             Expanded(
               child: _showHistory
                   ? _HistoryList(
+                      scrollController: scrollController,
                       conversations: _conversations,
                       canLoadMore: _historyPage < _historyLastPage,
                       onSelected: _openConversation,
                       onLoadMore: _loadMoreHistory,
                     )
-                  : _conversationBody(theme),
+                  : _conversationBody(theme, scrollController),
             ),
             if (_error != null)
               Padding(
@@ -322,28 +338,41 @@ class _AiChatSheetState extends State<AiChatSheet> {
             if (!_showHistory) _composer(),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 
-  Widget _conversationBody(ThemeData theme) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+  Widget _conversationBody(ThemeData theme, ScrollController scrollController) {
+    if (_loading) {
+      return ListView(
+        controller: scrollController,
+        children: const [
+          SizedBox(height: 120),
+          Center(child: CircularProgressIndicator()),
+        ],
+      );
+    }
     if (_messages.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'اسأل عن أي شيء يخص هذه الأداة أو مشروعك.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
+      return ListView(
+        controller: scrollController,
+        children: [
+          const SizedBox(height: 80),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'اسأل عن أي شيء يخص هذه الأداة أو مشروعك.',
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
           ),
-        ),
+        ],
       );
     }
 
     final canLoadOlder = _messagePage < _messageLastPage;
     return ListView.builder(
-      controller: _scroll,
+      controller: scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: _messages.length + (canLoadOlder ? 1 : 0),
       itemBuilder: (_, index) {
@@ -395,12 +424,14 @@ class _AiChatSheetState extends State<AiChatSheet> {
 
 class _HistoryList extends StatelessWidget {
   const _HistoryList({
+    required this.scrollController,
     required this.conversations,
     required this.canLoadMore,
     required this.onSelected,
     required this.onLoadMore,
   });
 
+  final ScrollController scrollController;
   final List<AiChatConversation> conversations;
   final bool canLoadMore;
   final ValueChanged<AiChatConversation> onSelected;
@@ -409,9 +440,16 @@ class _HistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (conversations.isEmpty) {
-      return const Center(child: Text('لا توجد محادثات سابقة.'));
+      return ListView(
+        controller: scrollController,
+        children: const [
+          SizedBox(height: 120),
+          Center(child: Text('لا توجد محادثات سابقة.')),
+        ],
+      );
     }
     return ListView.builder(
+      controller: scrollController,
       itemCount: conversations.length + (canLoadMore ? 1 : 0),
       itemBuilder: (_, index) {
         if (index == conversations.length) {
@@ -432,6 +470,24 @@ class _HistoryList extends StatelessWidget {
           onTap: () => onSelected(conversation),
         );
       },
+    );
+  }
+}
+
+/// مقبض سحب علوي موحّد للأوراق السفلية.
+class _SheetDragHandle extends StatelessWidget {
+  const _SheetDragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 4),
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.outlineVariant,
+        borderRadius: BorderRadius.circular(999),
+      ),
     );
   }
 }

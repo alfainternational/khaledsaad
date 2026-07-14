@@ -3,6 +3,7 @@
 namespace App\Domain\AI\Services;
 
 use App\Contracts\AiGatewayInterface;
+use App\Domain\Account\Models\Account;
 
 /**
  * مصنع البوّابات — يترجم اسم مزوّد إلى بوّابة، ويبني سلسلة من قائمة مرتّبة.
@@ -27,6 +28,24 @@ class AiGatewayFactory
             'private_worker' => app(PrivateWorkerAiGateway::class),
             default => null,
         };
+    }
+
+    /**
+     * بوّابة مخصّصة لحساب ربط مفتاحه الخاص (BYOK).
+     * تعمل فقط مع المزوّدات المتوافقة مع OpenAI. تعيد null إن لم يربط الحساب مفتاحاً.
+     */
+    public function makeForAccount(Account $account): ?AiGatewayInterface
+    {
+        if (! $account->hasByoAi()) {
+            return null;
+        }
+
+        $provider = (string) $account->ai_provider;
+        if (! in_array($provider, self::OPENAI_COMPATIBLE, true)) {
+            return null;
+        }
+
+        return new OpenAiCompatibleGateway($provider, (string) $account->ai_provider_key);
     }
 
     /**

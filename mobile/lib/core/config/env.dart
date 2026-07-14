@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
+
 /// إعدادات البيئة. تُمرَّر عبر --dart-define أو تُترك للقيم الافتراضية.
 ///
 /// أمثلة:
@@ -19,9 +21,11 @@ class Env {
   static const int connectTimeoutMs = 20000;
   static const int receiveTimeoutMs = 30000;
 
-  /// وضع التصحيح لتسجيل الشبكة.
+  /// تسجيل الشبكة (أجسام الطلب/الرد). مطفأ افتراضياً في إصدار الإنتاج
+  /// لأن جسم رد `POST /tokens` يحوي التوكن — تسجيله يسرّبه في سجلّات الجهاز.
+  /// يمكن تفعيله يدوياً عبر `--dart-define=NETWORK_LOGS=true`.
   static const bool enableNetworkLogs = bool.fromEnvironment(
     'NETWORK_LOGS',
-    defaultValue: true,
+    defaultValue: !kReleaseMode,
   );
 }

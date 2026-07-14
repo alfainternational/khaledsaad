@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "274149767180",
+    "project_id": "khaledsaad-growth",
+    "storage_bucket": "khaledsaad-growth.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:274149767180:android:462a480f59022977f2d629",
+        "android_client_info": {
+          "package_name": "net.khaledsaad.ksgrowth_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgpJysaj-iK7c4Lh_OxtAhHEN7aNbY2S8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

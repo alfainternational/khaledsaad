@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\Entitlement\Services\EntitlementResolver;
 use App\Domain\Workspace\Models\Workspace;
+use App\Http\Api\ApiException;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,7 +31,11 @@ class CheckEntitlement
         abort_unless($workspace instanceof Workspace, 403, 'لا توجد مساحة عمل مرتبطة بهذا الإجراء.');
 
         if (! $this->entitlements->boolean($key, $workspace)) {
-            abort(403, 'هذه الميزة متاحة ضمن باقة أعلى. رقِّ اشتراكك للوصول إليها.');
+            // رمز دلالي مميّز (ENTITLEMENT_REQUIRED) كي يفرّق العميل بين "ممنوع"
+            // و"يتطلّب ترقية الباقة" ويعرض دعوة الترقية بدل رسالة خطأ عامة.
+            throw ApiException::entitlementRequired(
+                'هذه الميزة متاحة ضمن باقة أعلى. رقِّ اشتراكك للوصول إليها.'
+            );
         }
 
         return $next($request);

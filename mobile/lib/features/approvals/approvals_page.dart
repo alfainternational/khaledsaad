@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../app/theme/app_semantic_colors.dart';
 import '../../core/error/api_exception.dart';
 import '../../core/l10n/ar_labels.dart';
 import '../../data/models/collab_models.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/status_badge.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// الموافقات: عدّادات + فلترة + مراجعة (اعتماد/رفض) — بدون زحمة.
 class ApprovalsPage extends StatefulWidget {
@@ -34,7 +37,11 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
 
   Future<void> _load() async {
     final ws = _workspaces.activeId;
-    if (ws == null) return;
+    if (ws == null) {
+      _loading.value = false;
+      _error.value = 'لا توجد مساحة عمل نشطة.';
+      return;
+    }
     _loading.value = true;
     _error.value = null;
     try {
@@ -53,10 +60,10 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
     if (ws == null) return;
     try {
       await _repo.reviewApproval(ws, approval.id, status: status);
+      UiFeedback.success(status == 'approved' ? 'تم الاعتماد.' : 'تم الرفض.');
       await _load();
     } on ApiException catch (e) {
-      Get.snackbar('الموافقات', e.message,
-          snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message);
     }
   }
 
@@ -73,6 +80,7 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
           return AppStateView.error(message: _error.value, onRetry: _load);
         }
         final meta = _meta.value ?? {};
+        final sem = AppSemanticColors.of(context);
         return RefreshIndicator(
           onRefresh: _load,
           child: ListView(
@@ -84,7 +92,7 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
                   _CountChip(
                     label: 'معلّقة',
                     count: (meta['pending_count'] as num?)?.toInt() ?? 0,
-                    color: const Color(0xFFD97706),
+                    color: sem.warning,
                     selected: _statusFilter.value == 'pending',
                     onTap: () => _setFilter('pending'),
                   ),
@@ -92,7 +100,7 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
                   _CountChip(
                     label: 'معتمدة',
                     count: (meta['approved_count'] as num?)?.toInt() ?? 0,
-                    color: const Color(0xFF16A34A),
+                    color: sem.success,
                     selected: _statusFilter.value == 'approved',
                     onTap: () => _setFilter('approved'),
                   ),
@@ -100,7 +108,7 @@ class _ApprovalsPageState extends State<ApprovalsPage> {
                   _CountChip(
                     label: 'مرفوضة',
                     count: (meta['rejected_count'] as num?)?.toInt() ?? 0,
-                    color: const Color(0xFFDC2626),
+                    color: sem.danger,
                     selected: _statusFilter.value == 'rejected',
                     onTap: () => _setFilter('rejected'),
                   ),
@@ -193,7 +201,7 @@ class _CountChip extends StatelessWidget {
   }
 }
 
-class _ApprovalCard extends StatelessWidget {
+class _ApprovalCard extends StatefulWidget {
   const _ApprovalCard({
     required this.approval,
     required this.onApprove,
@@ -201,12 +209,31 @@ class _ApprovalCard extends StatelessWidget {
   });
 
   final ApprovalModel approval;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
+  final Future<void> Function() onApprove;
+  final Future<void> Function() onReject;
+
+  @override
+  State<_ApprovalCard> createState() => _ApprovalCardState();
+}
+
+class _ApprovalCardState extends State<_ApprovalCard> {
+  bool _busy = false;
+
+  /// يمنع النقر المزدوج: يعطّل الأزرار ويعرض مؤشراً أثناء المراجعة.
+  Future<void> _run(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final approval = widget.approval;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
@@ -224,7 +251,7 @@ class _ApprovalCard extends StatelessWidget {
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
-                _statusBadge(theme),
+                StatusBadge(status: approval.status),
               ],
             ),
             if (approval.projectName != null) ...[
@@ -242,14 +269,20 @@ class _ApprovalCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: FilledButton.tonal(
-                      onPressed: onApprove,
-                      child: const Text('اعتماد'),
+                      onPressed: _busy ? null : () => _run(widget.onApprove),
+                      child: _busy
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2))
+                          : const Text('اعتماد'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: onReject,
+                      onPressed: _busy ? null : () => _run(widget.onReject),
                       child: const Text('رفض'),
                     ),
                   ),
@@ -259,24 +292,6 @@ class _ApprovalCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _statusBadge(ThemeData theme) {
-    final (color, label) = switch (approval.status) {
-      'approved' => (const Color(0xFF16A34A), 'معتمدة'),
-      'rejected' => (const Color(0xFFDC2626), 'مرفوضة'),
-      _ => (const Color(0xFFD97706), 'معلّقة'),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(label,
-          style: TextStyle(
-              color: color, fontSize: 12, fontWeight: FontWeight.w700)),
     );
   }
 }

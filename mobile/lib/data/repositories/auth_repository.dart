@@ -76,4 +76,20 @@ class AuthRepository {
     final data = Map<String, dynamic>.from(res['data'] as Map);
     return data['message']?.toString() ?? 'تم إرسال الطلب.';
   }
+
+  Future<String> resetPassword({
+    required String token,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final res = await _api.post(ApiEndpoints.passwordReset, body: {
+      'token': token,
+      'email': email,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+    });
+    final data = Map<String, dynamic>.from(res['data'] as Map);
+    return data['message']?.toString() ?? 'تم تحديث كلمة المرور.';
+  }
 }

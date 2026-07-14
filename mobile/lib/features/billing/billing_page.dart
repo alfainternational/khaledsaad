@@ -1,14 +1,13 @@
-import 'dart:async';
-
-import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/error/api_exception.dart';
 import '../../data/repositories/billing_repository.dart';
+import '../../data/services/deep_link_service.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// الفوترة: باقتك الحالية + رصيد الذكاء + الترقية عبر PayPal + الإلغاء.
 /// الدفع يفتح في المتصفح ويعود عبر deep link: ksgrowth://billing/return.
@@ -29,54 +28,37 @@ class _BillingPageState extends State<BillingPage> {
   final _data = Rxn<Map<String, dynamic>>();
   final _billingCycle = 'monthly'.obs;
 
-  StreamSubscription<Uri>? _linkSub;
+  Worker? _refreshWorker;
 
   @override
   void initState() {
     super.initState();
     _load();
-    _listenForReturn();
+    // عودة الدفع تُعالَج مركزياً في DeepLinkService (تعمل حتى عند إغلاق الشاشة
+    // أو إعادة تشغيل التطبيق). هنا نكتفي بتحديث العرض إذا أُكِّد دفعٌ والشاشة مفتوحة.
+    if (Get.isRegistered<DeepLinkService>()) {
+      _refreshWorker = ever(
+        Get.find<DeepLinkService>().billingRefreshTick,
+        (_) {
+          if (mounted) _load();
+        },
+      );
+    }
   }
 
   @override
   void dispose() {
-    _linkSub?.cancel();
+    _refreshWorker?.dispose();
     super.dispose();
-  }
-
-  /// يستمع لعودة PayPal عبر deep link ويؤكد الاشتراك تلقائياً.
-  void _listenForReturn() {
-    _linkSub = AppLinks().uriLinkStream.listen((uri) async {
-      if (uri.host != 'billing') return;
-      if (uri.path.contains('cancelled')) {
-        Get.snackbar('الفوترة', 'أُلغيت عملية الدفع.',
-            snackPosition: SnackPosition.BOTTOM);
-        return;
-      }
-      final subId = uri.queryParameters['subscription_id'] ??
-          uri.queryParameters['token'] ??
-          '';
-      if (subId.isEmpty) return;
-      final ws = _workspaces.activeId;
-      if (ws == null) return;
-      try {
-        final result = await _repo.confirmCallback(ws, subId);
-        Get.snackbar(
-          'الفوترة',
-          result['message']?.toString() ??
-              (result['activated'] == true ? 'تم تفعيل خطتك.' : 'لم يكتمل الدفع.'),
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        await _load();
-      } on ApiException catch (e) {
-        Get.snackbar('الفوترة', e.message, snackPosition: SnackPosition.BOTTOM);
-      }
-    });
   }
 
   Future<void> _load() async {
     final ws = _workspaces.activeId;
-    if (ws == null) return;
+    if (ws == null) {
+      _loading.value = false;
+      _error.value = 'لا توجد مساحة عمل نشطة.';
+      return;
+    }
     _loading.value = true;
     _error.value = null;
     try {
@@ -100,11 +82,10 @@ class _BillingPageState extends State<BillingPage> {
       );
       final uri = Uri.parse(result.approvalUrl);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        Get.snackbar('الفوترة', 'تعذر فتح صفحة الدفع.',
-            snackPosition: SnackPosition.BOTTOM);
+        UiFeedback.error('تعذر فتح صفحة الدفع.', title: 'الفوترة');
       }
     } on ApiException catch (e) {
-      Get.snackbar('الفوترة', e.message, snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message, title: 'الفوترة');
     } finally {
       _busy.value = null;
     }
@@ -134,12 +115,12 @@ class _BillingPageState extends State<BillingPage> {
     _busy.value = 'cancel';
     try {
       final result = await _repo.cancel(ws);
-      Get.snackbar('الفوترة',
+      UiFeedback.success(
           result['message']?.toString() ?? 'تم إلغاء الاشتراك.',
-          snackPosition: SnackPosition.BOTTOM);
+          title: 'الفوترة');
       await _load();
     } on ApiException catch (e) {
-      Get.snackbar('الفوترة', e.message, snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message, title: 'الفوترة');
     } finally {
       _busy.value = null;
     }
@@ -168,6 +149,20 @@ class _BillingPageState extends State<BillingPage> {
             : null;
         final hasPaypal = subscription?['has_paypal'] == true;
 
+        // الباقة الحالية باسمها العربي بدل الكود الخام.
+        Map? currentPlan;
+        for (final p in plans.whereType<Map>()) {
+          if (p['code']?.toString() == currentCode) {
+            currentPlan = p;
+            break;
+          }
+        }
+        final currentName =
+            currentPlan?['name_ar']?.toString() ?? currentCode ?? '—';
+        final features = currentPlan?['features'] is Map
+            ? Map<String, dynamic>.from(currentPlan!['features'] as Map)
+            : <String, dynamic>{};
+
         return RefreshIndicator(
           onRefresh: _load,
           child: ListView(
@@ -186,9 +181,11 @@ class _BillingPageState extends State<BillingPage> {
                           Icon(Icons.workspace_premium_outlined,
                               color: theme.colorScheme.primary),
                           const SizedBox(width: 8),
-                          Text('باقتك الحالية: ${currentCode ?? '—'}',
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w800)),
+                          Expanded(
+                            child: Text('باقتك الحالية: $currentName',
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800)),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -212,6 +209,11 @@ class _BillingPageState extends State<BillingPage> {
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+              _LimitsCard(
+                credits: (credits as num?)?.toDouble() ?? 0,
+                features: features,
               ),
               const SizedBox(height: 16),
               if (!isOwner)
@@ -260,7 +262,7 @@ class _BillingPageState extends State<BillingPage> {
                           style: theme.textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w700)),
                       subtitle: Text(price != null
-                          ? '$price\$ / ${_billingCycle.value == 'annual' ? 'سنة' : 'شهر'}'
+                          ? '${_formatPrice(price)} / ${_billingCycle.value == 'annual' ? 'سنة' : 'شهر'}'
                           : ''),
                       trailing: isCurrent
                           ? Chip(
@@ -290,5 +292,127 @@ class _BillingPageState extends State<BillingPage> {
         );
       }),
     );
+  }
+
+  /// يُنسّق السعر والعملة موحّداً ومعزولاً اتجاهياً (LTR isolate) كي لا
+  /// ينقلب ترتيب الرقم والرمز داخل نص عربي RTL.
+  static String _formatPrice(dynamic price) {
+    if (price == null) return '';
+    return _ltrIsolate('\$$price');
+  }
+}
+
+/// يعزل نصاً اتجاهياً LTR داخل سياق RTL دون وضع أحرف تحكّم حرفية في المصدر
+/// (U+2066 … U+2069)، كي لا ينقلب ترتيب الأرقام/الرموز.
+String _ltrIsolate(String s) =>
+    '${String.fromCharCode(0x2066)}$s${String.fromCharCode(0x2069)}';
+
+/// بطاقة الحدود والاستهلاك: رصيد الذكاء (كشريط تقدّم إن توفّر سقف) + حدود
+/// الباقة الرقمية (مساحات/مشاريع) مشتقّة من entitlements الباقة الحالية.
+class _LimitsCard extends StatelessWidget {
+  const _LimitsCard({required this.credits, required this.features});
+
+  final double credits;
+  final Map<String, dynamic> features;
+
+  static const _limitLabels = <String, (IconData, String)>{
+    'workspaces.max': (Icons.workspaces_outline, 'مساحات العمل'),
+    'projects.max_per_workspace':
+        (Icons.folder_open, 'المشاريع لكل مساحة'),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // سقف شهري للرصيد إن كان معرّفاً ضمن صلاحيات الباقة.
+    double? creditCap;
+    for (final e in features.entries) {
+      if (e.key.contains('credit') && e.value is num) {
+        creditCap = (e.value as num).toDouble();
+        break;
+      }
+    }
+
+    final rows = <Widget>[];
+    _limitLabels.forEach((key, meta) {
+      final raw = features[key];
+      if (raw is num) {
+        rows.add(_limitRow(theme, meta.$1, meta.$2, _formatLimit(raw)));
+      }
+    });
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('الحدود والاستهلاك',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.auto_awesome,
+                    size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('رصيد المساعد الذكي',
+                      style: theme.textTheme.bodyMedium),
+                ),
+                Text(
+                  creditCap != null
+                      ? _ltrIsolate(
+                          '${credits.toInt()}/${creditCap.toInt()}')
+                      : _ltrIsolate('${credits.toInt()}'),
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            if (creditCap != null && creditCap > 0) ...[
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: (credits / creditCap).clamp(0, 1).toDouble(),
+                  minHeight: 8,
+                  backgroundColor:
+                      theme.colorScheme.surfaceContainerHighest,
+                ),
+              ),
+            ],
+            if (rows.isNotEmpty) ...[
+              const Divider(height: 24),
+              ...rows,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _limitRow(
+      ThemeData theme, IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 8),
+          Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+          Text(value,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+
+  /// القيم الكبيرة (999/9999...) تعني «غير محدود» في بذور الباقات.
+  static String _formatLimit(num value) {
+    if (value >= 999) return 'غير محدود';
+    return _ltrIsolate('$value');
   }
 }

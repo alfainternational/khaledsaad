@@ -28,12 +28,36 @@ class CollabRepository {
   // ---- الحساب ----
 
   Future<Map<String, dynamic>> account(String ws) async {
-    final res = await _api.get('/workspaces/$ws/account');
+    final res = await _api.get(ApiEndpoints.account(ws));
     return _asMap(res['data']);
   }
 
   Future<void> updateAccount(String ws, Map<String, dynamic> payload) =>
-      _api.patch('/workspaces/$ws/account', body: payload);
+      _api.patch(ApiEndpoints.account(ws), body: payload);
+
+  // ---- مفتاح الذكاء الخاص بالحساب (BYOK) ----
+
+  /// حالة الربط: {connected, provider, masked_key, available_providers}.
+  Future<Map<String, dynamic>> aiKeyStatus(String ws) async {
+    final res = await _api.get(ApiEndpoints.accountAiKey(ws));
+    return _asMap(res['data']);
+  }
+
+  /// يربط مفتاح المستخدم الخاص. يعيد الحالة المحدّثة (المفتاح مقنّع).
+  Future<Map<String, dynamic>> setAiKey(
+    String ws, {
+    required String provider,
+    required String key,
+  }) async {
+    final res = await _api.put(
+      ApiEndpoints.accountAiKey(ws),
+      body: {'provider': provider, 'key': key},
+    );
+    return _asMap(res['data']);
+  }
+
+  /// يلغي الربط ويعيد التوليد لرصيد المنصة.
+  Future<void> clearAiKey(String ws) => _api.delete(ApiEndpoints.accountAiKey(ws));
 
   // ---- الفريق ----
 

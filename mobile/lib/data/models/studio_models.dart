@@ -53,6 +53,9 @@ class StudioGeneration {
   bool get isReady => output != null && output!.trim().isNotEmpty;
   bool get isFailed => status == 'failed' || (error != null && error!.isNotEmpty);
 
+  /// ما زال يُولَّد على الخادم (طابور) — لا مخرج بعد ولم يفشل.
+  bool get isProcessing => !isReady && !isFailed;
+
   factory StudioGeneration.fromJson(Map<String, dynamic> json) {
     final template = json['template'];
     return StudioGeneration(

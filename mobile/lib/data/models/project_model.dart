@@ -32,6 +32,8 @@ class ProjectModel {
     this.journeySnapshot,
     this.readiness,
     this.latestAudit,
+    this.executionSummary,
+    this.recentExecutionPackages = const [],
   });
 
   final String publicId;
@@ -52,6 +54,14 @@ class ProjectModel {
   final Map<String, dynamic>? journeySnapshot;
   final Map<String, dynamic>? readiness;
   final Map<String, dynamic>? latestAudit;
+
+  /// ملخّص التنفيذ (من ProjectDetailResource.execution_summary):
+  /// packages_count, active_packages_count, total_tasks, done_tasks,
+  /// task_progress_percent, latest_measurement{phase, phase_label, progress...}.
+  final Map<String, dynamic>? executionSummary;
+
+  /// أحدث حزم التنفيذ (recent_execution_packages[]).
+  final List<dynamic> recentExecutionPackages;
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
     return ProjectModel(
@@ -75,6 +85,9 @@ class ProjectModel {
       journeySnapshot: _asMap(json['journey_snapshot']),
       readiness: _asMap(json['readiness']),
       latestAudit: _asMap(json['latest_audit']),
+      executionSummary: _asMap(json['execution_summary']),
+      recentExecutionPackages:
+          (json['recent_execution_packages'] as List?)?.toList() ?? const [],
     );
   }
 

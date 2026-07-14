@@ -16,11 +16,17 @@ use Illuminate\Support\Facades\Log;
  */
 class OpenAiCompatibleGateway implements AiGatewayInterface
 {
-    public function __construct(private readonly string $provider) {}
+    /**
+     * @param  string|null  $keyOverride  مفتاح خاص بالحساب (BYOK) يتجاوز مفتاح المنصة العام.
+     */
+    public function __construct(
+        private readonly string $provider,
+        private readonly ?string $keyOverride = null,
+    ) {}
 
     public function requestContent(string $prompt, ?string $systemPrompt = null): ?array
     {
-        $apiKey = $this->cfg('key');
+        $apiKey = $this->keyOverride ?: $this->cfg('key');
         if (! $apiKey) {
             Log::warning("AI gateway: {$this->provider} API key is missing.");
 

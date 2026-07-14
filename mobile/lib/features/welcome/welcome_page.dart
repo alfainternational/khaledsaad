@@ -29,7 +29,7 @@ class WelcomePage extends StatelessWidget {
           children: [
             FilledButton.icon(
               onPressed: () => _go(Routes.register),
-              icon: const Icon(Icons.arrow_back),
+              icon: const Icon(Icons.rocket_launch_outlined),
               label: const Text('ابدأ الآن'),
             ),
             const SizedBox(height: 10),
@@ -38,10 +38,21 @@ class WelcomePage extends StatelessWidget {
               child: const Text('تسجيل الدخول'),
             ),
             const SizedBox(height: 10),
-            TextButton.icon(
+            TextButton(
               onPressed: () => Get.toNamed(Routes.explore),
-              icon: const Icon(Icons.explore_outlined, size: 18),
-              label: const Text('استكشف المنصة أولاً — بلا تسجيل'),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.explore_outlined, size: 18),
+                  SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'استكشف المنصة أولاً — بلا تسجيل',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

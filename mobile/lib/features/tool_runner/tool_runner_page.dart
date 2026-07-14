@@ -22,11 +22,31 @@ class ToolRunnerPage extends StatefulWidget {
 
 class _ToolRunnerPageState extends State<ToolRunnerPage> {
   final _scrollController = ScrollController();
+  final _resultKey = GlobalKey();
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// يشغّل الأداة ثم يمرّر تلقائياً إلى بطاقة النتيجة عند النجاح.
+  Future<void> _runAndScroll(ToolRunnerController controller) async {
+    await controller.run();
+    if (controller.result.value == null || controller.error.value != null) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _resultKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOutCubic,
+          alignment: 0.1,
+        );
+      }
+    });
   }
 
   Future<void> _handleNextAction(
@@ -206,7 +226,7 @@ class _ToolRunnerPageState extends State<ToolRunnerPage> {
               const SizedBox(height: 8),
               Obx(
                 () => FilledButton.icon(
-                  onPressed: c.isRunning.value ? null : c.run,
+                  onPressed: c.isRunning.value ? null : () => _runAndScroll(c),
                   icon: c.isRunning.value
                       ? const SizedBox(
                           height: 20,
@@ -223,10 +243,32 @@ class _ToolRunnerPageState extends State<ToolRunnerPage> {
               Obx(() {
                 final result = c.result.value;
                 if (result == null) return const SizedBox.shrink();
-                return ToolResultView(
-                  result: result,
-                  briefing: c.briefing.value,
-                  onNextAction: (action) => _handleNextAction(c, action),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ToolResultView(
+                      key: _resultKey,
+                      result: result,
+                      briefing: c.briefing.value,
+                      onNextAction: (action) => _handleNextAction(c, action),
+                    ),
+                    if (result.runPublicId != null) ...[
+                      const SizedBox(height: 12),
+                      Obx(() => OutlinedButton.icon(
+                            onPressed: c.isRequestingApproval.value
+                                ? null
+                                : c.requestApproval,
+                            icon: c.isRequestingApproval.value
+                                ? const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2.2))
+                                : const Icon(Icons.verified_outlined),
+                            label: const Text('طلب مراجعة وموافقة'),
+                          )),
+                    ],
+                  ],
                 );
               }),
             ],

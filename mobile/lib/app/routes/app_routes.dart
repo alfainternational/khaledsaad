@@ -6,8 +6,12 @@ abstract class Routes {
   static const login = '/login';
   static const register = '/register';
   static const forgotPassword = '/forgot-password';
+  static const resetPassword = '/reset-password';
   static const onboarding = '/onboarding';
+  static const home = '/home';
   static const dashboard = '/dashboard';
+  static const search = '/search';
+  static const notifications = '/notifications';
   static const projects = '/projects';
   static const projectDetail = '/projects/detail';
   static const projectTools = '/projects/tools';
@@ -18,9 +22,9 @@ abstract class Routes {
   static const toolRunner = '/tools/runner';
   static const studio = '/studio';
   static const studioGeneration = '/studio/generation';
-  static const reports = '/reports';
   static const team = '/team';
   static const account = '/account';
+  static const aiKey = '/account/ai-key';
   static const billing = '/billing';
   static const approvals = '/approvals';
   static const clients = '/clients';

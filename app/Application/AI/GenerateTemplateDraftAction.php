@@ -7,6 +7,7 @@ use App\Contracts\AiGatewayInterface;
 use App\Domain\AI\Models\AIGeneration;
 use App\Domain\AI\Models\AITemplate;
 use App\Domain\AI\Services\AiCreditService;
+use App\Domain\AI\Services\AiGatewayFactory;
 use App\Domain\Project\Models\Project;
 use App\Domain\Workspace\Models\Workspace;
 use App\Models\User;
@@ -28,6 +29,7 @@ class GenerateTemplateDraftAction
         private readonly WorkspaceProfileStore $profileStore,
         private readonly WorkspaceJourneyStore $journeyStore,
         private readonly AiGatewayInterface $aiGateway,
+        private readonly AiGatewayFactory $gatewayFactory,
         private readonly StudioOutputQualityGuard $qualityGuard,
         private readonly WorkspaceGenerationContextBuilder $contextBuilder,
         private readonly StudioTemplateContractRegistry $contractRegistry,
@@ -171,7 +173,14 @@ class GenerateTemplateDraftAction
             'ميّز بين اليقين (من المدخلات) والفرضيات (وضعها تحت عنوان افتراضات).',
         ]));
 
-        $generationResult = $this->generateHighQualityOutput($template, $aiPrompt, $systemPrompt);
+        // BYOK: إن ربط الحساب مفتاحه الخاص، نوجّه التوليد لبوّابته بدل بوّابة المنصة.
+        $account = $workspace->account;
+        $usingByoKey = $account !== null && $account->hasByoAi();
+        $gateway = $usingByoKey
+            ? ($this->gatewayFactory->makeForAccount($account) ?? $this->aiGateway)
+            : $this->aiGateway;
+
+        $generationResult = $this->generateHighQualityOutput($template, $aiPrompt, $systemPrompt, $gateway);
 
         if (($generationResult['status'] ?? null) === 'needs_input') {
             $output = $this->buildQualityNeedsInputOutput(
@@ -253,8 +262,8 @@ class GenerateTemplateDraftAction
         ]);
 
         // §31: كل توليد ناجح يستهلك رصيداً من دفتر الأرصدة. أفضل جهد — لا يكسر التسليم.
-        $account = $workspace->account;
-        if ($account !== null) {
+        // BYOK: لا نستهلك رصيد المنصة إذا استُخدم مفتاح الحساب الخاص (التوليد على حسابه).
+        if ($account !== null && ! $usingByoKey) {
             try {
                 $this->credits->consume(
                     $account,
@@ -499,8 +508,9 @@ TXT;
         AITemplate $template,
         string $prompt,
         string $systemPrompt,
+        AiGatewayInterface $gateway,
     ): array {
-        $firstAttempt = $this->requestAiText($prompt, $systemPrompt);
+        $firstAttempt = $this->requestAiText($prompt, $systemPrompt, $gateway);
         if ($firstAttempt === null) {
             return ['status' => 'unavailable', 'output' => null];
         }
@@ -518,6 +528,7 @@ TXT;
         $revisedAttempt = $this->requestAiText(
             $this->qualityGuard->revisionPrompt($prompt, $firstAttempt, $issues, $template),
             $systemPrompt,
+            $gateway,
         );
 
         if ($revisedAttempt === null) {
@@ -555,10 +566,10 @@ TXT;
         ];
     }
 
-    private function requestAiText(string $prompt, string $systemPrompt): ?string
+    private function requestAiText(string $prompt, string $systemPrompt, AiGatewayInterface $gateway): ?string
     {
         try {
-            $output = $this->aiGateway->generateText($prompt, $systemPrompt);
+            $output = $gateway->generateText($prompt, $systemPrompt);
 
             return is_string($output) && trim($output) !== '' ? trim($output) : null;
         } catch (\Throwable $e) {

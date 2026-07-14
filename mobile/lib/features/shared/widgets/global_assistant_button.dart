@@ -29,20 +29,32 @@ class GlobalAssistantButton extends StatelessWidget {
     final session = Get.find<SessionService>();
     return Obx(() {
       final route = currentRoute.value;
-      final visible =
-          session.isAuthenticated.value && !_hiddenRoutes.contains(route);
+      // لا يظهر فوق شاشات ما قبل الدخول، ولا فوق ورقة/حوار مفتوح كي لا
+      // يطفو فوق المحتوى المنبثق. (routingCallback يحدّث المسار عند فتح
+      // الأوراق أيضاً، فنتحقق من حالة الـ overlay مباشرةً.)
+      final overlayOpen =
+          (Get.isBottomSheetOpen ?? false) || (Get.isDialogOpen ?? false);
+      final visible = session.isAuthenticated.value &&
+          !_hiddenRoutes.contains(route) &&
+          !overlayOpen;
       if (!visible) return const SizedBox.shrink();
 
+      // على شاشة الهيكل يوجد شريط تنقّل سفلي — نرفع الزر فوقه كي لا يتراكب.
+      final overNavBar = route == Routes.home;
       // في واجهة RTL: end = يسار الشاشة (كما طلب التصميم).
       return PositionedDirectional(
-        bottom: 24,
+        bottom: overNavBar ? 24 + kBottomNavigationBarHeight : 24,
         end: 16,
         child: SafeArea(
-          child: FloatingActionButton.small(
-            heroTag: 'global_ai_assistant',
-            tooltip: 'المستشار الذكي',
-            onPressed: _openChat,
-            child: const Icon(Icons.support_agent),
+          child: Semantics(
+            button: true,
+            label: 'المستشار الذكي',
+            child: FloatingActionButton(
+              heroTag: 'global_ai_assistant',
+              tooltip: 'المستشار الذكي',
+              onPressed: _openChat,
+              child: const Icon(Icons.support_agent),
+            ),
           ),
         ),
       );

@@ -25,6 +25,8 @@ class WorkspaceSummaryResource extends JsonResource
             'status' => $this->status,
             // الدور الحالي للمستخدم في هذه المساحة (يُحقن من الـ controller عند توفّره).
             'role' => $this->whenHas('current_role'),
+            // خريطة صلاحيات مختصرة للعميل ليُخفي/يُعطّل الإجراءات المقفلة مسبقاً.
+            'entitlements' => $this->whenHas('ui_entitlements'),
         ];
     }
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_semantic_colors.dart';
 import '../../../core/l10n/ar_labels.dart';
 import '../../../data/models/tool_run_model.dart';
+import '../../shared/widgets/markdown_text.dart';
+import '../../shared/widgets/ui_feedback.dart';
 
 /// يعرض نتيجة تشغيل الأداة: نسبة الاكتمال، الملخّص، المخرجات، والخطوات التالية.
 class ToolResultView extends StatelessWidget {
@@ -38,6 +41,8 @@ class ToolResultView extends StatelessWidget {
                 const Spacer(),
                 if (result.completenessScore != null)
                   _CompletenessBadge(score: result.completenessScore!),
+                if (_copyText().isNotEmpty)
+                  CopyIconButton(text: _copyText(), tooltip: 'نسخ النتيجة'),
               ],
             ),
             if (result.aiGenerated) ...[
@@ -60,14 +65,58 @@ class ToolResultView extends StatelessWidget {
               ),
             ],
             const Divider(height: 24),
-            ..._renderSummary(theme),
-            ..._renderOutput(theme),
-            ..._renderBriefingAction(theme),
-            ..._renderNextActions(theme),
+            ..._renderBody(theme),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _renderBody(ThemeData theme) {
+    final body = <Widget>[
+      ..._renderSummary(theme),
+      ..._renderOutput(theme),
+      ..._renderBriefingAction(theme),
+      ..._renderNextActions(theme),
+    ];
+    if (body.isEmpty) {
+      return [
+        Row(
+          children: [
+            Icon(Icons.inbox_outlined,
+                size: 20, color: theme.colorScheme.outline),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'اكتملت الأداة دون مخرجات نصية. جرّب إضافة تفاصيل أكثر ثم أعد التشغيل.',
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: theme.colorScheme.outline),
+              ),
+            ),
+          ],
+        ),
+      ];
+    }
+    return body;
+  }
+
+  /// نص موحّد قابل للنسخ من الملخّص والمخرجات.
+  String _copyText() {
+    final buffer = StringBuffer();
+    final headline = result.summary['headline']?.toString();
+    final text = result.summary['text']?.toString();
+    if (headline != null && headline.trim().isNotEmpty) {
+      buffer.writeln(headline.trim());
+    }
+    if (text != null && text.trim().isNotEmpty) {
+      buffer.writeln(text.trim());
+    }
+    result.output.forEach((key, value) {
+      final rendered = _stringifyValue(value);
+      if (rendered.trim().isEmpty) return;
+      buffer.writeln('${_humanizeKey(key)}: $rendered');
+    });
+    return buffer.toString().trim();
   }
 
   List<Widget> _renderSummary(ThemeData theme) {
@@ -113,7 +162,7 @@ class ToolResultView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(rendered, style: theme.textTheme.bodyMedium),
+              MarkdownText(rendered),
             ],
           ),
         ),
@@ -202,11 +251,12 @@ class _CompletenessBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sem = AppSemanticColors.of(context);
     final color = score >= 70
-        ? const Color(0xFF16A34A)
+        ? sem.success
         : score >= 40
-        ? const Color(0xFFD97706)
-        : const Color(0xFFDC2626);
+            ? sem.warning
+            : sem.danger;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

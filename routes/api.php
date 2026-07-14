@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccountAiKeyController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AdminFeatureFlagController;
 use App\Http\Controllers\Api\V1\AgencyBrandingController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ProjectRecommendationController;
 use App\Http\Controllers\Api\V1\ProjectReportController;
 use App\Http\Controllers\Api\V1\RegisterController;
+use App\Http\Controllers\Api\V1\SocialAuthController;
 use App\Http\Controllers\Api\V1\StudioGenerationController;
 use App\Http\Controllers\Api\V1\StudioTemplateController;
 use App\Http\Controllers\Api\V1\TeamController;
@@ -72,6 +74,12 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:5,1');
     Route::post('/password/reset', [PasswordController::class, 'reset'])
         ->middleware('throttle:5,1');
+
+    // تسجيل/دخول اجتماعي (Google/Facebook/Twitter/LinkedIn) — redirect ثم callback→deep link.
+    Route::prefix('auth/social')->middleware('throttle:30,1')->group(function (): void {
+        Route::get('/{provider}/redirect', [SocialAuthController::class, 'redirect']);
+        Route::get('/{provider}/callback', [SocialAuthController::class, 'callback']);
+    })->where('provider', 'google|facebook|twitter|linkedin');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function (): void {
         Route::get('/me', MeController::class);
@@ -168,6 +176,11 @@ Route::prefix('v1')->group(function (): void {
             // الحساب
             Route::get('/account', [AccountController::class, 'show']);
             Route::patch('/account', [AccountController::class, 'update']);
+
+            // مفتاح الذكاء الخاص بالحساب (BYOK) — المالك فقط
+            Route::get('/account/ai-key', [AccountAiKeyController::class, 'show']);
+            Route::put('/account/ai-key', [AccountAiKeyController::class, 'update']);
+            Route::delete('/account/ai-key', [AccountAiKeyController::class, 'destroy']);
 
             // الفريق
             Route::get('/team', [TeamController::class, 'index']);

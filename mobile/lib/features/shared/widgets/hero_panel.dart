@@ -17,6 +17,7 @@ class HeroPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final onPrimary = theme.colorScheme.onPrimary;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -38,10 +39,10 @@ class HeroPanel extends StatelessWidget {
             height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
+              color: onPrimary.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: Colors.white),
+            child: Icon(icon, color: onPrimary),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -51,7 +52,7 @@ class HeroPanel extends StatelessWidget {
                 Text(
                   title,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
+                    color: onPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -59,7 +60,7 @@ class HeroPanel extends StatelessWidget {
                 Text(
                   body,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.86),
+                    color: onPrimary.withValues(alpha: 0.86),
                     height: 1.5,
                   ),
                 ),

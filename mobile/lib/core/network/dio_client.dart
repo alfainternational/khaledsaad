@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 
 import '../../data/services/session_service.dart';
 import '../config/env.dart';
+import 'certificate_pinning.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'interceptors/idempotency_interceptor.dart';
@@ -26,6 +28,13 @@ class DioClient {
         validateStatus: (status) => status != null && status < 400,
       ),
     );
+
+    // تثبيت الشهادة (معطّل افتراضياً — يُفعَّل عبر --dart-define=CERT_PINS).
+    if (certPinningEnabled()) {
+      dio.httpClientAdapter = IOHttpClientAdapter(
+        validateCertificate: validatePinnedCertificate,
+      );
+    }
 
     dio.interceptors.addAll([
       AuthInterceptor(session),

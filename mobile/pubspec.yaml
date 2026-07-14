@@ -62,6 +62,20 @@ dependencies:
   url_launcher: ^6.3.1
   app_links: ^6.3.3
 
+  # الإشعارات (FCM)
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
+
+  # الأمان: قفل بيومتري + تجزئة لتثبيت الشهادة
+  local_auth: ^2.3.0
+  crypto: ^3.0.6
+
+  # تخزين الصور مؤقتاً (شعارات المشاريع/الوكالة)
+  cached_network_image: ^3.4.1
+
+  # مراقبة الاتصال (شريط "غير متصل" + صمود على الشبكات الضعيفة)
+  connectivity_plus: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

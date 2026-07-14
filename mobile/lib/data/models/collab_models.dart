@@ -80,6 +80,7 @@ class ApprovalModel {
   static const itemTypeLabels = <String, String>{
     'tool_run': 'نتيجة أداة',
     'ai_generation': 'مخرج استوديو',
+    'execution_package': 'حزمة تنفيذ',
     'workspace_data': 'بيانات مساحة',
   };
 

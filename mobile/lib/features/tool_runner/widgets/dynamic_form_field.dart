@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../data/models/tool_form_model.dart';
 import '../tool_runner_controller.dart';
@@ -62,10 +63,20 @@ class _DynamicFormFieldState extends State<DynamicFormField> {
           Row(
             children: [
               Flexible(
-                child: Text(
-                  field.label,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                child: Text.rich(
+                  TextSpan(
+                    text: field.label,
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                    children: field.isRequired
+                        ? [
+                            TextSpan(
+                              text: ' *',
+                              style: TextStyle(color: theme.colorScheme.error),
+                            ),
+                          ]
+                        : null,
+                  ),
                 ),
               ),
               if (field.isCritical) ...[
@@ -95,6 +106,44 @@ class _DynamicFormFieldState extends State<DynamicFormField> {
           ],
           const SizedBox(height: 8),
           if (field.isSelect) _buildSelect(theme) else _buildText(),
+          if (field.answerTip.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.lightbulb_outline,
+                    size: 14, color: theme.colorScheme.outline),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    field.answerTip,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.outline),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          Obx(() {
+            final err = c.fieldErrors[field.key];
+            if (err == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.error_outline,
+                      size: 14, color: theme.colorScheme.error),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(err,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.error)),
+                  ),
+                ],
+              ),
+            );
+          }),
           if (field.suggestedValue != null &&
               field.suggestedValue!.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -133,6 +182,13 @@ class _DynamicFormFieldState extends State<DynamicFormField> {
       onChanged: _onChanged,
       minLines: field.isTextarea ? 3 : 1,
       maxLines: field.isTextarea ? 8 : 1,
+      keyboardType:
+          field.isTextarea ? TextInputType.multiline : TextInputType.text,
+      textInputAction:
+          field.isTextarea ? TextInputAction.newline : TextInputAction.next,
+      onEditingComplete: field.isTextarea
+          ? null
+          : () => FocusScope.of(context).nextFocus(),
       decoration: InputDecoration(
         hintText: field.smartPlaceholder ?? field.placeholder,
       ),

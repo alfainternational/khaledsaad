@@ -212,6 +212,10 @@ class AppServiceProvider extends ServiceProvider
                         || str_starts_with($key, 'services.gemini.')
                         || str_starts_with($key, 'services.private_worker.')
                         || str_starts_with($key, 'services.knowledge.')
+                        || str_starts_with($key, 'services.google.')
+                        || str_starts_with($key, 'services.facebook.')
+                        || str_starts_with($key, 'services.twitter-oauth-2.')
+                        || str_starts_with($key, 'services.linkedin-openid.')
                     )) {
                         config([$key => $value]);
                     }

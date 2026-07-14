@@ -22,6 +22,10 @@ class ApiEndpoints {
   static String onboarding(String ws) => '/workspaces/$ws/onboarding';
   static String dashboard(String ws) => '/workspaces/$ws/dashboard';
 
+  // الحساب ومفتاح الذكاء الخاص (BYOK)
+  static String account(String ws) => '/workspaces/$ws/account';
+  static String accountAiKey(String ws) => '/workspaces/$ws/account/ai-key';
+
   // الفريق
   static String team(String ws) => '/workspaces/$ws/team';
   static String teamInvitations(String ws) =>
@@ -88,8 +92,9 @@ class ApiEndpoints {
   static String recommendationPackage(String ws, String p, String rec) =>
       '/workspaces/$ws/projects/$p/recommendations/$rec/package';
 
-  // الموافقات
-  static const String approvals = '/approvals';
+  // الموافقات (ضمن نطاق المساحة — لا يوجد مسار عام /approvals).
+  static String approvals(String ws) => '/workspaces/$ws/approvals';
+  static String approval(String ws, int id) => '/workspaces/$ws/approvals/$id';
   static String projectApprovals(String ws, String p) =>
       '/workspaces/$ws/projects/$p/approvals';
 

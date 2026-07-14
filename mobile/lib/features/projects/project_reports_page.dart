@@ -6,6 +6,8 @@ import '../../core/l10n/ar_labels.dart';
 import '../../core/utils/file_exporter.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/services/workspace_service.dart';
+import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// تقارير المشروع: التقرير الشامل + دليل المشروع — عرض داخل التطبيق أو PDF.
 class ProjectReportsPage extends StatefulWidget {
@@ -46,7 +48,7 @@ class _ProjectReportsPageState extends State<ProjectReportsPage> {
       final doc = await loader(ws);
       Get.to(() => _DocumentView(title: title, document: doc));
     } on ApiException catch (e) {
-      Get.snackbar(title, e.message, snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message, title: title);
     } finally {
       _busy.value = null;
     }
@@ -65,12 +67,11 @@ class _ProjectReportsPageState extends State<ProjectReportsPage> {
       final bytes = await downloader(ws);
       await FileExporter.saveAndShare(bytes, filename);
     } on ApiException catch (e) {
-      Get.snackbar(
-        title,
+      UiFeedback.error(
         e.isEntitlementRequired
             ? 'تصدير PDF غير متاح في باقتك الحالية.'
             : e.message,
-        snackPosition: SnackPosition.BOTTOM,
+        title: title,
       );
     } finally {
       _busy.value = null;
@@ -250,9 +251,10 @@ class _DocumentView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: blocks.isEmpty
-          ? Center(
-              child: Text('لا يوجد محتوى بعد — أكمل بعض الأدوات أولاً.',
-                  style: theme.textTheme.bodyMedium),
+          ? AppStateView.empty(
+              icon: Icons.description_outlined,
+              title: 'لا يوجد محتوى بعد',
+              message: 'أكمل بعض الأدوات أولاً لتظهر نتائج هذا التقرير.',
             )
           : ListView(
               padding: const EdgeInsets.all(16),

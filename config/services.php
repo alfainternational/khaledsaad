@@ -286,4 +286,36 @@ return [
         'credentials' => env('FCM_CREDENTIALS_PATH'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | تسجيل الدخول الاجتماعي (Laravel Socialite)
+    |--------------------------------------------------------------------------
+    | أنشئ تطبيق OAuth لدى كل مزوّد وضع client_id/secret في .env. رابط الـ callback
+    | لكل مزوّد: {APP_URL}/api/v1/auth/social/{provider}/callback — سجّله في لوحة المزوّد.
+    | ملاحظة: مزوّد تويتر في Socialite باسم 'twitter-oauth-2'، ولينكدإن 'linkedin-openid'.
+    */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/api/v1/auth/social/google/callback'),
+    ],
+
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI', env('APP_URL').'/api/v1/auth/social/facebook/callback'),
+    ],
+
+    'twitter-oauth-2' => [
+        'client_id' => env('TWITTER_CLIENT_ID'),
+        'client_secret' => env('TWITTER_CLIENT_SECRET'),
+        'redirect' => env('TWITTER_REDIRECT_URI', env('APP_URL').'/api/v1/auth/social/twitter/callback'),
+    ],
+
+    'linkedin-openid' => [
+        'client_id' => env('LINKEDIN_CLIENT_ID'),
+        'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
+        'redirect' => env('LINKEDIN_REDIRECT_URI', env('APP_URL').'/api/v1/auth/social/linkedin/callback'),
+    ],
+
 ];

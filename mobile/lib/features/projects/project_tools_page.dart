@@ -43,7 +43,11 @@ class _ProjectToolsPageState extends State<ProjectToolsPage> {
 
   Future<void> _load() async {
     final ws = _workspaces.activeId;
-    if (ws == null) return;
+    if (ws == null) {
+      _loading.value = false;
+      _error.value = 'لا توجد مساحة عمل نشطة.';
+      return;
+    }
     _loading.value = true;
     _error.value = null;
     try {
@@ -73,7 +77,7 @@ class _ProjectToolsPageState extends State<ProjectToolsPage> {
       appBar: AppBar(title: const Text('الأدوات')),
       body: AnimatedAppBackground(
         child: Obx(() {
-          if (_loading.value) return AppStateView.loading();
+          if (_loading.value) return AppStateView.skeleton();
           if (_error.value != null) {
             return AppStateView.error(message: _error.value, onRetry: _load);
           }
@@ -173,7 +177,9 @@ class _ToolTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final locked = !tool.unlocked;
     final subtitleParts = <String>[
+      if (locked) 'يتطلب ترقية باقتك',
       if (tool.recommendedNow) 'الخطوة التالية',
       if (tool.completedInCurrentProject) 'مكتملة',
       if (!tool.completedInCurrentProject && tool.currentProjectRuns > 0)
@@ -185,16 +191,22 @@ class _ToolTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: tool.recommendedNow
+          backgroundColor: locked
+              ? theme.colorScheme.surfaceContainerHighest
+              : tool.recommendedNow
               ? theme.colorScheme.primary.withValues(alpha: 0.12)
               : theme.colorScheme.surfaceContainerHighest,
           child: Icon(
-            tool.completedInCurrentProject
+            locked
+                ? Icons.lock_outline
+                : tool.completedInCurrentProject
                 ? Icons.check_circle_outline
                 : tool.recommendedNow
                 ? Icons.play_arrow_rounded
                 : Icons.build_outlined,
-            color: tool.recommendedNow
+            color: locked
+                ? theme.colorScheme.onSurfaceVariant
+                : tool.recommendedNow
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurfaceVariant,
           ),
@@ -203,7 +215,19 @@ class _ToolTile extends StatelessWidget {
         subtitle: subtitleParts.isNotEmpty
             ? Text(subtitleParts.join(' · '))
             : null,
-        trailing: const Icon(Icons.chevron_left),
+        trailing: locked
+            ? Semantics(
+                label: 'مقفلة — تتطلب ترقية',
+                child: Chip(
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  avatar: Icon(Icons.lock_outline,
+                      size: 14, color: theme.colorScheme.onSurfaceVariant),
+                  label: const Text('ترقية'),
+                  labelStyle: theme.textTheme.labelSmall,
+                ),
+              )
+            : const Icon(Icons.chevron_left),
         enabled: tool.unlocked,
         onTap: tool.unlocked ? onTap : null,
       ),

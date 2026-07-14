@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Entitlement\Services\EntitlementResolver;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\UpdateAccountSettingsRequest;
+use App\Http\Requests\Api\V1\UpdateAccountApiRequest;
 use App\Support\Dashboard\AwarenessCatalog;
 use App\Support\Dashboard\ContentLocaleCatalog;
 use App\Support\Dashboard\GoalCatalog;
@@ -69,7 +69,7 @@ class AccountController extends Controller
      * تحديث إعدادات الحساب والمساحة والملف — نفس منطق الويب تماماً.
      */
     public function update(
-        UpdateAccountSettingsRequest $request,
+        UpdateAccountApiRequest $request,
         WorkspaceProfileStore $profileStore,
     ): JsonResponse {
         /** @var \App\Domain\Workspace\Models\Workspace $workspace */
@@ -94,16 +94,26 @@ class AccountController extends Controller
             'type' => $data['workspace_type'],
         ]);
 
-        $profileStore->put($workspace, [
-            'persona' => $data['persona'],
-            'awareness_level' => $data['awareness_level'],
-            'primary_goal' => $data['primary_goal'],
-            'recommended_path' => $data['recommended_path'] ?? null,
-            'audience' => $data['audience'],
-            'country' => $data['country'],
-            'content_locale' => $data['content_locale'],
-            'current_challenge' => $data['current_challenge'] ?? null,
-        ]);
+        // دمج جزئي: نبدأ من الملف الحالي ونطبّق الحقول المُرسلة فقط، حتى لا يمسح
+        // حفظٌ بسيط (كتغيير الاسم) بقيةَ الملف التسويقي لمستخدم لم يُكمله بعد.
+        $profileKeys = [
+            'persona',
+            'awareness_level',
+            'primary_goal',
+            'recommended_path',
+            'audience',
+            'country',
+            'content_locale',
+            'current_challenge',
+        ];
+
+        $profile = $profileStore->get($workspace);
+        foreach ($profileKeys as $key) {
+            if ($request->has($key)) {
+                $profile[$key] = $data[$key] ?? null;
+            }
+        }
+        $profileStore->put($workspace, $profile);
 
         return response()->json([
             'data' => ['message' => 'تم تحديث إعدادات الحساب ومساحة العمل.'],

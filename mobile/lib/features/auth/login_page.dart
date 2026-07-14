@@ -37,6 +37,21 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  /// زر دخول اجتماعي موحّد — يفتح صفحة المزوّد، والعودة عبر deep link.
+  Widget _socialButton(String provider, String label, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: OutlinedButton.icon(
+        onPressed: () => _c.signInWithProvider(provider),
+        icon: Icon(icon),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -48,7 +63,8 @@ class _LoginPageState extends State<LoginPage> {
               padding: const EdgeInsets.all(24),
               child: Form(
                 key: _formKey,
-                child: Column(
+                child: AutofillGroup(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Center(child: BrandMark(size: 58)),
@@ -90,6 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.email],
                         decoration: InputDecoration(
                           labelText: 'البريد الإلكتروني',
                           prefixIcon: const Icon(Icons.mail_outline),
@@ -106,12 +123,16 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _password,
                         obscureText: _c.obscurePassword.value,
                         textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
                         onFieldSubmitted: (_) => _submit(),
                         decoration: InputDecoration(
                           labelText: 'كلمة المرور',
                           prefixIcon: const Icon(Icons.lock_outline),
                           errorText: _c.fieldErrors['password'],
                           suffixIcon: IconButton(
+                            tooltip: _c.obscurePassword.value
+                                ? 'إظهار كلمة المرور'
+                                : 'إخفاء كلمة المرور',
                             icon: Icon(
                               _c.obscurePassword.value
                                   ? Icons.visibility_outlined
@@ -147,9 +168,31 @@ class _LoginPageState extends State<LoginPage> {
                             : const Text('تسجيل الدخول'),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text('أو', style: theme.textTheme.bodySmall),
+                        ),
+                        const Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _socialButton('google', 'المتابعة عبر Google',
+                        Icons.g_mobiledata),
+                    _socialButton('facebook', 'المتابعة عبر Facebook',
+                        Icons.facebook),
+                    _socialButton(
+                        'twitter', 'المتابعة عبر X', Icons.alternate_email),
+                    _socialButton('linkedin', 'المتابعة عبر LinkedIn',
+                        Icons.business_center),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         const Text('ليس لديك حساب؟'),
                         TextButton(
@@ -166,6 +209,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ],
+                  ),
                 ),
               ),
             ),

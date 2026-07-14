@@ -46,6 +46,7 @@ class ToolField {
     this.suggestedValue,
     this.suggestionLabel,
     this.quality = const ToolFieldQuality(),
+    this.mandatory = false,
   });
 
   final String key;
@@ -66,9 +67,15 @@ class ToolField {
   final String? suggestionLabel;
   final ToolFieldQuality quality;
 
+  /// حقل إلزامي صريح (من الخادم) — يُمنع التشغيل بدونه.
+  final bool mandatory;
+
   bool get isCritical => priority == 'critical';
   bool get isSelect => type == 'select';
   bool get isTextarea => type == 'textarea';
+
+  /// إلزامي فعلياً: مُعلَّم إلزامياً صراحةً أو حرج الأولوية.
+  bool get isRequired => mandatory || isCritical;
 
   factory ToolField.fromJson(Map<String, dynamic> json) {
     return ToolField(
@@ -93,6 +100,9 @@ class ToolField {
             ? Map<String, dynamic>.from(json['quality'] as Map)
             : null,
       ),
+      mandatory: json['required'] == true ||
+          json['is_required'] == true ||
+          json['priority']?.toString() == 'critical',
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../core/error/api_exception.dart';
@@ -18,10 +20,23 @@ class GenerationDetailController extends GetxController {
   final isExporting = false.obs;
   final error = RxnString();
 
+  /// هل المخرج ما زال يُولَّد على الخادم (طابور)؟
+  bool get isPending => generation.value?.isProcessing ?? false;
+
+  Timer? _pollTimer;
+  int _pollAttempts = 0;
+  static const _maxPollAttempts = 20; // ‎~60 ثانية (كل 3ث)
+
   @override
   void onReady() {
     super.onReady();
     load();
+  }
+
+  @override
+  void onClose() {
+    _pollTimer?.cancel();
+    super.onClose();
   }
 
   Future<void> load() async {
@@ -31,11 +46,34 @@ class GenerationDetailController extends GetxController {
     error.value = null;
     try {
       generation.value = await _repo.show(ws, publicId);
+      _pollAttempts = 0;
+      _schedulePoll();
     } on ApiException catch (e) {
       error.value = e.message;
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// يجدول إعادة جلب دورية طالما المخرج قيد التوليد ولم يتجاوز الحدّ.
+  void _schedulePoll() {
+    _pollTimer?.cancel();
+    final g = generation.value;
+    if (g == null || !g.isProcessing) return;
+    if (_pollAttempts >= _maxPollAttempts) return;
+    _pollTimer = Timer(const Duration(seconds: 3), _poll);
+  }
+
+  Future<void> _poll() async {
+    final ws = _workspaces.activeId;
+    if (ws == null) return;
+    _pollAttempts++;
+    try {
+      generation.value = await _repo.show(ws, publicId);
+    } on ApiException catch (_) {
+      // خطأ عابر أثناء الطابور — نعيد المحاولة ضمن الحدّ المسموح.
+    }
+    _schedulePoll();
   }
 
   /// يصدّر بصيغة (md/html/pdf) ثم يشارك الملف. يعيد رسالة خطأ إن فشل.

@@ -18,7 +18,7 @@ class SplashController extends GetxController {
   void _decide() {
     // نقطة توجيه أولية: مصادَق → الداشبورد، غير ذلك → تسجيل الدخول.
     if (_session.isAuthenticated.value) {
-      Get.offAllNamed(Routes.dashboard);
+      Get.offAllNamed(Routes.home);
     } else if (GetStorage().read('welcome_seen') == true) {
       Get.offAllNamed(Routes.login);
     } else {

@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../../data/models/project_model.dart';
 import '../../../data/models/studio_models.dart';
+import '../../../data/repositories/project_repository.dart';
 import '../studio_controller.dart';
 
 /// ورقة سفلية لتوليد مخرج من قالب: ملخّص اختياري ثم توليد.
@@ -39,12 +42,29 @@ class _GenerateSheetState extends State<GenerateSheet> {
   final _progressIndex = 0.obs;
   Timer? _progressTimer;
 
+  /// ربط اختياري بمشروع — فيقرأ التوليد بيانات المشروع (workspace_data) كسياق
+  /// بدل أن يبدأ من الصفر على مستوى المساحة فقط.
+  final _projects = <ProjectModel>[].obs;
+  final _projectId = RxnString();
+
   @override
   void initState() {
     super.initState();
     final initialBrief = widget.initialBrief?.trim();
     if (initialBrief != null && initialBrief.isNotEmpty) {
       _brief.text = initialBrief;
+    }
+    _loadProjects();
+  }
+
+  Future<void> _loadProjects() async {
+    final ws = widget.controller.workspaceId;
+    if (ws == null) return;
+    try {
+      final rows = await Get.find<ProjectRepository>().list(ws);
+      if (mounted) _projects.assignAll(rows);
+    } on ApiException catch (_) {
+      // الربط اختياري — نتجاهل فشل جلب المشاريع.
     }
   }
 
@@ -65,15 +85,20 @@ class _GenerateSheetState extends State<GenerateSheet> {
     });
   }
 
-  Future<void> _generate() async {
+  Future<void> _generate({bool freshCopy = false}) async {
     _error.value = null;
+    HapticFeedback.mediumImpact(); // إحساس ببدء التوليد
     _startProgressTicker();
     try {
       final generation = await widget.controller.generate(
         templateId: widget.template.id,
+        projectPublicId: _projectId.value,
         brief: _brief.text.trim().isEmpty ? null : _brief.text.trim(),
+        freshCopy: freshCopy,
       );
+      if (!mounted) return; // الورقة أُغلقت أثناء الانتظار — تفادَ pop خاطئ
       if (generation != null) {
+        HapticFeedback.lightImpact(); // نجاح التوليد
         Get.back(); // إغلاق الورقة
         widget.controller.openGeneration(generation);
       }
@@ -98,16 +123,28 @@ class _GenerateSheetState extends State<GenerateSheet> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            widget.template.name,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
             ),
-          ),
+            Text(
+              widget.template.name,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           if (widget.template.description != null) ...[
             const SizedBox(height: 6),
             Text(
@@ -116,6 +153,30 @@ class _GenerateSheetState extends State<GenerateSheet> {
             ),
           ],
           const SizedBox(height: 16),
+          Obx(() {
+            if (_projects.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: DropdownButtonFormField<String?>(
+                initialValue: _projectId.value,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'اربط بمشروع (اختياري)',
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('بدون مشروع'),
+                  ),
+                  ..._projects.map((p) => DropdownMenuItem<String?>(
+                        value: p.publicId,
+                        child: Text(p.name, overflow: TextOverflow.ellipsis),
+                      )),
+                ],
+                onChanged: (v) => _projectId.value = v,
+              ),
+            );
+          }),
           TextField(
             controller: _brief,
             minLines: 3,
@@ -137,6 +198,23 @@ class _GenerateSheetState extends State<GenerateSheet> {
               ),
             );
           }),
+          if (widget.template.creditCost != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  Icon(Icons.bolt_outlined,
+                      size: 16, color: theme.colorScheme.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'تكلفة هذا التوليد: ${widget.template.creditCost} رصيد',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Obx(() {
             final generating = widget.controller.isGenerating.value;
             return Column(
@@ -176,10 +254,17 @@ class _GenerateSheetState extends State<GenerateSheet> {
                       : const Icon(Icons.auto_awesome),
                   label: Text(generating ? 'جارٍ التوليد...' : 'توليد'),
                 ),
+                if (!generating)
+                  TextButton.icon(
+                    onPressed: () => _generate(freshCopy: true),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('توليد نسخة جديدة (يتجاوز الكاش)'),
+                  ),
               ],
             );
           }),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -33,7 +33,7 @@ class UpdateAccountSettingsRequest extends FormRequest
             'awareness_level' => ['required', 'string', Rule::in(array_keys(AwarenessCatalog::all()))],
             'primary_goal' => ['required', 'string', Rule::in(array_keys(GoalCatalog::all()))],
             'recommended_path' => ['nullable', 'string', Rule::in(array_keys(PathCatalog::all()))],
-            'audience' => ['required', 'string', 'max:255'],
+            'audience' => ['nullable', 'string', 'max:255'],
             'country' => ['required', 'string', 'max:120'],
             'content_locale' => ['required', 'string', Rule::in(array_keys(ContentLocaleCatalog::all()))],
             'current_challenge' => ['nullable', 'string', 'max:255'],

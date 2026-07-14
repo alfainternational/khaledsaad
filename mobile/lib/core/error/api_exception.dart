@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// يعكس عقد الأخطاء الموحّد القادم من الـ Backend:
 /// { "message": "...", "code": "SNAKE_CODE", "errors"?: { field: [..] } }
 class ApiException implements Exception {
@@ -33,6 +35,10 @@ class ApiException implements Exception {
   }
 
   /// بناء من جسم رد JSON.
+  ///
+  /// يدعم العقد الموحّد `{message, code, errors?}` بالإضافة إلى الأشكال غير
+  /// القياسية التي تُرجعها بعض الـ endpoints: `{error: "..."}` أو
+  /// `{success:false, error:"..."}` — فلا تضيع الرسالة الإرشادية للمستخدم.
   factory ApiException.fromJson(Map<String, dynamic> json, {int? status}) {
     final rawErrors = json['errors'];
     final parsed = <String, List<String>>{};
@@ -46,12 +52,71 @@ class ApiException implements Exception {
       });
     }
 
+    final message = json['message'] ?? json['error'];
+
     return ApiException(
-      message: (json['message'] ?? 'حدث خطأ.').toString(),
-      code: (json['code'] ?? 'ERROR').toString(),
+      message: (message ?? _defaultMessageForStatus(status)).toString(),
+      code: (json['code'] ?? _codeForStatus(status)).toString(),
       status: status,
       errors: parsed,
     );
+  }
+
+  /// رسالة افتراضية ودّية حين لا يرسل الخادم `message` — خصوصاً 429 (تجاوز الحد).
+  static String _defaultMessageForStatus(int? status) {
+    switch (status) {
+      case 429:
+        return 'الطلبات كثيرة الآن. انتظر لحظات ثم أعد المحاولة.';
+      case 503:
+        return 'الخدمة مشغولة مؤقتاً. حاول بعد قليل.';
+      default:
+        if (status != null && status >= 500) {
+          return 'خطأ في الخادم. حاول لاحقاً.';
+        }
+        return 'حدث خطأ.';
+    }
+  }
+
+  /// بناء من جسم خطأ وصل كبايتات (حالة تنزيل الملفات مثل PDF): نحاول فكّه
+  /// كـ JSON أولاً حتى نحافظ على الرسالة والرمز (ENTITLEMENT_REQUIRED...)،
+  /// وإلا نُرجع خطأ HTTP عاماً.
+  factory ApiException.fromBytes(List<int> bytes, {int? status}) {
+    if (bytes.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(utf8.decode(bytes));
+        if (decoded is Map<String, dynamic>) {
+          return ApiException.fromJson(decoded, status: status);
+        }
+      } catch (_) {
+        // ليست JSON صالحة — نتابع للخطأ العام.
+      }
+    }
+    return ApiException(
+      message: 'حدث خطأ${status != null ? ' ($status)' : ''}.',
+      code: _codeForStatus(status),
+      status: status,
+    );
+  }
+
+  /// رمز افتراضي مشتقّ من حالة HTTP حين لا يرسل الخادم `code` صريحاً.
+  static String _codeForStatus(int? status) {
+    switch (status) {
+      case 401:
+        return 'UNAUTHENTICATED';
+      case 402:
+        return 'PAYMENT_REQUIRED';
+      case 403:
+        return 'FORBIDDEN';
+      case 404:
+        return 'NOT_FOUND';
+      case 422:
+        return 'VALIDATION_ERROR';
+      case 429:
+        return 'RATE_LIMITED';
+      default:
+        if (status != null && status >= 500) return 'SERVER_ERROR';
+        return 'ERROR';
+    }
   }
 
   /// خطأ شبكة محلي (لا يوجد اتصال / مهلة).

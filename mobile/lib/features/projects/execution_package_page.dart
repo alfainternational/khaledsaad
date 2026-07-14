@@ -7,6 +7,7 @@ import '../../data/models/lifecycle_models.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// حزمة التنفيذ: القرار والمهام والأصول + تغيير الحالة.
 class ExecutionPackagePage extends StatefulWidget {
@@ -33,7 +34,11 @@ class _ExecutionPackagePageState extends State<ExecutionPackagePage> {
 
   Future<void> _load() async {
     final ws = _workspaces.activeId;
-    if (ws == null) return;
+    if (ws == null) {
+      _loading.value = false;
+      _error.value = 'لا توجد مساحة عمل نشطة.';
+      return;
+    }
     _loading.value = true;
     _error.value = null;
     try {
@@ -50,17 +55,9 @@ class _ExecutionPackagePageState extends State<ExecutionPackagePage> {
     if (ws == null) return;
     try {
       _package.value = await _repo.updatePackageStatus(ws, _packageId, status);
-      Get.snackbar(
-        'حزمة التنفيذ',
-        'تم تحديث الحالة.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      UiFeedback.success('تم تحديث الحالة.', title: 'حزمة التنفيذ');
     } on ApiException catch (e) {
-      Get.snackbar(
-        'حزمة التنفيذ',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      UiFeedback.error(e.message, title: 'حزمة التنفيذ');
     }
   }
 
@@ -81,7 +78,9 @@ class _ExecutionPackagePageState extends State<ExecutionPackagePage> {
             title: 'الحزمة غير متاحة',
           );
         }
-        return ListView(
+        return RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             Text(
@@ -204,6 +203,7 @@ class _ExecutionPackagePageState extends State<ExecutionPackagePage> {
               ),
             ],
           ],
+          ),
         );
       }),
     );

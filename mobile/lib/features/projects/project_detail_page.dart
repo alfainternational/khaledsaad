@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -73,13 +74,40 @@ class ProjectDetailPage extends StatelessWidget {
                           if (project.logoUrl?.isNotEmpty == true) ...[
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                project.logoUrl!,
+                              // صورة مُكاشة محلياً (أسرع وأقل استهلاكاً للبيانات).
+                              child: CachedNetworkImage(
+                                imageUrl: project.logoUrl!,
                                 width: 54,
                                 height: 54,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) =>
-                                    const SizedBox.shrink(),
+                                progressIndicatorBuilder: (_, _, _) => Container(
+                                  width: 54,
+                                  height: 54,
+                                  alignment: Alignment.center,
+                                  color: theme.colorScheme.onPrimary
+                                      .withValues(alpha: 0.15),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: theme.colorScheme.onPrimary,
+                                    ),
+                                  ),
+                                ),
+                                // فشل الصورة: نعرض بديلاً يملأ الحيز حتى لا
+                                // يبقى الفاصل معلّقاً بجوار فراغ.
+                                errorWidget: (_, _, _) => Container(
+                                  width: 54,
+                                  height: 54,
+                                  alignment: Alignment.center,
+                                  color: theme.colorScheme.onPrimary
+                                      .withValues(alpha: 0.15),
+                                  child: Icon(
+                                    Icons.image_not_supported_outlined,
+                                    color: theme.colorScheme.onPrimary,
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -87,8 +115,10 @@ class ProjectDetailPage extends StatelessWidget {
                           Expanded(
                             child: Text(
                               project.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.titleLarge?.copyWith(
-                                color: Colors.white,
+                                color: theme.colorScheme.onPrimary,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -121,6 +151,58 @@ class ProjectDetailPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (project.executionSummary != null)
+                  Builder(builder: (_) {
+                    final s = project.executionSummary!;
+                    final pct =
+                        (s['task_progress_percent'] as num?)?.toInt() ?? 0;
+                    final packages =
+                        (s['packages_count'] as num?)?.toInt() ?? 0;
+                    final done = (s['done_tasks'] as num?)?.toInt() ?? 0;
+                    final total = (s['total_tasks'] as num?)?.toInt() ?? 0;
+                    final measure = s['latest_measurement'];
+                    final phaseLabel = measure is Map
+                        ? measure['phase_label']?.toString()
+                        : null;
+                    if (packages == 0) return const SizedBox.shrink();
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.rocket_launch_outlined,
+                                    size: 18,
+                                    color: theme.colorScheme.primary),
+                                const SizedBox(width: 8),
+                                Text('ملخّص التنفيذ',
+                                    style: theme.textTheme.titleSmall
+                                        ?.copyWith(
+                                            fontWeight: FontWeight.w800)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: (pct / 100).clamp(0.0, 1.0),
+                                minHeight: 8,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$packages حزمة · $done من $total مهمة ($pct%)'
+                              '${phaseLabel != null ? ' · آخر قياس: $phaseLabel' : ''}',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
                 Text(
                   'الخطوات العملية',
                   style: theme.textTheme.titleMedium?.copyWith(

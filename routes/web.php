@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AccountManagementController;
 use App\Http\Controllers\Admin\AICreditsController;
 use App\Http\Controllers\Admin\AiControlController;
 use App\Http\Controllers\Admin\AiLabController;
+use App\Http\Controllers\Admin\SocialAuthSettingsController;
 use App\Http\Controllers\Admin\AIGenerationController;
 use App\Http\Controllers\Admin\AITemplateController;
 use App\Http\Controllers\Admin\AuditLogController;
@@ -115,6 +116,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('/ai-control/providers', [AiControlController::class, 'updateProviders'])->name('ai-control.providers');
     Route::post('/ai-control/learn', [AiControlController::class, 'learn'])->name('ai-control.learn');
     Route::delete('/ai-control/knowledge', [AiControlController::class, 'forgetKnowledge'])->name('ai-control.knowledge.forget');
+
+    Route::get('/social-auth', [SocialAuthSettingsController::class, 'index'])->name('social-auth.index');
+    Route::patch('/social-auth', [SocialAuthSettingsController::class, 'update'])->name('social-auth.update');
 
     Route::get('/ai-lab', [AiLabController::class, 'index'])->name('ai-lab.index');
     Route::post('/ai-lab/run', [AiLabController::class, 'run'])->name('ai-lab.run');

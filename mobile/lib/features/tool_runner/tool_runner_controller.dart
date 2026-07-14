@@ -1,11 +1,14 @@
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/error/api_exception.dart';
 import '../../data/models/tool_form_model.dart';
 import '../../data/models/tool_run_model.dart';
 import '../../data/repositories/ai_assist_repository.dart';
+import '../../data/repositories/collab_repository.dart';
 import '../../data/repositories/tool_repository.dart';
 import '../../data/services/workspace_service.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 class ToolRunnerController extends GetxController {
   ToolRunnerController(
@@ -35,11 +38,44 @@ class ToolRunnerController extends GetxController {
   final Rxn<ToolRunResult> result = Rxn<ToolRunResult>();
   final Rxn<ToolBriefing> briefing = Rxn<ToolBriefing>();
 
+  /// طلب مراجعة/موافقة على مخرج التشغيل الحالي (A6).
+  final isRequestingApproval = false.obs;
+
+  Future<void> requestApproval() async {
+    final res = result.value;
+    final ws = _workspaces.activeId;
+    final itemId = res?.runPublicId;
+    if (res == null ||
+        ws == null ||
+        itemId == null ||
+        itemId.isEmpty ||
+        isRequestingApproval.value) {
+      return;
+    }
+    isRequestingApproval.value = true;
+    try {
+      await Get.find<CollabRepository>().requestApproval(
+        ws,
+        projectPublicId,
+        itemType: 'tool_run',
+        itemPublicId: itemId,
+      );
+      UiFeedback.success('أُرسل المخرج للمراجعة والموافقة.', title: 'موافقة');
+    } on ApiException catch (e) {
+      UiFeedback.error(e.message, title: 'موافقة');
+    } finally {
+      isRequestingApproval.value = false;
+    }
+  }
+
   /// نتيجة تحليل جودة المدخلات (verdict/strategic_note/...).
   final Rxn<Map<String, dynamic>> analysis = Rxn<Map<String, dynamic>>();
 
   /// يزداد عند تعبئة قيم خارجية (اقتراحات) لإجبار حقول النص على إعادة البناء.
   final formEpoch = 0.obs;
+
+  /// أخطاء التحقق الإلزامي لكل حقل (مفتاح الحقل ← رسالة) تُعرض أسفل الحقل.
+  final fieldErrors = <String, String>{}.obs;
 
   ToolMode? get currentMode => selectedMode.value == null
       ? null
@@ -90,6 +126,29 @@ class ToolRunnerController extends GetxController {
 
   void setValue(String key, String value) {
     values[key] = value;
+    // امسح خطأ الإلزام فور بدء الكتابة.
+    if (fieldErrors.containsKey(key) && value.trim().isNotEmpty) {
+      fieldErrors.remove(key);
+    }
+  }
+
+  /// يتحقق من امتلاء كل الحقول الإلزامية في الوضع الحالي.
+  /// يملأ [fieldErrors] ويعيد false إن وُجد نقص.
+  bool validateRequired() {
+    final errors = <String, String>{};
+    for (final field in currentMode?.fields ?? <ToolField>[]) {
+      if (field.isRequired && (values[field.key]?.trim().isEmpty ?? true)) {
+        errors[field.key] = 'هذا الحقل مطلوب قبل التشغيل.';
+      }
+    }
+    fieldErrors
+      ..clear()
+      ..addAll(errors);
+    if (errors.isNotEmpty) {
+      HapticFeedback.mediumImpact();
+      return false;
+    }
+    return true;
   }
 
   void applySuggestion(ToolField field) {
@@ -196,12 +255,21 @@ class ToolRunnerController extends GetxController {
     if (ws == null || mode == null) return;
     if (isRunning.value) return;
 
+    // تحقّق إلزامي صارم قبل استهلاك أي طلب/رصيد.
+    if (!validateRequired()) {
+      error.value = 'أكمل الحقول المطلوبة أولاً.';
+      return;
+    }
+
     isRunning.value = true;
     error.value = null;
     try {
       final inputs = <String, dynamic>{};
       for (final field in currentMode?.fields ?? <ToolField>[]) {
-        inputs[field.key] = values[field.key] ?? '';
+        final value = values[field.key] ?? '';
+        // لا نرسل حقلاً إلزامياً فارغاً (التحقق يمنع ذلك أصلاً).
+        if (field.isRequired && value.trim().isEmpty) continue;
+        inputs[field.key] = value;
       }
       final res = await _tools.run(
         ws,
@@ -211,6 +279,7 @@ class ToolRunnerController extends GetxController {
         inputs: inputs,
       );
       result.value = res;
+      HapticFeedback.lightImpact();
     } on ApiException catch (e) {
       // 422 قد يعني أن الوضع غير متاح بعد (ToolModePolicy).
       error.value = e.message;

@@ -19,7 +19,7 @@ class AnimatedAppBackground extends StatefulWidget {
 }
 
 class _AnimatedAppBackgroundState extends State<AnimatedAppBackground>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _controller;
 
   @override
@@ -29,10 +29,22 @@ class _AnimatedAppBackgroundState extends State<AnimatedAppBackground>
       vsync: this,
       duration: const Duration(seconds: 12),
     )..repeat();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // أوقف الأنيميشن في الخلفية لتوفير المعالج والبطارية، واستأنفه عند العودة.
+    if (state == AppLifecycleState.resumed) {
+      if (!_controller.isAnimating) _controller.repeat();
+    } else {
+      if (_controller.isAnimating) _controller.stop();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
   }
@@ -50,20 +62,22 @@ class _AnimatedAppBackgroundState extends State<AnimatedAppBackground>
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
                 colors: isDark
-                    ? const [Color(0xFF0B1120), Color(0xFF172033)]
-                    : const [Color(0xFFF8FAFC), Color(0xFFEFF6FF)],
+                    ? const [AppColors.darkBg, AppColors.darkSurface]
+                    : const [AppColors.lightBg, AppColors.lightSurface],
               ),
             ),
           ),
         ),
         Positioned.fill(
           child: IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) => CustomPaint(
-                painter: _BackgroundPainter(
-                  progress: _controller.value,
-                  isDark: isDark,
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, _) => CustomPaint(
+                  painter: _BackgroundPainter(
+                    progress: _controller.value,
+                    isDark: isDark,
+                  ),
                 ),
               ),
             ),

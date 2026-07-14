@@ -20,6 +20,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
+  final _obscureConfirm = true.obs;
 
   late final RegisterController _c = Get.put(
     RegisterController(Get.find<AuthRepository>(), Get.find<SessionService>()),
@@ -56,7 +57,8 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
-              child: Column(
+              child: AutofillGroup(
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Center(child: BrandMark(size: 56)),
@@ -97,6 +99,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     () => TextFormField(
                       controller: _name,
                       textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.name],
                       decoration: InputDecoration(
                         labelText: 'الاسم',
                         prefixIcon: const Icon(Icons.person_outline),
@@ -112,6 +115,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: _email,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
                       decoration: InputDecoration(
                         labelText: 'البريد الإلكتروني',
                         prefixIcon: const Icon(Icons.mail_outline),
@@ -128,11 +132,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: _password,
                       obscureText: _c.obscurePassword.value,
                       textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.newPassword],
                       decoration: InputDecoration(
                         labelText: 'كلمة المرور',
                         prefixIcon: const Icon(Icons.lock_outline),
                         errorText: _c.fieldErrors['password'],
                         suffixIcon: IconButton(
+                          tooltip: _c.obscurePassword.value
+                              ? 'إظهار كلمة المرور'
+                              : 'إخفاء كلمة المرور',
                           icon: Icon(
                             _c.obscurePassword.value
                                 ? Icons.visibility_outlined
@@ -147,18 +155,32 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _confirm,
-                    obscureText: true,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _submit(),
-                    decoration: const InputDecoration(
-                      labelText: 'تأكيد كلمة المرور',
-                      prefixIcon: Icon(Icons.lock_outline),
+                  Obx(
+                    () => TextFormField(
+                      controller: _confirm,
+                      obscureText: _obscureConfirm.value,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.newPassword],
+                      onFieldSubmitted: (_) => _submit(),
+                      decoration: InputDecoration(
+                        labelText: 'تأكيد كلمة المرور',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          tooltip: _obscureConfirm.value
+                              ? 'إظهار كلمة المرور'
+                              : 'إخفاء كلمة المرور',
+                          icon: Icon(
+                            _obscureConfirm.value
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () => _obscureConfirm.toggle(),
+                        ),
+                      ),
+                      validator: (v) => (v != _password.text)
+                          ? 'كلمتا المرور غير متطابقتين'
+                          : null,
                     ),
-                    validator: (v) => (v != _password.text)
-                        ? 'كلمتا المرور غير متطابقتين'
-                        : null,
                   ),
                   const SizedBox(height: 24),
                   Obx(
@@ -176,6 +198,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                 ],
+                ),
               ),
             ),
           ),

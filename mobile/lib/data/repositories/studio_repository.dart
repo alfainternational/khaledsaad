@@ -1,5 +1,6 @@
 import '../../core/config/api_endpoints.dart';
 import '../../core/network/api_client.dart';
+import '../../core/utils/idempotency.dart';
 import '../models/studio_models.dart';
 
 class StudioRepository {
@@ -28,13 +29,27 @@ class StudioRepository {
     required int templateId,
     String? projectId,
     String? brief,
+    bool freshCopy = false,
   }) async {
-    final res =
-        await _api.postGenerative(ApiEndpoints.studioGenerations(ws), body: {
-      'template_id': templateId,
-      'project_public_id': ?projectId,
-      'brief': ?brief,
-    });
+    final res = await _api.postGenerative(
+      ApiEndpoints.studioGenerations(ws),
+      // مهلة العميل تتجاوز ميزانية الخادم (180ث) كي لا يُقطع الاتصال بينما
+      // اكتمل التوليد فعلاً على الخادم (توليد يتيم + رصيد مخصوم).
+      receiveTimeout: const Duration(seconds: 190),
+      idempotencyKey: stableIdempotencyKey('studio', [
+        templateId,
+        projectId ?? '',
+        brief ?? '',
+        // نسخة جديدة مقصودة → مفتاح فريد يتجاوز كاش الـ idempotency (نافذة 24س)
+        // فيولّد الخادم مخرجاً جديداً بدل إعادة المخزّن.
+        if (freshCopy) DateTime.now().microsecondsSinceEpoch,
+      ]),
+      body: {
+        'template_id': templateId,
+        'project_public_id': ?projectId,
+        'brief': ?brief,
+      },
+    );
     return StudioGeneration.fromJson(Map<String, dynamic>.from(res['data'] as Map));
   }
 

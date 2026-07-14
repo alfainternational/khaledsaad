@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'app_semantic_colors.dart';
 
 /// سمات التطبيق (فاتح/داكن) بخط Cairo واتجاه RTL.
 class AppTheme {
@@ -36,6 +37,9 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       textTheme: textTheme,
+      extensions: <ThemeExtension<dynamic>>[
+        isDark ? AppSemanticColors.dark : AppSemanticColors.light,
+      ],
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,

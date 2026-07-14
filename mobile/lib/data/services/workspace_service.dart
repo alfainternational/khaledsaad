@@ -41,6 +41,9 @@ class WorkspaceService extends GetxService {
                   'name': w.name,
                   'type': w.type,
                   'status': w.status,
+                  // نحفظ الدور والصلاحيات كي لا تُخفى الميزات المدفوعة عند القراءة بلا اتصال.
+                  'role': w.role,
+                  'entitlements': w.entitlements,
                 })
             .toList(),
       );

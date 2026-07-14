@@ -1,10 +1,10 @@
 import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
-import '../../core/error/api_exception.dart';
 import '../../data/models/project_model.dart';
 import '../../data/repositories/project_repository.dart';
 import '../../data/services/workspace_service.dart';
+import '../../core/error/api_exception.dart';
 
 class ProjectsController extends GetxController {
   ProjectsController(this._repo, this._workspaces);
@@ -49,6 +49,46 @@ class ProjectsController extends GetxController {
   void setStatus(String? status) {
     statusFilter.value = status;
     load();
+  }
+
+  /// فلترة حسب المرحلة (1..5)، أو null لكل المراحل.
+  void setStage(int? stage) {
+    stageFilter.value = stage;
+    load();
+  }
+
+  /// القطاعات المتاحة عند إنشاء مشروع (تطابق قيود الخادم).
+  static const sectors = <String, String>{
+    'general_business': 'نشاط عام',
+    'ecommerce': 'متجر إلكتروني',
+    'clinic': 'عيادة',
+    'restaurant': 'مطعم',
+    'b2b_services': 'خدمات للشركات',
+    'education': 'تعليم',
+    'saas': 'منتج رقمي (SaaS)',
+  };
+
+  /// إنشاء مشروع جديد بالحد الأدنى من الحقول المطلوبة من الخادم.
+  /// يرمي [ApiException] عند الفشل ليتولّى المستدعي عرض الرسالة.
+  Future<ProjectModel> create({
+    required String name,
+    required String sector,
+  }) async {
+    final ws = _workspaces.activeId;
+    if (ws == null) {
+      throw ApiException(
+        message: 'لا توجد مساحة عمل نشطة.',
+        code: 'NO_WORKSPACE',
+      );
+    }
+    final project = await _repo.create(ws, {
+      'name': name,
+      'sector': sector,
+      'stage': 1,
+      'status': 'active',
+    });
+    await load();
+    return project;
   }
 
   void openProject(ProjectModel project) {

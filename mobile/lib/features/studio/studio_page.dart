@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/l10n/ar_labels.dart';
 import '../../data/models/studio_models.dart';
 import '../../data/repositories/studio_repository.dart';
 import '../../data/services/workspace_service.dart';
@@ -218,6 +219,10 @@ class StudioPage extends StatelessWidget {
             child: const Text('إلغاء'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
             onPressed: () => Get.back(result: true),
             child: const Text('حذف'),
           ),
@@ -225,7 +230,7 @@ class StudioPage extends StatelessWidget {
       ),
     );
     if (ok == true) {
-      await c.deleteGeneration(g);
+      c.deleteGeneration(g);
     }
   }
 }
@@ -285,19 +290,32 @@ class _GenerationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final processing = generation.isProcessing;
     return Card(
       child: ListTile(
-        leading: Icon(
-          generation.isFailed
-              ? Icons.error_outline
-              : Icons.description_outlined,
-          color: generation.isFailed
-              ? Theme.of(context).colorScheme.error
-              : Theme.of(context).colorScheme.primary,
-        ),
+        leading: processing
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.4),
+              )
+            : Icon(
+                generation.isFailed
+                    ? Icons.error_outline
+                    : Icons.description_outlined,
+                color: generation.isFailed
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.primary,
+              ),
         title: Text(generation.templateName ?? 'مخرج'),
-        subtitle: Text(generation.createdAt ?? generation.status),
+        subtitle: Text(
+          processing
+              ? 'قيد التوليد...'
+              : (generation.createdAt ?? ArLabels.value(generation.status)),
+        ),
         trailing: IconButton(
+          tooltip: 'حذف',
           icon: const Icon(Icons.delete_outline),
           onPressed: onDelete,
         ),

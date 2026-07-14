@@ -5,6 +5,7 @@ import '../../core/error/api_exception.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// علامة الوكالة (white-label): تفعيل + اسم + لون + شعار.
 class BrandingPage extends StatefulWidget {
@@ -78,13 +79,11 @@ class _BrandingPageState extends State<BrandingPage> {
         'color': _color.text.trim().isEmpty ? null : _color.text.trim(),
         'logo_url': _logoUrl.text.trim().isEmpty ? null : _logoUrl.text.trim(),
       });
-      Get.snackbar('علامة الوكالة', 'تم الحفظ.',
-          snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.success('تم الحفظ.', title: 'علامة الوكالة');
     } on ApiException catch (e) {
       final firstFieldError =
           e.errors.isNotEmpty ? e.errors.values.first.first : null;
-      Get.snackbar('علامة الوكالة', firstFieldError ?? e.message,
-          snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(firstFieldError ?? e.message, title: 'علامة الوكالة');
     } finally {
       _saving.value = false;
     }

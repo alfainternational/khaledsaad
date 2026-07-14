@@ -48,12 +48,15 @@ class ErrorInterceptor extends Interceptor {
         if (data is Map<String, dynamic>) {
           return ApiException.fromJson(data, status: response?.statusCode);
         }
+        // جسم الخطأ لطلبات التنزيل يصل كبايتات؛ نفكّه للحفاظ على الرسالة/الرمز.
+        if (data is List<int>) {
+          return ApiException.fromBytes(data, status: response?.statusCode);
+        }
+        if (data is String && data.isNotEmpty) {
+          return ApiException.fromBytes(data.codeUnits, status: response?.statusCode);
+        }
         if (response != null) {
-          return ApiException(
-            message: 'حدث خطأ (${response.statusCode}).',
-            code: 'HTTP_${response.statusCode}',
-            status: response.statusCode,
-          );
+          return ApiException.fromBytes(const [], status: response.statusCode);
         }
         return ApiException.network();
     }

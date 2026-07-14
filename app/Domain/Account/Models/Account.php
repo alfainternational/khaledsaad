@@ -24,7 +24,23 @@ class Account extends Model
         'name',
         'billing_email',
         'status',
+        'ai_provider',
+        'ai_provider_key',
     ];
+
+    protected $hidden = [
+        'ai_provider_key',
+    ];
+
+    protected $casts = [
+        'ai_provider_key' => 'encrypted',
+    ];
+
+    /** هل ربط هذا الحساب مفتاح ذكاء خاصاً به (BYOK)؟ */
+    public function hasByoAi(): bool
+    {
+        return filled($this->ai_provider) && filled($this->ai_provider_key);
+    }
 
     public function owner(): BelongsTo
     {

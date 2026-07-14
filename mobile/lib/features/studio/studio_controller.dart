@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
@@ -5,6 +7,7 @@ import '../../core/error/api_exception.dart';
 import '../../data/models/studio_models.dart';
 import '../../data/repositories/studio_repository.dart';
 import '../../data/services/workspace_service.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 class StudioController extends GetxController {
   StudioController(this._repo, this._workspaces);
@@ -53,6 +56,7 @@ class StudioController extends GetxController {
     required int templateId,
     String? projectPublicId,
     String? brief,
+    bool freshCopy = false,
   }) async {
     final ws = _workspaces.activeId;
     if (ws == null) return null;
@@ -63,6 +67,7 @@ class StudioController extends GetxController {
         templateId: templateId,
         projectId: projectPublicId,
         brief: brief,
+        freshCopy: freshCopy,
       );
       generations.insert(0, generation);
       return generation;
@@ -71,11 +76,47 @@ class StudioController extends GetxController {
     }
   }
 
-  Future<void> deleteGeneration(StudioGeneration generation) async {
-    final ws = _workspaces.activeId;
-    if (ws == null) return;
-    await _repo.delete(ws, generation.publicId);
-    generations.removeWhere((g) => g.publicId == generation.publicId);
+  /// مؤقّتات حذف مؤجّلة (للسماح بالتراجع قبل الحذف الفعلي على الخادم).
+  final _pendingDeletes = <String, Timer>{};
+
+  /// حذف تفاؤلي: يزيل المخرج من القائمة فوراً ويعرض «تراجع». يُنفَّذ الحذف
+  /// على الخادم بعد انقضاء مهلة التراجع ما لم يتراجع المستخدم.
+  void deleteGeneration(StudioGeneration generation) {
+    final index =
+        generations.indexWhere((g) => g.publicId == generation.publicId);
+    if (index < 0) return;
+    generations.removeAt(index);
+
+    final timer = Timer(const Duration(seconds: 5), () async {
+      _pendingDeletes.remove(generation.publicId);
+      final ws = _workspaces.activeId;
+      if (ws == null) return;
+      try {
+        await _repo.delete(ws, generation.publicId);
+      } on ApiException {
+        // فشل الحذف على الخادم — نعيد المخرج للقائمة حتى لا يضيع صامتاً.
+        if (!generations.any((g) => g.publicId == generation.publicId)) {
+          generations.insert(index.clamp(0, generations.length), generation);
+        }
+      }
+    });
+    _pendingDeletes[generation.publicId] = timer;
+
+    UiFeedback.undoable('حُذف المخرج', onUndo: () {
+      _pendingDeletes.remove(generation.publicId)?.cancel();
+      if (!generations.any((g) => g.publicId == generation.publicId)) {
+        generations.insert(index.clamp(0, generations.length), generation);
+      }
+    });
+  }
+
+  @override
+  void onClose() {
+    for (final timer in _pendingDeletes.values) {
+      timer.cancel();
+    }
+    _pendingDeletes.clear();
+    super.onClose();
   }
 
   void openGeneration(StudioGeneration generation) {

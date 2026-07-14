@@ -1,5 +1,6 @@
 import '../../core/config/api_endpoints.dart';
 import '../../core/network/api_client.dart';
+import '../../core/utils/idempotency.dart';
 import '../models/tool_form_model.dart';
 import '../models/tool_list_item.dart';
 import '../models/tool_run_model.dart';
@@ -66,6 +67,14 @@ class ToolRepository {
   }) async {
     final res = await _api.post(
       ApiEndpoints.toolRun(ws, project, tcode),
+      // مفتاح ثابت لنفس (المشروع/الأداة/الوضع/المدخلات) كي لا تُنشئ إعادة
+      // المحاولة بعد انقطاع مؤقّت سجلّ تشغيل مكرّراً.
+      idempotencyKey: stableIdempotencyKey('toolrun', [
+        project,
+        tcode,
+        mode,
+        inputs,
+      ]),
       body: {
         'mode': mode,
         'inputs': inputs,

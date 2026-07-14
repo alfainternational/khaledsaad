@@ -6,6 +6,7 @@ import '../../data/models/collab_models.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// الفريق: الأعضاء والدعوات + دعوة جديدة — قسمان هادئان.
 class TeamPage extends StatefulWidget {
@@ -24,6 +25,9 @@ class _TeamPageState extends State<TeamPage> {
   final _loading = true.obs;
   final _error = RxnString();
 
+  /// تحقّق مبسّط من صيغة البريد قبل إرسال الدعوة.
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +36,11 @@ class _TeamPageState extends State<TeamPage> {
 
   Future<void> _load() async {
     final ws = _workspaces.activeId;
-    if (ws == null) return;
+    if (ws == null) {
+      _loading.value = false;
+      _error.value = 'لا توجد مساحة عمل نشطة.';
+      return;
+    }
     _loading.value = true;
     _error.value = null;
     try {
@@ -100,17 +108,24 @@ class _TeamPageState extends State<TeamPage> {
       ),
     );
 
-    if (ok == true && email.text.trim().isNotEmpty) {
+    if (ok == true) {
+      final value = email.text.trim();
+      if (!_emailPattern.hasMatch(value)) {
+        UiFeedback.error('أدخل بريداً إلكترونياً صحيحاً.');
+        email.dispose();
+        return;
+      }
       final ws = _workspaces.activeId;
-      if (ws == null) return;
+      if (ws == null) {
+        email.dispose();
+        return;
+      }
       try {
-        await _repo.invite(ws, email: email.text.trim(), role: role);
-        Get.snackbar('الفريق', 'أُرسلت الدعوة بنجاح.',
-            snackPosition: SnackPosition.BOTTOM);
+        await _repo.invite(ws, email: value, role: role);
+        UiFeedback.success('أُرسلت الدعوة بنجاح.');
         await _load();
       } on ApiException catch (e) {
-        Get.snackbar('الفريق', e.fieldError('email') ?? e.message,
-            snackPosition: SnackPosition.BOTTOM);
+        UiFeedback.error(e.fieldError('email') ?? e.message);
       }
     }
     email.dispose();
@@ -119,24 +134,30 @@ class _TeamPageState extends State<TeamPage> {
   Future<void> _removeMember(TeamMember member) async {
     final ws = _workspaces.activeId;
     if (ws == null) return;
-    final ok = await _confirm('حذف العضو', 'هل تريد إزالة ${member.name ?? 'العضو'} من الفريق؟');
+    final ok = await _confirm(
+        'حذف العضو', 'هل تريد إزالة ${member.name ?? 'العضو'} من الفريق؟');
     if (ok != true) return;
     try {
       await _repo.removeMember(ws, member.id);
       _members.removeWhere((m) => m.id == member.id);
+      UiFeedback.success('تمت إزالة العضو.');
     } on ApiException catch (e) {
-      Get.snackbar('الفريق', e.message, snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message);
     }
   }
 
   Future<void> _removeInvitation(TeamInvitation invitation) async {
     final ws = _workspaces.activeId;
     if (ws == null) return;
+    final ok = await _confirm(
+        'إلغاء الدعوة', 'هل تريد إلغاء الدعوة المرسلة إلى ${invitation.email}؟');
+    if (ok != true) return;
     try {
       await _repo.removeInvitation(ws, invitation.id);
       _invitations.removeWhere((i) => i.id == invitation.id);
+      UiFeedback.success('أُلغيت الدعوة.');
     } on ApiException catch (e) {
-      Get.snackbar('الفريق', e.message, snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message);
     }
   }
 
@@ -161,6 +182,8 @@ class _TeamPageState extends State<TeamPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('الفريق')),
+      // startFloat في RTL = أسفل اليمين، بعيداً عن زر المساعد العائم (أسفل اليسار).
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _invite,
         icon: const Icon(Icons.person_add_alt),
@@ -170,6 +193,15 @@ class _TeamPageState extends State<TeamPage> {
         if (_loading.value) return AppStateView.loading();
         if (_error.value != null) {
           return AppStateView.error(message: _error.value, onRetry: _load);
+        }
+        if (_members.isEmpty && _invitations.isEmpty) {
+          return AppStateView.empty(
+            icon: Icons.group_outlined,
+            title: 'لا يوجد أعضاء بعد',
+            message: 'ادعُ زميلاً للعمل معك في هذه المساحة.',
+            actionLabel: 'دعوة عضو',
+            onAction: _invite,
+          );
         }
         return RefreshIndicator(
           onRefresh: _load,
@@ -192,6 +224,7 @@ class _TeamPageState extends State<TeamPage> {
                       trailing: m.role == 'owner'
                           ? null
                           : IconButton(
+                              tooltip: 'إزالة العضو',
                               icon: const Icon(Icons.person_remove_outlined),
                               onPressed: () => _removeMember(m),
                             ),
@@ -211,6 +244,7 @@ class _TeamPageState extends State<TeamPage> {
                         subtitle:
                             Text(TeamMember.roleLabels[i.role] ?? i.role),
                         trailing: IconButton(
+                          tooltip: 'إلغاء الدعوة',
                           icon: const Icon(Icons.close),
                           onPressed: () => _removeInvitation(i),
                         ),

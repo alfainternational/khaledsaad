@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
+import '../../app/theme/app_semantic_colors.dart';
 import '../../core/error/api_exception.dart';
 import '../../core/l10n/ar_labels.dart';
 import '../../data/models/lifecycle_models.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 class IntelligenceController extends GetxController {
   IntelligenceController(this._repo, this._workspaces, this.projectId);
@@ -25,6 +27,11 @@ class IntelligenceController extends GetxController {
   final error = RxnString();
 
   Timer? _pollTimer;
+
+  /// سقف الاستطلاع: 40 محاولة × 6ث = 4 دقائق، كي لا يستمر بلا نهاية لو علق
+  /// التحليل في الطابور على الخادم.
+  static const _maxPollAttempts = 40;
+  int _pollAttempts = 0;
 
   @override
   void onReady() {
@@ -70,10 +77,20 @@ class IntelligenceController extends GetxController {
   }
 
   void _startPolling() {
-    _pollTimer?.cancel();
+    // لا تُعِد إنشاء المؤقّت عند كل نبضة — حتى يبقى عدّاد المحاولات صحيحاً.
+    if (_pollTimer?.isActive ?? false) return;
+    _pollAttempts = 0;
     _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) async {
       final ws = _workspaces.activeId;
       if (ws == null) return;
+      if (++_pollAttempts > _maxPollAttempts) {
+        _pollTimer?.cancel();
+        auditInProgress.value = false;
+        UiFeedback.error(
+            'طال التحليل أكثر من المتوقّع. حدّث الصفحة لاحقاً لمتابعة النتيجة.',
+            title: 'التحليل الذكي');
+        return;
+      }
       try {
         final status = await _repo.auditStatus(ws, projectId);
         final wasInProgress = auditInProgress.value;
@@ -96,12 +113,11 @@ class IntelligenceController extends GetxController {
       auditInProgress.value = true;
       auditStatus.value = result['status']?.toString() ?? 'queued';
       _startPolling();
-      Get.snackbar('التحليل الذكي',
+      UiFeedback.success(
           result['message']?.toString() ?? 'تمت جدولة التحليل.',
-          snackPosition: SnackPosition.BOTTOM);
+          title: 'التحليل الذكي');
     } on ApiException catch (e) {
-      Get.snackbar('التحليل الذكي', e.message,
-          snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message, title: 'التحليل الذكي');
     }
   }
 
@@ -115,8 +131,7 @@ class IntelligenceController extends GetxController {
           : await _repo.createPackage(ws, projectId, rec.publicId);
       Get.toNamed(Routes.executionPackage, arguments: pkg.publicId);
     } on ApiException catch (e) {
-      Get.snackbar('حزمة التنفيذ', e.message,
-          snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message, title: 'حزمة التنفيذ');
     }
   }
 }
@@ -242,11 +257,14 @@ class _RecommendationCard extends StatelessWidget {
   final RecommendationModel rec;
   final VoidCallback onPackage;
 
-  Color _severityColor(BuildContext context) => switch (rec.severity) {
-        'high' || 'critical' => const Color(0xFFDC2626),
-        'medium' => const Color(0xFFD97706),
-        _ => const Color(0xFF16A34A),
-      };
+  Color _severityColor(BuildContext context) {
+    final sem = AppSemanticColors.of(context);
+    return switch (rec.severity) {
+      'high' || 'critical' => sem.danger,
+      'medium' => sem.warning,
+      _ => sem.success,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -255,8 +273,15 @@ class _RecommendationCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        leading: Icon(Icons.tips_and_updates_outlined,
-            color: _severityColor(context)),
+        leading: Semantics(
+          label: switch (rec.severity) {
+            'high' || 'critical' => 'أولوية عالية',
+            'medium' => 'أولوية متوسطة',
+            _ => 'أولوية منخفضة',
+          },
+          child: Icon(Icons.tips_and_updates_outlined,
+              color: _severityColor(context)),
+        ),
         title: Text(rec.title,
             style:
                 theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),

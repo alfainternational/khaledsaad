@@ -6,6 +6,7 @@ import '../../data/models/collab_models.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/ui_feedback.dart';
 
 /// عملاء الوكالة — قائمة هادئة + إنشاء/تعديل عبر ورقة سفلية.
 class ClientsPage extends StatefulWidget {
@@ -31,7 +32,11 @@ class _ClientsPageState extends State<ClientsPage> {
 
   Future<void> _load() async {
     final ws = _workspaces.activeId;
-    if (ws == null) return;
+    if (ws == null) {
+      _loading.value = false;
+      _error.value = 'لا توجد مساحة عمل نشطة.';
+      return;
+    }
     _loading.value = true;
     _error.value = null;
     try {
@@ -141,8 +146,7 @@ class _ClientsPageState extends State<ClientsPage> {
           }
           await _load();
         } on ApiException catch (e) {
-          Get.snackbar('العملاء', e.message,
-              snackPosition: SnackPosition.BOTTOM);
+          UiFeedback.error(e.message, title: 'العملاء');
         }
       }
     }
@@ -174,20 +178,35 @@ class _ClientsPageState extends State<ClientsPage> {
       await _repo.deleteClient(ws, client.publicId);
       _clients.removeWhere((c) => c.publicId == client.publicId);
     } on ApiException catch (e) {
-      Get.snackbar('العملاء', e.message, snackPosition: SnackPosition.BOTTOM);
+      UiFeedback.error(e.message, title: 'العملاء');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isAgency = _workspaces.active.value?.isAgency ?? true;
     return Scaffold(
       appBar: AppBar(title: const Text('عملاء الوكالة')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _upsert(),
-        icon: const Icon(Icons.person_add_alt),
-        label: const Text('عميل جديد'),
-      ),
+      // startFloat في RTL = أسفل اليمين، بعيداً عن زر المساعد العائم (أسفل اليسار).
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: isAgency
+          ? FloatingActionButton.extended(
+              onPressed: () => _upsert(),
+              icon: const Icon(Icons.person_add_alt),
+              label: const Text('عميل جديد'),
+            )
+          : null,
       body: Obx(() {
+        // حارس نوع المساحة: العملاء خاصون بمساحات الوكالة فقط — يمنع الفتح
+        // عبر deep link من مساحة غير-وكالة.
+        if (!(_workspaces.active.value?.isAgency ?? true)) {
+          return AppStateView.empty(
+            icon: Icons.workspace_premium_outlined,
+            title: 'خاص بمساحات الوكالة',
+            message:
+                'إدارة العملاء متاحة في مساحات العمل من نوع «وكالة». بدّل إلى مساحة وكالة أو رقِّ باقتك.',
+          );
+        }
         if (_loading.value) return AppStateView.loading();
         if (_error.value != null && _clients.isEmpty) {
           return AppStateView.error(message: _error.value, onRetry: _load);
@@ -217,6 +236,7 @@ class _ClientsPageState extends State<ClientsPage> {
                       '${client.projectsCount} مشروع',
                   ].where((s) => s.isNotEmpty).join(' · ')),
                   trailing: PopupMenuButton<String>(
+                    tooltip: 'خيارات العميل',
                     onSelected: (action) => action == 'edit'
                         ? _upsert(client)
                         : _delete(client),
