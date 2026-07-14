@@ -125,6 +125,11 @@ class WorkspaceGenerationContextBuilder
                 'name' => $project->name,
                 'stage' => $project->stage,
                 'status' => $project->status,
+                'sector' => $this->stringValue($project->sector),
+                'market_country' => $this->stringValue($project->market_country),
+                'website' => $this->stringValue($project->primary_domain),
+                'social_links' => $this->projectSocialLinks($project),
+                'competitors' => $this->stringList($project->competitors_json ?? []),
             ] : null,
             'client' => $project?->client ? [
                 'id' => $project->client->id,
@@ -217,6 +222,24 @@ class WorkspaceGenerationContextBuilder
 
         if (is_array($context['client'] ?? null)) {
             $parts[] = 'العميل: '.$this->stringValue($context['client']['name'] ?? null);
+        }
+
+        if (is_array($context['project'] ?? null)) {
+            $presence = array_filter([
+                ($context['project']['website'] ?? '') !== '' ? 'الموقع الإلكتروني: '.$context['project']['website'] : null,
+                ! empty($context['project']['social_links']) ? 'حسابات التواصل: '.$this->implodeList($context['project']['social_links'], ' | ') : null,
+                ($context['project']['sector'] ?? '') !== '' ? 'القطاع: '.$context['project']['sector'] : null,
+                ($context['project']['market_country'] ?? '') !== '' ? 'السوق/الدولة: '.$context['project']['market_country'] : null,
+                ! empty($context['project']['competitors']) ? 'المنافسون: '.$this->implodeList($context['project']['competitors'], ' | ') : null,
+            ]);
+
+            if ($presence !== []) {
+                $parts[] = '=== الحضور الرقمي والسوق (من ملف المشروع) ===';
+                foreach ($presence as $line) {
+                    $parts[] = '- '.$line;
+                }
+                $parts[] = 'ملاحظة: هذه روابط معلنة من المستخدم. استند إليها في التحليل والتوصيات؛ إن احتجت محتوى الصفحة نفسه فاطلب من المستخدم لصقه بدل افتراض تعذّر الوصول.';
+            }
         }
 
         $profileLine = $this->formatKeyValueLine('ملف المساحة', [
@@ -479,10 +502,13 @@ class WorkspaceGenerationContextBuilder
             return [];
         }
 
+        // تقليم: نكتفي بأحدث 15 تشغيلاً بتفاصيلها الكاملة (المدخلات ثقيلة التوكنات)؛
+        // بينما تُغطّي «ملخصات الأدوات» كل الأدوات المنجَزة بإيجاز — فلا تضيع أي أداة.
         return ToolRun::query()
             ->where('workspace_id', $workspace->id)
             ->where('project_id', $project->id)
             ->latest()
+            ->limit(15)
             ->get()
             ->map(function (ToolRun $run): array {
                 $summary = is_array($run->summary_json) ? $run->summary_json : [];
@@ -619,6 +645,46 @@ class WorkspaceGenerationContextBuilder
             ->where('workspace_id', $workspace->id)
             ->where('project_id', $project->id)
             ->pluck('id')
+            ->all();
+    }
+
+    /**
+     * Flattens the project's declared + verified social profiles into concise strings.
+     *
+     * @return array<int, string>
+     */
+    private function projectSocialLinks(Project $project): array
+    {
+        $links = [];
+
+        foreach ((array) ($project->official_social_links_json ?? []) as $key => $value) {
+            if (is_string($value) && trim($value) !== '') {
+                $links[] = is_string($key) ? $key.': '.trim($value) : trim($value);
+            }
+        }
+
+        foreach ((array) ($project->verified_social_profiles_json ?? []) as $profile) {
+            if (! is_array($profile)) {
+                continue;
+            }
+
+            $label = trim(implode(' ', array_filter([
+                $this->stringValue($profile['network'] ?? null),
+                $this->stringValue($profile['handle'] ?? null),
+            ])));
+            $url = $this->stringValue($profile['url'] ?? null);
+            $entry = trim($label.($url !== '' ? ' ('.$url.')' : ''));
+
+            if ($entry !== '') {
+                $links[] = $entry;
+            }
+        }
+
+        return collect($links)
+            ->map(fn (string $line): string => $this->limit($line, 160))
+            ->filter()
+            ->unique()
+            ->values()
             ->all();
     }
 

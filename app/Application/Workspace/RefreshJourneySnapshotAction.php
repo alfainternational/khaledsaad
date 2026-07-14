@@ -56,8 +56,11 @@ class RefreshJourneySnapshotAction
             }
         }
 
-        if ($currentStep === null) {
-            $currentStep = collect($stageSequence)->last()['tools'][0] ?? null;
+        // كل الأدوات مكتملة: الرحلة انتهت — لا نُرجع الخطوة لأول أداة في المرحلة الأخيرة
+        // (كان هذا يسبب اقتراح «ابدأ بـKPIs» رغم اكتمال 100%). نتركها فارغة ونعلّم الاكتمال.
+        $journeyComplete = $currentStep === null;
+        if ($journeyComplete) {
+            $currentStage = (int) (collect($stageSequence)->last()['number'] ?? $currentStage);
         }
 
         $recommendedTool = $currentStep
@@ -74,6 +77,7 @@ class RefreshJourneySnapshotAction
             ),
             'current_stage' => $currentStage,
             'current_step' => $currentStep,
+            'journey_complete' => $journeyComplete,
             'completed_tools' => $completedToolCodes,
             'completed_count' => count($completedToolCodes),
             'next_tool_name' => $recommendedTool?->name,

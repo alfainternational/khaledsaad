@@ -4,6 +4,7 @@ namespace App\Support\Dashboard;
 
 use App\Domain\Project\Models\Project;
 use App\Domain\Tool\Models\Tool;
+use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Support\Workspaces\WorkspaceJourneyStore;
 use App\Support\Workspaces\WorkspaceProfileStore;
@@ -64,18 +65,36 @@ class NextStepRecommendationService
         }
 
         $journeySnapshot = $this->journeyStore->getSnapshot($workspace, $targetProject);
-        $currentStage = (int) ($journeySnapshot['current_stage'] ?? $targetProject->stage);
-        $nextStep = $journeySnapshot['current_step'] ?? null;
 
-        $tool = $nextStep
-            ? Tool::query()->where('code', $nextStep)->first()
-            : Tool::query()
-                ->where('stage', $currentStage)
+        // مصدر الحقيقة للإنجاز = tool_runs الفعلية (نفس ما تحسبه اللوحة)، لا لقطة مخزّنة قد تتقادم.
+        $completedToolCodes = ToolRun::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('project_id', $targetProject->id)
+            ->distinct()
+            ->pluck('tool_code')
+            ->all();
+
+        // أول أداة منشورة غير منجَزة عبر كل المراحل (بالترتيب) هي الترشيح الصحيح.
+        $firstIncomplete = Tool::query()
+            ->whereIn('status', ['published', 'beta'])
+            ->whereNotIn('code', $completedToolCodes)
+            ->orderBy('stage')
+            ->orderBy('sort_order')
+            ->first();
+
+        // نحترم لقطة الرحلة فقط إن كانت خطوتها أداةً منشورة غير منجَزة فعلاً.
+        $snapshotStep = $journeySnapshot['current_step'] ?? null;
+        $tool = null;
+        if ($snapshotStep !== null && ! in_array($snapshotStep, $completedToolCodes, true)) {
+            $tool = Tool::query()
+                ->where('code', $snapshotStep)
                 ->whereIn('status', ['published', 'beta'])
-                ->orderBy('sort_order')
                 ->first();
+        }
+        $tool = $tool ?? $firstIncomplete;
 
         if ($tool) {
+            $currentStage = (int) $tool->stage;
             $minutes = (int) ($tool->estimated_minutes ?? 0);
             $description = trim((string) ($tool->description ?? ''));
 
@@ -99,21 +118,20 @@ class NextStepRecommendationService
             ];
         }
 
-        $nextStage = min($currentStage + 1, 5);
-
+        // لا توجد أداة غير منجَزة = أكملت كل أدوات المراحل الخمس.
         return [
-            'title' => 'انتقل إلى: '.$this->stageLabel($nextStage),
-            'summary' => 'أنهيت هذه المرحلة. تابع إلى الخطوة التالية.',
+            'title' => 'أكملت رحلة هذا المشروع',
+            'summary' => 'أنجزت كل أدوات المراحل الخمس. راجع تقاريرك النهائية أو ابدأ مشروعاً جديداً.',
             'details' => [
-                'أكملت أدوات مرحلة «'.$this->stageLabel($currentStage).'».',
-                'افتح قائمة الأدوات وابدأ بأول أداة في مرحلة «'.$this->stageLabel($nextStage).'».',
+                'كل أدوات «اكتشف» و«الأساس» و«العرض» و«اجذب وحوّل» و«قِس ووسّع» منجَزة.',
+                'افتح التقارير لقراءة الصورة الكاملة، أو حدّث أي أداة لتطوير مخرجاتك.',
             ],
-            'action_label' => 'تابع',
-            'action_route' => route('tools.index'),
-            'action_type' => 'tools_index',
+            'action_label' => 'اعرض التقارير',
+            'action_route' => route('reports.index'),
+            'action_type' => 'reports',
             'tool_code' => null,
             'project_public_id' => (string) $targetProject->public_id,
-            'stage' => $nextStage,
+            'stage' => 5,
         ];
     }
 
