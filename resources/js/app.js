@@ -2124,6 +2124,194 @@ function wireVoiceInput() {
     });
 }
 
+function wireInterviewVoice() {
+    const form = document.querySelector('[data-interview-form]');
+    const url = form?.dataset.interviewTranscribeUrl;
+    if (!form || !url || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        form?.querySelectorAll('[data-interview-voice]').forEach((btn) => {
+            btn.hidden = true;
+        });
+        return;
+    }
+
+    let activeKey = null;
+    let recorder = null;
+    let chunks = [];
+    let stream = null;
+
+    const stopStream = () => {
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            stream = null;
+        }
+    };
+
+    const buttonFor = (key) => form.querySelector(`[data-interview-voice="${key}"]`);
+    const statusFor = (key) => form.querySelector(`[data-voice-status="${key}"]`);
+    const labelFor = (key) => buttonFor(key)?.querySelector('[data-voice-label]');
+
+    const resetButton = (key) => {
+        const btn = buttonFor(key);
+        if (btn) {
+            btn.setAttribute('aria-pressed', 'false');
+            btn.classList.remove('is-recording');
+        }
+        const label = labelFor(key);
+        if (label) label.textContent = 'تكلّم';
+    };
+
+    const sendAudio = async (key, blob) => {
+        const status = statusFor(key);
+        if (status) status.textContent = 'جارٍ التحويل...';
+
+        const formData = new FormData();
+        formData.append('audio', blob, 'audio.webm');
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    Accept: 'application/json',
+                },
+                body: formData,
+            });
+            const data = await response.json().catch(() => ({}));
+            if (status) status.textContent = '';
+
+            if (!response.ok) {
+                showToast(data.message || 'تعذّر تحويل الصوت.', 'error');
+                return;
+            }
+
+            const textarea = form.querySelector(`[data-interview-answer="${key}"]`);
+            if (textarea && data.transcript) {
+                const existing = textarea.value.trim();
+                textarea.value = existing ? existing + ' ' + data.transcript : data.transcript;
+                textarea.classList.add('ai-suggested');
+                setTimeout(() => textarea.classList.remove('ai-suggested'), 2400);
+            }
+        } catch (error) {
+            if (status) status.textContent = '';
+            showToast('حدث خطأ أثناء تحويل الصوت.', 'error');
+        }
+    };
+
+    const startRecording = async (key) => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (error) {
+            showToast('لم نتمكّن من الوصول إلى الميكروفون.', 'error');
+            return;
+        }
+        chunks = [];
+        activeKey = key;
+        recorder = new MediaRecorder(stream);
+        recorder.addEventListener('dataavailable', (event) => {
+            if (event.data && event.data.size > 0) chunks.push(event.data);
+        });
+        recorder.addEventListener('stop', () => {
+            stopStream();
+            const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+            const key = activeKey;
+            activeKey = null;
+            resetButton(key);
+            if (blob.size > 0) sendAudio(key, blob);
+        });
+        recorder.start();
+
+        const btn = buttonFor(key);
+        if (btn) {
+            btn.setAttribute('aria-pressed', 'true');
+            btn.classList.add('is-recording');
+        }
+        const label = labelFor(key);
+        if (label) label.textContent = 'أوقف';
+        const status = statusFor(key);
+        if (status) status.textContent = 'جارٍ التسجيل... تكلّم الآن';
+    };
+
+    const stopRecording = () => {
+        if (recorder && recorder.state !== 'inactive') recorder.stop();
+    };
+
+    form.querySelectorAll('[data-interview-voice]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const key = button.dataset.interviewVoice;
+            if (activeKey === key) {
+                stopRecording();
+            } else if (activeKey === null) {
+                startRecording(key);
+            } else {
+                showToast('أوقف التسجيل الحالي أولاً.', 'error');
+            }
+        });
+    });
+}
+
+function wireAnswerChallenge() {
+    const form = document.querySelector('[data-tool-ajax-form]');
+    const url = form?.dataset.toolChallengeUrl;
+    if (!form || !url) {
+        return;
+    }
+
+    const asked = new Map(); // fieldKey -> last challenged value (تجنّب نداء مكرر)
+
+    form.addEventListener(
+        'focusout',
+        (event) => {
+            const input = event.target.closest('[data-field-key]');
+            if (!input) {
+                return;
+            }
+
+            const wrap = input.closest('[data-field-wrap]');
+            // نركّز على الحقول المهمة فقط للحدّ من النداءات والكلفة.
+            if (!wrap || wrap.dataset.fieldPriority !== 'critical') {
+                return;
+            }
+
+            const key = input.dataset.fieldKey;
+            const value = String(input.value || '').trim();
+            if (!key || value.length < 3 || asked.get(key) === value) {
+                return;
+            }
+            asked.set(key, value);
+
+            const statusEl = form.querySelector(`[data-field-live-status="${key}"]`);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                    field: key,
+                    value,
+                    mode: form.querySelector('[name="mode"]')?.value || 'guided',
+                }),
+            })
+                .then((response) => (response.ok ? response.json() : null))
+                .then((data) => {
+                    if (!statusEl) return;
+                    const question = data && typeof data.question === 'string' ? data.question.trim() : '';
+                    if (question) {
+                        statusEl.innerHTML = '';
+                        const tip = document.createElement('div');
+                        tip.className = 'tool-field-challenge';
+                        tip.textContent = 'لتوضيح أدق: ' + question;
+                        statusEl.appendChild(tip);
+                    }
+                })
+                .catch(() => {});
+        },
+        true,
+    );
+}
+
 function wireToolInputCoach() {
     const form = document.querySelector('[data-tool-ajax-form]');
     if (!form) {
@@ -2772,6 +2960,8 @@ document.addEventListener('DOMContentLoaded', () => {
     wireToolFieldSuggestions();
     wireExampleChips();
     wireVoiceInput();
+    wireInterviewVoice();
+    wireAnswerChallenge();
     wireToolInputCoach();
     wireAutoSaveDraft();
     wireLivePreviewFlash();

@@ -6535,6 +6535,66 @@ details[open] .onb-advanced-summary {
     background: color-mix(in srgb, var(--accent) 11%, var(--surface));
 }
 
+/* إدخال الصوت (المرحلة 2): تكلّم بدل الكتابة */
+.tool-voice-input {
+    margin: 0.75rem 0;
+    padding: 0.85rem 1rem;
+    border: 1px dashed color-mix(in srgb, var(--accent) 30%, var(--border));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+
+.tool-voice-input-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.tool-voice-btn.is-recording {
+    background: color-mix(in srgb, #e11d48 88%, var(--surface));
+    border-color: #e11d48;
+    color: #fff;
+    animation: tool-voice-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tool-voice-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, #e11d48 45%, transparent); }
+    50% { box-shadow: 0 0 0 6px color-mix(in srgb, #e11d48 0%, transparent); }
+}
+
+.tool-voice-status {
+    font-size: 0.78rem;
+    color: color-mix(in srgb, var(--text) 70%, transparent);
+}
+
+.tool-voice-hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.76rem;
+    color: color-mix(in srgb, var(--text) 62%, transparent);
+}
+
+.tool-voice-transcript {
+    margin-top: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+    font-size: 0.82rem;
+    line-height: 1.7;
+}
+
+/* المُحاوِر الذكي (المرحلة 3): سؤال متابعة لرفع دقّة الإجابة */
+.tool-field-challenge {
+    margin-top: 0.4rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 9px;
+    border-inline-start: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+    color: color-mix(in srgb, var(--text) 82%, transparent);
+    font-size: 0.78rem;
+    line-height: 1.6;
+}
+
 .tool-field-wrap.is-empty .app-input {
     border-color: color-mix(in srgb, var(--warning, #f59e0b) 28%, var(--border));
 }

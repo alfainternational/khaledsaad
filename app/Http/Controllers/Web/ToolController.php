@@ -36,6 +36,7 @@ class ToolController extends Controller
         ToolCopyCatalog $toolCopyCatalog,
         ProjectMarketingBriefStore $briefStore,
         ToolStrategicAdvisor $toolStrategicAdvisor,
+        \App\Domain\AI\Speech\SpeechToTextContract $speech,
     ): View {
         $workspace = $this->currentWorkspace($request);
         $this->authorize('useTools', $workspace);
@@ -147,6 +148,7 @@ class ToolController extends Controller
             'latestAudit' => $latestAudit,
             'latestAuditReport' => $latestAudit?->report_json ?? [],
             'latestAuditSummary' => $latestAudit?->summary_json ?? [],
+            'voiceEnabled' => $speech->isAvailable(),
         ]);
     }
 

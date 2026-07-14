@@ -187,6 +187,7 @@
                 data-tool-name="{{ $tool->name ?: $tool->code }}"
                 data-analyze-url="{{ route('api.ai.analyze') }}"
                 data-suggest-url="{{ route('api.ai.suggest') }}"
+                data-tool-challenge-url="{{ route('tools.challenge', $tool) }}"
             >
                 @csrf
 
@@ -205,6 +206,24 @@
                     :initial-mode="$initialMode"
                     :is-diagnosis="$isDiagnosisTool"
                 />
+
+                @if (! empty($voiceEnabled))
+                    <section
+                        class="tool-voice-input"
+                        data-voice-input
+                        data-voice-url="{{ route('tools.transcribe', $tool) }}"
+                    >
+                        <div class="tool-voice-input-head">
+                            <button type="button" class="btn btn-secondary btn-sm tool-voice-btn" data-voice-record aria-pressed="false">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4"/></svg>
+                                <span data-voice-label>تكلّم بدل الكتابة</span>
+                            </button>
+                            <span class="tool-voice-status" data-voice-status role="status" aria-live="polite"></span>
+                        </div>
+                        <p class="tool-voice-hint">تكلّم عن مشروعك بلهجتك، وسنحوّل كلامك إلى إجابات في الحقول المناسبة. راجِعها وعدّل ما يلزم قبل الحفظ.</p>
+                        <div class="tool-voice-transcript" data-voice-transcript hidden></div>
+                    </section>
+                @endif
 
                 <details class="tool-context-rail tool-coach-rail">
                     <summary class="onb-advanced-summary">

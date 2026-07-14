@@ -12,6 +12,10 @@ use Illuminate\Support\Str;
 
 class ToolFormExperienceBuilder
 {
+    public function __construct(
+        private readonly ToolInputPrefillService $prefill = new ToolInputPrefillService(),
+    ) {}
+
     /**
      * @param  array<string, mixed>  $blueprint
      * @param  array<string, mixed>  $profile
@@ -29,6 +33,14 @@ class ToolFormExperienceBuilder
     ): array {
         $modes = [];
 
+        // اقتراحات عالية الثقة مع مصدرها (إجابة سابقة / أداة أخرى) — تُحسب مرة واحدة.
+        $prefillSuggestions = $this->prefill->suggest(
+            $tool,
+            $this->collectFieldKeys($blueprint),
+            $latestRun,
+            $project,
+        );
+
         foreach (($blueprint['modes'] ?? []) as $modeKey => $mode) {
             $modes[$modeKey] = $this->buildModeExperience(
                 $modeKey,
@@ -39,6 +51,7 @@ class ToolFormExperienceBuilder
                 $latestRun,
                 $upstreamContext,
                 $toolBriefing,
+                $prefillSuggestions,
             );
         }
 
@@ -63,6 +76,7 @@ class ToolFormExperienceBuilder
         ?ToolRun $latestRun,
         array $upstreamContext,
         array $toolBriefing,
+        array $prefillSuggestions = [],
     ): array {
         $fields = [];
         $briefFieldSuggestions = $toolBriefing['field_suggestions'] ?? [];
@@ -75,18 +89,23 @@ class ToolFormExperienceBuilder
                 ? trim((string) $briefFieldSuggestions[$field['key']])
                 : null;
 
+            // ترتيب الثقة: إجابة سابقة/قيمة معيارية (مع مصدر) ← ملف المشروع ← heuristic صياغة.
+            $resolved = $this->resolveSuggestion(
+                $prefillSuggestions[$field['key']] ?? null,
+                $briefSuggestion,
+                $priority,
+                fn (): ?string => $this->suggestedValueForField($category, $field, $profile, $project, $latestRun, $upstreamContext),
+            );
+
             $fields[$field['key']] = [
                 'category' => $category,
                 'priority' => $priority,
                 'priority_label' => $this->priorityLabel($priority),
                 'context_hint' => $this->contextHintForField($category, $field, $tool, $profile, $project, $latestRun, $upstreamContext),
                 'smart_placeholder' => $this->smartPlaceholderForField($category, $field, $profile, $project, $latestRun, $upstreamContext),
-                'suggested_value' => $briefSuggestion !== '' && $briefSuggestion !== null
-                    ? $briefSuggestion
-                    : $this->suggestedValueForField($category, $field, $profile, $project, $latestRun, $upstreamContext),
-                'suggestion_label' => $briefSuggestion !== '' && $briefSuggestion !== null
-                    ? 'جاهز من بيانات مشروعك'
-                    : $this->suggestionLabelForPriority($priority),
+                'suggested_value' => $resolved['value'],
+                'suggestion_label' => $resolved['label'],
+                'suggestion_source' => $resolved['source'],
                 'empty_prompt' => $this->emptyPromptForField($category, $field),
                 'weak_prompt' => $this->weakPromptForField($category, $quality['min_length']),
                 'quality' => $quality,
@@ -159,6 +178,56 @@ class ToolFormExperienceBuilder
             'client_label' => $project?->client?->name,
             'mode_label' => $blueprint['modes'][$currentMode]['label'] ?? null,
             'tool_briefing' => $toolBriefing,
+        ];
+    }
+
+    /**
+     * كل مفاتيح الحقول عبر جميع الأوضاع (لطلب اقتراحات الملء المسبق دفعة واحدة).
+     *
+     * @param  array<string, mixed>  $blueprint
+     * @return array<int, string>
+     */
+    private function collectFieldKeys(array $blueprint): array
+    {
+        return collect($blueprint['modes'] ?? [])
+            ->flatMap(fn (array $mode): array => collect($mode['fields'] ?? [])
+                ->pluck('key')
+                ->all())
+            ->filter(fn ($key): bool => is_string($key) && $key !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * يحسم اقتراح الحقل ومصدره بترتيب الثقة.
+     *
+     * @param  array{value: string, source: string, label: string}|null  $prefill
+     * @param  callable(): ?string  $heuristic
+     * @return array{value: ?string, label: string, source: string}
+     */
+    private function resolveSuggestion(?array $prefill, ?string $briefSuggestion, string $priority, callable $heuristic): array
+    {
+        if (is_array($prefill) && trim((string) ($prefill['value'] ?? '')) !== '') {
+            return [
+                'value' => (string) $prefill['value'],
+                'label' => (string) ($prefill['label'] ?? 'مقترح'),
+                'source' => (string) ($prefill['source'] ?? 'prefill'),
+            ];
+        }
+
+        if ($briefSuggestion !== null && $briefSuggestion !== '') {
+            return [
+                'value' => $briefSuggestion,
+                'label' => 'جاهز من بيانات مشروعك',
+                'source' => 'project_brief',
+            ];
+        }
+
+        return [
+            'value' => $heuristic(),
+            'label' => $this->suggestionLabelForPriority($priority),
+            'source' => 'heuristic',
         ];
     }
 

@@ -49,6 +49,9 @@ use App\Policies\ProjectPolicy;
 use App\Policies\WorkspaceInvitationPolicy;
 use App\Policies\WorkspaceMemberPolicy;
 use App\Policies\WorkspacePolicy;
+use App\Domain\AI\Speech\GroqSpeechToText;
+use App\Domain\AI\Speech\NullSpeechToText;
+use App\Domain\AI\Speech\SpeechToTextContract;
 use App\Support\Settings\SettingsStore;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -67,6 +70,20 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(SettingsStore::class);
+
+        // تحويل الكلام إلى نص (المرحلة 2): مُجرّد ليُبدَّل المزوّد من الإعدادات.
+        // على الاستضافة المشتركة المزوّد الوحيد المدعوم سحابياً هو Groq Whisper.
+        $this->app->singleton(SpeechToTextContract::class, function () {
+            if (! (bool) config('services.ai.speech.enabled', true)) {
+                return new NullSpeechToText;
+            }
+
+            return match ((string) config('services.ai.speech.provider', 'groq')) {
+                'groq' => new GroqSpeechToText,
+                default => new NullSpeechToText,
+            };
+        });
+
         $this->app->singleton(EntitlementResolver::class);
         $this->app->singleton(FeatureFlagService::class);
         $this->app->singleton(AuditLogger::class);

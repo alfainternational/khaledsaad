@@ -42,6 +42,7 @@ use App\Http\Controllers\Web\ContactFormController;
 use App\Http\Controllers\Web\DashboardController as UserDashboardController;
 use App\Http\Controllers\Web\ExecutionPackageController;
 use App\Http\Controllers\Web\ExperienceController;
+use App\Http\Controllers\Web\FounderInterviewController;
 use App\Http\Controllers\Web\GuestDiagnosisController;
 use App\Http\Controllers\Web\ProjectDossierController;
 use App\Http\Controllers\Web\ProjectReportController;
@@ -55,6 +56,7 @@ use App\Http\Controllers\Web\ProjectMarketingBriefController;
 use App\Http\Controllers\Web\StudioGenerationController;
 use App\Http\Controllers\Web\TeamController;
 use App\Http\Controllers\Web\ToolController as WebToolController;
+use App\Http\Controllers\Web\ToolAnswerChallengeController;
 use App\Http\Controllers\Web\ToolRunController;
 use App\Http\Controllers\Web\ToolTranscriptionController;
 use Illuminate\Support\Facades\Route;
@@ -258,6 +260,10 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/projects/{project}/tools/{tool}/run', [ToolRunController::class, 'store'])->name('projects.tools.run');
     Route::post('/tools/{tool}/run', [ToolRunController::class, 'storeFromTool'])->name('tools.run');
     Route::post('/tools/{tool}/transcribe', [ToolTranscriptionController::class, 'store'])->name('tools.transcribe');
+    Route::post('/tools/{tool}/challenge', [ToolAnswerChallengeController::class, 'store'])->name('tools.challenge');
+    Route::get('/interview', [FounderInterviewController::class, 'show'])->name('interview.show');
+    Route::post('/interview', [FounderInterviewController::class, 'store'])->name('interview.store');
+    Route::post('/interview/transcribe', [FounderInterviewController::class, 'transcribe'])->name('interview.transcribe');
     Route::get('/tools/{tool}', [WebToolController::class, 'show'])->name('tools.show');
     Route::post('/studio/generations', [StudioGenerationController::class, 'store'])
         ->middleware('entitlement:modules.ai_studio')
