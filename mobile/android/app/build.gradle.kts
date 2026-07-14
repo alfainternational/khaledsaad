@@ -8,7 +8,9 @@ plugins {
 
 android {
     namespace = "net.khaledsaad.ksgrowth_mobile"
-    compileSdk = flutter.compileSdkVersion
+    // مرفوع إلى 36: بعض إضافات Flutter (flutter_plugin_android_lifecycle عبر file_picker)
+    // تتطلّب compileSdk 36 أو أحدث.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
