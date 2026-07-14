@@ -178,6 +178,29 @@ function buildOptions(cfg) {
     return { ...common, series: cfg.series || [], chart: { ...common.chart, height } };
 }
 
+function wireTabs(key, cfg, chart) {
+    if (!Array.isArray(cfg.tabs) || cfg.tabs.length === 0) {
+        return;
+    }
+    const wrap = document.querySelector(`[data-chart-tabs="${key}"]`);
+    if (!wrap) {
+        return;
+    }
+    const buttons = Array.from(wrap.querySelectorAll('[data-tab-index]'));
+    buttons.forEach((btn) => {
+        // Assign via onclick so re-renders (theme change) never stack listeners.
+        btn.onclick = () => {
+            const i = Number(btn.dataset.tabIndex) || 0;
+            const tab = cfg.tabs[i];
+            if (!tab) {
+                return;
+            }
+            chart.updateSeries(tab.series, true);
+            buttons.forEach((b) => b.classList.toggle('is-active', b === btn));
+        };
+    });
+}
+
 function renderAll() {
     const payloadEl = document.getElementById('dashboard-charts-payload');
     if (!payloadEl) {
@@ -204,6 +227,7 @@ function renderAll() {
             const chart = new ApexCharts(el, buildOptions(cfg));
             chart.render();
             registry.set(key, chart);
+            wireTabs(key, cfg, chart);
         } catch (_) {
             /* ignore a single broken chart */
         }

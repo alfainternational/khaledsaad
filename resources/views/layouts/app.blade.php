@@ -115,43 +115,40 @@
         </aside>
 
         <div class="app-main">
-            <header class="app-header shell-header">
-                <div>
-                    <div class="shell-header-tools">
-                        <button type="button" class="shell-icon-button shell-menu-button" data-shell-toggle aria-controls="app-sidebar" aria-expanded="false" aria-label="فتح القائمة">
-                            <span></span><span></span><span></span>
-                        </button>
-                        <div class="shell-theme-cluster">
-                            <button type="button" class="shell-icon-button shell-theme-toggle" data-theme-toggle aria-label="تبديل الوضع">
-                                <svg class="shell-theme-icon shell-theme-icon-moon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.354 15.354A9 9 0 018.646 3.646 9 9 0 1012 21a9 9 0 008.354-5.646z"/>
-                                </svg>
-                                <svg class="shell-theme-icon shell-theme-icon-sun" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.864-6.364l-1.06 1.06M6.696 17.304l-1.06 1.06m13.228 0l-1.06-1.06M6.696 6.696l-1.06-1.06M15.5 12a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z"/>
-                                </svg>
-                            </button>
+            @php
+                $wsTypeAr = ['agency' => 'وكالة', 'team' => 'فريق', 'personal' => 'شخصي'][$currentWorkspace?->type] ?? 'مساحة عمل';
+                $roleAr = ['owner' => 'مالك', 'admin' => 'مدير', 'editor' => 'محرر', 'contributor' => 'مساهم', 'viewer' => 'مشاهد', 'client' => 'عميل'][$currentWorkspaceRole] ?? 'عضو';
+            @endphp
+            <header class="app-header shell-header shell-bar">
+                <div class="shell-bar-start">
+                    <button type="button" class="shell-icon-button shell-menu-button" data-shell-toggle aria-controls="app-sidebar" aria-expanded="false" aria-label="فتح القائمة">
+                        <span></span><span></span><span></span>
+                    </button>
+                    <div class="shell-bar-search">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M21 21l-4.3-4.3"/></svg>
+                        <input type="search" placeholder="ابحث أو اكتب أمراً..." aria-label="بحث">
+                        <kbd class="shell-kbd">⌘K</kbd>
+                    </div>
+                </div>
+                <div class="shell-bar-end">
+                    <button type="button" class="shell-icon-button shell-theme-toggle" data-theme-toggle aria-label="تبديل الوضع">
+                        <svg class="shell-theme-icon shell-theme-icon-moon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.354 15.354A9 9 0 018.646 3.646 9 9 0 1012 21a9 9 0 008.354-5.646z"/>
+                        </svg>
+                        <svg class="shell-theme-icon shell-theme-icon-sun" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.864-6.364l-1.06 1.06M6.696 17.304l-1.06 1.06m13.228 0l-1.06-1.06M6.696 6.696l-1.06-1.06M15.5 12a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z"/>
+                        </svg>
+                    </button>
+                    <a href="{{ route('approvals.index') }}" class="shell-icon-button shell-icon-badge" aria-label="الاعتمادات والتنبيهات" title="الاعتمادات والتنبيهات">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </a>
+                    <div class="shell-user">
+                        <span class="shell-avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
+                        <div class="shell-user-info">
+                            <strong>{{ auth()->user()->name }}</strong>
+                            <small>{{ $wsTypeAr }} · {{ $roleAr }}</small>
                         </div>
                     </div>
-                    @if(($pageKicker ?? '') !== '')
-                        <p class="app-header-kicker">{{ $pageKicker }}</p>
-                    @endif
-                    <h1 class="app-header-title">{{ $pageTitle ?? 'لوحة العمل' }}</h1>
-                </div>
-                <div class="app-header-meta shell-header-meta">
-                    @php
-                        $wsTypeAr = ['agency' => 'وكالة', 'team' => 'فريق', 'personal' => 'شخصي'][$currentWorkspace?->type] ?? 'مساحة عمل';
-                        $roleAr = ['owner' => 'مالك', 'admin' => 'مدير', 'editor' => 'محرر', 'contributor' => 'مساهم', 'viewer' => 'مشاهد', 'client' => 'عميل'][$currentWorkspaceRole] ?? 'عضو';
-                    @endphp
-                    <div class="shell-header-actions">
-                        <a href="{{ route('approvals.index') }}" class="shell-icon-button shell-icon-badge" aria-label="الاعتمادات والتنبيهات" title="الاعتمادات والتنبيهات">
-                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                        </a>
-                    </div>
-                    <div class="shell-header-chip">
-                        <span>{{ auth()->user()->name }}</span>
-                        <small>{{ $wsTypeAr }} · {{ $roleAr }}</small>
-                    </div>
-                    <span class="shell-avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
                 </div>
             </header>
 

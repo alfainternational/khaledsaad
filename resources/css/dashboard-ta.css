@@ -17,27 +17,32 @@
     flex-direction: column;
     gap: var(--sp-5);
     padding: var(--sp-5) var(--sp-6);
-    border-radius: 24px;
-    border: 1px solid var(--card-border);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 94%, transparent), color-mix(in srgb, var(--surface-2) 90%, transparent));
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    box-shadow: none;
 }
-.ta-metric:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+[data-theme="light"] .ta-metric { background: #ffffff; }
 .ta-metric-icon {
     width: 48px; height: 48px;
     display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 14px;
-    color: var(--p);
-    background: var(--p-subtle);
+    border-radius: 12px;
+    color: var(--text-2);
+    background: var(--surface-3);
 }
+[data-theme="light"] .ta-metric-icon { background: #f2f4f7; color: #344054; }
 .ta-metric-icon svg { width: 24px; height: 24px; }
-.ta-icon--indigo { color: #6366f1; background: rgba(99,102,241,0.12); }
-.ta-icon--teal   { color: #14b8a6; background: rgba(20,184,166,0.12); }
-.ta-icon--amber  { color: #f59e0b; background: rgba(245,158,11,0.14); }
-.ta-icon--rose   { color: #f43f5e; background: rgba(244,63,94,0.12); }
-.ta-icon--sky    { color: #0ea5e9; background: rgba(14,165,233,0.12); }
-.ta-icon--violet { color: #8b5cf6; background: rgba(139,92,246,0.13); }
+/* Neutral by default — TailAdmin ecommerce uses gray icon squares */
+.ta-icon--indigo, .ta-icon--teal, .ta-icon--amber,
+.ta-icon--rose, .ta-icon--sky, .ta-icon--violet {
+    color: var(--text-2);
+    background: var(--surface-3);
+}
+[data-theme="light"] .ta-icon--indigo, [data-theme="light"] .ta-icon--teal,
+[data-theme="light"] .ta-icon--amber, [data-theme="light"] .ta-icon--rose,
+[data-theme="light"] .ta-icon--sky, [data-theme="light"] .ta-icon--violet {
+    color: #344054; background: #f2f4f7;
+}
 .ta-metric-foot {
     display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-3);
 }
@@ -79,11 +84,12 @@
 }
 .ta-panel {
     padding: var(--sp-6);
-    border-radius: 24px;
-    border: 1px solid var(--card-border);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 94%, transparent), color-mix(in srgb, var(--surface-2) 90%, transparent));
-    box-shadow: var(--shadow-sm);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    box-shadow: none;
 }
+[data-theme="light"] .ta-panel { background: #ffffff; }
 .ta-panel-head {
     display: flex; align-items: flex-start; justify-content: space-between;
     gap: var(--sp-4); margin-bottom: var(--sp-4);
@@ -192,8 +198,8 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: var(--sp-4); flex-wrap: wrap;
 }
-.ta-pagehead h2 { font-size: clamp(var(--fs-xl), 2.6vw, var(--fs-2xl)); font-weight: 800; letter-spacing: -0.01em; }
-.ta-pagehead p { margin-top: 4px; color: var(--text-muted); font-size: var(--fs-sm); }
+.ta-pagehead h2 { font-size: var(--fs-lg); font-weight: 800; letter-spacing: -0.01em; }
+.ta-pagehead p { margin-top: 2px; color: var(--text-muted); font-size: var(--fs-xs); }
 .ta-pagehead-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
 
 /* ── Header actions cluster (shell) ───────────────────────────── */
@@ -235,3 +241,147 @@
     .shell-header-search { display: none; }
     .ta-metric { padding: var(--sp-5); }
 }
+
+/* ═══ Faithful TailAdmin ecommerce layout ═══════════════════════ */
+
+/* 12-column grid */
+.eco-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--sp-5); }
+.eco-span-7  { grid-column: span 7 / span 7; }
+.eco-span-5  { grid-column: span 5 / span 5; }
+.eco-span-12 { grid-column: 1 / -1; }
+.eco-stack   { display: grid; gap: var(--sp-5); align-content: start; }
+.eco-metric-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-5); }
+
+@media (max-width: 1024px) {
+    .eco-span-7, .eco-span-5 { grid-column: 1 / -1; }
+}
+@media (max-width: 520px) {
+    .eco-metric-pair { grid-template-columns: 1fr; }
+}
+
+/* Panel menu dots */
+.ta-panel-menu {
+    width: 34px; height: 34px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-muted);
+}
+.ta-panel-menu svg { width: 18px; height: 18px; }
+
+/* Segmented tabs (Statistics) */
+.ta-segment {
+    display: inline-flex; padding: 4px; gap: 2px;
+    border-radius: var(--r-full);
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+.ta-segment button {
+    border: 0; background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font); font-weight: 700; font-size: var(--fs-xs);
+    padding: 7px 15px; border-radius: var(--r-full);
+    cursor: pointer; white-space: nowrap;
+    transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.ta-segment button:hover { color: var(--text); }
+.ta-segment button.is-active { background: var(--p); color: #fff; box-shadow: 0 4px 12px var(--p-glow); }
+
+/* Monthly-target: badge + stat arrows */
+.ta-target-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 4px 9px; border-radius: var(--r-full);
+    font-size: var(--fs-xs); font-weight: 800;
+    color: #059669; background: rgba(16,185,129,0.13);
+}
+.ta-target-badge svg { width: 12px; height: 12px; }
+[data-theme="dark"] .ta-target-badge { color: #34d399; }
+.ta-target-stat .ta-stat-value { display: inline-flex; align-items: center; gap: 5px; justify-content: center; }
+.ta-stat-arrow { display: inline-flex; }
+.ta-stat-arrow svg { width: 13px; height: 13px; }
+.ta-arrow-up   { color: #059669; }
+.ta-arrow-down { color: #e11d48; }
+[data-theme="dark"] .ta-arrow-up   { color: #34d399; }
+[data-theme="dark"] .ta-arrow-down { color: #fb7185; }
+
+/* Distribution card (demographic analogue) */
+.ta-dist { display: flex; flex-direction: column; gap: var(--sp-5); }
+.ta-dist-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: var(--sp-3); margin-bottom: 10px;
+}
+.ta-dist-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ta-dist-flag {
+    width: 34px; height: 34px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 10px; background: var(--p-subtle); color: var(--p);
+    font-weight: 800; font-size: var(--fs-xs);
+}
+.ta-dist-name strong { display: block; color: var(--text); font-size: var(--fs-sm); font-weight: 700; }
+.ta-dist-name span { display: block; color: var(--text-dim); font-size: var(--fs-xs); margin-top: 1px; }
+.ta-dist-pct { color: var(--text); font-size: var(--fs-sm); font-weight: 800; white-space: nowrap; }
+.ta-dist-bar { height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.ta-dist-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--p), var(--teal)); }
+
+/* Width utilities for progress fills (avoids inline CSS) */
+.ta-w-0{width:0}.ta-w-5{width:5%}.ta-w-10{width:10%}.ta-w-15{width:15%}.ta-w-20{width:20%}
+.ta-w-25{width:25%}.ta-w-30{width:30%}.ta-w-35{width:35%}.ta-w-40{width:40%}.ta-w-45{width:45%}
+.ta-w-50{width:50%}.ta-w-55{width:55%}.ta-w-60{width:60%}.ta-w-65{width:65%}.ta-w-70{width:70%}
+.ta-w-75{width:75%}.ta-w-80{width:80%}.ta-w-85{width:85%}.ta-w-90{width:90%}.ta-w-95{width:95%}
+.ta-w-100{width:100%}
+
+/* Banner (operational alert / next step) — shared slot */
+.eco-banner {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; gap: var(--sp-6);
+    padding: var(--sp-6);
+    border-radius: 24px;
+    border: 1px solid color-mix(in srgb, var(--p) 22%, var(--border));
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--p) 14%, transparent), transparent 42%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--teal) 10%, transparent), transparent 34%),
+        linear-gradient(145deg, color-mix(in srgb, var(--card-bg) 96%, transparent), color-mix(in srgb, var(--surface-2) 92%, transparent));
+    box-shadow: var(--shadow-sm);
+}
+.eco-banner-body { flex: 1; min-width: 0; }
+.eco-banner-label {
+    display: inline-block; margin-bottom: 6px;
+    color: var(--p-light); font-size: var(--fs-xs); font-weight: 900;
+    letter-spacing: 0.12em; text-transform: uppercase;
+}
+.eco-banner-title { margin: 0 0 6px; font-size: clamp(var(--fs-lg), 2vw, var(--fs-xl)); font-weight: 800; }
+.eco-banner-body p { margin: 0; color: var(--text-muted); line-height: 1.7; max-width: 70ch; }
+.eco-banner .btn { flex-shrink: 0; }
+@media (max-width: 640px) {
+    .eco-banner { flex-direction: column; align-items: flex-start; gap: var(--sp-4); }
+}
+
+/* ── Header search box (⌘K) — TailAdmin parity ─────────────────── */
+.shell-bar-search {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 9px 14px; min-width: 260px;
+    border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-muted);
+}
+.shell-bar-search svg { width: 18px; height: 18px; flex-shrink: 0; }
+.shell-bar-search input {
+    border: 0; outline: 0; background: transparent; flex: 1; min-width: 0;
+    color: var(--text); font-family: var(--font); font-size: var(--fs-sm);
+}
+.shell-bar-search input::placeholder { color: var(--text-dim); }
+.shell-kbd {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 3px 8px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text-dim); font-size: 11px; font-weight: 700;
+}
+@media (max-width: 900px) { .shell-bar-search { display: none; } }
+
+/* ── Statistics: tabs + date-range chip ────────────────────────── */
+.ta-stat-tabs { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.ta-daterange {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-2); font-size: var(--fs-xs); font-weight: 700; white-space: nowrap;
+}
+.ta-daterange svg { width: 15px; height: 15px; }

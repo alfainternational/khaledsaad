@@ -5,169 +5,156 @@ namespace App\Http\Controllers\Admin;
 use App\Application\Admin\Dashboard\BuildOperationalAlertsAction;
 use App\Domain\Account\Models\Account;
 use App\Domain\AI\Models\AIGeneration;
-use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Billing\Models\Plan;
-use App\Domain\Client\Models\Client;
-use App\Domain\Comment\Models\Comment;
-use App\Domain\FeatureFlag\Models\FeatureFlag;
-use App\Domain\Project\Models\Project;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Dashboard\MonthlySeries;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    /** @var list<string> Arabic short month labels, index 1..12 */
-    private const AR_MONTHS = [
-        1 => 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-    ];
-
     public function __invoke(BuildOperationalAlertsAction $operationalAlerts): View
     {
-        $stats = [
-            'users' => User::query()->count(),
-            'accounts' => Account::query()->count(),
-            'workspaces' => Workspace::query()->count(),
-            'projects' => Project::query()->count(),
-            'clients' => Client::query()->count(),
-            'flags' => FeatureFlag::query()->whereIn('status', ['on', 'beta'])->count(),
-            'tool_runs' => ToolRun::query()->count(),
-            'ai_generations' => AIGeneration::query()->count(),
-            'comments' => Comment::query()->count(),
-        ];
+        $usersTotal = User::query()->count();
+        $accountsTotal = Account::query()->count();
 
-        // ── Monthly series (last 8 months) ──────────────────────────────
-        $months = collect(range(7, 0))
-            ->map(fn (int $back): CarbonImmutable => CarbonImmutable::now()->startOfMonth()->subMonths($back));
-        $labels = $months->map(fn (CarbonImmutable $m): string => self::AR_MONTHS[(int) $m->format('n')])->all();
+        [$months, $labels] = MonthlySeries::window(8);
+        $usersByMonth = MonthlySeries::counts(User::query(), $months);
+        $accountsByMonth = MonthlySeries::counts(Account::query(), $months);
+        $runsByMonth = MonthlySeries::counts(ToolRun::query(), $months);
+        $aiByMonth = MonthlySeries::counts(AIGeneration::query(), $months);
 
-        $usersByMonth = $this->monthlySeries(User::query(), $months);
-        $accountsByMonth = $this->monthlySeries(Account::query(), $months);
-        $toolRunsByMonth = $this->monthlySeries(ToolRun::query(), $months);
-        $aiByMonth = $this->monthlySeries(AIGeneration::query(), $months);
+        $trUsers = MonthlySeries::trend($usersByMonth);
+        $trAccounts = MonthlySeries::trend($accountsByMonth);
+        $trRuns = MonthlySeries::trend($runsByMonth);
 
-        // ── Trends: current month vs previous month ─────────────────────
-        $trends = [
-            'users' => $this->trend($usersByMonth),
-            'accounts' => $this->trend($accountsByMonth),
-            'tool_runs' => $this->trend($toolRunsByMonth),
-            'ai_generations' => $this->trend($aiByMonth),
-        ];
-
-        // ── Monthly target gauge: this month's runs toward a goal ───────
-        $thisMonthRuns = (int) end($toolRunsByMonth);
-        $prevBest = collect(array_slice($toolRunsByMonth, 0, -1))->max() ?: 0;
+        // Monthly target: this month's tool runs toward a goal.
+        $thisMonthRuns = (int) end($runsByMonth);
+        $prevBest = (int) (collect(array_slice($runsByMonth, 0, -1))->max() ?: 0);
         $goal = max((int) ceil($prevBest * 1.15), 10);
         $targetPct = $goal > 0 ? min(100, (int) round($thisMonthRuns / $goal * 100)) : 0;
         $todayRuns = ToolRun::query()->whereDate('created_at', CarbonImmutable::today())->count();
 
-        $activeSubscriptions = Subscription::query()->where('status', 'active')->count();
+        // Plan distribution (share of active-ish subscriptions).
+        $plans = Plan::query()->withCount('subscriptions')->orderByDesc('subscriptions_count')->get();
+        $subsTotal = max(1, (int) $plans->sum('subscriptions_count'));
+        $distItems = $plans->take(6)->map(fn (Plan $p): array => [
+            'name' => $p->name_ar,
+            'sub' => $p->code.' · '.$p->subscriptions_count.' اشتراك',
+            'pct' => $p->subscriptions_count / $subsTotal * 100,
+            'initials' => mb_substr($p->name_ar, 0, 1),
+        ])->all();
 
-        return view('admin.dashboard', [
-            'stats' => $stats,
-            'trends' => $trends,
-            'planDistribution' => Plan::query()
-                ->withCount('subscriptions')
-                ->orderBy('monthly_price')
-                ->get(),
-            'latestAuditLogs' => AuditLog::query()
-                ->with('actor', 'workspace')
-                ->latest('created_at')
-                ->limit(8)
-                ->get(),
-            'recentToolRuns' => ToolRun::query()
-                ->with(['project', 'tool', 'author'])
-                ->latest()
-                ->limit(6)
-                ->get(),
-            'operationalAlerts' => $operationalAlerts->handle(),
+        $recentRuns = ToolRun::query()
+            ->with(['project', 'tool', 'author'])
+            ->latest()
+            ->limit(6)
+            ->get()
+            ->map(fn (ToolRun $r): array => [
+                'title' => $r->tool?->name ?? $r->tool_code,
+                'project' => $r->project?->name,
+                'author' => $r->author?->name,
+                'score' => (int) ($r->completeness_score ?? 0),
+                'time' => $r->created_at?->diffForHumans(),
+            ])->all();
+
+        $alerts = $operationalAlerts->handle();
+        $primaryAlert = $alerts[0] ?? null;
+
+        $activeSubscriptions = Subscription::query()->where('status', 'active')->count();
+        $workspacesTotal = Workspace::query()->count();
+
+        $dash = [
+            'head' => [
+                'title' => auth()->user()->name.'، مركز التحكم',
+                'subtitle' => number_format($accountsTotal).' حساب · '.number_format($usersTotal).' مستخدم · '.number_format($activeSubscriptions).' اشتراك نشط · '.number_format($workspacesTotal).' مساحة عمل',
+                'actions' => [
+                    ['label' => 'مستخدم', 'route' => route('admin.users.create'), 'variant' => 'secondary'],
+                    ['label' => 'حساب', 'route' => route('admin.accounts.create'), 'variant' => 'secondary'],
+                    ['label' => 'خطة', 'route' => route('admin.plans.create'), 'variant' => 'primary'],
+                ],
+            ],
+            'banner' => $primaryAlert ? [
+                'label' => 'تنبيه تشغيلي',
+                'title' => $primaryAlert['title'],
+                'body' => $primaryAlert['body'],
+                'cta' => ['label' => 'معالجة', 'route' => $primaryAlert['url']],
+            ] : null,
+            'metrics' => [
+                ['icon' => 'users', 'tint' => 'indigo', 'label' => 'المستخدمون', 'value' => number_format($usersTotal), 'trend' => $trUsers],
+                ['icon' => 'account', 'tint' => 'teal', 'label' => 'الحسابات', 'value' => number_format($accountsTotal), 'trend' => $trAccounts],
+            ],
+            'sales' => [
+                'title' => 'النشاط الشهري',
+                'sub' => 'تشغيل الأدوات عبر آخر ٨ أشهر',
+                'link' => ['label' => 'السجل', 'route' => route('admin.tool-runs.index')],
+            ],
+            'target' => [
+                'title' => 'الهدف الشهري',
+                'sub' => 'تشغيلات هذا الشهر مقابل الهدف',
+                'badge' => $trRuns,
+                'caption' => 'أنجزت المنصة '.number_format($thisMonthRuns).' تشغيلاً هذا الشهر، والهدف '.number_format($goal).' تشغيل. واصلوا الوتيرة.',
+                'stats' => [
+                    ['label' => 'الهدف', 'value' => number_format($goal)],
+                    ['label' => 'هذا الشهر', 'value' => number_format($thisMonthRuns), 'direction' => $trRuns['direction']],
+                    ['label' => 'اليوم', 'value' => number_format($todayRuns)],
+                ],
+            ],
+            'statistics' => [
+                'title' => 'إحصائيات المنصة',
+                'sub' => 'النمو والنشاط خلال آخر ٨ أشهر',
+                'tabs' => ['نظرة عامة', 'الأدوات', 'الذكاء'],
+                'range' => reset($labels).' – '.end($labels),
+            ],
+            'distribution' => [
+                'title' => 'توزيع الخطط',
+                'sub' => 'حصة كل خطة من إجمالي الاشتراكات',
+                'link' => ['label' => 'الخطط', 'route' => route('admin.plans.index')],
+                'items' => $distItems,
+            ],
+            'table' => [
+                'title' => 'آخر تشغيلات الأدوات',
+                'sub' => 'أحدث ما نُفّذ عبر المنصة',
+                'link' => ['label' => 'الكل', 'route' => route('admin.tool-runs.index')],
+                'rows' => $recentRuns,
+            ],
             'charts' => [
                 'sales' => [
-                    'type' => 'bar',
-                    'height' => 200,
-                    'colors' => ['--p'],
+                    'type' => 'bar', 'height' => 200, 'colors' => ['--p'],
                     'categories' => $labels,
-                    'series' => [
-                        ['name' => 'تشغيل الأدوات', 'data' => array_values($toolRunsByMonth)],
-                    ],
+                    'series' => [['name' => 'تشغيل الأدوات', 'data' => array_values($runsByMonth)]],
                 ],
                 'target' => [
-                    'type' => 'radialBar',
-                    'height' => 320,
-                    'colors' => ['--p'],
-                    'gradientTo' => '--teal',
-                    'value' => $targetPct,
-                    'label' => 'الهدف الشهري',
+                    'type' => 'radialBar', 'height' => 320, 'colors' => ['--p'], 'gradientTo' => '--teal',
+                    'value' => $targetPct, 'label' => 'الهدف الشهري',
                 ],
                 'statistics' => [
-                    'type' => 'area',
-                    'height' => 310,
-                    'colors' => ['--p', '--teal'],
+                    'type' => 'area', 'height' => 320, 'colors' => ['--p', '--teal'],
                     'categories' => $labels,
                     'series' => [
                         ['name' => 'مستخدمون جدد', 'data' => array_values($usersByMonth)],
                         ['name' => 'حسابات جديدة', 'data' => array_values($accountsByMonth)],
                     ],
+                    'tabs' => [
+                        ['label' => 'نظرة عامة', 'series' => [
+                            ['name' => 'مستخدمون جدد', 'data' => array_values($usersByMonth)],
+                            ['name' => 'حسابات جديدة', 'data' => array_values($accountsByMonth)],
+                        ]],
+                        ['label' => 'الأدوات', 'series' => [
+                            ['name' => 'تشغيل الأدوات', 'data' => array_values($runsByMonth)],
+                        ]],
+                        ['label' => 'الذكاء', 'series' => [
+                            ['name' => 'مخرجات الذكاء', 'data' => array_values($aiByMonth)],
+                        ]],
+                    ],
                 ],
             ],
-            'targetMeta' => [
-                'today' => $todayRuns,
-                'month' => $thisMonthRuns,
-                'goal' => $goal,
-                'active_subscriptions' => $activeSubscriptions,
-            ],
-        ]);
-    }
-
-    /**
-     * Count rows grouped by month, aligned to the given month buckets (zero-filled).
-     *
-     * @param  Collection<int, CarbonImmutable>  $months
-     * @return array<string, int>  keyed by 'Y-m'
-     */
-    private function monthlySeries(Builder $query, Collection $months): array
-    {
-        $start = $months->first();
-
-        $counts = $query
-            ->where('created_at', '>=', $start)
-            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as aggregate")
-            ->groupBy('ym')
-            ->pluck('aggregate', 'ym');
-
-        return $months
-            ->mapWithKeys(fn (CarbonImmutable $m): array => [
-                $m->format('Y-m') => (int) ($counts[$m->format('Y-m')] ?? 0),
-            ])
-            ->all();
-    }
-
-    /**
-     * @param  array<string, int>  $series
-     * @return array{pct: float, direction: string}
-     */
-    private function trend(array $series): array
-    {
-        $values = array_values($series);
-        $current = (int) ($values[count($values) - 1] ?? 0);
-        $previous = (int) ($values[count($values) - 2] ?? 0);
-
-        if ($previous === 0) {
-            $pct = $current > 0 ? 100.0 : 0.0;
-        } else {
-            $pct = round(($current - $previous) / $previous * 100, 1);
-        }
-
-        return [
-            'pct' => abs($pct),
-            'direction' => $pct > 0 ? 'up' : ($pct < 0 ? 'down' : 'flat'),
         ];
+
+        return view('admin.dashboard', ['dash' => $dash]);
     }
 }

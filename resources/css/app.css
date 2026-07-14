@@ -7282,3 +7282,149 @@ body.rd-dark .text-gradient-light {
 .report-domain-sec{margin-top:12px}
 .report-domain-sec-h{display:block;font-size:.9rem;font-weight:800;color:var(--p);margin-bottom:6px}
 .tool-edit-hint{font-size:.82rem;color:var(--text-muted);margin:8px 0 0;padding:8px 12px;background:var(--p-subtle);border-radius:8px}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHELL → TailAdmin flat layout (overrides earlier rounded-card shell)
+   Loaded last so it wins the cascade. Flat sidebar + horizontal top bar.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Flush, edge-to-edge layout (no floating cards, no page padding) */
+.shell-layout { padding: 0; gap: 0; }
+
+/* Sidebar: flat panel with a single divider */
+.shell-sidebar { border-radius: 0; box-shadow: none; overflow: visible; }
+.admin-sidebar,
+.app-sidebar {
+    padding: var(--sp-5) var(--sp-4);
+    border: 0;
+    border-inline-end: 1px solid var(--border);
+    border-radius: 0;
+    background: var(--panel);
+    backdrop-filter: none;
+    gap: var(--sp-4);
+}
+
+/* Desktop-only layout props (mobile keeps its slide-in drawer + single column) */
+@media (min-width: 1101px) {
+    .admin-shell,
+    .app-shell { grid-template-columns: 290px minmax(0, 1fr); }
+    .admin-sidebar,
+    .app-sidebar { position: sticky; top: 0; height: 100vh; }
+}
+[data-theme="light"] .admin-sidebar,
+[data-theme="light"] .app-sidebar { background: #ffffff; }
+
+/* Brand: flat, no card */
+.admin-brand,
+.app-brand {
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    padding: var(--sp-2) var(--sp-2) var(--sp-4);
+}
+
+/* Nav: TailAdmin item + soft active state */
+.admin-nav,
+.app-nav { gap: 8px; }
+.admin-nav-link,
+.app-nav-link {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 0;
+    color: var(--text-muted);
+    font-weight: 600;
+    line-height: 1.4;
+    transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+.admin-nav-link span,
+.app-nav-link span { font-weight: 600; line-height: 1.4; }
+.admin-nav-link svg,
+.app-nav-link svg { flex-shrink: 0; opacity: 0.9; }
+/* Soft, cohesive indigo states — no gray box, no hard borders */
+.admin-nav-link:hover,
+.app-nav-link:hover {
+    background: color-mix(in srgb, var(--p) 7%, transparent);
+    border: 0;
+    box-shadow: none;
+    color: var(--p);
+}
+[data-theme="dark"] .admin-nav-link:hover,
+[data-theme="dark"] .app-nav-link:hover { color: var(--p-light); }
+.admin-nav-link.active,
+.app-nav-link.active {
+    background: color-mix(in srgb, var(--p) 12%, transparent);
+    border: 0;
+    box-shadow: none;
+    color: var(--p);
+}
+[data-theme="dark"] .admin-nav-link.active,
+[data-theme="dark"] .app-nav-link.active { color: var(--p-light); }
+.admin-nav-link.active svg,
+.app-nav-link.active svg { opacity: 1; }
+
+/* Top bar: flat, full-width, sticky */
+.shell-header { border-radius: 0; box-shadow: none; border: 0; }
+.admin-header,
+.app-header,
+.shell-bar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    min-height: 68px;
+    padding: 12px 24px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--panel) 88%, transparent);
+    backdrop-filter: blur(12px);
+}
+[data-theme="light"] .admin-header,
+[data-theme="light"] .app-header { background: rgba(255, 255, 255, 0.88); }
+
+.shell-bar-start,
+.shell-bar-end { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
+.shell-bar-heading { display: flex; flex-direction: column; min-width: 0; }
+.shell-bar-kicker {
+    font-size: var(--fs-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 800;
+}
+.shell-bar-title {
+    color: var(--text);
+    font-size: var(--fs-md);
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* User cluster in the bar */
+.shell-user { display: flex; align-items: center; gap: 10px; }
+.shell-user-info { display: flex; flex-direction: column; line-height: 1.25; }
+.shell-user-info strong { color: var(--text); font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; }
+.shell-user-info small { color: var(--text-dim); font-size: var(--fs-xs); white-space: nowrap; }
+
+/* Content: comfortable padding on the app background */
+.admin-content,
+.app-content { padding: var(--sp-6); }
+.admin-main,
+.app-main { gap: 0; }
+
+@media (max-width: 768px) {
+    .shell-bar-heading { display: none; }
+    .shell-user-info { display: none; }
+    .admin-content,
+    .app-content { padding: var(--sp-4); }
+    .admin-header,
+    .app-header,
+    .shell-bar { padding: 10px 16px; min-height: 60px; }
+}

@@ -2,28 +2,22 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\AI\Models\AIGeneration;
 use App\Domain\Tool\Models\ToolRun;
 use App\Domain\Workspace\Models\Workspace;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\Concerns\InteractsWithWorkspaceContext;
 use App\Support\Dashboard\DashboardResolver;
+use App\Support\Dashboard\MonthlySeries;
 use App\Support\Ui\FlashMessageCatalog;
 use App\Support\Workspaces\OnboardingState;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     use InteractsWithWorkspaceContext;
-
-    /** @var list<string> */
-    private const AR_MONTHS = [
-        1 => 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-    ];
 
     public function __invoke(
         Request $request,
@@ -42,8 +36,7 @@ class DashboardController extends Controller
         return view('app.dashboard', [
             'workspace' => $workspace,
             'availableWorkspaces' => $request->user()->activeWorkspaces()->with('account.subscription.plan')->get(),
-            'dashboard' => $dashboard,
-            'charts' => $this->buildCharts($workspace, $dashboard),
+            'dash' => $this->buildDash($workspace, $dashboard, $request->user()->name),
         ]);
     }
 
@@ -57,70 +50,140 @@ class DashboardController extends Controller
     }
 
     /**
+     * Build the shared ecommerce dashboard view-model — same contract as the admin dashboard.
+     *
      * @param  array<string, mixed>  $dashboard
      * @return array<string, mixed>
      */
-    private function buildCharts(Workspace $workspace, array $dashboard): array
+    private function buildDash(Workspace $workspace, array $dashboard, string $userName): array
     {
-        $toolPipeline = collect($dashboard['toolPipeline'] ?? []);
-        $totalTools = (int) $toolPipeline->sum('total');
-        $completedTools = (int) $toolPipeline->sum('completed');
+        $project = $dashboard['currentProject'];
+        $metrics = $dashboard['metrics'];
+        $pipeline = collect($dashboard['toolPipeline'] ?? []);
+        $brief = $dashboard['briefAssessment'] ?? ['completeness_score' => 0];
+        $nextStep = $dashboard['nextStep'];
+
+        $totalTools = (int) $pipeline->sum('total');
+        $completedTools = (int) $pipeline->sum('completed');
         $journeyPct = $totalTools > 0 ? (int) round($completedTools / $totalTools * 100) : 0;
 
-        // Monthly workspace activity (last 8 months, zero-filled).
-        $months = collect(range(7, 0))
-            ->map(fn (int $back): CarbonImmutable => CarbonImmutable::now()->startOfMonth()->subMonths($back));
-        $labels = $months->map(fn (CarbonImmutable $m): string => self::AR_MONTHS[(int) $m->format('n')])->all();
-        $runsByMonth = $this->monthlyRuns($workspace, $months);
+        [$months, $labels] = MonthlySeries::window(8);
+        $runsByMonth = MonthlySeries::counts(
+            ToolRun::query()->where('workspace_id', $workspace->id), $months
+        );
+        $aiByMonth = MonthlySeries::counts(
+            AIGeneration::query()->where('workspace_id', $workspace->id), $months
+        );
+        $trRuns = MonthlySeries::trend($runsByMonth);
+        $trAi = MonthlySeries::trend($aiByMonth);
+
+        $greeting = now()->hour < 12 ? 'صباح الخير' : (now()->hour < 17 ? 'مرحباً' : 'مساء الخير');
+
+        $distItems = $pipeline->map(fn (array $s): array => [
+            'name' => $s['label'],
+            'sub' => $s['completed'].'/'.$s['total'].' أداة',
+            'pct' => ($s['total'] ?? 0) > 0 ? $s['completed'] / $s['total'] * 100 : 0,
+            'initials' => (string) $s['stage'],
+        ])->all();
+
+        $rows = collect($dashboard['recentToolRuns'])->map(fn ($r): array => [
+            'title' => $r->tool?->name ?? $r->tool_code,
+            'project' => $r->project?->name,
+            'author' => $r->author?->name,
+            'score' => (int) ($r->completeness_score ?? 0),
+            'time' => $r->created_at?->diffForHumans(),
+        ])->all();
 
         return [
-            'progress' => [
-                'type' => 'radialBar',
-                'height' => 300,
-                'colors' => ['--p'],
-                'gradientTo' => '--teal',
-                'value' => $journeyPct,
-                'label' => 'اكتمال الرحلة',
+            'head' => [
+                'title' => $greeting.'، '.$userName,
+                'subtitle' => $project
+                    ? 'أنت داخل مشروع '.$project->name.' · '.$journeyPct.'% من الرحلة مكتمل'
+                    : 'ابدأ بإنشاء أول مشروع لتظهر لك قمرة القيادة الخاصة به.',
+                'actions' => $project
+                    ? [
+                        ['label' => 'كل المشاريع', 'route' => route('projects.index'), 'variant' => 'ghost'],
+                        ['label' => 'تفاصيل المشروع', 'route' => route('projects.show', $project), 'variant' => 'secondary'],
+                    ]
+                    : [
+                        ['label' => 'إنشاء مشروع', 'route' => route('projects.create'), 'variant' => 'primary'],
+                    ],
             ],
-            'stages' => [
-                'type' => 'bar',
-                'height' => 260,
-                'colors' => ['--p', '--teal'],
-                'categories' => $toolPipeline->pluck('label')->all(),
-                'series' => [
-                    ['name' => 'مكتملة', 'data' => $toolPipeline->pluck('completed')->map(fn ($v) => (int) $v)->all()],
-                    ['name' => 'إجمالي', 'data' => $toolPipeline->pluck('total')->map(fn ($v) => (int) $v)->all()],
+            'banner' => [
+                'label' => $project ? 'الخطوة التالية' : 'الخطوة الأولى',
+                'title' => $nextStep['title'],
+                'body' => $nextStep['summary'],
+                'cta' => ['label' => $nextStep['action_label'], 'route' => $nextStep['action_route']],
+            ],
+            'metrics' => [
+                ['icon' => 'tool', 'tint' => 'indigo', 'label' => 'تشغيل الأدوات', 'value' => number_format($metrics['tool_runs']), 'trend' => $trRuns],
+                ['icon' => 'bolt', 'tint' => 'teal', 'label' => 'مخرجات الاستوديو', 'value' => number_format($metrics['ai_generations']), 'trend' => $trAi],
+            ],
+            'sales' => [
+                'title' => 'نشاطك الشهري',
+                'sub' => 'تشغيل الأدوات عبر آخر ٨ أشهر',
+                'link' => ['label' => 'الأدوات', 'route' => route('tools.index')],
+            ],
+            'target' => [
+                'title' => 'اكتمال الرحلة',
+                'sub' => 'نسبة إنجاز أدوات المشروع',
+                'badge' => $trRuns,
+                'caption' => 'أنجزت '.number_format($completedTools).' من '.number_format($totalTools).' أداة. كل خطوة تجعل مخرجاتك أدقّ على مقاسك.',
+                'stats' => [
+                    ['label' => 'مكتملة', 'value' => number_format($completedTools)],
+                    ['label' => 'الإجمالي', 'value' => number_format($totalTools)],
+                    ['label' => 'الملف', 'value' => ($brief['completeness_score'] ?? 0).'%'],
                 ],
             ],
-            'activity' => [
-                'type' => 'area',
-                'height' => 280,
-                'colors' => ['--teal'],
-                'categories' => $labels,
-                'series' => [
-                    ['name' => 'تشغيل الأدوات', 'data' => array_values($runsByMonth)],
+            'statistics' => [
+                'title' => 'إحصائياتك',
+                'sub' => 'نشاطك ومخرجاتك خلال آخر ٨ أشهر',
+                'tabs' => ['نظرة عامة', 'الأدوات', 'الذكاء'],
+                'range' => reset($labels).' – '.end($labels),
+            ],
+            'distribution' => [
+                'title' => 'توزيع المراحل',
+                'sub' => 'نسبة اكتمال كل مرحلة من رحلتك',
+                'link' => ['label' => 'الأدوات', 'route' => route('tools.index')],
+                'items' => $distItems,
+            ],
+            'table' => [
+                'title' => 'آخر ما أنجزته',
+                'sub' => 'أحدث تشغيلات الأدوات في مساحتك',
+                'link' => ['label' => 'الأدوات', 'route' => route('tools.index')],
+                'rows' => $rows,
+            ],
+            'charts' => [
+                'sales' => [
+                    'type' => 'bar', 'height' => 200, 'colors' => ['--p'],
+                    'categories' => $labels,
+                    'series' => [['name' => 'تشغيل الأدوات', 'data' => array_values($runsByMonth)]],
+                ],
+                'target' => [
+                    'type' => 'radialBar', 'height' => 320, 'colors' => ['--p'], 'gradientTo' => '--teal',
+                    'value' => $journeyPct, 'label' => 'اكتمال الرحلة',
+                ],
+                'statistics' => [
+                    'type' => 'area', 'height' => 320, 'colors' => ['--p', '--teal'],
+                    'categories' => $labels,
+                    'series' => [
+                        ['name' => 'تشغيل الأدوات', 'data' => array_values($runsByMonth)],
+                        ['name' => 'مخرجات الاستوديو', 'data' => array_values($aiByMonth)],
+                    ],
+                    'tabs' => [
+                        ['label' => 'نظرة عامة', 'series' => [
+                            ['name' => 'تشغيل الأدوات', 'data' => array_values($runsByMonth)],
+                            ['name' => 'مخرجات الاستوديو', 'data' => array_values($aiByMonth)],
+                        ]],
+                        ['label' => 'الأدوات', 'series' => [
+                            ['name' => 'تشغيل الأدوات', 'data' => array_values($runsByMonth)],
+                        ]],
+                        ['label' => 'الذكاء', 'series' => [
+                            ['name' => 'مخرجات الاستوديو', 'data' => array_values($aiByMonth)],
+                        ]],
+                    ],
                 ],
             ],
         ];
-    }
-
-    /**
-     * @param  Collection<int, CarbonImmutable>  $months
-     * @return array<string, int>
-     */
-    private function monthlyRuns(Workspace $workspace, Collection $months): array
-    {
-        $counts = ToolRun::query()
-            ->where('workspace_id', $workspace->id)
-            ->where('created_at', '>=', $months->first())
-            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as aggregate")
-            ->groupBy('ym')
-            ->pluck('aggregate', 'ym');
-
-        return $months
-            ->mapWithKeys(fn (CarbonImmutable $m): array => [
-                $m->format('Y-m') => (int) ($counts[$m->format('Y-m')] ?? 0),
-            ])
-            ->all();
     }
 }
