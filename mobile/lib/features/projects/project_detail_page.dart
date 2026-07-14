@@ -242,6 +242,13 @@ class ProjectDetailPage extends StatelessWidget {
                   onTap: () =>
                       Get.toNamed(Routes.projectReports, arguments: publicId),
                 ),
+                ActionTile(
+                  icon: Icons.folder_open_outlined,
+                  title: 'مصادر المعرفة',
+                  subtitle: 'ارفع مستنداتك ليقرأها التحليل ويضمّنها في تقاريرك',
+                  onTap: () =>
+                      Get.toNamed(Routes.knowledge, arguments: publicId),
+                ),
               ],
             ),
           );

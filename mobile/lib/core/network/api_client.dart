@@ -68,6 +68,26 @@ class ApiClient {
     await _guard(() => _dio.delete(path));
   }
 
+  /// رفع ملف (multipart/form-data) — لمستندات المعرفة. الحقل المتوقّع: file.
+  Future<Map<String, dynamic>> upload(
+    String path, {
+    required String filePath,
+    required String filename,
+  }) =>
+      _request(() async {
+        final form = FormData.fromMap({
+          'file': await MultipartFile.fromFile(filePath, filename: filename),
+        });
+        return _dio.post(
+          path,
+          data: form,
+          options: Options(
+            sendTimeout: const Duration(seconds: 120),
+            receiveTimeout: const Duration(seconds: 120),
+          ),
+        );
+      });
+
   /// تنزيل بايتات (لملفات PDF مثلاً) مع مصادقة Bearer.
   Future<List<int>> download(String path) async {
     final response = await _guard(

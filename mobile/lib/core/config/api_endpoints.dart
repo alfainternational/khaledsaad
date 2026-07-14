@@ -51,6 +51,14 @@ class ApiEndpoints {
   static String projectDossierPdf(String ws, String p) =>
       '/workspaces/$ws/projects/$p/dossier/pdf';
 
+  // مصادر المعرفة (رفع مستندات المشروع للتحليل)
+  static String knowledgeUploads(String ws, String p) =>
+      '/workspaces/$ws/projects/$p/knowledge/uploads';
+  static String knowledgeUpload(String ws, String p, String upload) =>
+      '/workspaces/$ws/projects/$p/knowledge/uploads/$upload';
+  static String knowledgeUploadRetry(String ws, String p, String upload) =>
+      '/workspaces/$ws/projects/$p/knowledge/uploads/$upload/retry';
+
   // الأدوات
   static String tools(String ws) => '/workspaces/$ws/tools';
   static String toolLoad(String ws, String p, String tcode) =>

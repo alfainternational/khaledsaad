@@ -12,6 +12,7 @@ import '../../features/billing/billing_page.dart';
 import '../../features/clients/clients_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/explore/explore_page.dart';
+import '../../features/knowledge/knowledge_page.dart';
 import '../../features/notifications/notifications_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
 import '../../features/search/global_search_page.dart';
@@ -69,6 +70,7 @@ class AppPages {
       name: Routes.projectReports,
       page: () => const ProjectReportsPage(),
     ),
+    GetPage(name: Routes.knowledge, page: () => const KnowledgePage()),
     GetPage(
       name: Routes.executionPackage,
       page: () => const ExecutionPackagePage(),
