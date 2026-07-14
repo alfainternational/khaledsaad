@@ -42,7 +42,7 @@ dependencies:
   # طبقة الشبكة
   dio: ^5.7.0
   file_picker: ^8.1.4
-  font_awesome_flutter: ^10.8.0
+  flutter_svg: ^2.0.10+1
 
   # التخزين
   flutter_secure_storage: ^9.2.2
