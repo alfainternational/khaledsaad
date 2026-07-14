@@ -34,8 +34,11 @@ class SocialAuthController extends Controller
     {
         $driver = $this->driverFor($provider);
 
-        // بجلسة (بدون stateless) — الويب يملك session لحفظ حالة OAuth.
-        return Socialite::driver($driver)->redirect();
+        // بجلسة (بدون stateless) — الويب يملك session لحفظ حالة OAuth. نفرض مسار
+        // callback الويب (لا الافتراضي في config الذي يشير لـ callback الموبايل/API).
+        return Socialite::driver($driver)
+            ->redirectUrl($this->webCallbackUrl($provider))
+            ->redirect();
     }
 
     public function callback(
@@ -46,7 +49,10 @@ class SocialAuthController extends Controller
         $driver = $this->driverFor($provider);
 
         try {
-            $socialUser = Socialite::driver($driver)->user();
+            // نفس مسار callback الويب المُستخدم في redirect (شرط مطابقة redirect_uri).
+            $socialUser = Socialite::driver($driver)
+                ->redirectUrl($this->webCallbackUrl($provider))
+                ->user();
         } catch (\Throwable $e) {
             return redirect()->route('login')
                 ->withErrors(['email' => 'تعذّر تسجيل الدخول عبر المزوّد.']);
@@ -139,5 +145,11 @@ class SocialAuthController extends Controller
         abort_unless(array_key_exists($provider, self::DRIVERS), 404, 'مزوّد غير مدعوم.');
 
         return self::DRIVERS[$provider];
+    }
+
+    /** مسار callback الخاص بالويب (بجلسة)، منفصل عن callback الموبايل (deep link). */
+    private function webCallbackUrl(string $provider): string
+    {
+        return route('social.callback', ['provider' => $provider]);
     }
 }
