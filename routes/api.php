@@ -75,6 +75,9 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/password/reset', [PasswordController::class, 'reset'])
         ->middleware('throttle:5,1');
 
+    // المزوّدون الاجتماعيون المفعّلون (لإظهار المفعّل فقط في شاشة الدخول) — عام.
+    Route::get('/auth/social/providers', [SocialAuthController::class, 'providers'])
+        ->middleware('throttle:30,1');
     // بدء الدخول الاجتماعي للموبايل — العودة عبر الـ callback الموحّد في مسارات الويب.
     Route::get('/auth/social/{provider}/redirect', [SocialAuthController::class, 'redirect'])
         ->middleware('throttle:30,1')

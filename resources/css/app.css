@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 @import "./diagnose.css";
+@import "./dashboard-ta.css";
 
 /* ═══════════════════════════════════════════════════════════════════
    KHALED SAAD PLATFORM — Centralized Design System

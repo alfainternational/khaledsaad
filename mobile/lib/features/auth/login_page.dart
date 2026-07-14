@@ -7,6 +7,7 @@ import '../../data/services/session_service.dart';
 import '../shared/widgets/animated_app_background.dart';
 import '../shared/widgets/brand_mark.dart';
 import 'login_controller.dart';
+import 'widgets/social_login_buttons.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -37,20 +38,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// زر دخول اجتماعي موحّد — يفتح صفحة المزوّد، والعودة عبر deep link.
-  Widget _socialButton(String provider, String label, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: OutlinedButton.icon(
-        onPressed: () => _c.signInWithProvider(provider),
-        icon: Icon(icon),
-        label: Text(label),
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(48),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,27 +155,7 @@ class _LoginPageState extends State<LoginPage> {
                             : const Text('تسجيل الدخول'),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text('أو', style: theme.textTheme.bodySmall),
-                        ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _socialButton('google', 'المتابعة عبر Google',
-                        Icons.g_mobiledata),
-                    _socialButton('facebook', 'المتابعة عبر Facebook',
-                        Icons.facebook),
-                    _socialButton(
-                        'twitter', 'المتابعة عبر X', Icons.alternate_email),
-                    _socialButton('linkedin', 'المتابعة عبر LinkedIn',
-                        Icons.business_center),
+                    const SocialLoginButtons(),
                     const SizedBox(height: 8),
                     Wrap(
                       alignment: WrapAlignment.center,

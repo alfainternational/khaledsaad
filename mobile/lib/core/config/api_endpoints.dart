@@ -13,6 +13,7 @@ class ApiEndpoints {
   static const String logout = '/logout';
   static const String passwordForgot = '/password/forgot';
   static const String passwordReset = '/password/reset';
+  static const String socialProviders = '/auth/social/providers';
 
   // المستخدم ومساحات العمل
   static const String me = '/me';

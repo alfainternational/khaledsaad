@@ -14,4 +14,12 @@ class PublicRepository {
         ? Map<String, dynamic>.from(res['data'] as Map)
         : {};
   }
+
+  /// المزوّدون الاجتماعيون المفعّلون فقط (لإظهار المفعّل منهم في شاشة الدخول).
+  Future<List<String>> socialProviders() async {
+    final res = await _api.get(ApiEndpoints.socialProviders);
+    return ((res['data'] as List?) ?? const [])
+        .map((e) => e.toString())
+        .toList();
+  }
 }

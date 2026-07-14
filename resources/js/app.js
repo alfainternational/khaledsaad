@@ -1,3 +1,5 @@
+import { initDashboardCharts } from './dashboard-charts.js';
+
 const THEME_KEY = 'ks-theme';
 
 function getStoredTheme() {
@@ -10,6 +12,12 @@ function getStoredTheme() {
 
 function applyTheme(theme, { persist = true } = {}) {
     document.documentElement.setAttribute('data-theme', theme);
+
+    try {
+        document.dispatchEvent(new CustomEvent('ks:themechange', { detail: { theme } }));
+    } catch (_) {
+        // Ignore environments without CustomEvent.
+    }
 
     if (!persist) {
         return;
@@ -2626,4 +2634,5 @@ document.addEventListener('DOMContentLoaded', () => {
     wireAutoSaveDraft();
     wireLivePreviewFlash();
     wireStudioGenerationCopy();
+    initDashboardCharts();
 });

@@ -6,6 +6,7 @@ import '../../data/services/session_service.dart';
 import '../shared/widgets/animated_app_background.dart';
 import '../shared/widgets/brand_mark.dart';
 import 'register_controller.dart';
+import 'widgets/social_login_buttons.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -197,6 +198,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           : const Text('إنشاء الحساب'),
                     ),
                   ),
+                  const SocialLoginButtons(),
                 ],
                 ),
               ),

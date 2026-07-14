@@ -11,6 +11,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use App\Enums\UserStatus;
+use App\Support\Auth\SocialProviderCatalog;
 use App\Support\Ui\FlashMessageCatalog;
 use App\Support\Workspaces\OnboardingState;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +26,7 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return view('auth.login');
+        return view('auth.login', ['socialProviders' => SocialProviderCatalog::enabled()]);
     }
 
     public function login(
@@ -70,7 +71,7 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return view('auth.register');
+        return view('auth.register', ['socialProviders' => SocialProviderCatalog::enabled()]);
     }
 
     public function register(

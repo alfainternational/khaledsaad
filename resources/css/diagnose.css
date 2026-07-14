@@ -138,6 +138,20 @@
 .dx-submit:hover { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 16px 36px color-mix(in srgb, var(--dx-accent) 45%, transparent); }
 .dx-submit:active { transform: translateY(0); }
 
+/* أزرار الدخول الاجتماعي — أيقونات فقط، تُعرض للمفعّل منها فقط. */
+.dx-social { margin-top: 22px; text-align: center; }
+.dx-social-icons { display: flex; justify-content: center; gap: 14px; margin-top: 10px; }
+.dx-social-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--text-dim, #888) 40%, transparent);
+    background: var(--surface, #fff);
+    color: var(--text, #1a1a1a);
+    transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.dx-social-icon:hover { transform: translateY(-2px); border-color: var(--dx-accent); box-shadow: 0 10px 24px color-mix(in srgb, var(--dx-accent) 22%, transparent); }
+.dx-social-icon svg { width: 22px; height: 22px; fill: currentColor; }
+
 .dx-trust {
     display: flex; align-items: center; gap: var(--sp-2);
     margin: 0;

@@ -1,8 +1,6 @@
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/routes/app_routes.dart';
-import '../../core/config/env.dart';
 import '../../core/error/api_exception.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/session_service.dart';
@@ -34,19 +32,6 @@ class LoginController extends GetxController {
       _applyError(e);
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  /// تسجيل الدخول الاجتماعي: يفتح صفحة المزوّد في المتصفح، والعودة تُعالَج عبر
-  /// DeepLinkService (ksgrowth://auth/social) الذي يحفظ التوكن ويوجّه للرئيسية.
-  Future<void> signInWithProvider(String provider) async {
-    _resetErrors();
-    final uri = Uri.parse('${Env.apiBaseUrl}/auth/social/$provider/redirect');
-    try {
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok) formError.value = 'تعذّر فتح صفحة تسجيل الدخول.';
-    } catch (_) {
-      formError.value = 'تعذّر فتح صفحة تسجيل الدخول.';
     }
   }
 

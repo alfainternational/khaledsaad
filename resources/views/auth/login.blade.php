@@ -40,13 +40,7 @@
 
         <p class="dx-note"><a href="{{ route('password.request') }}">نسيت كلمة المرور؟</a></p>
 
-        <div class="dx-social">
-            <p class="dx-note">أو تابع عبر</p>
-            <a class="dx-submit dx-submit--ghost" href="{{ route('social.redirect', 'google') }}">المتابعة عبر Google</a>
-            <a class="dx-submit dx-submit--ghost" href="{{ route('social.redirect', 'facebook') }}">المتابعة عبر Facebook</a>
-            <a class="dx-submit dx-submit--ghost" href="{{ route('social.redirect', 'twitter') }}">المتابعة عبر X</a>
-            <a class="dx-submit dx-submit--ghost" href="{{ route('social.redirect', 'linkedin') }}">المتابعة عبر LinkedIn</a>
-        </div>
+        @include('auth._social-buttons')
 
         <p class="dx-note">ليس لديك حساب؟ <a href="{{ route('register') }}">أنشئ حساباً جديداً</a></p>
     </div>

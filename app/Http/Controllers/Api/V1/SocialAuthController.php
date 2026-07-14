@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Support\Auth\SocialProviderCatalog;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -21,6 +23,12 @@ class SocialAuthController extends Controller
         'twitter' => 'twitter-oauth-2',
         'linkedin' => 'linkedin-openid',
     ];
+
+    /** المزوّدون المفعّلون (لإظهار المفعّل فقط في شاشة الدخول). عام بلا مصادقة. */
+    public function providers(): JsonResponse
+    {
+        return response()->json(['data' => SocialProviderCatalog::enabled()]);
+    }
 
     public function redirect(string $provider): RedirectResponse
     {
