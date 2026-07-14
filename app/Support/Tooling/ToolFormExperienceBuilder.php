@@ -14,6 +14,7 @@ class ToolFormExperienceBuilder
 {
     public function __construct(
         private readonly ToolInputPrefillService $prefill = new ToolInputPrefillService(),
+        private readonly MarketingConsistencyInspector $consistencyInspector = new MarketingConsistencyInspector(),
     ) {}
 
     /**
@@ -58,7 +59,26 @@ class ToolFormExperienceBuilder
         return [
             'summary' => $this->buildSummary($tool, $blueprint, $profile, $project, $latestRun, $upstreamContext, $modes, $toolBriefing),
             'modes' => $modes,
+            // تنبيهات لحظية أثناء الإدخال: تعارضات بين ملف المشروع والحقائق المشتقّة
+            // من الأدوات (كتعارض الجمهور) ليصحّحها المستخدم قبل توليد أي مخرج.
+            'alerts' => $this->buildAlerts($profile, $project),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $profile
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildAlerts(array $profile, ?Project $project): array
+    {
+        if (! $project instanceof Project) {
+            return [];
+        }
+
+        return $this->consistencyInspector->inspect(
+            ProjectCanonicalFacts::for($project),
+            $profile,
+        );
     }
 
     /**

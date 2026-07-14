@@ -225,6 +225,29 @@
                     </section>
                 @endif
 
+                @if (! empty($formExperience['alerts']))
+                    <section class="tool-consistency-alert" data-tool-consistency-alert role="alert" aria-live="polite">
+                        @foreach ($formExperience['alerts'] as $alert)
+                            <div class="tool-consistency-alert-item">
+                                <div class="tool-consistency-alert-head">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                                    <strong>{{ $alert['title'] ?? 'تعارض في بيانات مشروعك' }}</strong>
+                                </div>
+                                <p class="tool-consistency-alert-body">{{ $alert['message'] ?? '' }}</p>
+                                @if (! empty($alert['values']))
+                                    <ul class="tool-consistency-alert-values">
+                                        <li><span>من أدواتك (العميل المثالي)</span>{{ $alert['values']['canonical'] ?? '' }}</li>
+                                        <li><span>في إعدادات المشروع</span>{{ $alert['values']['profile'] ?? '' }}</li>
+                                    </ul>
+                                @endif
+                                @if (! empty($alert['suggestion']))
+                                    <p class="tool-consistency-alert-fix">{{ $alert['suggestion'] }}</p>
+                                @endif
+                            </div>
+                        @endforeach
+                    </section>
+                @endif
+
                 <details class="tool-context-rail tool-coach-rail">
                     <summary class="onb-advanced-summary">
                         <span>مساعد المدخلات (اختياري)</span>

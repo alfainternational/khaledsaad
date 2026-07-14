@@ -11,6 +11,9 @@ use App\Domain\Workspace\Models\Workspace;
 use App\Domain\WorkspaceData\Models\WorkspaceData;
 use App\Models\User;
 use App\Support\Tooling\CanonicalOutputMapper;
+use App\Support\Tooling\MarketingConsistencyInspector;
+use App\Support\Tooling\ProjectCanonicalFacts;
+use App\Support\Workspaces\WorkspaceProfileStore;
 
 class RunToolAction
 {
@@ -19,6 +22,8 @@ class RunToolAction
         private readonly RefreshJourneySnapshotAction $refreshJourneySnapshotAction,
         private readonly CompileWorkspaceIntelligenceAction $compileIntelligence,
         private readonly CanonicalOutputMapper $canonicalOutputMapper,
+        private readonly WorkspaceProfileStore $profileStore,
+        private readonly MarketingConsistencyInspector $consistencyInspector,
     ) {}
 
     /**
@@ -118,6 +123,32 @@ class RunToolAction
         $this->compileIntelligence->handle($workspace, $project);
         $this->compileIntelligence->handle($workspace);
 
+        // تنبيه ما بعد الإدخال: نكشف تناقضات الحقائق (كاختلاف جمهور الملف عن
+        // العميل المثالي) ونخزّنها ليعرضها الداشبورد لحظياً قبل تسرّبها للمخرجات.
+        $this->recordContradictions($workspace, $project);
+
         return $run;
+    }
+
+    private function recordContradictions(Workspace $workspace, Project $project): void
+    {
+        $findings = $this->consistencyInspector->inspect(
+            ProjectCanonicalFacts::for($project),
+            $this->profileStore->get($workspace),
+        );
+
+        WorkspaceData::query()->updateOrCreate(
+            [
+                'workspace_id' => $workspace->id,
+                'project_id' => $project->id,
+                'key' => 'intelligence.contradictions',
+            ],
+            [
+                'value_json' => [
+                    'findings' => $findings,
+                    'checked_at' => now()->toDateTimeString(),
+                ],
+            ],
+        );
     }
 }

@@ -19,6 +19,7 @@ use App\Support\Dashboard\ContentLocaleCatalog;
 use App\Support\Dashboard\GoalCatalog;
 use App\Support\Dashboard\PathCatalog;
 use App\Support\AI\StudioOutputQualityGuard;
+use App\Support\Tooling\ProjectCanonicalFacts;
 use App\Support\Workspaces\WorkspaceJourneyStore;
 use App\Support\Workspaces\WorkspaceProfileStore;
 use Illuminate\Support\Arr;
@@ -103,12 +104,20 @@ class GenerateTemplateDraftAction
         }
         $country = trim((string) ($profile['country'] ?? ''));
 
+        // مصدر الحقيقة للجمهور: العميل المثالي المشتقّ من الأدوات (canonical) أولاً،
+        // ثم جمهور ملف المساحة كاحتياطي — فلا يخاطب الإعلان جمهوراً يناقض رسالته.
+        $canonicalFacts = $project ? ProjectCanonicalFacts::for($project) : null;
+        $resolvedAudience = trim((string) (
+            $canonicalFacts?->audience($profile)['value'] ?? ($profile['audience'] ?? '')
+        ));
+        $audienceForPrompt = $resolvedAudience !== '' ? $resolvedAudience : 'غير محدد';
+
         $replacements = [
             '{{workspace_name}}' => $workspace->name,
             '{{project_name}}' => $project?->name ?? 'المشروع الحالي',
             '{{client_name}}' => $project?->client?->name ?? 'العميل الحالي',
             '{{primary_goal}}' => GoalCatalog::label($profile['primary_goal'] ?? null),
-            '{{audience}}' => $profile['audience'] ?? 'غير محدد',
+            '{{audience}}' => $audienceForPrompt,
             '{{country}}' => $country !== '' ? $country : 'غير محدد',
             '{{content_locale}}' => ContentLocaleCatalog::label($localeKey),
             '{{brief}}' => $brief ?: 'بدون brief إضافي',
@@ -171,7 +180,7 @@ class GenerateTemplateDraftAction
             'المشروع: '.($project?->name ?? 'غير مرتبط بمشروع'),
             'العميل: '.($project?->client?->name ?? 'غير محدد'),
             'الهدف: '.GoalCatalog::label($profile['primary_goal'] ?? null),
-            'الجمهور: '.($profile['audience'] ?? 'غير محدد'),
+            'الجمهور: '.$audienceForPrompt,
             'الدولة أو السوق المرجعية للمحتوى (سوشيال، هبوط، إعلانات): '.($country !== '' ? $country : 'غير محدد — حدّثه من إعدادات الحساب'),
             'معرّف لهجة المحتوى من إعدادات الحساب (ملف المساحة): '.$localeKey,
             'اللهجة وأسلوب لغة النصوص التسويقية: '.ContentLocaleCatalog::label($localeKey).' — '.ContentLocaleCatalog::promptInstruction($localeKey),
@@ -574,7 +583,10 @@ TXT;
             'الدولة/السوق: '.(trim((string) ($profile['country'] ?? '')) !== '' ? trim((string) $profile['country']) : 'غير محدد'),
             'لهجة المحتوى: '.ContentLocaleCatalog::label($profile['content_locale'] ?? 'ar_modern_fusha'),
             'الهدف: '.GoalCatalog::label($profile['primary_goal'] ?? null),
-            'الجمهور: '.($profile['audience'] ?? 'غير محدد'),
+            'الجمهور: '.(($fallbackAudience = trim((string) (
+                ($project ? ProjectCanonicalFacts::for($project)->audience($profile)['value'] : null)
+                ?? ($profile['audience'] ?? '')
+            ))) !== '' ? $fallbackAudience : 'غير محدد'),
             'المسار: '.PathCatalog::label($profile['recommended_path'] ?? null),
             'المرحلة الحالية: '.($journeySnapshot['current_stage'] ?? ($project?->stage ?? 'غير محدد')),
             'آخر نقطة في الرحلة: '.($journeySnapshot['current_step'] ?? 'غير محدد'),
@@ -722,15 +734,15 @@ TXT;
             ->implode("\n");
 
         return implode("\n\n", array_filter([
-            '## تم رفض المخرج قبل التسليم',
-            'النص الذي عاد من النموذج لم يحقق تعريف الإنجاز لهذا القالب، لذلك لم يتم اعتماده كمخرج نهائي.',
-            '## أسباب الرفض',
+            '## المخرج يحتاج تحسيناً قبل الاعتماد',
+            'المسودة أدناه لم تحقق بعد تعريف الإنجاز لهذا القالب، فحفظناها للمراجعة بدل اعتمادها نهائياً — مع توضيح ما ينقصها وكيف تكمله في جولة واحدة.',
+            '## ما الذي يحتاج تحسيناً',
             '- '.implode("\n- ", $issues),
             $definitionOfDone !== '' ? "## تعريف الإنجاز المطلوب\n".$definitionOfDone : null,
-            '## المسودة المرفوضة للمراجعة',
+            '## المسودة الحالية للمراجعة',
             $candidate,
-            '## الإجراء المطلوب',
-            'راجع المدخلات أو زوّد السياق ببيانات أوضح، ثم أعد التوليد. الهدف هنا منع حفظ ملف مضلل أو غير قابل للتطبيق.',
+            '## الخطوة التالية',
+            'زوّد السياق ببيانات أوضح أو أكمل الأدوات المرتبطة، ثم أعد التوليد. الهدف حماية مشروعك من اعتماد ملف غير دقيق أو غير قابل للتطبيق.',
         ]));
     }
 

@@ -4909,6 +4909,68 @@ details[open] .onb-advanced-summary {
     margin-bottom: var(--sp-4);
 }
 
+/* تنبيه اتساق لحظي أثناء الإدخال (تعارض الجمهور مثلاً) — يعمل في الوضعين */
+.tool-consistency-alert {
+    border: 1px solid color-mix(in srgb, var(--warning, #f59e0b) 45%, var(--border));
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--warning, #f59e0b) 8%, var(--surface));
+    padding: var(--sp-4);
+    margin-bottom: var(--sp-4);
+    display: grid;
+    gap: var(--sp-3);
+}
+
+.tool-consistency-alert-item {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+.tool-consistency-alert-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    color: var(--warning, #f59e0b);
+}
+
+.tool-consistency-alert-head strong {
+    color: var(--text);
+}
+
+.tool-consistency-alert-body {
+    margin: 0;
+    color: var(--text-2);
+}
+
+.tool-consistency-alert-values {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tool-consistency-alert-values li {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: var(--sp-2) var(--sp-3);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.tool-consistency-alert-values li span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+}
+
+.tool-consistency-alert-fix {
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+}
+
 .tool-mode-rail {
     margin-bottom: var(--sp-4);
 }
