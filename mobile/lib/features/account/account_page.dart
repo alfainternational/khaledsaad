@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../app/routes/app_routes.dart';
 import '../../app/theme/theme_controller.dart';
 import '../../core/error/api_exception.dart';
+import '../../data/models/dashboard_models.dart';
 import '../../data/models/workspace_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/collab_repository.dart';
@@ -33,8 +34,8 @@ class _AccountPageState extends State<AccountPage> {
   final _saving = false.obs;
   final _error = RxnString();
 
-  // خيارات القوائم من الخادم: [{value/key, label}] أو {key: label}
-  final _options = <String, List<MapEntry<String, String>>>{}.obs;
+  // خيارات القوائم من الخادم، مفهرسة بمفتاح الحقل.
+  final _options = <String, List<SelectOption>>{}.obs;
   final _planName = RxnString();
 
   // قيم الحقول
@@ -91,80 +92,42 @@ class _AccountPageState extends State<AccountPage> {
     _loading.value = true;
     _error.value = null;
     try {
-      final data = await _repo.account(ws);
+      final overview = await _repo.account(ws);
+      final profile = overview.profile;
+      _planName.value = overview.planName;
 
-      final user = _asMap(data['user']);
-      final account = _asMap(data['account']);
-      final workspace = _asMap(data['workspace']);
-      final profile = _asMap(data['profile']);
-      final plan = _asMap(data['plan']);
-      _planName.value = plan['name']?.toString();
+      _text['name']!.text = overview.name;
+      _text['account_name']!.text = overview.accountName;
+      _text['billing_email']!.text = overview.billingEmail;
+      _text['workspace_name']!.text = overview.workspaceName;
+      _text['audience']!.text = profile.audience;
+      _text['country']!.text = profile.country;
+      _text['current_challenge']!.text = profile.currentChallenge;
 
-      _text['name']!.text = user['name']?.toString() ?? '';
-      _text['account_name']!.text = account['name']?.toString() ?? '';
-      _text['billing_email']!.text = account['billing_email']?.toString() ?? '';
-      _text['workspace_name']!.text = workspace['name']?.toString() ?? '';
-      _text['audience']!.text = profile['audience']?.toString() ?? '';
-      _text['country']!.text = profile['country']?.toString() ?? '';
-      _text['current_challenge']!.text =
-          profile['current_challenge']?.toString() ?? '';
+      _select['locale']!.value = overview.locale;
+      _select['workspace_type']!.value = overview.workspaceType;
+      _select['persona']!.value = profile.persona;
+      _select['awareness_level']!.value = profile.awarenessLevel;
+      _select['primary_goal']!.value = profile.primaryGoal;
+      _select['recommended_path']!.value = profile.recommendedPath;
+      _select['content_locale']!.value = profile.contentLocale;
 
-      _select['locale']!.value = user['locale']?.toString() ?? 'ar';
-      _select['workspace_type']!.value = workspace['type']?.toString();
-      for (final key in [
-        'persona',
-        'awareness_level',
-        'primary_goal',
-        'recommended_path',
-        'content_locale'
-      ]) {
-        _select[key]!.value = profile[key]?.toString();
-      }
-
-      // خيارات القوائم
-      final options = _asMap(data['options']);
-      _options['persona'] = _parseOptions(options['personas']);
-      _options['awareness_level'] = _parseOptions(options['awareness_levels']);
-      _options['primary_goal'] = _parseOptions(options['goals']);
-      _options['recommended_path'] = _parseOptions(options['paths']);
-      _options['content_locale'] = _parseOptions(options['content_locales']);
-      _options['locale'] = [
-        const MapEntry('ar', 'العربية'),
-        const MapEntry('en', 'English'),
+      // خيارات القوائم: من الخادم + خيارات ثابتة للغة ونوع المساحة.
+      _options.addAll(overview.options);
+      _options['locale'] = const [
+        SelectOption('ar', 'العربية'),
+        SelectOption('en', 'English'),
       ];
-      _options['workspace_type'] = [
-        const MapEntry('personal', 'شخصية'),
-        const MapEntry('team', 'فريق'),
-        const MapEntry('agency', 'وكالة'),
+      _options['workspace_type'] = const [
+        SelectOption('personal', 'شخصية'),
+        SelectOption('team', 'فريق'),
+        SelectOption('agency', 'وكالة'),
       ];
     } on ApiException catch (e) {
       _error.value = e.message;
     } finally {
       _loading.value = false;
     }
-  }
-
-  /// يحوّل خيارات الخادم (خريطة {key: label} أو قائمة [{value,label}]) لقائمة موحّدة.
-  List<MapEntry<String, String>> _parseOptions(dynamic raw) {
-    if (raw is Map) {
-      return raw.entries
-          .map((e) {
-            final v = e.value;
-            final label = v is Map
-                ? (v['label'] ?? v['title'] ?? e.key).toString()
-                : v.toString();
-            return MapEntry(e.key.toString(), label);
-          })
-          .toList();
-    }
-    if (raw is List) {
-      return raw.whereType<Map>().map((e) {
-        final value = (e['value'] ?? e['key'] ?? '').toString();
-        final label = (e['label'] ?? e['title'] ?? value).toString();
-        return MapEntry(value, label);
-      }).toList();
-    }
-    return const [];
   }
 
   Future<void> _save() async {
@@ -190,9 +153,6 @@ class _AccountPageState extends State<AccountPage> {
       _saving.value = false;
     }
   }
-
-  static Map<String, dynamic> _asMap(dynamic v) =>
-      v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
 
   /// تسجيل الخروج — نفس منطق الداشبورد: نُبطل التوكن على الخادم (إن أمكن)
   /// ثم نمسح الجلسة محلياً ونعود لتسجيل الدخول.
@@ -452,15 +412,16 @@ class _AccountPageState extends State<AccountPage> {
   Widget _dropdown(String key) => Padding(
         padding: const EdgeInsets.only(top: 12),
         child: Obx(() {
-          final options = _options[key] ?? const <MapEntry<String, String>>[];
+          final options = _options[key] ?? const <SelectOption>[];
           final current = _select[key]!.value;
-          final valid = options.any((o) => o.key == current) ? current : null;
+          final valid = options.any((o) => o.value == current) ? current : null;
           return DropdownButtonFormField<String>(
             initialValue: valid,
             isExpanded: true,
             decoration: InputDecoration(labelText: _selectKeys[key]),
             items: options
-                .map((o) => DropdownMenuItem(value: o.key, child: Text(o.value)))
+                .map((o) =>
+                    DropdownMenuItem(value: o.value, child: Text(o.label)))
                 .toList(),
             onChanged: (v) => _select[key]!.value = v,
           );

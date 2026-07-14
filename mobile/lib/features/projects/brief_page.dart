@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/error/api_exception.dart';
+import '../../data/models/report_models.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
@@ -85,7 +86,7 @@ class _BriefPageState extends State<BriefPage> {
   final _loading = true.obs;
   final _saving = false.obs;
   final _error = RxnString();
-  final _assessment = Rxn<Map<String, dynamic>>();
+  final _assessment = Rxn<BriefAssessment>();
 
   late final String _projectId = Get.arguments as String;
   late final LifecycleRepository _repo = Get.find<LifecycleRepository>();
@@ -147,12 +148,9 @@ class _BriefPageState extends State<BriefPage> {
     }
   }
 
-  void _fill(Map<String, dynamic> brief) {
+  void _fill(BriefData brief) {
     _controllers.forEach((key, controller) {
-      final parts = key.split('.');
-      final group = brief[parts[0]];
-      final value = group is Map ? group[parts[1]] : null;
-      controller.text = value?.toString() ?? '';
+      controller.text = brief.value(key);
     });
   }
 
@@ -209,8 +207,8 @@ class _BriefPageState extends State<BriefPage> {
           children: [
             Obx(() {
               final a = _assessment.value;
-              final score = a?['score'];
-              final verdict = a?['verdict']?.toString() ?? a?['summary']?.toString();
+              final score = a?.score;
+              final verdict = a?.verdict ?? a?.summary;
               if (score == null && (verdict == null || verdict.isEmpty)) {
                 return const SizedBox.shrink();
               }

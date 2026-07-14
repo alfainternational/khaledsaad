@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../error/api_exception.dart';
@@ -87,6 +89,53 @@ class ApiClient {
           ),
         );
       });
+
+  /// بثّ خادم-مُرسَل (SSE): يفكّ أسطر `data:` ويُطلق نص كل delta لحظياً.
+  /// يرمي ApiException عند حدث خطأ من الخادم، وينتهي عند `[DONE]`.
+  Stream<String> stream(String path, {Object? body}) async* {
+    late final Response<ResponseBody> response;
+    try {
+      response = await _dio.post<ResponseBody>(
+        path,
+        data: body,
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: {'Accept': 'text/event-stream'},
+          receiveTimeout: const Duration(seconds: 150),
+        ),
+      );
+    } on DioException catch (e) {
+      final err = e.error;
+      if (err is ApiException) throw err;
+      throw ApiException.network(e.message);
+    }
+
+    var buffer = '';
+    await for (final chunk in response.data!.stream) {
+      buffer += utf8.decode(chunk, allowMalformed: true);
+      while (true) {
+        final nl = buffer.indexOf('\n');
+        if (nl < 0) break;
+        final line = buffer.substring(0, nl).trim();
+        buffer = buffer.substring(nl + 1);
+        if (line.isEmpty || !line.startsWith('data:')) continue;
+        final data = line.substring(5).trim();
+        if (data == '[DONE]') return;
+        Map<String, dynamic>? event;
+        try {
+          final decoded = jsonDecode(data);
+          if (decoded is Map) event = Map<String, dynamic>.from(decoded);
+        } catch (_) {
+          continue; // سطر SSE غير مكتمل — نتجاهله.
+        }
+        if (event == null) continue;
+        final error = event['error'];
+        if (error != null) throw ApiException.network(error.toString());
+        final delta = event['delta'];
+        if (delta != null) yield delta.toString();
+      }
+    }
+  }
 
   /// تنزيل بايتات (لملفات PDF مثلاً) مع مصادقة Bearer.
   Future<List<int>> download(String path) async {

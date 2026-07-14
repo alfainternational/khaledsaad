@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
+import '../../data/models/dashboard_models.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/session_service.dart';
@@ -198,21 +199,16 @@ class DashboardPage extends StatelessWidget {
 class _NextStepCard extends StatelessWidget {
   const _NextStepCard({required this.next, required this.onStart});
 
-  final Map<String, dynamic> next;
+  final NextStep next;
   final VoidCallback onStart;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final title = next['title']?.toString() ?? 'خطوتك التالية';
-    final summary = next['summary']?.toString() ?? '';
-    final details = (next['details'] is List)
-        ? (next['details'] as List)
-            .map((e) => e.toString())
-            .where((s) => s.trim().isNotEmpty)
-            .toList()
-        : const <String>[];
-    final actionLabel = next['action_label']?.toString() ?? 'ابدأ الآن';
+    final title = next.title;
+    final summary = next.summary;
+    final details = next.details;
+    final actionLabel = next.actionLabel;
 
     return Card(
       elevation: 0,

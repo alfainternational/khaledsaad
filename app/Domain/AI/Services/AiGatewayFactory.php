@@ -49,6 +49,42 @@ class AiGatewayFactory
     }
 
     /**
+     * أول بوّابة متوافقة مع OpenAI قابلة للبثّ (لها مفتاح مضبوط).
+     * يُفضَّل مفتاح الحساب (BYOK) إن وُجد، وإلا أول مزوّد في السلسلة له مفتاح.
+     * يعيد null إذا لا مزوّد قابل للبثّ متاح (فيتدهور المتصل لغير المتدفّق).
+     */
+    public function firstStreamable(?Account $account = null): ?OpenAiCompatibleGateway
+    {
+        if ($account !== null) {
+            $byok = $this->makeForAccount($account);
+            if ($byok instanceof OpenAiCompatibleGateway) {
+                return $byok;
+            }
+        }
+
+        $chain = array_filter(array_map(
+            'trim',
+            explode(',', (string) config('services.ai.chain', 'groq,cerebras'))
+        ));
+
+        foreach ($chain as $name) {
+            if (in_array($name, self::OPENAI_COMPATIBLE, true)
+                && filled(config("services.ai.providers.{$name}.key"))) {
+                return new OpenAiCompatibleGateway($name);
+            }
+        }
+
+        // احتياط: أي مزوّد OpenAI-compatible له مفتاح.
+        foreach (self::OPENAI_COMPATIBLE as $name) {
+            if (filled(config("services.ai.providers.{$name}.key"))) {
+                return new OpenAiCompatibleGateway($name);
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param  array<int, string>  $names
      */
     public function chain(array $names): ChainAiGateway

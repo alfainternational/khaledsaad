@@ -1,6 +1,7 @@
 import '../../core/config/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../models/lifecycle_models.dart';
+import '../models/report_models.dart';
 
 /// دورة المشروع: brief، التدقيق الذكي، التوصيات، حزم التنفيذ، التقارير.
 class LifecycleRepository {
@@ -10,24 +11,24 @@ class LifecycleRepository {
 
   // ---- ملف المشروع (brief) ----
 
-  Future<({Map<String, dynamic> brief, Map<String, dynamic> assessment})> brief(
+  Future<({BriefData brief, BriefAssessment assessment})> brief(
       String ws, String project) async {
     final res = await _api.get(ApiEndpoints.projectBrief(ws, project));
     final data = Map<String, dynamic>.from(res['data'] as Map);
     return (
-      brief: _asMap(data['brief']),
-      assessment: _asMap(data['assessment']),
+      brief: BriefData.fromJson(_asMap(data['brief'])),
+      assessment: BriefAssessment.fromJson(_asMap(data['assessment'])),
     );
   }
 
-  Future<({Map<String, dynamic> brief, Map<String, dynamic> assessment})>
-      updateBrief(String ws, String project, Map<String, dynamic> payload) async {
+  Future<({BriefData brief, BriefAssessment assessment})> updateBrief(
+      String ws, String project, Map<String, dynamic> payload) async {
     final res =
         await _api.put(ApiEndpoints.projectBrief(ws, project), body: payload);
     final data = Map<String, dynamic>.from(res['data'] as Map);
     return (
-      brief: _asMap(data['brief']),
-      assessment: _asMap(data['assessment']),
+      brief: BriefData.fromJson(_asMap(data['brief'])),
+      assessment: BriefAssessment.fromJson(_asMap(data['assessment'])),
     );
   }
 
@@ -119,18 +120,18 @@ class LifecycleRepository {
 
   // ---- التقارير ----
 
-  Future<Map<String, dynamic>> report(String ws, String project,
+  Future<ProjectReport> report(String ws, String project,
       {bool fresh = false}) async {
     final res = await _api.get(
       ApiEndpoints.projectReport(ws, project),
       query: fresh ? {'fresh': 1} : null,
     );
-    return _asMap(res['data']);
+    return ProjectReport.fromJson(_asMap(res['data']));
   }
 
-  Future<Map<String, dynamic>> dossier(String ws, String project) async {
+  Future<ProjectDossier> dossier(String ws, String project) async {
     final res = await _api.get(ApiEndpoints.projectDossier(ws, project));
-    return _asMap(res['data']);
+    return ProjectDossier.fromJson(_asMap(res['data']));
   }
 
   Future<List<int>> reportPdf(String ws, String project) =>

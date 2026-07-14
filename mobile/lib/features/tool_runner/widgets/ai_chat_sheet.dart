@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
@@ -28,10 +26,8 @@ class _AiChatSheetState extends State<AiChatSheet> {
   final _uuid = const Uuid();
   final _messages = <AiChatMessage>[];
   final _conversations = <AiChatConversation>[];
-  Timer? _pollTimer;
-  // سقف استطلاع الرد المؤجّل: 30 محاولة × 3ث = 90ث، كي لا يستمر بلا نهاية.
-  static const int _maxPollAttempts = 30;
-  int _pollAttempts = 0;
+  /// نص رد المساعد أثناء البثّ الحيّ (null = لا بثّ جارٍ).
+  String? _streamingText;
   AiChatConversation? _conversation;
   bool _loading = true;
   bool _sending = false;
@@ -53,7 +49,6 @@ class _AiChatSheetState extends State<AiChatSheet> {
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
     _input.dispose();
     // _listScroll مملوك من DraggableScrollableSheet — لا نتخلّص منه هنا.
     super.dispose();
@@ -86,7 +81,6 @@ class _AiChatSheetState extends State<AiChatSheet> {
   Future<void> _createConversation() async {
     final ws = _workspaceId;
     if (ws == null) return;
-    _pollTimer?.cancel();
     setState(() {
       _loading = true;
       _showHistory = false;
@@ -120,7 +114,6 @@ class _AiChatSheetState extends State<AiChatSheet> {
   }) async {
     final ws = _workspaceId;
     if (ws == null) return;
-    _pollTimer?.cancel();
     if (!prepend) {
       setState(() {
         _loading = true;
@@ -149,8 +142,6 @@ class _AiChatSheetState extends State<AiChatSheet> {
         _messageLastPage = thread.lastPage;
         _loading = false;
       });
-      _pollAttempts = 0; // فتح محادثة → صفّر عدّاد الاستطلاع.
-      _schedulePendingPoll();
       if (!prepend) _scrollToEnd();
     } on ApiException catch (error) {
       _setError(error.message);
@@ -181,63 +172,62 @@ class _AiChatSheetState extends State<AiChatSheet> {
     final conversation = _conversation;
     if (conversation == null) return;
 
+    final userMsg = AiChatMessage(
+      publicId: _uuid.v4(),
+      role: 'user',
+      status: 'completed',
+      content: text,
+    );
     setState(() {
       _sending = true;
       _error = null;
       _input.clear();
+      _messages.add(userMsg);
+      _streamingText = '';
     });
+    _scrollToEnd();
+
+    // تاريخ المحادثة كمصفوفة {role, content} لتغذية البثّ.
+    final history = _messages
+        .where((m) => (m.content?.trim().isNotEmpty ?? false))
+        .map((m) => {'role': m.role, 'content': m.content!.trim()})
+        .toList();
 
     try {
-      final result = await _repository.sendMessage(
+      await for (final delta in _repository.chatStream(
         ws,
-        conversation.publicId,
-        content: text,
-        clientRequestId: _uuid.v4(),
-      );
+        messages: history,
+        toolKey: widget.toolKey,
+        projectPublicId: widget.projectPublicId,
+      )) {
+        if (!mounted) return;
+        setState(() => _streamingText = (_streamingText ?? '') + delta);
+        _scrollToEnd();
+      }
       if (!mounted) return;
+      final reply = (_streamingText ?? '').trim();
       setState(() {
-        _conversation = result.conversation;
-        _messages.addAll([result.userMessage, result.assistantMessage]);
+        if (reply.isNotEmpty) {
+          _messages.add(AiChatMessage(
+            publicId: _uuid.v4(),
+            role: 'assistant',
+            status: 'completed',
+            content: reply,
+          ));
+        }
+        _streamingText = null;
       });
       _scrollToEnd();
-      _pollAttempts = 0; // رسالة جديدة → ابدأ عدّ الاستطلاع من الصفر.
-      _schedulePendingPoll();
     } on ApiException catch (error) {
-      _setError(error.message);
+      if (mounted) {
+        setState(() {
+          _streamingText = null;
+          _error = error.message;
+        });
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
-  }
-
-  void _schedulePendingPoll() {
-    _pollTimer?.cancel();
-    final pending = _messages.where((message) => message.isPending).firstOrNull;
-    if (pending == null || _conversation == null) return;
-    // توقّف بعد السقف حتى لا نستطلع رسالة عالقة على الخادم إلى ما لا نهاية.
-    if (_pollAttempts >= _maxPollAttempts) return;
-    _pollTimer = Timer(const Duration(seconds: 3), () => _poll(pending));
-  }
-
-  Future<void> _poll(AiChatMessage pending) async {
-    final ws = _workspaceId;
-    final conversation = _conversation;
-    if (!mounted || ws == null || conversation == null) return;
-    try {
-      final message = await _repository.message(
-        ws,
-        conversation.publicId,
-        pending.publicId,
-      );
-      if (!mounted) return;
-      final index = _messages.indexWhere(
-        (item) => item.publicId == message.publicId,
-      );
-      if (index >= 0) setState(() => _messages[index] = message);
-    } on ApiException catch (error) {
-      if (mounted) setState(() => _error = error.message);
-    }
-    _pollAttempts++;
-    if (mounted) _schedulePendingPoll();
   }
 
   void _setError(String message) {
@@ -371,10 +361,12 @@ class _AiChatSheetState extends State<AiChatSheet> {
     }
 
     final canLoadOlder = _messagePage < _messageLastPage;
+    final leading = canLoadOlder ? 1 : 0;
+    final streaming = _streamingText != null;
     return ListView.builder(
       controller: scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: _messages.length + (canLoadOlder ? 1 : 0),
+      itemCount: leading + _messages.length + (streaming ? 1 : 0),
       itemBuilder: (_, index) {
         if (canLoadOlder && index == 0) {
           return TextButton(
@@ -386,7 +378,19 @@ class _AiChatSheetState extends State<AiChatSheet> {
             child: const Text('عرض رسائل أقدم'),
           );
         }
-        final messageIndex = index - (canLoadOlder ? 1 : 0);
+        final messageIndex = index - leading;
+        // فقاعة الرد الحيّ أثناء البثّ (تظهر رمزاً برمز).
+        if (streaming && messageIndex == _messages.length) {
+          final live = _streamingText ?? '';
+          return _Bubble(
+            message: AiChatMessage(
+              publicId: '_streaming',
+              role: 'assistant',
+              status: 'queued',
+              content: live.isEmpty ? '…' : live,
+            ),
+          );
+        }
         return _Bubble(message: _messages[messageIndex]);
       },
     );

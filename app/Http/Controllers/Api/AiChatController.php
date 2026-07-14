@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Domain\AI\Services\AiCreditService;
+use App\Domain\AI\Services\AiGatewayFactory;
 use App\Domain\AI\Services\AIService;
 use App\Domain\AI\Web\WebResearchService;
 use App\Domain\Workspace\Models\Workspace;
@@ -14,6 +15,7 @@ use App\Support\Tooling\ToolInputQualityAssessmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AiChatController extends Controller
 {
@@ -114,6 +116,98 @@ class AiChatController extends Controller
         $this->chargeCredits($workspace, 1, 'ai.chat');
 
         return response()->json(['response' => $result['response']]);
+    }
+
+    /**
+     * بثّ رد المستشار رمزاً برمز (SSE). يبثّ فعلياً عبر مزوّد OpenAI-compatible
+     * (سلسلة/BYOK)؛ وإن تعذّر يتدهور بأمان لتوليد كامل دفعة واحدة. أحداث:
+     * data:{"delta":"..."} ثم data:[DONE]، أو data:{"error":"..."}.
+     */
+    public function chatStream(Request $request, AiGatewayFactory $factory): StreamedResponse
+    {
+        set_time_limit(150);
+
+        $request->validate([
+            'messages' => 'required|array|min:1',
+            'messages.*.role' => 'required|string|in:user,assistant,system',
+            'messages.*.content' => 'required|string|max:5000',
+            'tool_key' => 'nullable|string|max:100',
+            'project_id' => 'nullable|integer',
+        ]);
+
+        $workspace = $this->currentWorkspace($request);
+        $messages = $request->input('messages');
+        $toolKey = $request->input('tool_key', 'general');
+        $projectId = $request->input('project_id');
+
+        $contextParts = ['أنت المستشار الذكي في منصة التسويق الاستراتيجي.'];
+        $knowledgeQuery = collect($messages)
+            ->where('role', 'user')
+            ->pluck('content')
+            ->filter(fn ($content): bool => is_string($content))
+            ->take(-3)
+            ->implode(' ');
+        $contextBlock = $this->contextBuilder->promptBlockForIds($workspace?->id, $projectId, $knowledgeQuery);
+        if (trim($contextBlock) !== '') {
+            $contextParts[] = $contextBlock;
+        }
+        if ($toolKey !== 'general') {
+            $contextParts[] = "المستخدم يسأل حالياً في سياق أداة: {$toolKey}. قدم نصائح مرتبطة بهذه الأداة.";
+        }
+        $contextParts[] = 'أجب بالعربية بوضوح ودفء مهني. ركّز على خطوة عملية واحدة في كل فقرة عند الإمكان. لا تستخدم رموز تعبيرية. لا تكرّر سؤال المستخدم حرفياً.';
+        $systemPrompt = implode("\n", $contextParts);
+
+        $lastUser = (string) (collect($messages)
+            ->where('role', 'user')
+            ->pluck('content')
+            ->filter(fn ($c): bool => is_string($c) && trim($c) !== '')
+            ->last() ?? '');
+
+        $headers = [
+            'Content-Type' => 'text/event-stream; charset=utf-8',
+            'Cache-Control' => 'no-cache',
+            'Connection' => 'keep-alive',
+            'X-Accel-Buffering' => 'no',
+        ];
+
+        if ($guard = $this->creditGuard($workspace)) {
+            return response()->stream(function (): void {
+                echo 'data: '.json_encode(['error' => 'نفد رصيد المساعد الذكي لهذا الحساب.', 'code' => 'AI_CREDITS_EXHAUSTED'], JSON_UNESCAPED_UNICODE)."\n\n";
+                echo "data: [DONE]\n\n";
+            }, 200, $headers);
+        }
+
+        $gateway = $factory->firstStreamable($workspace?->account);
+        $fullMessages = array_merge([['role' => 'system', 'content' => $systemPrompt]], $messages);
+
+        return response()->stream(function () use ($gateway, $lastUser, $systemPrompt, $fullMessages, $workspace): void {
+            $streamed = false;
+            if ($gateway !== null && $lastUser !== '') {
+                $streamed = $gateway->streamText($lastUser, $systemPrompt, function (string $delta): void {
+                    echo 'data: '.json_encode(['delta' => $delta], JSON_UNESCAPED_UNICODE)."\n\n";
+                    if (ob_get_level() > 0) {
+                        @ob_flush();
+                    }
+                    @flush();
+                });
+            }
+
+            // تدهور آمن: مزوّد غير قابل للبثّ (مثل private_worker) ⇒ توليد كامل دفعة واحدة.
+            if (! $streamed) {
+                $result = $this->ai->chat($fullMessages);
+                $text = ($result['success'] ?? false) ? (string) ($result['response'] ?? '') : '';
+                if ($text === '') {
+                    echo 'data: '.json_encode(['error' => 'تعذّر توليد رد الآن.'], JSON_UNESCAPED_UNICODE)."\n\n";
+                    echo "data: [DONE]\n\n";
+
+                    return;
+                }
+                echo 'data: '.json_encode(['delta' => $text], JSON_UNESCAPED_UNICODE)."\n\n";
+            }
+
+            $this->chargeCredits($workspace, 1, 'ai.chat_stream');
+            echo "data: [DONE]\n\n";
+        }, 200, $headers);
     }
 
     public function analyzeToolInputs(Request $request): JsonResponse

@@ -77,6 +77,7 @@ class ApiEndpoints {
 
   // مساعد الذكاء
   static String aiChat(String ws) => '/workspaces/$ws/ai/chat';
+  static String aiChatStream(String ws) => '/workspaces/$ws/ai/chat/stream';
   static String aiConversations(String ws) =>
       '/workspaces/$ws/ai/conversations';
   static String aiConversation(String ws, String conversation) =>

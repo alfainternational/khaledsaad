@@ -91,6 +91,23 @@ class AiAssistRepository {
     return res['response']?.toString() ?? '';
   }
 
+  /// بثّ رد المستشار رمزاً برمز (SSE). يطلق مقاطع النص لحظياً.
+  Stream<String> chatStream(
+    String ws, {
+    required List<Map<String, String>> messages,
+    String? toolKey,
+    String? projectPublicId,
+  }) {
+    return _api.stream(
+      ApiEndpoints.aiChatStream(ws),
+      body: {
+        'messages': messages,
+        'tool_key': ?toolKey,
+        'project_public_id': ?projectPublicId,
+      },
+    );
+  }
+
   /// تحليل جودة مدخلات أداة (تقييم محلي + إثراء اختياري بالـ LLM).
   Future<Map<String, dynamic>> analyzeInputs(
     String ws, {

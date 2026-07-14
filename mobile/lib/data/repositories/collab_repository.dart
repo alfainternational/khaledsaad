@@ -1,6 +1,7 @@
 import '../../core/config/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../models/collab_models.dart';
+import '../models/dashboard_models.dart';
 
 /// التعاون والحساب: الداشبورد، onboarding، الحساب، الفريق، الموافقات، العملاء، العلامة.
 class CollabRepository {
@@ -10,9 +11,9 @@ class CollabRepository {
 
   // ---- الداشبورد ----
 
-  Future<Map<String, dynamic>> dashboard(String ws) async {
+  Future<DashboardSnapshot> dashboard(String ws) async {
     final res = await _api.get(ApiEndpoints.dashboard(ws));
-    return _asMap(res['data']);
+    return DashboardSnapshot.fromJson(_asMap(res['data']));
   }
 
   // ---- onboarding ----
@@ -27,9 +28,9 @@ class CollabRepository {
 
   // ---- الحساب ----
 
-  Future<Map<String, dynamic>> account(String ws) async {
+  Future<AccountOverview> account(String ws) async {
     final res = await _api.get(ApiEndpoints.account(ws));
-    return _asMap(res['data']);
+    return AccountOverview.fromJson(_asMap(res['data']));
   }
 
   Future<void> updateAccount(String ws, Map<String, dynamic> payload) =>

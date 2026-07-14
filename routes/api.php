@@ -158,6 +158,7 @@ Route::prefix('v1')->group(function (): void {
             // مساعد الذكاء (chat/analyze/suggest/research)
             Route::middleware('throttle:ai-assist')->prefix('ai')->group(function (): void {
                 Route::post('/chat', [AiAssistController::class, 'chat']);
+                Route::post('/chat/stream', [AiAssistController::class, 'chatStream']);
                 Route::get('/conversations', [AiConversationController::class, 'index']);
                 Route::post('/conversations', [AiConversationController::class, 'store']);
                 Route::get('/conversations/{conversationPublicId}', [AiConversationController::class, 'show']);

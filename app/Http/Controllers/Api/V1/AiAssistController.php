@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\AI\Services\AiGatewayFactory;
 use App\Domain\AI\Web\WebResearchService;
 use App\Domain\Project\Models\Project;
 use App\Http\Controllers\Api\AiChatController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * واجهة مساعد الذكاء للموبايل (v1/sanctum). تفوّض للمنطق الكامل في AiChatController
@@ -19,6 +21,13 @@ class AiAssistController
         $this->resolveProject($request);
 
         return app(AiChatController::class)->chat($request);
+    }
+
+    public function chatStream(Request $request): StreamedResponse
+    {
+        $this->resolveProject($request);
+
+        return app(AiChatController::class)->chatStream($request, app(AiGatewayFactory::class));
     }
 
     public function analyze(Request $request): JsonResponse

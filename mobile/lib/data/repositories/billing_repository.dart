@@ -1,5 +1,6 @@
 import '../../core/config/api_endpoints.dart';
 import '../../core/network/api_client.dart';
+import '../models/billing_models.dart';
 
 /// الفوترة: نظرة الاشتراك، بدء اشتراك PayPal، تأكيد العودة، الإلغاء، وأجهزة الإشعارات.
 class BillingRepository {
@@ -7,9 +8,9 @@ class BillingRepository {
 
   final ApiClient _api;
 
-  Future<Map<String, dynamic>> overview(String ws) async {
+  Future<BillingOverview> overview(String ws) async {
     final res = await _api.get(ApiEndpoints.billing(ws));
-    return _asMap(res['data']);
+    return BillingOverview.fromJson(_asMap(res['data']));
   }
 
   /// يبدأ الاشتراك ويعيد approval_url ليُفتح في المتصفح.

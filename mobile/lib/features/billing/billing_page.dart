@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/error/api_exception.dart';
+import '../../data/models/billing_models.dart';
 import '../../data/repositories/billing_repository.dart';
 import '../../data/services/deep_link_service.dart';
 import '../../data/services/workspace_service.dart';
@@ -25,7 +26,7 @@ class _BillingPageState extends State<BillingPage> {
   final _loading = true.obs;
   final _busy = RxnString(); // plan_code أثناء الاشتراك أو 'cancel'
   final _error = RxnString();
-  final _data = Rxn<Map<String, dynamic>>();
+  final _data = Rxn<BillingOverview>();
   final _billingCycle = 'monthly'.obs;
 
   Worker? _refreshWorker;
@@ -138,30 +139,17 @@ class _BillingPageState extends State<BillingPage> {
         if (_error.value != null && _data.value == null) {
           return AppStateView.error(message: _error.value, onRetry: _load);
         }
-        final data = _data.value ?? {};
-        final plans = (data['plans'] as List?) ?? const [];
-        final currentCode = data['current_plan_code']?.toString();
-        final isOwner = data['is_owner'] == true;
-        final paypalReady = data['paypal_ready'] == true;
-        final credits = data['ai_credits_balance'];
-        final subscription = data['subscription'] is Map
-            ? Map<String, dynamic>.from(data['subscription'] as Map)
-            : null;
-        final hasPaypal = subscription?['has_paypal'] == true;
+        final data = _data.value;
+        final plans = data?.plans ?? const <BillingPlan>[];
+        final currentCode = data?.currentPlanCode;
+        final isOwner = data?.isOwner == true;
+        final paypalReady = data?.paypalReady == true;
+        final credits = data?.aiCreditsBalance;
+        final hasPaypal = data?.hasPaypal == true;
 
         // الباقة الحالية باسمها العربي بدل الكود الخام.
-        Map? currentPlan;
-        for (final p in plans.whereType<Map>()) {
-          if (p['code']?.toString() == currentCode) {
-            currentPlan = p;
-            break;
-          }
-        }
-        final currentName =
-            currentPlan?['name_ar']?.toString() ?? currentCode ?? '—';
-        final features = currentPlan?['features'] is Map
-            ? Map<String, dynamic>.from(currentPlan!['features'] as Map)
-            : <String, dynamic>{};
+        final currentName = data?.currentPlanName ?? currentCode ?? '—';
+        final features = data?.currentPlan?.features ?? <String, dynamic>{};
 
         return RefreshIndicator(
           onRefresh: _load,
@@ -212,7 +200,7 @@ class _BillingPageState extends State<BillingPage> {
               ),
               const SizedBox(height: 12),
               _LimitsCard(
-                credits: (credits as num?)?.toDouble() ?? 0,
+                credits: credits?.toDouble() ?? 0,
                 features: features,
               ),
               const SizedBox(height: 16),
@@ -247,18 +235,15 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                     ),
                   ),
-                ...plans.whereType<Map>().map((raw) {
-                  final plan = Map<String, dynamic>.from(raw);
-                  final code = plan['code']?.toString() ?? '';
-                  if (code == 'free') return const SizedBox.shrink();
+                ...plans.map((plan) {
+                  final code = plan.code;
+                  if (plan.isFree) return const SizedBox.shrink();
                   final isCurrent = code == currentCode;
-                  final price = _billingCycle.value == 'annual'
-                      ? plan['annual_price']
-                      : plan['monthly_price'];
+                  final price = plan.priceFor(_billingCycle.value);
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
-                      title: Text(plan['name_ar']?.toString() ?? code,
+                      title: Text(plan.displayName,
                           style: theme.textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w700)),
                       subtitle: Text(price != null

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/error/api_exception.dart';
 import '../../core/l10n/ar_labels.dart';
+import '../../data/models/dashboard_models.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/collab_repository.dart';
 import '../../data/services/session_service.dart';
@@ -18,7 +19,7 @@ class DashboardController extends GetxController {
   final CollabRepository _collab;
 
   /// لقطة الداشبورد الذكية من الخادم.
-  final dashboardData = Rxn<Map<String, dynamic>>();
+  final dashboardData = Rxn<DashboardData>();
 
   /// اسم المستخدم للتحية (يُجلب مرة واحدة، بأفضل جهد).
   final userName = RxnString();
@@ -48,15 +49,13 @@ class DashboardController extends GetxController {
       }
       final ws = _workspaces.activeId;
       if (ws != null) {
-        final data = await _collab.dashboard(ws);
+        final snapshot = await _collab.dashboard(ws);
         // لم يكتمل الإعداد الأولي → وجّه لشاشة الإعداد.
-        if (data['onboarding_completed'] == false) {
+        if (snapshot.onboardingCompleted == false) {
           Get.offAllNamed(Routes.onboarding);
           return;
         }
-        dashboardData.value = data['dashboard'] is Map
-            ? Map<String, dynamic>.from(data['dashboard'] as Map)
-            : null;
+        dashboardData.value = snapshot.dashboard;
       }
     } on ApiException catch (e) {
       error.value = e.message;
@@ -84,87 +83,33 @@ class DashboardController extends GetxController {
   }
 
   /// بطاقة «الخطوة التالية» من لقطة الداشبورد الذكية.
-  Map<String, dynamic>? get nextStep {
-    final raw = dashboardData.value?['nextStep'];
-    return raw is Map ? Map<String, dynamic>.from(raw) : null;
-  }
-
-  Map<String, dynamic> get _data =>
-      dashboardData.value ?? const <String, dynamic>{};
+  NextStep? get nextStep => dashboardData.value?.nextStep;
 
   /// اسم المشروع الحالي المعروض في اللقطة (إن وُجد).
-  String? get currentProjectName {
-    final p = _data['currentProject'];
-    return p is Map ? p['name']?.toString() : null;
-  }
+  String? get currentProjectName => dashboardData.value?.currentProjectName;
 
   /// رقم المرحلة الحالية للمشروع النشط.
-  int? get currentStage {
-    final p = _data['currentProject'];
-    if (p is Map && p['stage'] is num) return (p['stage'] as num).toInt();
-    return null;
-  }
+  int? get currentStage => dashboardData.value?.currentStage;
 
   /// اسم المرحلة الحالية من خريطة تقدّم المراحل.
-  String? get currentStageLabel {
-    final stage = currentStage;
-    if (stage == null) return null;
-    final progress = _data['stageProgress'];
-    if (progress is List) {
-      for (final s in progress) {
-        if (s is Map && (s['number'] as num?)?.toInt() == stage) {
-          final label = s['label']?.toString();
-          if (label != null && label.isNotEmpty) return label;
-        }
-      }
-    }
-    return null;
-  }
+  String? get currentStageLabel => dashboardData.value?.currentStageLabel;
 
   /// نسبة إكمال المسار = مجموع الأدوات المنجزة ÷ إجماليها عبر كل المراحل.
-  int? get pathCompletionPercent {
-    final pipeline = _data['toolPipeline'];
-    if (pipeline is! List || pipeline.isEmpty) return null;
-    var completed = 0;
-    var total = 0;
-    for (final s in pipeline) {
-      if (s is Map) {
-        completed += (s['completed'] as num?)?.toInt() ?? 0;
-        total += (s['total'] as num?)?.toInt() ?? 0;
-      }
-    }
-    if (total == 0) return null;
-    return ((completed / total) * 100).round();
-  }
+  int? get pathCompletionPercent => dashboardData.value?.pathCompletionPercent;
 
   /// توصيات تنفيذية من تقييم ملف المشروع (إن توفّرت).
-  List<String> get recommendations {
-    final brief = _data['briefAssessment'];
-    if (brief is Map && brief['next_actions'] is List) {
-      return (brief['next_actions'] as List)
-          .map((e) => e.toString())
-          .where((s) => s.trim().isNotEmpty)
-          .toList();
-    }
-    return const [];
-  }
+  List<String> get recommendations =>
+      dashboardData.value?.recommendations ?? const [];
 
   /// آخر النشاط: تشغيلات الأدوات الأخيرة مع اسم الأداة والمشروع.
   List<({String title, String subtitle})> get recentActivity {
-    final runs = _data['recentToolRuns'];
-    if (runs is! List) return const [];
+    final runs = dashboardData.value?.recentToolRuns ?? const [];
     final items = <({String title, String subtitle})>[];
     for (final r in runs) {
-      if (r is! Map) continue;
-      final toolCode = r['tool_code']?.toString() ?? '';
       final toolName =
-          (r['tool'] is Map ? (r['tool'] as Map)['name']?.toString() : null) ??
-              ArLabels.toolNames[toolCode] ??
-              toolCode;
+          r.toolName ?? ArLabels.toolNames[r.toolCode] ?? r.toolCode;
       if (toolName.isEmpty) continue;
-      final projectName =
-          r['project'] is Map ? (r['project'] as Map)['name']?.toString() : null;
-      items.add((title: toolName, subtitle: projectName ?? ''));
+      items.add((title: toolName, subtitle: r.projectName ?? ''));
     }
     return items;
   }
@@ -177,9 +122,9 @@ class DashboardController extends GetxController {
       openProjects();
       return;
     }
-    final type = next['action_type']?.toString();
-    final toolCode = next['tool_code']?.toString() ?? '';
-    final projectId = next['project_public_id']?.toString() ?? '';
+    final type = next.actionType;
+    final toolCode = next.toolCode ?? '';
+    final projectId = next.projectPublicId ?? '';
 
     if (type == 'tool' && toolCode.isNotEmpty && projectId.isNotEmpty) {
       Get.toNamed(Routes.toolRunner, arguments: {

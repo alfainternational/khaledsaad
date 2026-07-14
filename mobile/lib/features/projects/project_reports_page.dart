@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../core/error/api_exception.dart';
 import '../../core/l10n/ar_labels.dart';
 import '../../core/utils/file_exporter.dart';
+import '../../data/models/report_models.dart';
 import '../../data/repositories/lifecycle_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
@@ -39,14 +40,14 @@ class _ProjectReportsPageState extends State<ProjectReportsPage> {
   Future<void> _viewDocument({
     required String key,
     required String title,
-    required Future<Map<String, dynamic>> Function(String ws) loader,
+    required Future<RenderableDocument> Function(String ws) loader,
   }) async {
     final ws = _workspaces.activeId;
     if (ws == null || _busy.value != null) return;
     _busy.value = key;
     try {
       final doc = await loader(ws);
-      Get.to(() => _DocumentView(title: title, document: doc));
+      Get.to(() => _DocumentView(title: title, document: doc.raw));
     } on ApiException catch (e) {
       UiFeedback.error(e.message, title: title);
     } finally {
