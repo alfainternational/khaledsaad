@@ -136,10 +136,17 @@ class ToolMode {
 
 /// مخطط نموذج الأداة كاملاً (كل الأوضاع).
 class ToolForm {
-  const ToolForm({required this.modes, this.defaultMode});
+  const ToolForm({
+    required this.modes,
+    this.defaultMode,
+    this.voiceEnabled = false,
+  });
 
   final List<ToolMode> modes;
   final String? defaultMode;
+
+  /// هل خدمة الصوت مفعّلة (تُظهر زر "تكلّم بدل الكتابة").
+  final bool voiceEnabled;
 
   ToolMode? modeByKey(String key) =>
       modes.where((m) => m.key == key).cast<ToolMode?>().firstOrNull;
@@ -151,6 +158,7 @@ class ToolForm {
               .toList() ??
           const [],
       defaultMode: json['default_mode']?.toString(),
+      voiceEnabled: json['voice_enabled'] == true,
     );
   }
 }

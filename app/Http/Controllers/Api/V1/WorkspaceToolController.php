@@ -49,6 +49,8 @@ class WorkspaceToolController extends Controller
                 $toolBlueprintCatalog->for($tool),
                 is_array($payload['experience'] ?? null) ? $payload['experience'] : [],
             );
+            // توفّر الصوت (تكلّم بدل الكتابة) — تُظهر الواجهة الزر فقط عند التفعيل.
+            $payload['form']['voice_enabled'] = app(\App\Domain\AI\Speech\SpeechToTextContract::class)->isAvailable();
             $response->setData($payload);
         }
 

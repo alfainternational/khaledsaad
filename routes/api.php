@@ -121,6 +121,8 @@ Route::prefix('v1')->group(function (): void {
                 // مقابلة المؤسِّس (المرحلة 4): تملأ أساس المشروع فتُلقّم الأدوات تلقائياً.
                 Route::get('/interview', [ApiFounderInterviewController::class, 'show']);
                 Route::post('/interview', [ApiFounderInterviewController::class, 'store']);
+                Route::post('/interview/transcribe', [ApiFounderInterviewController::class, 'transcribe'])
+                    ->middleware('throttle:ai-assist');
 
                 // دورة المشروع الكاملة (B3)
                 Route::get('/brief', [ProjectBriefController::class, 'show']);

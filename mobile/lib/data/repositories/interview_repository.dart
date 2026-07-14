@@ -17,6 +17,20 @@ class InterviewRepository {
     );
   }
 
+  /// يفرّغ ملفاً صوتياً إلى نص خام (لإدخال الصوت في المقابلة).
+  Future<String> transcribe(String ws, String project, String filePath) async {
+    final res = await _api.uploadAudio(
+      ApiEndpoints.interviewTranscribe(ws, project),
+      filePath: filePath,
+      filename: 'voice.m4a',
+    );
+    final data = res['data'];
+    if (data is Map && data['transcript'] is String) {
+      return data['transcript'] as String;
+    }
+    return '';
+  }
+
   /// يحفظ الإجابات ويعيد عدد الحقول المحفوظة.
   Future<int> save(String ws, String project, Map<String, String> answers) async {
     final res = await _api.post(

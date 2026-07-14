@@ -7,6 +7,7 @@ import '../../data/repositories/interview_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
 import '../shared/widgets/ui_feedback.dart';
+import '../shared/widgets/voice_input_button.dart';
 
 /// مقابلة المؤسِّس (المرحلة 4): محادثة واحدة تملأ أساس المشروع، فتقترحه الأدوات
 /// تلقائياً لاحقاً بدل إعادة كتابته. حتمية — إجابات المستخدم تُحفظ كما هي.
@@ -23,6 +24,7 @@ class _FounderInterviewPageState extends State<FounderInterviewPage> {
   final _saving = false.obs;
   final _error = RxnString();
   final _questions = <InterviewQuestion>[].obs;
+  final _voiceEnabled = false.obs;
 
   late final String _projectId = Get.arguments as String;
   late final InterviewRepository _repo = Get.find<InterviewRepository>();
@@ -54,6 +56,7 @@ class _FounderInterviewPageState extends State<FounderInterviewPage> {
     try {
       final InterviewData data = await _repo.load(ws, _projectId);
       _questions.assignAll(data.questions);
+      _voiceEnabled.value = data.voiceEnabled;
       for (final q in data.questions) {
         _controllers.putIfAbsent(q.key, () => TextEditingController());
         _controllers[q.key]!.text = data.answers[q.key] ?? '';
@@ -62,6 +65,25 @@ class _FounderInterviewPageState extends State<FounderInterviewPage> {
       _error.value = e.message;
     } finally {
       _loading.value = false;
+    }
+  }
+
+  Future<void> _transcribeInto(String key, String filePath) async {
+    final ws = _workspaces.activeId;
+    if (ws == null) return;
+    try {
+      final text = await _repo.transcribe(ws, _projectId, filePath);
+      if (text.trim().isEmpty) {
+        UiFeedback.error('لم نتمكّن من تحويل الصوت إلى نص.', title: 'الصوت');
+        return;
+      }
+      final controller = _controllers[key];
+      if (controller != null) {
+        final existing = controller.text.trim();
+        controller.text = existing.isEmpty ? text : '$existing $text';
+      }
+    } on ApiException catch (e) {
+      UiFeedback.error(e.message, title: 'الصوت');
     }
   }
 
@@ -156,6 +178,13 @@ class _FounderInterviewPageState extends State<FounderInterviewPage> {
                         maxLines: 5,
                         decoration: InputDecoration(hintText: q.placeholder),
                       ),
+                      if (_voiceEnabled.value)
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: VoiceInputButton(
+                            onRecorded: (path) => _transcribeInto(q.key, path),
+                          ),
+                        ),
                     ],
                   ),
                 )),

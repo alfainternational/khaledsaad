@@ -57,6 +57,35 @@ class ToolRepository {
     return ToolLoadResult(form: form, lastRun: lastRun, briefing: briefing);
   }
 
+  /// يفرّغ ملفاً صوتياً ويوزّعه على حقول الأداة عبر الخادم.
+  /// يعيد (transcript, fields) حيث fields خريطة مفتاح الحقل → القيمة المقترحة.
+  Future<({String transcript, Map<String, String> fields})> transcribe(
+    String ws,
+    String project,
+    String tcode, {
+    required String filePath,
+    required String mode,
+  }) async {
+    final res = await _api.uploadAudio(
+      ApiEndpoints.toolTranscribe(ws, project, tcode),
+      filePath: filePath,
+      filename: 'voice.m4a',
+      fields: {'mode': mode},
+    );
+    final data = res['data'] is Map
+        ? Map<String, dynamic>.from(res['data'] as Map)
+        : const <String, dynamic>{};
+    final rawFields = data['fields'];
+    final fields = <String, String>{};
+    if (rawFields is Map) {
+      rawFields.forEach((k, v) => fields[k.toString()] = v?.toString() ?? '');
+    }
+    return (
+      transcript: data['transcript']?.toString() ?? '',
+      fields: fields,
+    );
+  }
+
   Future<ToolRunResult> run(
     String ws,
     String project,

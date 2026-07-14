@@ -90,6 +90,30 @@ class ApiClient {
         );
       });
 
+  /// رفع ملف صوتي (multipart) مع حقول إضافية اختيارية — لإدخال الصوت.
+  /// اسم الحقل الافتراضي `audio` مطابق لما يتوقّعه الخادم.
+  Future<Map<String, dynamic>> uploadAudio(
+    String path, {
+    required String filePath,
+    required String filename,
+    Map<String, String> fields = const {},
+    String fieldName = 'audio',
+  }) =>
+      _request(() async {
+        final form = FormData.fromMap({
+          ...fields,
+          fieldName: await MultipartFile.fromFile(filePath, filename: filename),
+        });
+        return _dio.post(
+          path,
+          data: form,
+          options: Options(
+            sendTimeout: const Duration(seconds: 60),
+            receiveTimeout: const Duration(seconds: 90),
+          ),
+        );
+      });
+
   /// بثّ خادم-مُرسَل (SSE): يفكّ أسطر `data:` ويُطلق نص كل delta لحظياً.
   /// يرمي ApiException عند حدث خطأ من الخادم، وينتهي عند `[DONE]`.
   Stream<String> stream(String path, {Object? body}) async* {

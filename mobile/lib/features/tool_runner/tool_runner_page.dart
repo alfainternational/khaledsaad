@@ -8,6 +8,7 @@ import '../../data/repositories/ai_assist_repository.dart';
 import '../../data/repositories/tool_repository.dart';
 import '../../data/services/workspace_service.dart';
 import '../shared/widgets/app_state_view.dart';
+import '../shared/widgets/voice_input_button.dart';
 import 'tool_runner_controller.dart';
 import 'widgets/ai_chat_sheet.dart';
 import 'widgets/dynamic_form_field.dart';
@@ -165,6 +166,21 @@ class _ToolRunnerPageState extends State<ToolRunnerPage> {
                     err,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                );
+              }),
+              Obx(() {
+                if (c.form.value?.voiceEnabled != true) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: VoiceInputButton(
+                      idleLabel: 'تكلّم بدل الكتابة',
+                      onRecorded: c.transcribeVoice,
                     ),
                   ),
                 );

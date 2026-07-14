@@ -66,4 +66,33 @@ class FounderInterviewController extends Controller
             ],
         ], $result['count'] > 0 ? 200 : 422);
     }
+
+    /**
+     * تفريغ صوتي خام لسؤال مقابلة (بلا توزيع على حقول) — لإدخال الصوت في الموبايل.
+     */
+    public function transcribe(Request $request, SpeechToTextContract $speech): JsonResponse
+    {
+        $this->authorize('update', $this->currentProject());
+
+        if (! $speech->isAvailable()) {
+            return response()->json(['error' => ['code' => 'SPEECH_UNAVAILABLE', 'message' => 'خدمة الصوت غير مفعّلة.']], 422);
+        }
+
+        $maxKb = max(1, (int) round(((int) config('services.ai.speech.max_bytes', 20971520)) / 1024));
+        $request->validate([
+            'audio' => ['required', 'file', 'max:'.$maxKb, 'mimetypes:audio/webm,audio/ogg,audio/mpeg,audio/mp4,audio/wav,audio/x-wav,audio/mp3,audio/aac,audio/m4a,audio/x-m4a,video/webm'],
+        ]);
+
+        $file = $request->file('audio');
+        $transcript = $speech->transcribe(
+            (string) file_get_contents($file->getRealPath()),
+            'audio.'.($file->getClientOriginalExtension() ?: 'm4a'),
+        );
+
+        if ($transcript === null || trim($transcript) === '') {
+            return response()->json(['error' => ['code' => 'TRANSCRIBE_FAILED', 'message' => 'تعذّر تحويل الصوت إلى نص.']], 422);
+        }
+
+        return response()->json(['data' => ['transcript' => $transcript]]);
+    }
 }

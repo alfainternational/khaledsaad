@@ -218,6 +218,49 @@ class ToolRunnerController extends GetxController {
     }
   }
 
+  /// إدخال صوتي: يفرّغ تسجيلاً ويوزّعه على حقول الأداة (تكلّم بدل الكتابة).
+  final isTranscribing = false.obs;
+
+  Future<void> transcribeVoice(String filePath) async {
+    final ws = _workspaces.activeId;
+    final mode = selectedMode.value;
+    if (ws == null || mode == null || isTranscribing.value) return;
+
+    isTranscribing.value = true;
+    try {
+      final res = await _tools.transcribe(
+        ws,
+        projectPublicId,
+        toolCode,
+        filePath: filePath,
+        mode: mode,
+      );
+      if (res.fields.isEmpty) {
+        UiFeedback.error(
+          res.transcript.isEmpty
+              ? 'تعذّر تحويل الصوت إلى نص.'
+              : 'حوّلنا كلامك لكن لم نوزّعه على الحقول. النص: ${res.transcript}',
+          title: 'الصوت',
+        );
+        return;
+      }
+      res.fields.forEach((key, value) {
+        if (value.trim().isNotEmpty) values[key] = value;
+        fieldErrors.remove(key);
+      });
+      values.refresh();
+      formEpoch.value++; // إعادة بناء الحقول لالتقاط القيم الجديدة
+      UiFeedback.success(
+        'عبّأنا ${res.fields.length} حقلاً من كلامك — راجعها وعدّل ما يلزم.',
+        title: 'الصوت',
+      );
+    } on ApiException catch (e) {
+      UiFeedback.error(e.message, title: 'الصوت');
+    } finally {
+      isTranscribing.value = false;
+    }
+  }
+
   /// تحليل جودة المدخلات الحالية قبل التشغيل (تقييم محلي + إثراء LLM).
   Future<void> analyzeInputs() async {
     final ws = _workspaces.activeId;

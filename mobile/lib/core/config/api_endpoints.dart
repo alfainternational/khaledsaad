@@ -74,6 +74,8 @@ class ApiEndpoints {
   // مقابلة المؤسِّس (تملأ أساس المشروع فتُلقّم الأدوات تلقائياً)
   static String interview(String ws, String p) =>
       '/workspaces/$ws/projects/$p/interview';
+  static String interviewTranscribe(String ws, String p) =>
+      '/workspaces/$ws/projects/$p/interview/transcribe';
 
   // الاستوديو الذكي
   static String studioTemplates(String ws) => '/workspaces/$ws/templates';

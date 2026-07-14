@@ -27,6 +27,8 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>ksgrowth_mobile</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>نستخدم الميكروفون لتحويل كلامك إلى نص وتعبئة إجابات الأدوات نيابةً عنك.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
