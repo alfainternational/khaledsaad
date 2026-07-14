@@ -28,6 +28,24 @@
     </div>
 </section>
 
+@if (in_array($generation->status, ['queued', 'processing'], true))
+    <section class="card mb-6 studio-pending" data-generation-poll="{{ route('studio.generations.status', $generation) }}">
+        <span class="studio-pending-spinner" aria-hidden="true"></span>
+        <div>
+            <h3 class="heading-sm">جارٍ توليد ملفك الآن</h3>
+            <p class="text-muted">نُجهّز التحليل الكامل ونربط بيانات مشروعك. سيظهر الملف تلقائياً بمجرد جهوزيته — لا حاجة لتحديث الصفحة.</p>
+        </div>
+    </section>
+@elseif ($generation->status === 'failed')
+    <section class="card mb-6">
+        <div class="app-section-head">
+            <h3 class="heading-sm">تعذّر إكمال التوليد</h3>
+            <span class="app-badge app-badge-danger">failed</span>
+        </div>
+        <p class="text-body">حدث خطأ أثناء التوليد. جرّب توليد مسودة جديدة من الاستوديو.</p>
+    </section>
+@endif
+
 @if ($generation->status === 'needs_input')
     <section class="card mb-6">
         <div class="app-section-head">
@@ -149,6 +167,7 @@
     </details>
 @endif
 
+@unless (in_array($generation->status, ['queued', 'processing'], true))
 @if ($titledSections->isNotEmpty())
     <section class="card mb-6 studio-outline-card">
         <div class="app-section-head">
@@ -198,6 +217,7 @@
         @endforeach
     </div>
 </section>
+@endunless
 
 <section class="studio-gen-footer mb-8">
     <a href="{{ route('studio.index') }}" class="btn btn-secondary btn-lg">توليد مسودة جديدة</a>

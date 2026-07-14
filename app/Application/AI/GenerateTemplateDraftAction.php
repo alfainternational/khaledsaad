@@ -46,12 +46,31 @@ class GenerateTemplateDraftAction
         return (int) ceil(mb_strlen(trim($text)) / 4);
     }
 
+    /**
+     * إمّا إنشاء سجل توليد جديد (المسار المتزامن) أو تحديث سجلّ placeholder موجود
+     * (المسار اللامتزامن عبر الطابور) — فلا يتضاعف السجل ولا تتيتّم الموافقات.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function persist(array $attributes, ?AIGeneration $target = null): AIGeneration
+    {
+        if ($target !== null) {
+            $target->fill(Arr::only($attributes, ['inputs_json', 'output', 'tokens_used', 'status', 'error']));
+            $target->save();
+
+            return $target;
+        }
+
+        return AIGeneration::query()->create($attributes);
+    }
+
     public function handle(
         Workspace $workspace,
         AITemplate $template,
         ?Project $project,
         User $actor,
         ?string $brief = null,
+        ?AIGeneration $target = null,
     ): AIGeneration {
         $profile = $this->profileStore->get($workspace);
         $journeySnapshot = $project
@@ -114,7 +133,7 @@ class GenerateTemplateDraftAction
                 $analysisDossier,
             );
 
-            return AIGeneration::query()->create([
+            return $this->persist([
                 'account_id' => $workspace->account_id,
                 'workspace_id' => $workspace->id,
                 'project_id' => $project?->id,
@@ -139,7 +158,7 @@ class GenerateTemplateDraftAction
                 'output' => $output,
                 'tokens_used' => 0, // مسار نقص الإدخال: لا نداء LLM، لا استهلاك.
                 'status' => 'needs_input',
-            ]);
+            ], $target);
         }
 
         $aiPrompt = implode("\n\n", array_filter([
@@ -200,7 +219,7 @@ class GenerateTemplateDraftAction
         if ($sectionedOutput !== null) {
             $output = $sectionedOutput;
 
-            $generation = AIGeneration::query()->create([
+            $generation = $this->persist([
                 'account_id' => $workspace->account_id,
                 'workspace_id' => $workspace->id,
                 'project_id' => $project?->id,
@@ -225,7 +244,7 @@ class GenerateTemplateDraftAction
                 'output' => $output,
                 'tokens_used' => $this->estimateTokens($aiPrompt.' '.$output),
                 'status' => 'completed',
-            ]);
+            ], $target);
 
             if ($account !== null && ! $usingByoKey) {
                 try {
@@ -262,7 +281,7 @@ class GenerateTemplateDraftAction
                 $analysisDossier,
             );
 
-            return AIGeneration::query()->create([
+            return $this->persist([
                 'account_id' => $workspace->account_id,
                 'workspace_id' => $workspace->id,
                 'project_id' => $project?->id,
@@ -291,7 +310,7 @@ class GenerateTemplateDraftAction
                 'output' => $output,
                 'tokens_used' => $this->estimateTokens($output),
                 'status' => 'needs_input',
-            ]);
+            ], $target);
         }
 
         $output = $generationResult['output'] ?? $this->buildFallbackOutput(
@@ -310,7 +329,7 @@ class GenerateTemplateDraftAction
             'output_contract' => $template->output_contract_json,
         ];
 
-        $generation = AIGeneration::query()->create([
+        $generation = $this->persist([
             'account_id' => $workspace->account_id,
             'workspace_id' => $workspace->id,
             'project_id' => $project?->id,
@@ -330,7 +349,7 @@ class GenerateTemplateDraftAction
             'output' => $output,
             'tokens_used' => $this->estimateTokens($aiPrompt.' '.$output),
             'status' => 'completed',
-        ]);
+        ], $target);
 
         // §31: كل توليد ناجح يستهلك رصيداً من دفتر الأرصدة. أفضل جهد — لا يكسر التسليم.
         // BYOK: لا نستهلك رصيد المنصة إذا استُخدم مفتاح الحساب الخاص (التوليد على حسابه).

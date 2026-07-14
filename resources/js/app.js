@@ -1983,6 +1983,147 @@ function wireExampleChips() {
     });
 }
 
+function wireVoiceInput() {
+    const container = document.querySelector('[data-voice-input]');
+    if (!container || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        // المتصفح لا يدعم التسجيل: أخفِ الواجهة بدل عرض زر لا يعمل.
+        if (container) container.hidden = true;
+        return;
+    }
+
+    const button = container.querySelector('[data-voice-record]');
+    const label = container.querySelector('[data-voice-label]');
+    const statusEl = container.querySelector('[data-voice-status]');
+    const transcriptEl = container.querySelector('[data-voice-transcript]');
+    const url = container.dataset.voiceUrl;
+    const form = document.querySelector('[data-tool-ajax-form]');
+    if (!button || !url || !form) {
+        return;
+    }
+
+    let recorder = null;
+    let chunks = [];
+    let stream = null;
+    let recording = false;
+
+    const setStatus = (text) => {
+        if (statusEl) statusEl.textContent = text || '';
+    };
+    const setLabel = (text) => {
+        if (label) label.textContent = text;
+    };
+
+    const stopStream = () => {
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            stream = null;
+        }
+    };
+
+    const applyFields = (fields) => {
+        let filled = 0;
+        Object.entries(fields || {}).forEach(([key, value]) => {
+            const input = form.querySelector(`[data-field-key="${key}"]`);
+            if (input && setToolFieldValue(input, value)) {
+                filled += 1;
+                input.classList.add('ai-suggested');
+                setTimeout(() => input.classList.remove('ai-suggested'), 2400);
+            }
+        });
+        return filled;
+    };
+
+    const sendAudio = async (blob) => {
+        setStatus('جارٍ التحويل إلى نص...');
+        button.disabled = true;
+
+        const formData = new FormData();
+        formData.append('audio', blob, 'audio.webm');
+        formData.append('mode', form.querySelector('[name="mode"]')?.value || 'guided');
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    Accept: 'application/json',
+                },
+                body: formData,
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                setStatus('');
+                showToast(data.message || 'تعذّر تحويل الصوت. حاول مرة أخرى.', 'error');
+                return;
+            }
+
+            if (transcriptEl && data.transcript) {
+                transcriptEl.hidden = false;
+                transcriptEl.textContent = 'ما فهمناه: ' + data.transcript;
+            }
+
+            const filled = applyFields(data.fields);
+            if (filled > 0) {
+                setStatus('');
+                showToast(`عبّأنا ${filled} حقلاً من كلامك — راجعها وعدّل ما يلزم.`, 'success');
+            } else {
+                setStatus('');
+                showToast('حوّلنا كلامك لنص لكن لم نتمكّن من توزيعه على الحقول. راجع النص وانسخ منه.', 'error');
+            }
+        } catch (error) {
+            setStatus('');
+            showToast('حدث خطأ في الاتصال أثناء تحويل الصوت.', 'error');
+        } finally {
+            button.disabled = false;
+        }
+    };
+
+    const startRecording = async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (error) {
+            showToast('لم نتمكّن من الوصول إلى الميكروفون. تأكّد من السماح به.', 'error');
+            return;
+        }
+
+        chunks = [];
+        recorder = new MediaRecorder(stream);
+        recorder.addEventListener('dataavailable', (event) => {
+            if (event.data && event.data.size > 0) chunks.push(event.data);
+        });
+        recorder.addEventListener('stop', () => {
+            stopStream();
+            const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+            if (blob.size > 0) sendAudio(blob);
+        });
+        recorder.start();
+        recording = true;
+        button.setAttribute('aria-pressed', 'true');
+        button.classList.add('is-recording');
+        setLabel('أوقف التسجيل');
+        setStatus('جارٍ التسجيل... تكلّم الآن');
+    };
+
+    const stopRecording = () => {
+        if (recorder && recorder.state !== 'inactive') {
+            recorder.stop();
+        }
+        recording = false;
+        button.setAttribute('aria-pressed', 'false');
+        button.classList.remove('is-recording');
+        setLabel('تكلّم بدل الكتابة');
+    };
+
+    button.addEventListener('click', () => {
+        if (recording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    });
+}
+
 function wireToolInputCoach() {
     const form = document.querySelector('[data-tool-ajax-form]');
     if (!form) {
@@ -2630,9 +2771,48 @@ document.addEventListener('DOMContentLoaded', () => {
     wireFieldFocusDots();
     wireToolFieldSuggestions();
     wireExampleChips();
+    wireVoiceInput();
     wireToolInputCoach();
     wireAutoSaveDraft();
     wireLivePreviewFlash();
     wireStudioGenerationCopy();
+    wireGenerationPoll();
     initDashboardCharts();
 });
+
+function wireGenerationPoll() {
+    const el = document.querySelector('[data-generation-poll]');
+    if (!el) {
+        return;
+    }
+
+    const url = el.getAttribute('data-generation-poll');
+    if (!url) {
+        return;
+    }
+
+    let tries = 0;
+    const maxTries = 140; // ~7 دقائق بمعدّل 3 ثوانٍ
+
+    const poll = () => {
+        tries += 1;
+        fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => {
+                if (data && data.ready) {
+                    window.location.reload();
+                    return;
+                }
+                if (tries < maxTries) {
+                    window.setTimeout(poll, 3000);
+                }
+            })
+            .catch(() => {
+                if (tries < maxTries) {
+                    window.setTimeout(poll, 3000);
+                }
+            });
+    };
+
+    window.setTimeout(poll, 3000);
+}

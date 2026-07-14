@@ -56,6 +56,7 @@ use App\Http\Controllers\Web\StudioGenerationController;
 use App\Http\Controllers\Web\TeamController;
 use App\Http\Controllers\Web\ToolController as WebToolController;
 use App\Http\Controllers\Web\ToolRunController;
+use App\Http\Controllers\Web\ToolTranscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->prefix('admin')->group(function (): void {
@@ -256,6 +257,7 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('/team/invitations/{invitation}', [TeamController::class, 'destroyInvitation'])->name('team.invitations.destroy');
     Route::post('/projects/{project}/tools/{tool}/run', [ToolRunController::class, 'store'])->name('projects.tools.run');
     Route::post('/tools/{tool}/run', [ToolRunController::class, 'storeFromTool'])->name('tools.run');
+    Route::post('/tools/{tool}/transcribe', [ToolTranscriptionController::class, 'store'])->name('tools.transcribe');
     Route::get('/tools/{tool}', [WebToolController::class, 'show'])->name('tools.show');
     Route::post('/studio/generations', [StudioGenerationController::class, 'store'])
         ->middleware('entitlement:modules.ai_studio')
@@ -264,6 +266,7 @@ Route::middleware('auth')->group(function (): void {
         ->where('format', 'md|markdown|html|pdf')
         ->middleware('entitlement:outputs.can_export')
         ->name('studio.generations.export');
+    Route::get('/studio/generations/{aiGeneration}/status', [StudioGenerationController::class, 'status'])->name('studio.generations.status');
     Route::get('/studio/generations/{aiGeneration}', [StudioGenerationController::class, 'show'])->name('studio.generations.show');
     Route::delete('/studio/generations/{aiGeneration}', [StudioGenerationController::class, 'destroy'])->name('studio.generations.destroy');
     Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');

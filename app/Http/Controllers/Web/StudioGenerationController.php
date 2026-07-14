@@ -10,6 +10,7 @@ use App\Domain\Project\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\Concerns\InteractsWithWorkspaceContext;
 use App\Http\Requests\Web\GenerateStudioOutputRequest;
+use App\Jobs\GenerateStudioDraftJob;
 use App\Support\AI\StudioGenerationExporter;
 use App\Support\AI\StudioContentRenderer;
 use App\Support\AI\StudioMarkdownSections;
@@ -36,17 +37,61 @@ class StudioGenerationController extends Controller
             ? Project::query()->where('workspace_id', $workspace->id)->findOrFail($projectId)
             : null;
 
+        $brief = $request->validated('brief');
+
+        // اللامتزامن: نُنشئ سجلاً مؤقتاً (queued) ونُرسل التوليد للطابور، فلا تُحجب
+        // الواجهة. صفحة العرض تعرض «جارٍ التوليد» وتُحدّث تلقائياً عند الجهوزية.
+        if ((bool) config('services.ai.async_generation', false)) {
+            $generation = AIGeneration::query()->create([
+                'account_id' => $workspace->account_id,
+                'workspace_id' => $workspace->id,
+                'project_id' => $project?->id,
+                'template_id' => $template->id,
+                'created_by' => $request->user()->id,
+                'inputs_json' => ['brief' => $brief],
+                'output' => null,
+                'tokens_used' => 0,
+                'status' => 'queued',
+            ]);
+
+            GenerateStudioDraftJob::dispatch(
+                $generation->id,
+                $workspace->id,
+                $template->id,
+                $project?->id,
+                $request->user()->id,
+                $brief,
+            );
+
+            return redirect()
+                ->route('studio.generations.show', $generation)
+                ->with('status', 'جارٍ توليد ملفك الآن — سيظهر تلقائياً بمجرد جهوزيته.');
+        }
+
         $generation = $action->handle(
             workspace: $workspace,
             template: $template,
             project: $project?->load('client'),
             actor: $request->user(),
-            brief: $request->validated('brief'),
+            brief: $brief,
         );
 
         return redirect()
             ->route('studio.generations.show', $generation)
             ->with('status', $flash->studioDraftGenerated());
+    }
+
+    /**
+     * حالة التوليد (للاستقصاء من الواجهة أثناء المسار اللامتزامن).
+     */
+    public function status(Request $request, AIGeneration $aiGeneration): \Illuminate\Http\JsonResponse
+    {
+        $this->workspaceForItem($request, $aiGeneration->workspace_id);
+
+        return response()->json([
+            'status' => $aiGeneration->status,
+            'ready' => in_array($aiGeneration->status, ['completed', 'needs_input', 'failed'], true),
+        ]);
     }
 
     public function show(

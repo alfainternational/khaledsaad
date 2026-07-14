@@ -49,6 +49,9 @@ return [
            يُفعّل من settings بعد التحقق، ويسقط تلقائياً للمسار الأحادي عند أي فشل جزئي. */
         'sectioned_generation' => env('AI_SECTIONED_GENERATION', false),
         'sectioned_min_sections' => env('AI_SECTIONED_MIN_SECTIONS', 4),
+        /* التوليد اللامتزامن: يُرسل للطابور فلا تُحجب الواجهة ~46 ثانية. off افتراضياً؛
+           يتطلّب عامل طوابير (cron queue:work) — مُفعّل على الإنتاج ومُختبَر. */
+        'async_generation' => env('AI_ASYNC_GENERATION', false),
         /* الكاش لتقليل الإنفاق على الـ API (انظر CachingAiGateway). */
         'cache' => env('AI_CACHE', true),
         'cache_ttl_minutes' => env('AI_CACHE_TTL_MINUTES', 1440),
@@ -90,6 +93,29 @@ return [
         | التسجيل المجاني (بلا بطاقة): Groq=console.groq.com · Cerebras=cloud.cerebras.ai
         | · OpenRouter=openrouter.ai. كلها Chat Completions قياسية.
         */
+        /*
+        | تحويل الكلام إلى نص (Speech-to-Text) — المرحلة 2 من تطوير الإدخال.
+        | المستخدم يتكلّم بلهجته فيُفرّغ نصاً ثم يوزّعه الذكاء على حقول الأداة.
+        | على الاستضافة المشتركة (لا GPU) المزوّد سحابي: Groq Whisper سريع وعربي
+        | مقبول. مجرّد عبر SpeechToTextContract فيُبدَّل للمحلّي لاحقاً بلا كود.
+        | المفتاح يرث مفتاح Groq العام (SttdriverGroq يقرأه مع fallback).
+        */
+        'speech' => [
+            'enabled' => env('AI_SPEECH_ENABLED', true),
+            'provider' => env('AI_SPEECH_PROVIDER', 'groq'),
+            'max_bytes' => (int) env('AI_SPEECH_MAX_BYTES', 20971520),
+            'language' => env('AI_SPEECH_LANGUAGE', 'ar'),
+            'providers' => [
+                'groq' => [
+                    'base_url' => env('GROQ_STT_BASE_URL', env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1')),
+                    'key' => env('GROQ_STT_API_KEY'),
+                    'model' => env('GROQ_STT_MODEL', 'whisper-large-v3'),
+                    'connect_timeout' => (int) env('GROQ_STT_CONNECT_TIMEOUT', 15),
+                    'timeout' => (int) env('GROQ_STT_TIMEOUT', 60),
+                ],
+            ],
+        ],
+
         'providers' => [
             'groq' => [
                 'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
