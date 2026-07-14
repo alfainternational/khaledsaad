@@ -157,6 +157,7 @@ TXT;
             app(WorkspaceProfileStore::class),
             app(WorkspaceJourneyStore::class),
             $gateway,
+            app(\App\Domain\AI\Services\AiGatewayFactory::class),
             app(StudioOutputQualityGuard::class),
             new WorkspaceGenerationContextBuilder(
                 app(WorkspaceProfileStore::class),
@@ -293,6 +294,7 @@ TXT;
             app(WorkspaceProfileStore::class),
             app(WorkspaceJourneyStore::class),
             $gateway,
+            app(\App\Domain\AI\Services\AiGatewayFactory::class),
             app(StudioOutputQualityGuard::class),
             new WorkspaceGenerationContextBuilder(
                 app(WorkspaceProfileStore::class),
@@ -417,6 +419,7 @@ TXT;
             app(WorkspaceProfileStore::class),
             app(WorkspaceJourneyStore::class),
             $gateway,
+            app(\App\Domain\AI\Services\AiGatewayFactory::class),
             app(StudioOutputQualityGuard::class),
             new WorkspaceGenerationContextBuilder(
                 app(WorkspaceProfileStore::class),

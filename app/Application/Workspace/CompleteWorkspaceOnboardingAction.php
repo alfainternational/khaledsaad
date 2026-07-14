@@ -51,12 +51,24 @@ class CompleteWorkspaceOnboardingAction
                 'type' => $data['workspace_type'],
             ])->save();
 
+            // بناء العميل تلقائياً من مدخلات الـ onboarding: نُثري سجلّه بالموقع والقطاع
+            // والسوق والجمهور حتى يدخل السياق التحليلي جاهزاً بدل «عميل بلا بيانات».
+            $clientAudience = $data['brief_ideal_customer'] ?? ($data['audience'] ?? null);
             $client = Client::query()->create([
                 'workspace_id' => $workspace->id,
                 'name' => $data['client_name'],
-                'contact_info' => [
+                'contact_info' => array_filter([
                     'company' => $data['client_name'],
-                ],
+                    'website' => $data['primary_domain'] ?? null,
+                    'sector' => $data['sector'] ?? null,
+                    'market' => $data['country'] ?? null,
+                    'audience' => $clientAudience,
+                    'notes' => trim(implode("\n", array_filter([
+                        ! empty($data['brief_business_summary']) ? 'النشاط: '.$data['brief_business_summary'] : null,
+                        ! empty($clientAudience) ? 'العميل المثالي: '.$clientAudience : null,
+                        ! empty($data['brief_offer']) ? 'العرض: '.$data['brief_offer'] : null,
+                    ]))) ?: null,
+                ], fn ($v) => $v !== null && $v !== ''),
                 'status' => 'active',
             ]);
 

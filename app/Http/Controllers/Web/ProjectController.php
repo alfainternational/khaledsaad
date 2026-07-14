@@ -82,9 +82,27 @@ class ProjectController extends Controller
         $this->authorize('manageProjects', $workspace);
         $data = $request->validated();
 
+        // بناء عميل تلقائياً من مدخلات المشروع عند عدم اختيار عميل، حتى لا يبقى المشروع
+        // «بلا عميل» في التحليل، ويدخل السياق كياناً مكتملاً يُدمج في الخطة.
+        $clientId = $data['client_id'] ?? null;
+        if (! $clientId) {
+            $clientId = \App\Domain\Client\Models\Client::query()->create([
+                'workspace_id' => $workspace->id,
+                'name' => $data['name'],
+                'contact_info' => array_filter([
+                    'company' => $data['name'],
+                    'website' => $data['primary_domain'] ?? null,
+                    'sector' => $data['sector'] ?? null,
+                    'market' => $data['market_country'] ?? null,
+                    'auto_created' => true,
+                ], fn ($v) => $v !== null && $v !== ''),
+                'status' => 'active',
+            ])->id;
+        }
+
         $attributes = [
             'workspace_id' => $workspace->id,
-            'client_id' => $data['client_id'] ?? null,
+            'client_id' => $clientId,
             'name' => $data['name'],
             'stage' => $data['stage'],
             'status' => $data['status'],
