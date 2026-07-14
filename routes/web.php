@@ -172,6 +172,18 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/login', [AuthController::class, 'login'])->name('login.store');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.store');
+
+    // إعادة تعيين كلمة المرور (self-service) — نظير شاشة الموبايل.
+    Route::get('/forgot-password', [App\Http\Controllers\Web\Auth\PasswordResetController::class, 'showForgot'])->name('password.request');
+    Route::post('/forgot-password', [App\Http\Controllers\Web\Auth\PasswordResetController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [App\Http\Controllers\Web\Auth\PasswordResetController::class, 'showReset'])->name('password.reset');
+    Route::post('/reset-password', [App\Http\Controllers\Web\Auth\PasswordResetController::class, 'reset'])->name('password.update');
+
+    // تسجيل الدخول الاجتماعي (نظير الموبايل، لكن بجلسة Laravel لا deep link).
+    Route::get('/auth/social/{provider}', [App\Http\Controllers\Web\SocialAuthController::class, 'redirect'])
+        ->whereIn('provider', ['google', 'facebook', 'twitter', 'linkedin'])->name('social.redirect');
+    Route::get('/auth/social/{provider}/callback', [App\Http\Controllers\Web\SocialAuthController::class, 'callback'])
+        ->whereIn('provider', ['google', 'facebook', 'twitter', 'linkedin'])->name('social.callback');
 });
 
 Route::middleware('auth')->group(function (): void {
@@ -227,6 +239,16 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('entitlement:white_label')->name('agency.branding.update');
 
     Route::patch('/account', [AccountController::class, 'update'])->name('account.update');
+    // مفتاح الذكاء الخاص بالحساب (BYOK) — نظير شاشة الموبايل.
+    Route::patch('/account/ai-key', [App\Http\Controllers\Web\AccountAiKeyController::class, 'update'])->name('account.ai-key.update');
+    Route::delete('/account/ai-key', [App\Http\Controllers\Web\AccountAiKeyController::class, 'destroy'])->name('account.ai-key.destroy');
+
+    // مصادر المعرفة للمشروع — نظير شاشة الموبايل.
+    Route::get('/projects/{project}/knowledge', [App\Http\Controllers\Web\KnowledgeUploadController::class, 'index'])->name('projects.knowledge.index');
+    Route::post('/projects/{project}/knowledge', [App\Http\Controllers\Web\KnowledgeUploadController::class, 'store'])->name('projects.knowledge.store');
+    Route::post('/projects/{project}/knowledge/{upload}/retry', [App\Http\Controllers\Web\KnowledgeUploadController::class, 'retry'])->name('projects.knowledge.retry');
+    Route::delete('/projects/{project}/knowledge/{upload}', [App\Http\Controllers\Web\KnowledgeUploadController::class, 'destroy'])->name('projects.knowledge.destroy');
+
     Route::get('/team', [TeamController::class, 'index'])->name('team.index');
     Route::post('/team/invitations', [TeamController::class, 'invite'])->name('team.invitations.store');
     Route::post('/team/invitations/{token}/accept', [TeamController::class, 'accept'])->name('team.invitations.accept');
@@ -280,6 +302,8 @@ Route::middleware('auth')->prefix('api')->group(function (): void {
     Route::post('/tool/{tool}/run', [ToolRunApiController::class, 'store'])->name('api.tools.run');
     Route::get('/tool/{tool}/load', [ToolRunApiController::class, 'load'])->name('api.tools.load');
     Route::post('/ai/chat', [AiChatController::class, 'chat'])->middleware('throttle:ai-assist')->name('api.ai.chat');
+    // بثّ الرد الحيّ (SSE) — نظير الموبايل، بجلسة الويب.
+    Route::post('/ai/chat/stream', [AiChatController::class, 'chatStream'])->middleware('throttle:ai-assist')->name('api.ai.chat.stream');
     Route::get('/ai/conversations', [AiConversationController::class, 'index'])->name('api.ai.conversations.index');
     Route::post('/ai/conversations', [AiConversationController::class, 'store'])->middleware('throttle:ai-assist')->name('api.ai.conversations.store');
     Route::get('/ai/conversations/{conversationPublicId}', [AiConversationController::class, 'show'])->name('api.ai.conversations.show');

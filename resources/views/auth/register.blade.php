@@ -59,6 +59,14 @@
             <button type="submit" class="dx-submit">إنشاء الحساب</button>
         </form>
 
+        <div class="dx-social">
+            <p class="dx-note">أو أنشئ حسابك عبر</p>
+            <a class="dx-submit dx-submit--ghost" href="{{ route('social.redirect', 'google') }}">المتابعة عبر Google</a>
+            <a class="dx-submit dx-submit--ghost" href="{{ route('social.redirect', 'facebook') }}">المتابعة عبر Facebook</a>
+            <a class="dx-submit dx-submit--ghost" href="{{ route('social.redirect', 'twitter') }}">المتابعة عبر X</a>
+            <a class="dx-submit dx-submit--ghost" href="{{ route('social.redirect', 'linkedin') }}">المتابعة عبر LinkedIn</a>
+        </div>
+
         <p class="dx-note">لديك حساب بالفعل؟ <a href="{{ route('login') }}">سجّل الدخول</a></p>
     </div>
 </section>

@@ -37,6 +37,13 @@ class AccountController extends Controller
         return view('app.account', [
             'workspace' => $workspace,
             'account' => $account,
+            'isAccountOwner' => $request->user()->id === $account->owner_user_id,
+            'aiKeyConnected' => $account->hasByoAi(),
+            'aiKeyProvider' => $account->ai_provider,
+            'aiKeyMasked' => $account->hasByoAi()
+                ? str_repeat('•', 8).substr($account->ai_provider_key, -4)
+                : null,
+            'aiKeyProviders' => AccountAiKeyController::PROVIDERS,
             'members' => $workspace->members()->with('user')->get(),
             'invitations' => $workspace->invitations()->latest()->get(),
             'profile' => $profileStore->get($workspace),

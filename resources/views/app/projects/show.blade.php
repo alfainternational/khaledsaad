@@ -10,7 +10,10 @@
                 @endif
                 <h3 class="heading-sm mb-0">تفاصيل المشروع</h3>
             </div>
-            <a href="{{ route('projects.edit', $project) }}" class="btn btn-secondary btn-sm">تعديل</a>
+            <div class="app-inline-actions">
+                <a href="{{ route('projects.knowledge.index', $project) }}" class="btn btn-secondary btn-sm">مصادر المعرفة</a>
+                <a href="{{ route('projects.edit', $project) }}" class="btn btn-secondary btn-sm">تعديل</a>
+            </div>
         </div>
         <div class="app-meta-grid">
             <div><span>العميل</span><strong>{{ $project->client?->name ?? 'بدون عميل' }}</strong></div>

@@ -2172,6 +2172,7 @@ function wireAiChatWidget() {
     let hasOlderMessages = false;
     const activePolls = new Set();
     const conversationsUrl = toggle.dataset.conversationsUrl || '/api/ai/conversations';
+    const chatStreamUrl = toggle.dataset.chatStreamUrl || '/api/ai/chat/stream';
 
     const requestJson = async (url, options = {}) => {
         const response = await fetch(url, {
@@ -2389,19 +2390,48 @@ function wireAiChatWidget() {
 
         sendBtn.disabled = true;
 
+        // بثّ الرد رمزاً برمز (SSE) — نظير الموبايل. فقاعة حيّة تُملأ تدريجياً.
+        const liveNode = appendMessage('assistant', '…');
+        let acc = '';
         try {
-            const result = await requestJson(`${conversationUrl(currentConversation.public_id)}/messages`, {
+            const resp = await fetch(chatStreamUrl, {
                 method: 'POST',
-                body: JSON.stringify({
-                    content: text,
-                    client_request_id: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
-                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({ messages: [{ role: 'user', content: text }] }),
             });
-            currentConversation = result.data.conversation;
-            title.textContent = currentConversation.title;
-            renderStoredMessage(result.data.assistant_message);
+            if (!resp.ok || !resp.body) throw new Error('تعذّر الاتصال بالمساعد.');
+
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let streaming = true;
+            while (streaming) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                let nl;
+                while ((nl = buffer.indexOf('\n')) >= 0) {
+                    const line = buffer.slice(0, nl).trim();
+                    buffer = buffer.slice(nl + 1);
+                    if (!line.startsWith('data:')) continue;
+                    const payload = line.slice(5).trim();
+                    if (payload === '[DONE]') { streaming = false; break; }
+                    try {
+                        const ev = JSON.parse(payload);
+                        if (ev.error) { acc = ev.error; }
+                        else if (ev.delta) { acc += ev.delta; }
+                        liveNode.textContent = acc || '…';
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    } catch (_) { /* سطر SSE غير مكتمل — نتجاهله */ }
+                }
+            }
+            if (!acc) liveNode.textContent = 'تعذّر توليد رد الآن.';
         } catch (err) {
-            appendMessage('assistant', err.message || 'حدث خطأ في الاتصال. حاول مرة أخرى.');
+            liveNode.textContent = err.message || 'حدث خطأ في الاتصال. حاول مرة أخرى.';
         } finally {
             sendBtn.disabled = false;
             input.focus();

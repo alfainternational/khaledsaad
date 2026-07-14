@@ -122,6 +122,55 @@
     </article>
 </section>
 
+@if ($isAccountOwner)
+<section class="app-grid mb-8">
+    <article class="card">
+        <div class="app-section-head">
+            <h3 class="heading-sm">مفتاح الذكاء الخاص (BYOK)</h3>
+            <span class="app-badge">{{ $aiKeyConnected ? 'مربوط' : 'غير مربوط' }}</span>
+        </div>
+        <p class="app-empty">اربط مفتاح مزوّد ذكاء خاص بك لتعمل توليدات هذا الحساب على مفتاحك بدل رصيد المنصة. لن يُعرض المفتاح بعد حفظه.</p>
+        @if ($aiKeyConnected)
+            <div class="app-list">
+                <div class="app-list-item">
+                    <div>
+                        <strong>المزوّد الحالي</strong>
+                        <small>{{ $aiKeyMasked }}</small>
+                    </div>
+                    <span class="app-badge">{{ $aiKeyProvider }}</span>
+                </div>
+            </div>
+        @endif
+        <form method="POST" action="{{ route('account.ai-key.update') }}" class="app-form-grid cols-2">
+            @csrf
+            @method('PATCH')
+            <label class="app-field">
+                <span>المزوّد</span>
+                <select class="app-input" name="provider" required>
+                    @foreach ($aiKeyProviders as $provider)
+                        <option value="{{ $provider }}" @selected(old('provider', $aiKeyProvider) === $provider)>{{ $provider }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="app-field">
+                <span>المفتاح</span>
+                <input class="app-input" type="password" name="key" autocomplete="off" placeholder="{{ $aiKeyConnected ? 'أدخل مفتاحاً جديداً للاستبدال' : 'الصق مفتاح المزوّد هنا' }}" required>
+            </label>
+            <div class="app-form-actions cols-span-2">
+                <button type="submit" class="btn btn-primary btn-lg">{{ $aiKeyConnected ? 'تحديث المفتاح' : 'ربط المفتاح' }}</button>
+            </div>
+        </form>
+        @if ($aiKeyConnected)
+            <form method="POST" action="{{ route('account.ai-key.destroy') }}" class="mt-4">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-secondary btn-sm">إلغاء الربط</button>
+            </form>
+        @endif
+    </article>
+</section>
+@endif
+
 <section class="app-grid app-two-col">
     <article class="card">
         <div class="app-section-head">

@@ -18,17 +18,19 @@ Future<void> firebaseBackgroundHandler(RemoteMessage message) async {
 
 /// خدمة الإشعارات (FCM): تهيّئ Firebase، تطلب الإذن، وتسجّل توكن الجهاز لدى
 /// الخادم عبر `POST /devices` عند المصادقة — فتصل إشعارات الخادم (اكتمال تحليل،
-/// موافقات...) فعلياً للتطبيق. مقيّدة بالمنصّات التي لديها إعداد Firebase
-/// (أندرويد عبر google-services.json) وتفشل بهدوء على غيرها.
+/// موافقات...) فعلياً للتطبيق. تعمل على أندرويد (google-services.json) و iOS
+/// (GoogleService-Info.plist)، وتفشل بهدوء على غيرها أو إن نقص ملف الإعداد.
 class NotificationService extends GetxService {
   bool _ready = false;
   String? _token;
   Worker? _authWorker;
 
+  /// منصّة الجهاز لتسجيلها لدى الخادم.
+  String get _platform => Platform.isIOS ? 'ios' : 'android';
+
   Future<NotificationService> init() async {
-    // أندرويد فقط لديه ملف إعداد (google-services.json). نتفادى iOS/غيره حتى
-    // لا تنهار التهيئة بدون GoogleService-Info.plist.
-    if (!(!kIsWeb && Platform.isAndroid)) return this;
+    // المنصّات التي لديها إعداد Firebase فقط (أندرويد/iOS). نتفادى الويب/غيره.
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return this;
 
     try {
       await Firebase.initializeApp();
@@ -78,7 +80,7 @@ class NotificationService extends GetxService {
     try {
       await Get.find<BillingRepository>().registerDevice(
         token: _token!,
-        platform: 'android',
+        platform: _platform,
       );
     } on ApiException catch (_) {
       // تسجيل التوكن ليس حرجاً لتجربة المستخدم — نتجاهل الفشل العابر.
