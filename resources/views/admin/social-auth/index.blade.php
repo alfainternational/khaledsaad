@@ -15,7 +15,7 @@
     <div class="admin-panel-head"><h2>حالة المزوّدين</h2></div>
     <div class="admin-stats-grid">
         @foreach ($providers as $key => $p)
-            <div class="admin-stat">
+            <div class="admin-stat-card">
                 <span class="admin-stat-label">{{ $p['label'] }}</span>
                 <span class="app-badge {{ $p['ready'] ? 'app-badge-success' : 'app-badge-danger' }}">{{ $p['ready'] ? 'مهيّأ' : 'غير مكتمل' }}</span>
             </div>

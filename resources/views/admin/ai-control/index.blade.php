@@ -10,43 +10,43 @@
 <section class="admin-panel panel-modern mb-6">
     <div class="admin-panel-head"><h2>حالة المحرّك</h2></div>
     <div class="admin-stats-grid">
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">المزوّد النشط</span>
             <strong class="admin-stat-value">{{ $status['provider'] }}</strong>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">Gemini</span>
             <span class="app-badge {{ $status['gemini_ready'] ? 'app-badge-success' : 'app-badge-danger' }}">{{ $status['gemini_ready'] ? 'مهيّأ' : 'بلا مفتاح' }}</span>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">NVIDIA</span>
             <span class="app-badge {{ $status['nvidia_ready'] ? 'app-badge-success' : 'app-badge-danger' }}">{{ $status['nvidia_ready'] ? 'مهيّأ' : 'بلا مفتاح' }}</span>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">تحقّق TLS</span>
             <span class="app-badge {{ $status['verify_tls'] ? 'app-badge-success' : 'app-badge-danger' }}">{{ $status['verify_tls'] ? 'مفعّل' : 'معطّل' }}</span>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">الكاش</span>
             <span class="app-badge {{ $status['cache'] ? 'app-badge-success' : 'app-badge-warning' }}">{{ $status['cache'] ? 'يعمل' : 'متوقف' }}</span>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">حارس الرصيد</span>
             <span class="app-badge {{ $status['enforce_credits'] ? 'app-badge-success' : 'app-badge-warning' }}">{{ $status['enforce_credits'] ? 'مُطبَّق' : 'تتبّع فقط' }}</span>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">البحث الحيّ</span>
             <strong class="admin-stat-value">{{ $status['search_provider'] }}</strong>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">إثراء الأدوات بالبحث</span>
             <span class="app-badge {{ $status['enrich_tools'] ? 'app-badge-success' : 'app-badge-warning' }}">{{ $status['enrich_tools'] ? 'مفعّل' : 'متوقف' }}</span>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">Cascade (تصعيد ذكي)</span>
             <span class="app-badge {{ $status['cascade'] ? 'app-badge-success' : 'app-badge-warning' }}">{{ $status['cascade'] ? 'مفعّل · عتبة '.$status['cascade_threshold'] : 'متوقف' }}</span>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">قاضي الجودة (Gemini)</span>
             <span class="app-badge {{ $status['quality_judge'] ? 'app-badge-success' : 'app-badge-warning' }}">{{ $status['quality_judge'] ? 'مفعّل' : 'متوقف' }}</span>
         </div>
@@ -58,7 +58,7 @@
     <div class="admin-panel-head"><h2>صحة المزوّدين <small>(فحص اتصال — لا يستهلك رصيداً)</small></h2></div>
     <div class="admin-stats-grid">
         @foreach ($health as $provider)
-            <div class="admin-stat">
+            <div class="admin-stat-card">
                 <span class="admin-stat-label">{{ $provider['label'] }}</span>
                 @if (! $provider['ready'])
                     <span class="app-badge app-badge-warning">غير مهيّأ</span>
@@ -76,23 +76,23 @@
 <section class="admin-panel panel-modern mb-6">
     <div class="admin-panel-head"><h2>المقاييس</h2></div>
     <div class="admin-stats-grid">
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">نسبة إصابة الكاش</span>
             <strong class="admin-stat-value">{{ $metrics['cache_hit_rate'] }}%</strong>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">إصابات / إخفاقات الكاش</span>
             <strong class="admin-stat-value">{{ $metrics['cache_hit'] }} / {{ $metrics['cache_miss'] }}</strong>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">عمليات بحث حيّ</span>
             <strong class="admin-stat-value">{{ $metrics['web_search'] }}</strong>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">إخفاقات بحث</span>
             <strong class="admin-stat-value">{{ $metrics['web_fail'] }}</strong>
         </div>
-        <div class="admin-stat">
+        <div class="admin-stat-card">
             <span class="admin-stat-label">تصعيدات Cascade</span>
             <strong class="admin-stat-value">{{ $metrics['cascade_escalated'] }}</strong>
         </div>
@@ -276,15 +276,15 @@
     </div>
     @if ($patterns)
         <div class="admin-stats-grid mb-4">
-            <div class="admin-stat">
+            <div class="admin-stat-card">
                 <span class="admin-stat-label">عدد المشاريع</span>
                 <strong class="admin-stat-value">{{ $patterns['total_projects'] ?? 0 }}</strong>
             </div>
-            <div class="admin-stat">
+            <div class="admin-stat-card">
                 <span class="admin-stat-label">حجم العيّنة</span>
                 <strong class="admin-stat-value">{{ $patterns['sample_size'] ?? 0 }}</strong>
             </div>
-            <div class="admin-stat">
+            <div class="admin-stat-card">
                 <span class="admin-stat-label">أكثر أداة توقّفاً</span>
                 <strong class="admin-stat-value">{{ $patterns['common_drop_off_tool'] ?? '—' }}</strong>
             </div>

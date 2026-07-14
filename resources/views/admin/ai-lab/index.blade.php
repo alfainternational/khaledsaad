@@ -93,10 +93,10 @@
 <section class="admin-panel panel-modern mb-6">
     <div class="admin-panel-head"><h2>مدقّق حقول الأدوات</h2></div>
     <div class="admin-stats-grid mb-4">
-        <div class="admin-stat"><span class="admin-stat-label">الأدوات</span><strong class="admin-stat-value">{{ $toolAudit['tool_count'] }}</strong></div>
-        <div class="admin-stat"><span class="admin-stat-label">حقول نصّية</span><strong class="admin-stat-value">{{ $toolAudit['text_count'] }}</strong></div>
-        <div class="admin-stat"><span class="admin-stat-label">حقول اختيار</span><strong class="admin-stat-value">{{ $toolAudit['select_count'] }}</strong></div>
-        <div class="admin-stat"><span class="admin-stat-label">مشاكل محتملة</span><strong class="admin-stat-value">{{ $toolAudit['issues_total'] }}</strong></div>
+        <div class="admin-stat-card"><span class="admin-stat-label">الأدوات</span><strong class="admin-stat-value">{{ $toolAudit['tool_count'] }}</strong></div>
+        <div class="admin-stat-card"><span class="admin-stat-label">حقول نصّية</span><strong class="admin-stat-value">{{ $toolAudit['text_count'] }}</strong></div>
+        <div class="admin-stat-card"><span class="admin-stat-label">حقول اختيار</span><strong class="admin-stat-value">{{ $toolAudit['select_count'] }}</strong></div>
+        <div class="admin-stat-card"><span class="admin-stat-label">مشاكل محتملة</span><strong class="admin-stat-value">{{ $toolAudit['issues_total'] }}</strong></div>
     </div>
     @if (! empty($toolAudit['select_fields']))
         <h3 class="admin-subhead">حقول اختيار (راجع أيّها يجب أن يكون كتابة حرّة)</h3>
