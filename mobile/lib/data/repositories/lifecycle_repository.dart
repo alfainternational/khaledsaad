@@ -79,6 +79,44 @@ class LifecycleRepository {
         Map<String, dynamic>.from(res['data'] as Map));
   }
 
+  /// تحديث حالة مهمة (start/complete/reopen ⇒ pending/in_progress/done).
+  /// يعيد الحزمة كاملة محدّثة.
+  Future<ExecutionPackageModel> updateTaskStatus(
+      String ws, String task, String status) async {
+    final res = await _api.patch(
+      ApiEndpoints.executionTaskStatus(ws, task),
+      body: {'status': status},
+    );
+    return ExecutionPackageModel.fromJson(
+        Map<String, dynamic>.from(res['data'] as Map));
+  }
+
+  /// إضافة تقرير قياس للحزمة. يعيد الحزمة كاملة محدّثة.
+  Future<ExecutionPackageModel> addReport(
+    String ws,
+    String pkg, {
+    required String phase,
+    required int progress,
+    String? note,
+    String? metricName,
+    String? metricValue,
+  }) async {
+    final res = await _api.post(
+      ApiEndpoints.executionPackageReports(ws, pkg),
+      body: {
+        'phase': phase,
+        'progress': progress,
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+        if (metricName != null && metricName.trim().isNotEmpty)
+          'metric_name': metricName.trim(),
+        if (metricValue != null && metricValue.trim().isNotEmpty)
+          'metric_value': metricValue.trim(),
+      },
+    );
+    return ExecutionPackageModel.fromJson(
+        Map<String, dynamic>.from(res['data'] as Map));
+  }
+
   // ---- التقارير ----
 
   Future<Map<String, dynamic>> report(String ws, String project,

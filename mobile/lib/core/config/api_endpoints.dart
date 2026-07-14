@@ -89,6 +89,10 @@ class ApiEndpoints {
       '/workspaces/$ws/execution-packages/$pkg';
   static String executionPackageStatus(String ws, String pkg) =>
       '/workspaces/$ws/execution-packages/$pkg/status';
+  static String executionPackageReports(String ws, String pkg) =>
+      '/workspaces/$ws/execution-packages/$pkg/reports';
+  static String executionTaskStatus(String ws, String task) =>
+      '/workspaces/$ws/execution-tasks/$task/status';
   static String recommendationPackage(String ws, String p, String rec) =>
       '/workspaces/$ws/projects/$p/recommendations/$rec/package';
 
