@@ -75,11 +75,10 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/password/reset', [PasswordController::class, 'reset'])
         ->middleware('throttle:5,1');
 
-    // تسجيل/دخول اجتماعي (Google/Facebook/Twitter/LinkedIn) — redirect ثم callback→deep link.
-    Route::prefix('auth/social')->middleware('throttle:30,1')->group(function (): void {
-        Route::get('/{provider}/redirect', [SocialAuthController::class, 'redirect']);
-        Route::get('/{provider}/callback', [SocialAuthController::class, 'callback']);
-    })->where('provider', 'google|facebook|twitter|linkedin');
+    // بدء الدخول الاجتماعي للموبايل — العودة عبر الـ callback الموحّد في مسارات الويب.
+    Route::get('/auth/social/{provider}/redirect', [SocialAuthController::class, 'redirect'])
+        ->middleware('throttle:30,1')
+        ->where('provider', 'google|facebook|twitter|linkedin');
 
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function (): void {
         Route::get('/me', MeController::class);

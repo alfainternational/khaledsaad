@@ -44,7 +44,8 @@ class SocialAuthSettingsController extends Controller
                 'label' => $meta['label'],
                 'client_id' => $clientId,
                 'secret_hint' => $this->maskKey($secret),
-                'callback' => $appUrl.'/api/v1/auth/social/'.$key.'/callback',
+                // رابط callback موحّد واحد يخدم الويب والموبايل معاً.
+                'callback' => $appUrl.'/auth/social/'.$key.'/callback',
                 'ready' => $clientId !== '' && $secret !== '',
             ];
         }

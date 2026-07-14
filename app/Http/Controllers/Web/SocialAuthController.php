@@ -34,28 +34,36 @@ class SocialAuthController extends Controller
     {
         $driver = $this->driverFor($provider);
 
-        // بجلسة (بدون stateless) — الويب يملك session لحفظ حالة OAuth. نفرض مسار
-        // callback الويب (لا الافتراضي في config الذي يشير لـ callback الموبايل/API).
+        // علامة المصدر (ويب) في الجلسة — يقرأها الـ callback الموحّد ليتفرّع. الويب
+        // بجلسة (state/PKCE مفعّلان)، ونفرض مسار callback الموحّد.
+        session()->put('social_origin', 'web');
+
         return Socialite::driver($driver)
             ->redirectUrl($this->webCallbackUrl($provider))
             ->redirect();
     }
 
+    /**
+     * Callback موحّد لكل من الويب والموبايل. يكتشف المصدر عبر علامة الجلسة:
+     * - ويب (علامة موجودة، بجلسة/state): Auth::login + توجيه لصفحة.
+     * - موبايل (لا علامة، stateless): توكن Sanctum + deep link ksgrowth://.
+     */
     public function callback(
         string $provider,
         OnboardingState $state,
         EnsureUserWorkspaceAccessAction $ensureUserWorkspaceAccessAction,
     ): RedirectResponse {
         $driver = $this->driverFor($provider);
+        $isWeb = session()->pull('social_origin') === 'web';
 
         try {
-            // نفس مسار callback الويب المُستخدم في redirect (شرط مطابقة redirect_uri).
-            $socialUser = Socialite::driver($driver)
-                ->redirectUrl($this->webCallbackUrl($provider))
-                ->user();
+            $flow = Socialite::driver($driver)->redirectUrl($this->webCallbackUrl($provider));
+            // الموبايل stateless (لا جلسة عبر متصفح الجهاز)؛ الويب stateful (CSRF/PKCE).
+            $socialUser = ($isWeb ? $flow : $flow->stateless())->user();
         } catch (\Throwable $e) {
-            return redirect()->route('login')
-                ->withErrors(['email' => 'تعذّر تسجيل الدخول عبر المزوّد.']);
+            return $isWeb
+                ? redirect()->route('login')->withErrors(['email' => 'تعذّر تسجيل الدخول عبر المزوّد.'])
+                : redirect($this->deepLink(['error' => 'social_auth_failed']));
         }
 
         $user = $this->resolveUser($provider, $socialUser);
@@ -65,20 +73,34 @@ class SocialAuthController extends Controller
             : (string) $user->status;
 
         if ($status !== UserStatus::Active->value) {
-            return redirect()->route('login')
-                ->withErrors(['email' => 'تعذّر تسجيل الدخول عبر المزوّد.']);
+            return $isWeb
+                ? redirect()->route('login')->withErrors(['email' => 'الحساب غير نشط.'])
+                : redirect($this->deepLink(['error' => 'account_frozen']));
         }
 
-        Auth::login($user);
-        session()->regenerate();
-
         $workspace = $ensureUserWorkspaceAccessAction->handle($user);
-        session()->put('current_workspace_id', $workspace->id);
-
         $user->forceFill(['last_login_at' => now()])->save();
 
+        // مسار الموبايل: توكن + deep link.
+        if (! $isWeb) {
+            $token = $user->createToken(
+                $provider.'-mobile',
+                ['workspace:'.$workspace->public_id],
+            )->plainTextToken;
+
+            return redirect($this->deepLink([
+                'token' => $token,
+                'workspace' => $workspace->public_id,
+            ]));
+        }
+
+        // مسار الويب: جلسة Laravel.
+        Auth::login($user);
+        session()->regenerate();
+        session()->put('current_workspace_id', $workspace->id);
+
         return redirect()->route(
-            $workspace && ! $state->isCompleted($workspace) ? 'onboarding.show' : 'dashboard'
+            ! $state->isCompleted($workspace) ? 'onboarding.show' : 'dashboard'
         );
     }
 
@@ -147,9 +169,15 @@ class SocialAuthController extends Controller
         return self::DRIVERS[$provider];
     }
 
-    /** مسار callback الخاص بالويب (بجلسة)، منفصل عن callback الموبايل (deep link). */
+    /** مسار الـ callback الموحّد (يخدم الويب والموبايل معاً). */
     private function webCallbackUrl(string $provider): string
     {
         return route('social.callback', ['provider' => $provider]);
+    }
+
+    /** رابط العودة العميق للتطبيق (مسار الموبايل داخل الـ callback الموحّد). */
+    private function deepLink(array $params): string
+    {
+        return 'ksgrowth://auth/social?'.http_build_query($params);
     }
 }
