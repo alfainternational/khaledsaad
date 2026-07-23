@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Http\Controllers\App;
+
+use App\Http\Controllers\Concerns\ResolvesWorkspace;
+use App\Http\Controllers\Controller;
+use App\Models\Project;
+use App\Services\Growth\SyntheticAudience;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Throwable;
+
+/**
+ * مختبر الجمهور: بناء لوحة الشخصيات واختبار الرسائل عليها قبل الإنفاق.
+ */
+class AudienceLabController extends Controller
+{
+    use ResolvesWorkspace;
+
+    public function __construct(private readonly SyntheticAudience $audience) {}
+
+    public function show(Request $request, Project $project): View
+    {
+        $this->authorizeProject($request, $project);
+
+        $panel = $project->personaPanel?->load('tests');
+
+        return view('app.audience.lab', [
+            'project' => $project,
+            'panel' => $panel,
+            'tests' => $panel?->tests()->with('user:id,name')->limit(10)->get() ?? collect(),
+        ]);
+    }
+
+    public function buildPanel(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorizeProject($request, $project);
+
+        $this->audience->buildPanel($project);
+
+        return redirect()
+            ->route('app.audience.show', $project)
+            ->with('status', 'لوحة جمهورك جاهزة — اكتب رسالة واختبرها عليهم.');
+    }
+
+    public function test(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorizeProject($request, $project);
+
+        $validated = $request->validate([
+            'message' => 'required|string|min:10|max:1000',
+        ], [
+            'message.min' => 'اكتب الرسالة كما ستنشرها فعلًا — عشرة أحرف على الأقل.',
+        ]);
+
+        $panel = $project->personaPanel;
+
+        if ($panel === null) {
+            return back()->withErrors(['message' => 'ابنِ لوحة الجمهور أولًا.']);
+        }
+
+        try {
+            $this->audience->test($panel, $validated['message'], $request->user());
+        } catch (Throwable) {
+            // رد فعل مُخترع أسوأ من الاعتذار: نقولها صراحة ولا نلفّق.
+            return back()->withErrors([
+                'message' => 'تعذّر إجراء الاختبار الآن. رسالتك لم تُفقد — أعد المحاولة بعد قليل.',
+            ])->withInput();
+        }
+
+        return redirect()
+            ->route('app.audience.show', $project)
+            ->with('status', 'جمهورك قال رأيه — النتيجة بالأسفل.');
+    }
+}

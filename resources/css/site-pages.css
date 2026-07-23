@@ -1,0 +1,536 @@
+/* ==========================================================================
+   الصفحات العامة الداخلية: كتالوج الأدوات، صفحة الأداة، وسياق الحساب.
+   تعتمد على الرموز والأزرار المعرفة في app.css ولا تكررها.
+   ========================================================================== */
+
+/* --- ترويسة الصفحة --- */
+
+.page-hero {
+    padding-block: clamp(2.75rem, 7vw, 4.75rem) clamp(2rem, 5vw, 3.5rem);
+    background:
+        radial-gradient(120% 140% at 85% 0%, rgba(9, 215, 229, 0.1), transparent 55%),
+        linear-gradient(180deg, var(--surface-soft), var(--surface));
+    border-bottom: 1px solid var(--line);
+}
+
+.page-hero__inner {
+    display: grid;
+    gap: 1.15rem;
+    max-width: 46rem;
+}
+
+.page-hero h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 4.6vw, 3rem);
+    line-height: 1.2;
+    color: var(--brand-navy);
+}
+
+.page-hero__lead {
+    margin: 0;
+    max-width: 42rem;
+    color: var(--muted);
+    font-size: clamp(1rem, 1.6vw, 1.12rem);
+}
+
+.page-hero__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.page-hero__facts li {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.page-hero__facts strong {
+    color: var(--brand-navy);
+    font-size: 1.55rem;
+    line-height: 1;
+}
+
+.page-hero__facts span {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.page-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-block-start: 0.5rem;
+}
+
+/* --- مسار التنقل --- */
+
+.crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-block-end: 1.5rem;
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.crumbs a {
+    color: var(--brand-blue);
+    font-weight: 700;
+}
+
+.crumbs a:hover {
+    text-decoration: underline;
+}
+
+.crumbs b {
+    color: var(--brand-navy);
+}
+
+/* --- شارات الحالة --- */
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.pill--live {
+    border-color: rgba(15, 138, 77, 0.28);
+    background: #eaf9f1;
+    color: #0b5d34;
+}
+
+.pill--soon {
+    border-color: rgba(255, 155, 39, 0.35);
+    background: var(--surface-warm);
+    color: #8a4b06;
+}
+
+/* --- كتالوج الأدوات --- */
+
+.section {
+    padding-block: clamp(2.5rem, 6vw, 4.25rem);
+}
+
+.catalog-grid {
+    display: grid;
+    gap: 1.15rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+}
+
+.catalog-grid--three {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+}
+
+.catalog-card {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    padding: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.catalog-card:hover,
+.catalog-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: var(--brand-blue);
+    box-shadow: var(--shadow-card);
+}
+
+.catalog-card--soon {
+    opacity: 0.78;
+    background: var(--surface-soft);
+}
+
+.catalog-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.catalog-card__category {
+    color: var(--brand-blue);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.catalog-card__name {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+}
+
+.catalog-card h2,
+.catalog-card h3 {
+    margin: 0;
+    color: var(--brand-navy);
+    font-size: 1.15rem;
+    line-height: 1.35;
+}
+
+.catalog-card__desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.94rem;
+}
+
+.catalog-card__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-block-start: 0.35rem;
+    color: var(--brand-blue);
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+.catalog-card__link b {
+    transition: transform 180ms ease;
+}
+
+.catalog-card:hover .catalog-card__link b {
+    transform: translateX(-0.25rem);
+}
+
+/* --- ترويسة صفحة الأداة --- */
+
+.tool-hero {
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: start;
+}
+
+.tool-hero__copy {
+    display: grid;
+    gap: 1rem;
+}
+
+.tool-hero__copy h1 {
+    margin: 0;
+    font-size: clamp(1.85rem, 4.2vw, 2.8rem);
+    line-height: 1.2;
+    color: var(--brand-navy);
+}
+
+.tool-hero__tags {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.tool-hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1rem, 3vw, 2.25rem);
+    margin: 0;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--line);
+    list-style: none;
+}
+
+.tool-hero__meta li {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.tool-hero__meta strong {
+    color: var(--brand-navy);
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.tool-hero__meta span {
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.tool-hero__note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.tool-hero__panel {
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.6rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.panel-block {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.panel-block h2 {
+    margin: 0;
+    color: var(--brand-navy);
+    font-size: 1rem;
+}
+
+.panel-block small {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.check-list {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.check-list li {
+    display: flex;
+    gap: 0.55rem;
+    align-items: flex-start;
+    color: var(--ink);
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.check-list li span {
+    flex: 0 0 auto;
+    color: #0f8a4d;
+    font-weight: 800;
+}
+
+/* --- تنبيه الأداة غير المفعّلة --- */
+
+.notice {
+    display: grid;
+    gap: 0.6rem;
+    justify-items: start;
+    padding: 1.35rem 1.5rem;
+    border: 1px solid rgba(255, 155, 39, 0.4);
+    border-radius: var(--radius-md);
+    background: var(--surface-warm);
+}
+
+.notice strong {
+    color: var(--brand-navy);
+}
+
+.notice p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.94rem;
+}
+
+/* --- خطوات الأداة --- */
+
+.steps-grid {
+    display: grid;
+    gap: 1.15rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+
+.step-card {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    padding: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.step-card__number {
+    color: var(--brand-blue);
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.step-card h3 {
+    margin: 0;
+    color: var(--brand-navy);
+    font-size: 1.05rem;
+}
+
+.step-card ul {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding-inline-start: 1.1rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* --- رحلة المستخدم ونداء الإجراء --- */
+
+.journey-steps {
+    display: grid;
+    gap: 1.15rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: journey;
+}
+
+.journey-steps li {
+    display: grid;
+    gap: 0.45rem;
+    align-content: start;
+    padding: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.journey-steps span {
+    color: var(--brand-blue);
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.journey-steps h3 {
+    margin: 0;
+    color: var(--brand-navy);
+    font-size: 1.02rem;
+}
+
+.journey-steps p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.cta-band {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-block-start: clamp(1.75rem, 4vw, 2.75rem);
+    padding: 1.5rem 1.75rem;
+    border-radius: var(--radius-lg);
+    background: var(--brand-gradient);
+    color: #fff;
+}
+
+.cta-band p {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
+.cta-band .button--primary {
+    color: var(--brand-navy);
+    background: #fff;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+}
+
+/* --- سياق الحساب: من جاء من أداة يعرف إلى أين يعود --- */
+
+.auth-intent {
+    display: grid;
+    gap: 0.3rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--line);
+    border-inline-start: 3px solid var(--brand-blue);
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+}
+
+.auth-intent__tag {
+    color: var(--brand-blue);
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.auth-intent strong {
+    color: var(--brand-navy);
+}
+
+.auth-intent p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.auth-steps {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.auth-steps li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.auth-steps b {
+    display: grid;
+    place-items: center;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 0.78rem;
+}
+
+.auth-steps .is-current {
+    color: var(--brand-navy);
+    font-weight: 700;
+}
+
+.auth-steps .is-current b {
+    border-color: transparent;
+    background: var(--brand-gradient);
+    color: #fff;
+}
+
+.auth-card__sep {
+    margin-inline: 0.4rem;
+    color: var(--line);
+}
+
+/* --- التجاوب --- */
+
+@media (max-width: 900px) {
+    .tool-hero {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .catalog-card,
+    .catalog-card__link b,
+    .catalog-card:hover {
+        transform: none;
+        transition: none;
+    }
+}

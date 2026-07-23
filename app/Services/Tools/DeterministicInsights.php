@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Services\Tools;
+
+use App\Models\ToolRun;
+
+/**
+ * أرضية النتائج الحتمية: ما يستحقه صاحب المشروع حتى لو تعطّل الذكاء الاصطناعي تمامًا.
+ *
+ * السبب: التقرير كان يصل أحيانًا بلا توصية واحدة حين تفشل مرحلة الخلاصة،
+ * فيقود العميل بإتقان إلى بابٍ مغلق. هذه الطبقة تشتق نتائج وتوصيات حقيقية
+ * من درجته المحسوبة بقواعد ثابتة — من إجاباته هو، لا من نموذج خارجي.
+ *
+ * تتوافق مع اتجاه سيادة البيانات: الذكاء الأساسي محلي، والخارجي يحسّنه لا يصنعه.
+ */
+class DeterministicInsights
+{
+    /**
+     * يحوّل تفصيل الدرجة إلى نتائج مرتبة حسب الأثر: الأضعف عائدًا أولًا.
+     *
+     * @param  array{score: int, band: string, breakdown: array<int, array<string, mixed>>}  $baseline
+     * @return array<int, array<string, mixed>> بنفس شكل مخرج الخلاصة، جاهز لـ ReportComposer.
+     */
+    public function findings(ToolRun $run, array $baseline, int $limit = 3): array
+    {
+        $advice = $this->adviceMap($run);
+
+        // الأولوية = الوزن × مقدار النقص. البند مرتفع الوزن ومنخفض العائد يتصدّر.
+        $ranked = collect($baseline['breakdown'])
+            ->map(function (array $row) {
+                $factor = (float) ($row['factor'] ?? 1);
+                $weight = (float) ($row['weight'] ?? 1);
+
+                return [...$row, 'gap' => $weight * (1 - $factor)];
+            })
+            ->filter(fn (array $row) => $row['gap'] > 0.01)
+            ->sortByDesc('gap')
+            ->take($limit)
+            ->values();
+
+        return $ranked
+            ->map(fn (array $row) => $this->toFinding($row, $advice[$row['field']] ?? null))
+            ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @param  array{title?: string, description?: string, recommendation?: string, kpi?: string}|null  $advice
+     * @return array<string, mixed>
+     */
+    private function toFinding(array $row, ?array $advice): array
+    {
+        $label = (string) ($row['label'] ?? $row['field']);
+        $factor = (float) ($row['factor'] ?? 0);
+
+        // شدة النتيجة من مقدار النقص نفسه، لا من حكم نموذج.
+        $severity = match (true) {
+            $factor <= 0.25 => 'high',
+            $factor <= 0.6 => 'medium',
+            default => 'low',
+        };
+
+        $title = $advice['title'] ?? "«{$label}» يحتاج اهتمامك أولًا";
+        $description = $advice['description']
+            ?? 'هذا الجانب من أضعف ما في مشروعك الآن مقارنة بأثره على النتيجة، فمعالجته تعطيك أكبر تحسّن بأقل جهد.';
+
+        $recommendation = $advice['recommendation']
+            ?? "خصّص وقتًا هذا الأسبوع لمعالجة «{$label}»: اكتب وضعه الحالي بصراحة، وحدّد خطوة واحدة ملموسة تحسّنه.";
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'category' => 'أولوية محسوبة',
+            'severity' => $severity,
+            // حتمية لا افتراضية: مبنية على إجاباته ودرجته لا على تخمين.
+            'is_assumption' => false,
+            'evidence' => "درجة هذا الجانب {$this->percent($factor)}% من الحد الأعلى، وهو من أعلى بنود الأثر.",
+            'confidence' => 90,
+            'recommendations' => [[
+                'title' => $advice['title'] ?? "ابدأ بمعالجة «{$label}»",
+                'description' => $recommendation,
+                'impact' => $factor <= 0.4 ? 'high' : 'medium',
+                'effort' => 'medium',
+                'kpi_hint' => $advice['kpi'] ?? null,
+            ]],
+        ];
+    }
+
+    /**
+     * نصائح مكتوبة بلغة العميل لكل بند من بنود الدرجة، تُقرأ من تعريف الأداة.
+     *
+     * @return array<string, array{title?: string, description?: string, recommendation?: string, kpi?: string}>
+     */
+    private function adviceMap(ToolRun $run): array
+    {
+        $rules = $run->toolVersion->scoring_rules['rules'] ?? [];
+        $map = [];
+
+        foreach ($rules as $rule) {
+            if (! empty($rule['weak_advice'])) {
+                $map[$rule['field']] = $rule['weak_advice'];
+            }
+        }
+
+        return $map;
+    }
+
+    private function percent(float $factor): int
+    {
+        return (int) round(max(0, min(1, $factor)) * 100);
+    }
+}
