@@ -10,15 +10,20 @@ use Illuminate\Support\Collection;
 /**
  * اكتمال الإجابات يُحسب على الحقول المرئية فقط: حقل مخفي بشرط
  * لا يجوز أن يمنع التشغيل.
+ *
+ * الرؤية تُقيَّم على الإجابات مدموجة بسياق المشروع (النوع والحالة)،
+ * فالأسئلة تتكيف مع كل مشروع دون أن يختل حساب الاكتمال أو الدرجة.
  */
 class AnswerCompleteness
 {
+    public function __construct(private readonly ProjectContextResolver $context) {}
+
     /**
      * @return array<int, string> عناوين الحقول الناقصة.
      */
     public function missingRequired(ToolRun $run): array
     {
-        $answers = $this->plainAnswers($run);
+        $answers = $this->contextualAnswers($run);
 
         return $this->visibleFields($run->toolVersion, $answers)
             ->filter(fn ($field) => $field->required && $this->isEmpty($answers[$field->key] ?? null))
@@ -29,7 +34,7 @@ class AnswerCompleteness
 
     public function percent(ToolRun $run): int
     {
-        $answers = $this->plainAnswers($run);
+        $answers = $this->contextualAnswers($run);
         $fields = $this->visibleFields($run->toolVersion, $answers)->where('required', true);
 
         if ($fields->isEmpty()) {
@@ -48,6 +53,20 @@ class AnswerCompleteness
     public function visibleFields(ToolVersion $version, array $answers): Collection
     {
         return $version->fields->filter(fn ($field) => $field->isVisible($answers))->values();
+    }
+
+    /**
+     * الإجابات + مفاتيح سياق المشروع المحجوزة (project.*) — الصيغة الموحدة
+     * التي تُقيَّم عليها كل شروط الرؤية.
+     *
+     * @return array<string, mixed>
+     */
+    public function contextualAnswers(ToolRun $run): array
+    {
+        return array_merge(
+            $this->plainAnswers($run),
+            $this->context->for($run->project),
+        );
     }
 
     /**

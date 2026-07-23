@@ -75,7 +75,7 @@ class ToolRunService
     {
         $run->loadMissing(['toolVersion.fields', 'answers']);
 
-        $answers = $this->completeness->plainAnswers($run);
+        $answers = $this->completeness->contextualAnswers($run);
         $fields = $this->completeness->visibleFields($run->toolVersion, array_merge($answers, $input))
             ->where('step', $step);
 

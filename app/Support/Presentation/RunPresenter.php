@@ -63,7 +63,8 @@ class RunPresenter
 
         return [
             ...$this->summary($run),
-            'steps' => $this->tools->steps($run->toolVersion, $answers, $knownKeys),
+            // الرؤية تُقيَّم بسياق المشروع، بينما تبقى حمولة الإجابات نقية.
+            'steps' => $this->tools->steps($run->toolVersion, $this->completeness->contextualAnswers($run), $knownKeys),
             'answers' => $answers,
             'completeness_percent' => $this->completeness->percent($run),
             'files' => $this->files($run),

@@ -5,8 +5,9 @@ namespace App\Services\Growth;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\ReportWatcher;
-use App\Services\Tools\DeterministicScorer;
 use App\Models\User;
+use App\Services\Tools\DeterministicScorer;
+use App\Services\Tools\ProjectContextResolver;
 
 /**
  * فاحص التقرير الحي: يقارن ما بُني عليه التقرير (اللقطة المجمدة BR-005)
@@ -36,7 +37,10 @@ class LiveReportChecker
         'channels' => 'القنوات',
     ];
 
-    public function __construct(private readonly DeterministicScorer $scorer) {}
+    public function __construct(
+        private readonly DeterministicScorer $scorer,
+        private readonly ProjectContextResolver $context,
+    ) {}
 
     public function activate(Report $report, User $user): ReportWatcher
     {
@@ -142,8 +146,16 @@ class LiveReportChecker
 
         $frozen = $run->answers->pluck('value_json', 'field_key')->all();
         $updated = $watcher->project->answers()->pluck('value_json', 'field_key')->all();
+        $merged = [...$frozen, ...$updated];
 
-        $current = $this->scorer->score($version, [...$frozen, ...$updated]);
+        // نفس عدالة خط الأنابيب: القواعد المنطبقة على سياق هذا المشروع فقط.
+        $contextual = [...$merged, ...$this->context->for($watcher->project)];
+        $activeKeys = $version->fields
+            ->filter(fn ($field) => $field->isVisible($contextual))
+            ->pluck('key')
+            ->all();
+
+        $current = $this->scorer->score($version, $merged, $activeKeys);
         $delta = $current['score'] - (int) $report->score;
 
         if (abs($delta) < (int) config('growth.score_drift_threshold', 5)) {

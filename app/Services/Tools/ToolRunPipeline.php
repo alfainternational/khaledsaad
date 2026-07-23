@@ -209,7 +209,14 @@ class ToolRunPipeline
             ->map(fn ($value) => is_array($value) && array_key_exists('value', $value) ? $value['value'] : $value)
             ->all();
 
-        $baseline = $this->scorer->score($run->toolVersion, $answers);
+        // الدرجة على الأسئلة المنطبقة على هذا المشروع فقط — عدالة التكيف.
+        $completeness = app(AnswerCompleteness::class);
+        $activeKeys = $completeness
+            ->visibleFields($run->toolVersion, $completeness->contextualAnswers($run))
+            ->pluck('key')
+            ->all();
+
+        $baseline = $this->scorer->score($run->toolVersion, $answers, $activeKeys);
 
         $run->forceFill(['base_score' => $baseline['score']])->save();
         $run->project->forceFill(['latest_score' => $baseline['score']])->save();
