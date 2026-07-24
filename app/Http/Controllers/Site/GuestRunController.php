@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Site;
 
+use App\Http\Controllers\Concerns\NavigatesWizardSteps;
 use App\Http\Controllers\Controller;
 use App\Models\GuestSession;
 use App\Models\Tool;
@@ -21,6 +22,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class GuestRunController extends Controller
 {
+    use NavigatesWizardSteps;
+
     public function __construct(
         private readonly GuestSessionManager $guests,
         private readonly ToolRunService $service,
@@ -57,17 +60,25 @@ class GuestRunController extends Controller
         }
 
         $wizard = $this->presenter->wizard($run);
-        $total = count($wizard['steps']);
+        $steps = $wizard['steps'];
+        $current = $this->currentStep($steps, $step);
 
-        if ($step < 1 || $step > $total) {
-            return redirect()->route('try.step', [$run, min(max(1, $step), max(1, $total))]);
+        if ($current === null) {
+            $nearest = $this->nearestStep($steps, $step);
+
+            return $nearest === null
+                ? redirect()->route('try.result', $run)
+                : redirect()->route('try.step', [$run, $nearest]);
         }
 
         return view('site.try.step', [
             'run' => $wizard,
-            'step' => $wizard['steps'][$step - 1],
-            'step_number' => $step,
-            'total_steps' => $total,
+            'step' => $current,
+            'step_number' => $current['step'],
+            'position' => $current['position'],
+            'total_steps' => count($steps),
+            'previous_step' => $this->stepBefore($steps, $step),
+            'next_step' => $this->stepAfter($steps, $step),
         ]);
     }
 
@@ -77,10 +88,10 @@ class GuestRunController extends Controller
 
         $this->service->saveStep($run, $step, $request->except(['_token', '_method']));
 
-        $total = count($this->presenter->wizard($run)['steps']);
+        $next = $this->stepAfter($this->presenter->wizard($run)['steps'], $step);
 
-        if ($step < $total) {
-            return redirect()->route('try.step', [$run, $step + 1]);
+        if ($next !== null) {
+            return redirect()->route('try.step', [$run, $next]);
         }
 
         // اكتملت الأسئلة: هنا يرى قيمة ما فعله، ثم نعرض عليه حفظه.

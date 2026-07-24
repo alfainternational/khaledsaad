@@ -5,12 +5,14 @@ namespace App\Support\Presentation;
 use App\Models\ProjectAnswer;
 use App\Models\ToolRun;
 use App\Services\Tools\AnswerCompleteness;
+use App\Services\Tools\HybridInsightService;
 
 class RunPresenter
 {
     public function __construct(
         private readonly AnswerCompleteness $completeness,
         private readonly ToolPresenter $tools,
+        private readonly HybridInsightService $insights,
     ) {}
 
     /**
@@ -67,6 +69,7 @@ class RunPresenter
             'steps' => $this->tools->steps($run->toolVersion, $this->completeness->contextualAnswers($run), $knownKeys),
             'answers' => $answers,
             'completeness_percent' => $this->completeness->percent($run),
+            'insights' => $this->insights->preview($run),
             'files' => $this->files($run),
         ];
     }

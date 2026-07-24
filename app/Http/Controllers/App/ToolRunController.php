@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Http\Controllers\Concerns\NavigatesWizardSteps;
 use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
@@ -9,6 +10,8 @@ use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Models\ToolRunFile;
 use App\Services\Tools\AttachmentUploader;
+use App\Services\Tools\HybridInsightService;
+use App\Services\Tools\ManualReportService;
 use App\Services\Tools\ToolRunService;
 use App\Support\Presentation\RunPresenter;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +22,7 @@ use RuntimeException;
 
 class ToolRunController extends Controller
 {
+    use NavigatesWizardSteps;
     use ResolvesWorkspace;
 
     public function __construct(
@@ -55,17 +59,26 @@ class ToolRunController extends Controller
         }
 
         $wizard = $this->presenter->wizard($run);
-        $total = count($wizard['steps']);
+        $steps = $wizard['steps'];
+        $current = $this->currentStep($steps, $step);
 
-        if ($step < 1 || $step > $total) {
-            return redirect()->route('app.runs.step', [$run, min(max(1, $step), max(1, $total))]);
+        // الخطوة المطلوبة لا تخص هذا المشروع (أو لم تعد قائمة): ننقله لأقربها.
+        if ($current === null) {
+            $nearest = $this->nearestStep($steps, $step);
+
+            return $nearest === null
+                ? redirect()->route('app.runs.review', $run)
+                : redirect()->route('app.runs.step', [$run, $nearest]);
         }
 
         return view('app.runs.step', [
             'run' => $wizard,
-            'step' => $wizard['steps'][$step - 1],
-            'step_number' => $step,
-            'total_steps' => $total,
+            'step' => $current,
+            'step_number' => $current['step'],
+            'position' => $current['position'],
+            'total_steps' => count($steps),
+            'previous_step' => $this->stepBefore($steps, $step),
+            'next_step' => $this->stepAfter($steps, $step),
         ]);
     }
 
@@ -75,11 +88,32 @@ class ToolRunController extends Controller
 
         $this->service->saveStep($run, $step, $request->except(['_token', '_method']));
 
-        $total = count($this->presenter->wizard($run)['steps']);
+        // الخطوات تُعاد قراءتها بعد الحفظ: إجابة هذه الخطوة قد تكشف خطوة تالية.
+        $next = $this->stepAfter($this->presenter->wizard($run)['steps'], $step);
 
-        return $step >= $total
+        return $next === null
             ? redirect()->route('app.runs.review', $run)
-            : redirect()->route('app.runs.step', [$run, $step + 1]);
+            : redirect()->route('app.runs.step', [$run, $next]);
+    }
+
+    public function insights(
+        Request $request,
+        ToolRun $run,
+        HybridInsightService $insights,
+    ): JsonResponse {
+        $this->authorizeRun($request, $run);
+        $validated = $request->validate([
+            'answers' => 'nullable|array|max:50',
+            'include_ai' => 'nullable|boolean',
+            'step' => 'nullable|integer|min:1|max:50',
+        ]);
+
+        return response()->json(['data' => $insights->preview(
+            $run,
+            $validated['answers'] ?? [],
+            (bool) ($validated['include_ai'] ?? false),
+            isset($validated['step']) ? (int) $validated['step'] : null,
+        )]);
     }
 
     public function review(Request $request, ToolRun $run): View
@@ -98,6 +132,18 @@ class ToolRunController extends Controller
         $this->service->queue($run);
 
         return redirect()->route('app.runs.status', $run);
+    }
+
+    /**
+     * المسار اليدوي: يجمّد التشغيل بانتظار مراجعة الآدمن بدل خط الأنابيب.
+     */
+    public function requestManualReview(Request $request, ToolRun $run, ManualReportService $manual): RedirectResponse
+    {
+        $this->authorizeRun($request, $run);
+        $manual->requestManualReview($run);
+
+        return redirect()->route('app.runs.status', $run)
+            ->with('status', 'وصلتنا إجاباتك. سيراجعها خالد بنفسه، ونُشعرك فور جاهزية النتيجة.');
     }
 
     public function status(Request $request, ToolRun $run): View|RedirectResponse

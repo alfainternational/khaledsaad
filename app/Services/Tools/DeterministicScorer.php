@@ -17,9 +17,9 @@ class DeterministicScorer
     /**
      * @param  array<string, mixed>  $answers
      * @param  array<int, string>|null  $activeKeys  مفاتيح الحقول المنطبقة على
-     *         هذا المشروع (بحسب نوعه وحالته). null = كل القواعد كما كانت.
-     *         القاعدة التي يخفي سياقُ المشروع سؤالَها تُستبعد من الوزن كليًا:
-     *         مشروع فكرة لا يُعاقَب على سؤال قنوات لم يُوجَّه له أصلًا.
+     *                                               هذا المشروع (بحسب نوعه وحالته). null = كل القواعد كما كانت.
+     *                                               القاعدة التي يخفي سياقُ المشروع سؤالَها تُستبعد من الوزن كليًا:
+     *                                               مشروع فكرة لا يُعاقَب على سؤال قنوات لم يُوجَّه له أصلًا.
      * @return array{score: int, band: string, breakdown: array<int, array<string, mixed>>}
      */
     public function score(ToolVersion $version, array $answers, ?array $activeKeys = null): array

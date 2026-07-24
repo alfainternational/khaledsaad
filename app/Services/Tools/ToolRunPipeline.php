@@ -219,7 +219,12 @@ class ToolRunPipeline
         $baseline = $this->scorer->score($run->toolVersion, $answers, $activeKeys);
 
         $run->forceFill(['base_score' => $baseline['score']])->save();
-        $run->project->forceFill(['latest_score' => $baseline['score']])->save();
+
+        // درجة بطاقة المشروع هي المؤشر التسويقي الشامل فقط. درجات الأدوات
+        // المتخصصة تخص تقاريرها ولا يجوز أن تستبدل المؤشر العام.
+        if ($run->toolVersion->tool->key === 'marketing-score') {
+            $run->project->forceFill(['latest_score' => $baseline['score']])->save();
+        }
 
         return $baseline;
     }

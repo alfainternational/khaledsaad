@@ -17,9 +17,9 @@
                 <h1>{{ $step['title'] }}</h1>
                 <div class="progress" role="group" aria-label="إلى أين وصلت">
                     <div class="progress__bar">
-                        <span style="inline-size: {{ (int) round($step_number / max(1, $total_steps) * 100) }}%"></span>
+                        <span style="inline-size: {{ (int) round($position / max(1, $total_steps) * 100) }}%"></span>
                     </div>
-                    <p class="muted">الخطوة {{ $step_number }} من {{ $total_steps }} · تجرّب الآن بدون حساب</p>
+                    <p class="muted">الخطوة {{ $position }} من {{ $total_steps }} · تجرّب الآن بدون حساب</p>
                 </div>
             </header>
 
@@ -56,11 +56,11 @@
                 @endforeach
 
                 <div class="form__actions">
-                    @if ($step_number > 1)
-                        <a href="{{ route('try.step', [$run['uuid'], $step_number - 1]) }}" class="btn btn--ghost">السابق</a>
+                    @if ($previous_step !== null)
+                        <a href="{{ route('try.step', [$run['uuid'], $previous_step]) }}" class="btn btn--ghost">السابق</a>
                     @endif
                     <button type="submit" class="btn btn--primary">
-                        {{ $step_number >= $total_steps ? 'شوف نتيجتك' : 'التالي' }}
+                        {{ $next_step === null ? 'شوف نتيجتك' : 'التالي' }}
                     </button>
                 </div>
             </form>

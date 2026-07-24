@@ -66,7 +66,29 @@ class ToolField extends Model
             $actual = $answers[$key] ?? null;
             $allowed = is_array($expected) ? $expected : [$expected];
 
-            if (! in_array($actual, $allowed, true)) {
+            /*
+             * القيمة المسبوقة بعلامة تعجب استثناء لا شرطًا: «اعرض للجميع
+             * إلا هؤلاء». بدونها كنا نضطر لتعداد كل الأنواع الأخرى في كل
+             * سؤال، فيصبح تعريف الأداة هشًّا كلما أُضيف نوع مشروع جديد.
+             */
+            $excluded = [];
+            $required = [];
+
+            foreach ($allowed as $value) {
+                if (is_string($value) && str_starts_with($value, '!')) {
+                    $excluded[] = substr($value, 1);
+
+                    continue;
+                }
+
+                $required[] = $value;
+            }
+
+            if (in_array($actual, $excluded, true)) {
+                return false;
+            }
+
+            if ($required !== [] && ! in_array($actual, $required, true)) {
                 return false;
             }
         }
