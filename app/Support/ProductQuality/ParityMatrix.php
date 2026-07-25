@@ -39,4 +39,30 @@ final class ParityMatrix
 
         return array_values($decoded['capabilities']);
     }
+
+    /**
+     * @return list<array<string, mixed>>
+     *
+     * @throws JsonException
+     */
+    public function forRole(string $role): array
+    {
+        return array_values(array_filter(
+            $this->records(),
+            fn (array $record) => ($record['role'] ?? null) === $role,
+        ));
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     *
+     * @throws JsonException
+     */
+    public function forSurface(string $surface): array
+    {
+        return array_values(array_filter(
+            $this->records(),
+            fn (array $record) => ($record[$surface]['applicable'] ?? false) === true,
+        ));
+    }
 }

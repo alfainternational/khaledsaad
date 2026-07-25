@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Support\ProductQuality\NeutralArabicScanner;
 use App\Support\ProductQuality\ParityMatrix;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Route;
 use Throwable;
 
 class AuditProductQuality extends Command
@@ -18,6 +19,7 @@ class AuditProductQuality extends Command
     public function handle(NeutralArabicScanner $scanner): int
     {
         [$records, $matrixIssues] = $this->auditMatrix();
+        $apiRouteIssues = $this->auditApiRoutes($records);
         $languageIssues = $scanner->scanDefaultPaths();
 
         if ($matrixIssues === []) {
@@ -33,6 +35,21 @@ class AuditProductQuality extends Command
             $this->error(sprintf('Parity matrix: FAIL (%d issues)', count($matrixIssues)));
 
             foreach ($matrixIssues as $issue) {
+                $this->line(" - {$issue}");
+            }
+        }
+
+        if ($apiRouteIssues === []) {
+            $declared = count(array_filter(
+                $records,
+                fn (array $record) => is_string($record['api']['route'] ?? null)
+                    && $record['api']['route'] !== '',
+            ));
+            $this->info("API route coverage: PASS ({$declared} declared routes)");
+        } else {
+            $this->error(sprintf('API route coverage: FAIL (%d issues)', count($apiRouteIssues)));
+
+            foreach ($apiRouteIssues as $issue) {
                 $this->line(" - {$issue}");
             }
         }
@@ -53,7 +70,7 @@ class AuditProductQuality extends Command
             }
         }
 
-        return $matrixIssues === [] && $languageIssues === []
+        return $matrixIssues === [] && $apiRouteIssues === [] && $languageIssues === []
             ? self::SUCCESS
             : self::FAILURE;
     }
@@ -135,5 +152,32 @@ class AuditProductQuality extends Command
         }
 
         return [$records, array_values(array_unique($issues))];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $records
+     * @return list<string>
+     */
+    private function auditApiRoutes(array $records): array
+    {
+        $issues = [];
+
+        foreach ($records as $record) {
+            if (($record['api']['applicable'] ?? false) !== true) {
+                continue;
+            }
+
+            $name = $record['api']['route'] ?? null;
+
+            if ($name === null || $name === '') {
+                continue;
+            }
+
+            if (! is_string($name) || ! Route::has($name)) {
+                $issues[] = ($record['id'] ?? 'unknown').': missing route '.(is_scalar($name) ? $name : '[invalid]');
+            }
+        }
+
+        return $issues;
     }
 }

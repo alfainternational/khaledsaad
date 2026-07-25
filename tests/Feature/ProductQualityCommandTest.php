@@ -12,6 +12,7 @@ class ProductQualityCommandTest extends TestCase
     {
         $this->artisan('product:audit')
             ->expectsOutputToContain('Parity matrix')
+            ->expectsOutputToContain('API route coverage')
             ->expectsOutputToContain('Neutral Arabic')
             ->assertSuccessful();
     }
