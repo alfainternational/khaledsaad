@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Support\Settings\SettingsConfig;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
@@ -32,5 +33,37 @@ class SettingController extends Controller
         ])->values()->all();
 
         return response()->json(['data' => $groups]);
+    }
+
+    public function update(Request $request): JsonResponse
+    {
+        foreach (SettingsConfig::fields() as $field) {
+            $key = $field['key'];
+            $inputName = str_replace('.', '__', $key);
+
+            if (! $request->exists($inputName)) {
+                continue;
+            }
+
+            $input = $request->input($inputName);
+
+            if ($field['type'] === 'bool') {
+                Setting::put($key, $request->boolean($inputName), 'admin', 'bool');
+            } elseif ($field['type'] === 'int') {
+                blank($input)
+                    ? Setting::where('key', $key)->delete()
+                    : Setting::put($key, (int) $input, 'admin', 'int');
+            } elseif ($field['type'] === 'secret') {
+                if (filled($input)) {
+                    Setting::put($key, $input, 'admin', 'secret');
+                }
+            } elseif (blank($input)) {
+                Setting::where('key', $key)->delete();
+            } else {
+                Setting::put($key, $input, 'admin', 'string');
+            }
+        }
+
+        return $this->index();
     }
 }

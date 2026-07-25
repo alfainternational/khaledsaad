@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Http\Controllers\Admin\AdminPaymentController;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
@@ -41,5 +42,46 @@ class PaymentController extends Controller
             'data' => $payments,
             'meta' => ['limit' => $limit, 'status' => $status],
         ]);
+    }
+
+    public function approve(
+        Request $request,
+        Payment $payment,
+        AdminPaymentController $payments,
+    ): JsonResponse {
+        $this->confirm($request);
+
+        if (! $payment->awaitsApproval()) {
+            return response()->json(['message' => 'هذه الدفعة عولجت مسبقاً.'], 409);
+        }
+
+        $payments->approve($request, $payment);
+
+        return response()->json(['data' => $payment->fresh()->only([
+            'id', 'status', 'credits_granted', 'approved_by', 'approved_at',
+        ])]);
+    }
+
+    public function reject(
+        Request $request,
+        Payment $payment,
+        AdminPaymentController $payments,
+    ): JsonResponse {
+        $this->confirm($request);
+
+        if (! $payment->awaitsApproval()) {
+            return response()->json(['message' => 'هذه الدفعة عولجت مسبقاً.'], 409);
+        }
+
+        $payments->reject($request, $payment);
+
+        return response()->json(['data' => $payment->fresh()->only([
+            'id', 'status', 'failure_reason',
+        ])]);
+    }
+
+    private function confirm(Request $request): void
+    {
+        $request->validate(['confirmation' => ['required', 'accepted']]);
     }
 }

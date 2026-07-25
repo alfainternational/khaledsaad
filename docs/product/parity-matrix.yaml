@@ -339,7 +339,7 @@
       "api": {"applicable": true, "route": "api.v1.admin.tools.prompts.update", "method": "PUT"},
       "mobile": {"applicable": true, "screen": null, "action": "update"},
       "states": ["loading", "validation", "locked_version", "forbidden", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\AdminCrudTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\AdminCrudTest"], "api": ["Tests\\Feature\\AdminApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {
@@ -349,7 +349,7 @@
       "api": {"applicable": true, "route": "api.v1.admin.catalog", "method": "GET|POST|PUT|DELETE"},
       "mobile": {"applicable": true, "screen": null, "action": "manage"},
       "states": ["loading", "empty", "validation", "confirmation", "forbidden", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\PlanFeatureEntitlementTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\PlanFeatureEntitlementTest"], "api": ["Tests\\Feature\\AdminApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {
@@ -359,7 +359,7 @@
       "api": {"applicable": true, "route": "api.v1.admin.catalog", "method": "GET|POST|PUT|DELETE"},
       "mobile": {"applicable": true, "screen": null, "action": "manage"},
       "states": ["loading", "empty", "validation", "confirmation", "forbidden", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\AdminCrudTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\AdminCrudTest"], "api": ["Tests\\Feature\\AdminApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {
@@ -369,7 +369,7 @@
       "api": {"applicable": true, "route": "api.v1.admin.catalog", "method": "GET|POST|PUT|DELETE"},
       "mobile": {"applicable": true, "screen": null, "action": "manage"},
       "states": ["loading", "empty", "validation", "confirmation", "forbidden", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\AdminCrudTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\AdminCrudTest"], "api": ["Tests\\Feature\\AdminApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {
@@ -379,7 +379,7 @@
       "api": {"applicable": true, "route": "api.v1.admin.catalog", "method": "GET|POST|PUT|DELETE|PATCH"},
       "mobile": {"applicable": true, "screen": null, "action": "manage"},
       "states": ["loading", "empty", "validation", "confirmation", "forbidden", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\PaymentGatewayTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\PaymentGatewayTest"], "api": ["Tests\\Feature\\AdminApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {

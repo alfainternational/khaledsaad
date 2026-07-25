@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Http\Controllers\Admin\AdminCreditPackController;
+use App\Http\Controllers\Admin\AdminFeatureController;
+use App\Http\Controllers\Admin\AdminGatewayController;
+use App\Http\Controllers\Admin\AdminPlanController;
 use App\Http\Controllers\Controller;
 use App\Models\CreditPack;
 use App\Models\Feature;
@@ -10,6 +14,7 @@ use App\Models\Plan;
 use App\Services\Payments\PaymentGatewayManager;
 use App\Support\Billing\FeatureKey;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class BillingCatalogController extends Controller
 {
@@ -50,5 +55,156 @@ class BillingCatalogController extends Controller
                     ])->values()->all(),
                 ])->all(),
         ]]);
+    }
+
+    public function storeFeature(Request $request, AdminFeatureController $features): JsonResponse
+    {
+        $features->store($request);
+
+        return response()->json([
+            'data' => Feature::where('key', $request->string('key'))->firstOrFail(),
+        ], 201);
+    }
+
+    public function updateFeature(Request $request, Feature $feature, AdminFeatureController $features): JsonResponse
+    {
+        $features->update($request, $feature);
+
+        return response()->json(['data' => $feature->fresh()]);
+    }
+
+    public function destroyFeature(Request $request, Feature $feature, AdminFeatureController $features): JsonResponse
+    {
+        $this->confirm($request);
+
+        if (in_array($feature->key, FeatureKey::all(), true)) {
+            return response()->json([
+                'message' => 'هذا العنصر مربوط بالنظام. يمكنك تعطيله بدلاً من حذفه.',
+            ], 409);
+        }
+
+        $features->destroy($feature);
+
+        return response()->json(['message' => 'حُذف عنصر الميزة.']);
+    }
+
+    public function storePlan(Request $request, AdminPlanController $plans): JsonResponse
+    {
+        $plans->store($request);
+
+        return response()->json([
+            'data' => Plan::where('key', $request->string('key'))->firstOrFail()->load('planFeatures'),
+        ], 201);
+    }
+
+    public function updatePlan(Request $request, Plan $plan, AdminPlanController $plans): JsonResponse
+    {
+        $plans->update($request, $plan);
+
+        return response()->json(['data' => $plan->fresh()->load('planFeatures')]);
+    }
+
+    public function destroyPlan(Request $request, Plan $plan, AdminPlanController $plans): JsonResponse
+    {
+        $this->confirm($request);
+
+        if ($plan->subscriptions()->exists()) {
+            return response()->json([
+                'message' => 'لا يمكن حذف خطة تضم مشتركين. يمكنك إخفاؤها بدلاً من حذفها.',
+            ], 409);
+        }
+
+        $plans->destroy($plan);
+
+        return response()->json(['message' => 'حُذفت الخطة.']);
+    }
+
+    public function storePack(Request $request, AdminCreditPackController $packs): JsonResponse
+    {
+        $packs->store($request);
+        $pack = CreditPack::latest('id')->firstOrFail();
+
+        return response()->json(['data' => $pack], 201);
+    }
+
+    public function updatePack(Request $request, CreditPack $pack, AdminCreditPackController $packs): JsonResponse
+    {
+        $packs->update($request, $pack);
+
+        return response()->json(['data' => $pack->fresh()]);
+    }
+
+    public function destroyPack(Request $request, CreditPack $pack, AdminCreditPackController $packs): JsonResponse
+    {
+        $this->confirm($request);
+        $packs->destroy($pack);
+
+        return response()->json(['message' => 'حُذفت الحزمة.']);
+    }
+
+    public function storeGateway(Request $request, AdminGatewayController $gateways): JsonResponse
+    {
+        $gateways->store($request);
+        $gateway = PaymentGateway::where('provider', $request->string('provider'))->firstOrFail();
+
+        return response()->json(['data' => $this->gateway($gateway)], 201);
+    }
+
+    public function updateGateway(
+        Request $request,
+        PaymentGateway $gateway,
+        AdminGatewayController $gateways,
+    ): JsonResponse {
+        $gateways->update($request, $gateway);
+
+        return response()->json(['data' => $this->gateway($gateway->fresh())]);
+    }
+
+    public function toggleGateway(
+        Request $request,
+        PaymentGateway $gateway,
+        AdminGatewayController $gateways,
+    ): JsonResponse {
+        $this->confirm($request);
+
+        if (! $gateway->is_active && ! $gateway->hasRequiredCredentials()) {
+            return response()->json([
+                'message' => 'أضف كل المفاتيح الإلزامية قبل تفعيل البوابة.',
+            ], 422);
+        }
+
+        $gateways->toggle($gateway);
+
+        return response()->json(['data' => $this->gateway($gateway->fresh())]);
+    }
+
+    public function destroyGateway(
+        Request $request,
+        PaymentGateway $gateway,
+        AdminGatewayController $gateways,
+    ): JsonResponse {
+        $this->confirm($request);
+        $gateways->destroy($gateway);
+
+        return response()->json(['message' => 'حُذفت البوابة.']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function gateway(PaymentGateway $gateway): array
+    {
+        return [
+            ...$gateway->only([
+                'id', 'provider', 'label', 'mode', 'is_active', 'currency',
+                'fx_rate', 'instructions', 'sort_order',
+            ]),
+            'configured' => $gateway->hasRequiredCredentials(),
+        ];
+    }
+
+    private function confirm(Request $request): void
+    {
+        $request->validate(['confirmation' => ['required', 'accepted']]);
     }
 }

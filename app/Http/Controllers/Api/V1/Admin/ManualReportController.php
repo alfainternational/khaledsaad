@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Http\Controllers\Admin\AdminManualReportController;
 use App\Http\Controllers\Controller;
 use App\Models\ToolRun;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ManualReportController extends Controller
 {
@@ -30,6 +32,43 @@ class ManualReportController extends Controller
             ])->get()->map($present)->all(),
             'completed' => $query()->where('status', ToolRun::STATUS_COMPLETED)
                 ->limit(50)->get()->map($present)->all(),
+        ]]);
+    }
+
+    public function show(ToolRun $run, AdminManualReportController $manual): JsonResponse
+    {
+        return response()->json(['data' => [
+            'run' => [
+                'uuid' => $run->uuid,
+                'tool' => $run->toolVersion->tool->title,
+                'project' => $run->project->name,
+                'status' => $run->status,
+            ],
+            'package' => $manual->export($run)->getData(true),
+        ]]);
+    }
+
+    public function store(
+        Request $request,
+        ToolRun $run,
+        AdminManualReportController $manual,
+    ): JsonResponse {
+        if ($run->status === ToolRun::STATUS_COMPLETED) {
+            return response()->json(['message' => 'اكتمل هذا التقرير مسبقاً.'], 409);
+        }
+
+        if (is_array($request->input('payload'))) {
+            $request->merge([
+                'payload' => json_encode($request->input('payload'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ]);
+        }
+
+        $manual->store($request, $run);
+
+        return response()->json(['data' => [
+            'uuid' => $run->uuid,
+            'status' => $run->fresh()->status,
+            'report_id' => $run->fresh()->report?->id,
         ]]);
     }
 }
