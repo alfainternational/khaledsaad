@@ -65,6 +65,6 @@ class PasswordResetController extends Controller
             return back()->withErrors(['email' => 'الرابط انتهت صلاحيته أو استُخدم من قبل. اطلب رابطًا جديدًا.']);
         }
 
-        return redirect()->route('login')->with('status', 'تغيّرت كلمة المرور. تقدر تدخل الآن.');
+        return redirect()->route('login')->with('status', 'تغيّرت كلمة المرور. يمكنك تسجيل الدخول الآن.');
     }
 }

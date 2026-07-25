@@ -64,7 +64,7 @@
                             <div class="notice">
                                 <strong>هذه لم تفتح بعد، ونعمل عليها الآن.</strong>
                                 <p>نفضّل أن نقول لك الحقيقة بدل أن نفتح لك بابًا لا يعمل. ابدأ بما هو جاهز، وسنخبرك أول ما تفتح هذه.</p>
-                                <a class="button button--primary" href="{{ route('tools.index') }}">شوف المتاح الآن</a>
+                                <a class="button button--primary" href="{{ route('tools.index') }}">اطّلع على الأدوات المتاحة</a>
                             </div>
                         @endif
                     </div>

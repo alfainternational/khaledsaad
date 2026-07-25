@@ -46,7 +46,7 @@
                                 <span aria-hidden="true">←</span>
                             </a>
                         @endif
-                        <a class="button button--ghost button--large" href="{{ route('tools.index') }}">شوف بماذا نساعدك</a>
+                        <a class="button button--ghost button--large" href="{{ route('tools.index') }}">اطّلع على ما نقدمه</a>
                     </div>
                     <ul class="hero-trust reveal" aria-label="ما الذي يميّز الطريقة">
                         <li><strong>+10</strong><span>سنوات خبرة معك</span></li>
@@ -132,7 +132,7 @@
                 <x-section-heading
                     eyebrow="قبل أن تجرّب شيئًا جديدًا"
                     title="أي واحدة من هذه تحصل معك؟"
-                    description="لو واحدة منها تصف حالك، فالمشكلة غالبًا ليست في كمية الشغل — بل في أننا لا نعرف أين بالضبط يضيع المال والوقت."
+                    description="إذا كانت إحداها تصف حالتك، فالمشكلة غالبًا ليست في حجم العمل، بل في عدم وضوح موضع هدر المال والوقت."
                 />
 
                 @php $problemArt = ['spend', 'content', 'scatter', 'guess']; @endphp
@@ -192,12 +192,12 @@
                     <x-section-heading
                         eyebrow="كيف نمشي معك"
                         title="أربع خطوات فقط"
-                        description="أسئلة قليلة منك، وشغل كثير من عندنا، ونتيجة تقدر تنفذها بنفسك."
+                        description="أسئلة قليلة منك، وعمل متكامل من جانبنا، ونتيجة يمكنك تنفيذها بنفسك."
                         align="start"
                     />
                     <div class="method-quote">
                         <span aria-hidden="true">“</span>
-                        <p>أحسن خطة ليست الأعقد، بل التي تعرف لماذا تعملها وتقدر فعلًا أن تمشي فيها.</p>
+                        <p>أفضل خطة ليست الأعقد، بل الخطة التي تعرف سببها ويمكنك الاستمرار في تنفيذها.</p>
                     </div>
                 </div>
 
@@ -220,7 +220,7 @@
                 <x-section-heading
                     eyebrow="ابدأ من وجعك أنت"
                     title="أي حالة من هذه تشبه وضعك؟"
-                    description="اختر الأقرب لحالك، ونمشي معك من السؤال إلى خطة تقدر تنفذها بنفسك."
+                    description="اختر الأقرب إلى حالتك، ونرافقك من السؤال إلى خطة يمكنك تنفيذها بنفسك."
                 />
 
                 <div class="tools-grid">
@@ -250,7 +250,7 @@
                                 @if ($tool['duration_minutes'])
                                     <b>{{ $tool['duration_minutes'] }} دقائق</b>
                                 @endif
-                                <em>شوف التفاصيل ←</em>
+                                <em>اطّلع على التفاصيل ←</em>
                             </span>
                         </a>
                     @endforeach
@@ -258,7 +258,7 @@
 
                 <div class="tools-more reveal">
                     <a class="button button--ghost button--large" href="{{ route('tools.index') }}">
-                        شوف كل الحالات
+                        اطّلع على جميع الحالات
                         <span aria-hidden="true">←</span>
                     </a>
                     <a class="text-link" href="{{ $startUrl }}">{{ $startLabel }} <span aria-hidden="true">←</span></a>
@@ -485,7 +485,7 @@
                                     <span aria-hidden="true">←</span>
                                 </a>
                             @endif
-                            <span>من 7 إلى 10 دقائق · كل خطوة تُحفظ · تقدر ترجع في أي وقت</span>
+                            <span>من 7 إلى 10 دقائق · كل خطوة تُحفظ · يمكنك العودة في أي وقت</span>
                         </div>
                     </div>
                     <div class="diagnosis-card__mark" aria-hidden="true">

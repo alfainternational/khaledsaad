@@ -46,4 +46,16 @@ class NeutralArabicScannerTest extends TestCase
             @unlink($path);
         }
     }
+
+    #[Test]
+    public function repository_user_facing_copy_uses_neutral_arabic(): void
+    {
+        $issues = (new NeutralArabicScanner)->scanDefaultPaths();
+
+        $this->assertSame(
+            [],
+            $issues,
+            json_encode($issues, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+        );
+    }
 }

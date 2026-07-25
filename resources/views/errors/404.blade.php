@@ -10,14 +10,13 @@
         <section class="page-hero">
             <div class="container page-hero__inner">
                 <p class="eyebrow">الرابط غير موجود</p>
-                <h1>الصفحة دي ما موجودة عندنا.</h1>
+                <h1>هذه الصفحة غير موجودة.</h1>
                 <p class="page-hero__lead">
-                    غالبًا الرابط قديم أو فيه خطأ في الكتابة. ما في داعي ترجع للخلف —
-                    اختر من هنا وتكمل مباشرة.
+                    قد يكون الرابط قديمًا أو يحتوي على خطأ في الكتابة. يمكنك اختيار وجهتك من هنا والمتابعة مباشرة.
                 </p>
 
                 <div class="page-hero__actions">
-                    <a class="button button--primary button--large" href="{{ route('tools.index') }}">شوف بماذا نساعدك <span aria-hidden="true">←</span></a>
+                    <a class="button button--primary button--large" href="{{ route('tools.index') }}">اطّلع على الأدوات <span aria-hidden="true">←</span></a>
                     @auth
                         <a class="button button--ghost button--large" href="{{ route('app.dashboard') }}">ادخل على مشروعك</a>
                     @else

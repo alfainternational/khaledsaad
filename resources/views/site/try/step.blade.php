@@ -60,7 +60,7 @@
                         <a href="{{ route('try.step', [$run['uuid'], $previous_step]) }}" class="btn btn--ghost">السابق</a>
                     @endif
                     <button type="submit" class="btn btn--primary">
-                        {{ $next_step === null ? 'شوف نتيجتك' : 'التالي' }}
+                        {{ $next_step === null ? 'اعرض نتيجتك' : 'التالي' }}
                     </button>
                 </div>
             </form>

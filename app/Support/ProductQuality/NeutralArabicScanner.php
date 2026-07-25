@@ -26,6 +26,15 @@ final class NeutralArabicScanner
         'مش' => 'ليس',
         'عشان' => 'لكي',
         'اللي' => 'الذي',
+        'شوف' => 'اطّلع',
+        'تقدر' => 'يمكنك',
+        'لحد' => 'حتى',
+        'ما عندك' => 'ليس لديك',
+        'يجيك' => 'يصل إليك',
+        'حالك' => 'حالتك',
+        'نرجّع' => 'نقدّم',
+        'خلّي' => 'اجعل',
+        'خلي' => 'اجعل',
         'خلّيه' => 'فعّل',
         'خليه' => 'فعّل',
         'ما في' => 'لا يوجد',
@@ -40,6 +49,10 @@ final class NeutralArabicScanner
         $issues = [];
 
         foreach ($this->files($paths) as $file) {
+            if (realpath($file) === __FILE__) {
+                continue;
+            }
+
             $lines = file($file, FILE_IGNORE_NEW_LINES);
 
             if ($lines === false) {

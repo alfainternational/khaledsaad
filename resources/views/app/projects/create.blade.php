@@ -36,7 +36,7 @@
             </label>
 
             <label class="field">
-                <span class="field__label">وين وصل مشروعك؟</span>
+                <span class="field__label">إلى أي مرحلة وصل مشروعك؟</span>
                 <select name="stage">
                     @foreach (['idea' => 'مجرد فكرة', 'launch' => 'بدأت للتو', 'growth' => 'شغّال وأبيع', 'scale' => 'أبيع وأريد التوسع'] as $value => $label)
                         <option value="{{ $value }}" @selected(old('stage', 'growth') === $value)>{{ $label }}</option>

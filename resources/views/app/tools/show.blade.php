@@ -59,7 +59,7 @@
     @elseif ($projects === [])
         <section class="empty">
             <h2>عرّفنا على مشروعك أولًا</h2>
-            <p>نحفظ كل شيء داخل مشروعك حتى تقدر ترجع له وتقارن تقدمك بعد شهر.</p>
+            <p>نحفظ كل شيء داخل مشروعك لكي تتمكن من العودة إليه ومقارنة تقدمك بعد شهر.</p>
             <a href="{{ route('app.projects.create') }}" class="btn btn--primary">عرّفنا على مشروعك</a>
         </section>
     @else
