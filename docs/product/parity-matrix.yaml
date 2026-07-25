@@ -36,10 +36,10 @@
       "id": "visitor.trial.complete",
       "role": "visitor",
       "web": {"applicable": true, "route": "try.start", "method": "POST"},
-      "api": {"applicable": true, "route": null, "method": "POST"},
+      "api": {"applicable": true, "route": "api.v1.public.runs.start", "method": "POST"},
       "mobile": {"applicable": true, "screen": null, "action": "complete"},
       "states": ["loading", "validation", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\GuestTrialTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\GuestTrialTest"], "api": ["Tests\\Feature\\PublicApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {

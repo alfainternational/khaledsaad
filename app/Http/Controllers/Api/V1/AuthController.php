@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Guests\GuestSessionManager;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +17,8 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly GuestSessionManager $guests) {}
+
     public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -22,11 +26,23 @@ class AuthController extends Controller
             'email' => 'required|email|max:255|unique:users,email',
             'password' => ['required', PasswordRule::min(8)],
             'device_name' => 'required|string|max:120',
+            'guest_token' => 'nullable|string|size:48',
         ]);
 
+        $guest = $this->guests->currentForApi($data['guest_token'] ?? null);
+        $claimedRun = $guest?->runs()->latest('id')->first();
         $user = User::create($data);
 
-        return response()->json($this->payload($user, $data['device_name']), 201);
+        event(new Registered($user));
+
+        if ($guest !== null) {
+            $this->guests->claim($guest, $user);
+        }
+
+        return response()->json(
+            $this->payload($user, $data['device_name'], $claimedRun?->uuid),
+            201,
+        );
     }
 
     public function login(Request $request): JsonResponse
@@ -107,13 +123,14 @@ class AuthController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function payload(User $user, string $deviceName): array
+    private function payload(User $user, string $deviceName, ?string $claimedRunUuid = null): array
     {
         // مفتاح المزود لا يغادر الخادم إطلاقًا. التطبيق يحمل رمز مستخدم فقط.
         return [
             'data' => [
                 'user' => $this->user($user),
                 'token' => $user->createToken($deviceName)->plainTextToken,
+                'claimed_run_uuid' => $claimedRunUuid,
             ],
         ];
     }

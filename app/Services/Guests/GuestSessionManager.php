@@ -41,6 +41,40 @@ class GuestSessionManager
             ->first();
     }
 
+    public function currentForApi(?string $token): ?GuestSession
+    {
+        if (! is_string($token) || strlen($token) !== 48) {
+            return null;
+        }
+
+        return GuestSession::where('token_hash', GuestSession::hash($token))
+            ->whereNull('claimed_by')
+            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->first();
+    }
+
+    /**
+     * @return array{session: GuestSession, token: string, created: bool}
+     */
+    public function startForApi(?string $token, string $projectName = 'مشروعي'): array
+    {
+        $existing = $this->currentForApi($token);
+
+        if ($existing !== null) {
+            return ['session' => $existing, 'token' => (string) $token, 'created' => false];
+        }
+
+        $plainToken = Str::random(48);
+        $session = GuestSession::create([
+            'token_hash' => GuestSession::hash($plainToken),
+            'expires_at' => now()->addDays(self::LIFETIME_DAYS),
+        ]);
+
+        $this->workspaceFor($session, $projectName);
+
+        return ['session' => $session, 'token' => $plainToken, 'created' => true];
+    }
+
     /**
      * جلسة زائر جديدة مع مساحة عمل ومشروع مؤقت جاهز للتجربة.
      */

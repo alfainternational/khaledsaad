@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CompetitorController;
 use App\Http\Controllers\Api\V1\EngagementController;
 use App\Http\Controllers\Api\V1\GrowthController;
+use App\Http\Controllers\Api\V1\GuestRunController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\PublicContentController;
 use App\Http\Controllers\Api\V1\ReportController;
@@ -30,6 +31,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::prefix('public')->name('public.')->middleware('throttle:60,1')->group(function (): void {
         Route::get('bootstrap', [PublicContentController::class, 'bootstrap'])->name('bootstrap');
         Route::get('legal/{page}', [PublicContentController::class, 'legal'])->name('legal');
+        Route::post('tools/{tool}/runs', [GuestRunController::class, 'start'])->name('runs.start');
+        Route::get('runs/{run}', [GuestRunController::class, 'show'])->name('runs.show');
+        Route::put('runs/{run}/steps/{step}', [GuestRunController::class, 'saveStep'])->name('runs.step');
+        Route::get('runs/{run}/preflight', [GuestRunController::class, 'preflight'])->name('runs.preflight');
     });
 
     Route::get('tools', [ToolController::class, 'index'])->name('tools.index');

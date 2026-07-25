@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\GuestSession;
+use App\Models\ToolRun;
 use App\Models\User;
+use App\Models\Workspace;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -153,5 +156,74 @@ class PublicApiParityTest extends TestCase
             'password' => 'password-2026',
             'device_name' => 'test-device',
         ])->assertOk()->assertJsonPath('data.user.is_admin', true);
+    }
+
+    #[Test]
+    public function a_mobile_visitor_can_start_resume_and_save_a_guest_run_with_an_opaque_token(): void
+    {
+        $start = $this->postJson(route('api.v1.public.runs.start', 'marketing-score'))
+            ->assertCreated()
+            ->assertJsonPath('data.session_created', true)
+            ->assertJsonPath('data.run.tool.key', 'marketing-score');
+
+        $token = $start->json('data.guest_token');
+        $uuid = $start->json('data.run.uuid');
+
+        $this->assertIsString($token);
+        $this->assertSame(48, strlen($token));
+        $this->assertNotSame($token, GuestSession::firstOrFail()->token_hash);
+
+        $this->withHeader('X-Guest-Token', $token)
+            ->getJson(route('api.v1.public.runs.show', $uuid))
+            ->assertOk()
+            ->assertJsonPath('data.uuid', $uuid);
+
+        $this->withHeader('X-Guest-Token', $token)
+            ->putJson(route('api.v1.public.runs.step', [$uuid, 1]), [
+                'business_model' => 'services',
+                'description' => 'خدمة استشارات تسويقية للمتاجر الصغيرة داخل المدينة.',
+                'geography' => 'الرياض',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.answers.geography', 'الرياض');
+    }
+
+    #[Test]
+    public function a_guest_token_cannot_open_another_visitors_run(): void
+    {
+        $first = $this->postJson(route('api.v1.public.runs.start', 'marketing-score'));
+        $firstUuid = $first->json('data.run.uuid');
+
+        $second = $this->postJson(route('api.v1.public.runs.start', 'marketing-score'), [], [
+            'X-Guest-Token' => 'invalid-existing-token',
+        ]);
+        $secondToken = $second->json('data.guest_token');
+
+        $this->withHeader('X-Guest-Token', $secondToken)
+            ->getJson(route('api.v1.public.runs.show', $firstUuid))
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function api_registration_claims_the_existing_guest_workspace_and_run(): void
+    {
+        $start = $this->postJson(route('api.v1.public.runs.start', 'marketing-score'));
+        $token = $start->json('data.guest_token');
+        $uuid = $start->json('data.run.uuid');
+
+        $this->postJson(route('api.v1.auth.register'), [
+            'name' => 'مستخدم التطبيق',
+            'email' => 'mobile-guest@example.com',
+            'password' => 'password-2026',
+            'device_name' => 'android-test',
+            'guest_token' => $token,
+        ])->assertCreated()
+            ->assertJsonPath('data.claimed_run_uuid', $uuid)
+            ->assertJsonPath('data.user.email', 'mobile-guest@example.com');
+
+        $user = User::where('email', 'mobile-guest@example.com')->firstOrFail();
+        $this->assertSame($user->id, Workspace::firstOrFail()->owner_id);
+        $this->assertSame($user->id, GuestSession::firstOrFail()->claimed_by);
+        $this->assertSame($user->id, ToolRun::where('uuid', $uuid)->firstOrFail()->user_id);
     }
 }
