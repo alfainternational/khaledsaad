@@ -6,10 +6,10 @@
       "id": "visitor.home.view",
       "role": "visitor",
       "web": {"applicable": true, "route": "home", "method": "GET"},
-      "api": {"applicable": true, "route": null, "method": "GET"},
+      "api": {"applicable": true, "route": "api.v1.public.bootstrap", "method": "GET"},
       "mobile": {"applicable": true, "screen": null, "action": "view"},
       "states": ["loading", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\PublicHomePageTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\PublicHomePageTest"], "api": ["Tests\\Feature\\PublicApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {
@@ -56,10 +56,10 @@
       "id": "visitor.legal.view",
       "role": "visitor",
       "web": {"applicable": true, "route": "privacy", "method": "GET"},
-      "api": {"applicable": true, "route": null, "method": "GET"},
+      "api": {"applicable": true, "route": "api.v1.public.legal", "method": "GET"},
       "mobile": {"applicable": true, "screen": null, "action": "view"},
       "states": ["loading", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\WebAppJourneyTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\WebAppJourneyTest"], "api": ["Tests\\Feature\\PublicApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {
