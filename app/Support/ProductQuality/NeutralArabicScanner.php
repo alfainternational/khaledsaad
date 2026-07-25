@@ -33,6 +33,23 @@ final class NeutralArabicScanner
         'يجيك' => 'يصل إليك',
         'حالك' => 'حالتك',
         'نرجّع' => 'نقدّم',
+        'شفت' => 'رأيت',
+        'ليه' => 'لماذا',
+        'راح' => 'ذهب',
+        'تاني' => 'آخر',
+        'جات' => 'جاءت',
+        'ما حد' => 'لا أحد',
+        'بيتحول' => 'يتحول',
+        'حأقدر' => 'هل أستطيع',
+        'أوري' => 'أعرض',
+        'تديه' => 'تقدمه',
+        'بعدين' => 'لاحقًا',
+        'لازم' => 'يلزم',
+        'بتروح' => 'تذهب',
+        'طالعة' => 'ناتجة',
+        'نشتغل' => 'نعمل',
+        'شغله' => 'عمله',
+        'حأعيد' => 'هل سأعيد',
         'خلّي' => 'اجعل',
         'خلي' => 'اجعل',
         'خلّيه' => 'فعّل',
@@ -88,14 +105,23 @@ final class NeutralArabicScanner
      */
     public function scanDefaultPaths(): array
     {
+        return $this->scan($this->defaultPaths());
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function defaultPaths(): array
+    {
         $root = dirname(__DIR__, 3);
 
-        return $this->scan([
+        return [
             $root.DIRECTORY_SEPARATOR.'app',
+            $root.DIRECTORY_SEPARATOR.'config',
             $root.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'data'.DIRECTORY_SEPARATOR.'tools',
             $root.DIRECTORY_SEPARATOR.'mobile'.DIRECTORY_SEPARATOR.'lib',
             $root.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'views',
-        ]);
+        ];
     }
 
     private function containsTerm(string $line, string $term): bool

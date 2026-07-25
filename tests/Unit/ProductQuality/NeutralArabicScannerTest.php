@@ -58,4 +58,19 @@ class NeutralArabicScannerTest extends TestCase
             json_encode($issues, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
         );
     }
+
+    #[Test]
+    public function default_source_paths_include_public_configuration_copy(): void
+    {
+        $paths = (new NeutralArabicScanner)->defaultPaths();
+        $normalized = array_map(
+            static fn (string $path): string => str_replace('\\', '/', $path),
+            $paths,
+        );
+
+        $this->assertContains(
+            str_replace('\\', '/', dirname(__DIR__, 3).'/config'),
+            $normalized,
+        );
+    }
 }
