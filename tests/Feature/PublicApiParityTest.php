@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\ToolCatalogSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
