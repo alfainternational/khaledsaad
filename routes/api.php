@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\PublicContentController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\RunController;
+use App\Http\Controllers\Api\V1\SharedAgencyReportController as PublicSharedAgencyReportController;
 use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\ToolController;
 use App\Support\Billing\FeatureKey;
@@ -35,6 +36,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('runs/{run}', [GuestRunController::class, 'show'])->name('runs.show');
         Route::put('runs/{run}/steps/{step}', [GuestRunController::class, 'saveStep'])->name('runs.step');
         Route::get('runs/{run}/preflight', [GuestRunController::class, 'preflight'])->name('runs.preflight');
+        Route::get('shared-reports/{token}', [PublicSharedAgencyReportController::class, 'show'])->name('shared-reports.show');
+        Route::get('shared-reports/{token}/pdf', [PublicSharedAgencyReportController::class, 'pdf'])->name('shared-reports.pdf');
     });
 
     Route::get('tools', [ToolController::class, 'index'])->name('tools.index');

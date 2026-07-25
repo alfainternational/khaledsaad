@@ -46,10 +46,10 @@
       "id": "visitor.shared_report.view",
       "role": "visitor",
       "web": {"applicable": true, "route": "shared.agency-report", "method": "GET"},
-      "api": {"applicable": true, "route": null, "method": "GET"},
+      "api": {"applicable": true, "route": "api.v1.public.shared-reports.show", "method": "GET"},
       "mobile": {"applicable": true, "screen": null, "action": "open_deep_link"},
       "states": ["loading", "expired", "revoked", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\AgencyReportSharingTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\AgencyReportSharingTest"], "api": ["Tests\\Feature\\AgencyReportSharingTest"], "mobile": []},
       "status": "missing"
     },
     {
