@@ -14,6 +14,7 @@ use App\Services\Growth\LiveReportChecker;
 use App\Services\Growth\SyntheticAudience;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
@@ -110,6 +111,19 @@ class GrowthController extends Controller
         $this->geo->generate($project);
 
         return response()->json(['data' => $this->geoPayload($project->refresh())], 201);
+    }
+
+    public function geoLlms(Request $request, Project $project): Response
+    {
+        $this->authorizeProject($request, $project);
+        $pack = $project->geoPack;
+
+        abort_if($pack === null, 404);
+
+        return response($pack->llms_txt, 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="llms.txt"',
+        ]);
     }
 
     public function personas(Request $request, Project $project): JsonResponse

@@ -67,6 +67,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 ->middleware('throttle:6,60')->name('projects.full-diagnosis');
             Route::get('agency-reports/{agencyReport}', [AgencyReportController::class, 'show'])->name('agency-reports.show');
             Route::get('agency-reports/{agencyReport}/pdf', [AgencyReportController::class, 'pdf'])->name('agency-reports.pdf');
+            Route::get('agency-reports/{agencyReport}/data.json', [AgencyReportController::class, 'data'])->name('agency-reports.data');
             Route::post('agency-reports/{agencyReport}/share', [AgencyReportController::class, 'share'])->name('agency-reports.share');
             Route::delete('agency-reports/{agencyReport}/share', [AgencyReportController::class, 'revokeShare'])->name('agency-reports.share.revoke');
         });
@@ -112,6 +113,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('projects/{project}/geo', [GrowthController::class, 'geoShow'])->name('geo.show');
             Route::post('projects/{project}/geo', [GrowthController::class, 'geoGenerate'])
                 ->middleware('throttle:6,60')->name('geo.generate');
+            Route::get('projects/{project}/geo/llms.txt', [GrowthController::class, 'geoLlms'])->name('geo.llms');
         });
         Route::middleware('feature:'.FeatureKey::AUDIENCE_LAB)->group(function (): void {
             Route::get('projects/{project}/personas', [GrowthController::class, 'personas'])->name('personas.index');
@@ -130,8 +132,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('checkout/plan/{plan}', [AccountController::class, 'checkoutPlan'])->name('checkout.plan');
         Route::post('checkout/pack/{pack}', [AccountController::class, 'checkoutPack'])->name('checkout.pack');
         Route::get('checkout/{payment}/callback', [AccountController::class, 'checkoutCallback'])->name('checkout.callback');
+        Route::post('checkout/{payment}/cancel', [AccountController::class, 'checkoutCancel'])->name('checkout.cancel');
         Route::get('notifications', [AccountController::class, 'notifications'])->name('notifications.index');
         Route::post('notifications/{id}/read', [AccountController::class, 'markNotificationRead'])->name('notifications.read');
+        Route::post('notifications/read-all', [AccountController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
 
         Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('tasks.index');
         Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');

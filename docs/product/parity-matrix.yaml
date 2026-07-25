@@ -249,7 +249,7 @@
       "api": {"applicable": true, "route": "api.v1.geo.show", "method": "GET|POST"},
       "mobile": {"applicable": true, "screen": null, "action": "view_generate"},
       "states": ["loading", "empty", "entitlement_denied", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\GrowthEngineTest"], "api": ["Tests\\Feature\\GrowthEngineTest"], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\GrowthEngineTest"], "api": ["Tests\\Feature\\GrowthEngineTest", "Tests\\Feature\\CustomerApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {
@@ -279,7 +279,7 @@
       "api": {"applicable": true, "route": "api.v1.notifications.index", "method": "GET|POST"},
       "mobile": {"applicable": true, "screen": "NotificationsScreen", "action": "view_mark_read"},
       "states": ["loading", "empty", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\NotificationsTest"], "api": ["Tests\\Feature\\ApiParityTest"], "mobile": ["mobile/test/features/parity_models_test.dart"]},
+      "tests": {"web": ["Tests\\Feature\\NotificationsTest"], "api": ["Tests\\Feature\\ApiParityTest", "Tests\\Feature\\CustomerApiParityTest"], "mobile": ["mobile/test/features/parity_models_test.dart"]},
       "status": "implemented"
     },
     {
@@ -299,7 +299,7 @@
       "api": {"applicable": true, "route": "api.v1.checkout.plan", "method": "POST"},
       "mobile": {"applicable": true, "screen": "BillingScreen", "action": "checkout_plan_or_pack"},
       "states": ["loading", "provider_disabled", "cancelled", "failed", "success"],
-      "tests": {"web": ["Tests\\Feature\\CheckoutTest"], "api": ["Tests\\Feature\\CheckoutTest"], "mobile": ["mobile/test/features/parity_models_test.dart"]},
+      "tests": {"web": ["Tests\\Feature\\CheckoutTest"], "api": ["Tests\\Feature\\CheckoutTest", "Tests\\Feature\\CustomerApiParityTest"], "mobile": ["mobile/test/features/parity_models_test.dart"]},
       "status": "implemented"
     },
     {

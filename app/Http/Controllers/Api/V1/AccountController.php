@@ -8,10 +8,12 @@ use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Report;
 use App\Services\Billing\CreditManager;
+use App\Services\Billing\Entitlements;
 use App\Services\Billing\SubscriptionManager;
 use App\Services\Payments\CheckoutService;
 use App\Services\Payments\PaymentGatewayManager;
 use App\Services\Reports\ReportPdfGenerator;
+use App\Support\Billing\FeatureKey;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -28,6 +30,7 @@ class AccountController extends Controller
         private readonly ReportPdfGenerator $pdf,
         private readonly CheckoutService $checkout,
         private readonly PaymentGatewayManager $gateways,
+        private readonly Entitlements $entitlements,
     ) {}
 
     public function billing(Request $request): JsonResponse
@@ -43,14 +46,22 @@ class AccountController extends Controller
                 'project_count' => $workspace->projects()->count(),
                 'project_limit' => $subscription->plan->project_limit,
                 'payments_enabled' => $this->gateways->hasActiveGateway(),
-                'plans' => Plan::where('is_public', true)->orderBy('sort_order')->get()
+                // ما يستحقه العميل الآن — يقرأه التطبيق ليخفي ما لا تسمح به خطته
+                // بدل أن يعرض زرًّا يُرفض عند الضغط.
+                'entitlements' => collect($this->entitlements->for($workspace))
+                    ->map(fn (array $entry) => [
+                        'enabled' => $entry['enabled'],
+                        'value' => $entry['value'],
+                        'name' => $entry['feature']->name,
+                    ])->all(),
+                'plans' => Plan::where('is_public', true)->with('planFeatures')->orderBy('sort_order')->get()
                     ->map(fn (Plan $plan) => [
                         'key' => $plan->key,
                         'name' => $plan->name,
                         'price' => $plan->price,
                         'monthly_credits' => $plan->monthly_credits,
                         'project_limit' => $plan->project_limit,
-                        'features' => $plan->features ?? [],
+                        'features' => $this->entitlements->displayFeatures($plan),
                         'is_current' => $plan->id === $subscription->plan_id,
                     ])->all(),
                 'packs' => CreditPack::active()->orderBy('sort_order')->get()
@@ -135,11 +146,22 @@ class AccountController extends Controller
             return response()->json(['message' => $exception->getMessage()], 422);
         }
 
-        // البوابة اليدوية تكتمل مباشرة دون رابط خارجي.
+        // بوابة بلا تحويل: إما اعتماد فوري، وإما انتظار تأكيد الآدمن.
         if (! $session->requiresRedirect) {
-            $this->checkout->complete($payment, []);
+            if ($session->pendingApproval) {
+                return response()->json(['data' => [
+                    'completed' => false,
+                    'pending_approval' => true,
+                    'message' => $session->message ?? 'سجّلنا طلبك. سيُعتمد رصيدك فور تأكيد التحويل.',
+                ]]);
+            }
 
-            return response()->json(['data' => ['completed' => true, 'message' => 'تم اعتماد الدفع وأُضيف رصيدك.']]);
+            $paid = $this->checkout->complete($payment, []);
+
+            return response()->json(['data' => [
+                'completed' => $paid,
+                'message' => $paid ? 'تم اعتماد الدفع وأُضيف رصيدك.' : 'سجّلنا طلبك وهو قيد المراجعة.',
+            ]]);
         }
 
         return response()->json(['data' => ['completed' => false, 'redirect_url' => $session->redirectUrl]]);
@@ -155,6 +177,21 @@ class AccountController extends Controller
         $paid = $this->checkout->complete($payment, $request->all());
 
         return response()->json(['data' => ['paid' => $paid]]);
+    }
+
+    public function checkoutCancel(Request $request, Payment $payment): JsonResponse
+    {
+        abort_unless(
+            $payment->workspace()->where('owner_id', $request->user()?->id)->exists(),
+            404,
+        );
+
+        $this->checkout->cancel($payment);
+
+        return response()->json(['data' => [
+            'cancelled' => $payment->fresh()->status === Payment::STATUS_CANCELLED,
+            'status' => $payment->fresh()->status,
+        ]]);
     }
 
     public function notifications(Request $request): JsonResponse
@@ -182,12 +219,30 @@ class AccountController extends Controller
         return response()->json(['data' => ['read' => true]]);
     }
 
-    public function reportPdf(Request $request, Report $report): StreamedResponse
+    public function markAllNotificationsRead(Request $request): JsonResponse
+    {
+        $request->user()->unreadNotifications->markAsRead();
+
+        return response()->json(['data' => [
+            'read' => true,
+            'unread' => 0,
+        ]]);
+    }
+
+    public function reportPdf(Request $request, Report $report): StreamedResponse|JsonResponse
     {
         abort_unless(
             $report->project->workspace()->where('owner_id', $request->user()->id)->exists(),
             404,
         );
+
+        // نفس ترتيب الويب: الملكية أولًا، ثم الاستحقاق.
+        if (! $this->entitlements->allows($report->project->workspace, FeatureKey::REPORTS_PDF)) {
+            return response()->json([
+                'message' => 'تصدير PDF غير متاح في خطتك الحالية.',
+                'feature' => FeatureKey::REPORTS_PDF,
+            ], 403);
+        }
 
         return $this->pdf->download($report);
     }
