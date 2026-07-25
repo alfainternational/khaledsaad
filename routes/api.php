@@ -22,6 +22,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::post('auth/register', [AuthController::class, 'register'])->name('auth.register');
     Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');
+    Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword'])
+        ->middleware('throttle:6,1')->name('auth.forgot-password');
+    Route::post('auth/reset-password', [AuthController::class, 'resetPassword'])
+        ->middleware('throttle:6,1')->name('auth.reset-password');
 
     Route::prefix('public')->name('public.')->middleware('throttle:60,1')->group(function (): void {
         Route::get('bootstrap', [PublicContentController::class, 'bootstrap'])->name('bootstrap');

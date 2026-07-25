@@ -30,7 +30,7 @@ class PasswordResetController extends Controller
         Password::sendResetLink($request->only('email'));
 
         // لا نكشف إن كان البريد مسجلًا أم لا: الرسالة واحدة في الحالتين.
-        return back()->with('status', 'لو البريد مسجل عندنا، وصلته رسالة فيها رابط لتغيير كلمة المرور. تفقّد صندوقك خلال دقائق.');
+        return back()->with('status', 'إذا كان البريد مسجلًا، فستصلك رسالة تحتوي على رابط لتغيير كلمة المرور. تفقّد صندوق الوارد خلال دقائق.');
     }
 
     public function edit(Request $request, string $token): View

@@ -86,10 +86,10 @@
       "id": "visitor.auth.reset_password",
       "role": "visitor",
       "web": {"applicable": true, "route": "password.email", "method": "POST"},
-      "api": {"applicable": true, "route": null, "method": "POST"},
+      "api": {"applicable": true, "route": "api.v1.auth.forgot-password", "method": "POST"},
       "mobile": {"applicable": true, "screen": null, "action": "request_and_reset"},
       "states": ["loading", "validation", "error", "success"],
-      "tests": {"web": ["Tests\\Feature\\WebAppJourneyTest"], "api": [], "mobile": []},
+      "tests": {"web": ["Tests\\Feature\\WebAppJourneyTest"], "api": ["Tests\\Feature\\PublicApiParityTest"], "mobile": []},
       "status": "missing"
     },
     {

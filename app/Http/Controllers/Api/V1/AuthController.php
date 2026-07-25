@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -17,7 +20,7 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:120',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => ['required', Password::min(8)],
+            'password' => ['required', PasswordRule::min(8)],
             'device_name' => 'required|string|max:120',
         ]);
 
@@ -55,6 +58,52 @@ class AuthController extends Controller
         return response()->json(['data' => ['message' => 'تم تسجيل الخروج.']]);
     }
 
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate(['email' => 'required|email']);
+
+        Password::sendResetLink(['email' => $data['email']]);
+
+        return response()->json([
+            'data' => [
+                'message' => 'إذا كان البريد مسجلًا، فستصلك رسالة تحتوي على رابط لتغيير كلمة المرور.',
+            ],
+        ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', PasswordRule::min(8)],
+        ]);
+
+        $status = Password::reset(
+            $data,
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => $password,
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                event(new PasswordReset($user));
+            },
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            throw ValidationException::withMessages([
+                'email' => 'انتهت صلاحية الرابط أو استُخدم من قبل. اطلب رابطًا جديدًا.',
+            ]);
+        }
+
+        return response()->json([
+            'data' => [
+                'message' => 'تغيّرت كلمة المرور. يمكنك تسجيل الدخول الآن.',
+            ],
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -74,6 +123,11 @@ class AuthController extends Controller
      */
     private function user(User $user): array
     {
-        return ['id' => $user->id, 'name' => $user->name, 'email' => $user->email];
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'is_admin' => $user->isAdmin(),
+        ];
     }
 }
