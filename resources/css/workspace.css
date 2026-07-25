@@ -315,6 +315,15 @@
     align-content: start;
 }
 
+/*
+ * عناصر Grid تحتفظ افتراضياً بعرض محتواها الأدنى. الجداول وبطاقات الخطط
+ * الطويلة كانت توسّع العمود كله على الهاتف؛ نجعل العنصر ينكمش داخل الشاشة،
+ * ويبقى تمرير الجدول محصوراً في .table-wrap.
+ */
+.panel__main > * {
+    min-inline-size: 0;
+}
+
 /* --- خلفية الجوال عند فتح السايدبار --- */
 
 .panel__backdrop {
@@ -349,7 +358,7 @@
         display: grid;
     }
 
-    .panel__top-cta {
+    .panel__top-actions .panel__top-cta {
         display: none;
     }
 }
@@ -429,6 +438,9 @@
 
 .card--score {
     text-align: center;
+    justify-items: center;
+    gap: 0.35rem;
+    padding-block: 1.9rem;
 }
 
 .card-grid {
@@ -441,6 +453,34 @@
     display: grid;
     gap: 1.25rem;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    /* بلا هذا تتمدّد البطاقة القصيرة لتساوي أطولها فيظهر فراغ هائل داخلها. */
+    align-items: start;
+}
+
+/*
+ * رأس التقرير: الدرجة رقم مقتضب، والخلاصة نص يحتاج مساحة.
+ * تقسيم متساوٍ يهدر نصف الشاشة على رقم ويخنق النص.
+ */
+.report-head {
+    display: grid;
+    gap: 1.25rem;
+    align-items: start;
+    grid-template-columns: minmax(12rem, 0.62fr) minmax(0, 1.38fr);
+}
+
+.report-head .card--score {
+    position: sticky;
+    inset-block-start: 5.5rem;
+}
+
+@media (max-width: 900px) {
+    .report-head {
+        grid-template-columns: 1fr;
+    }
+
+    .report-head .card--score {
+        position: static;
+    }
 }
 
 .stat-row {
@@ -598,6 +638,95 @@
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
+}
+
+.wizard-live-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 46rem) minmax(17rem, 22rem);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.live-insights {
+    position: sticky;
+    inset-block-start: 1.25rem;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.live-insights__card {
+    padding: 1rem;
+}
+
+.live-insights__metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-block: 0.75rem;
+}
+
+.live-insights__metrics p {
+    margin: 0;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+}
+
+.live-insights__metrics strong,
+.live-insights__metrics span {
+    display: block;
+}
+
+.live-insights__metrics strong {
+    color: var(--brand-blue);
+    font-size: 1.45rem;
+}
+
+.live-insights__metrics span {
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.live-insights__signals {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.live-insights__signals div + div {
+    padding-block-start: 0.85rem;
+    border-block-start: 1px solid var(--line);
+}
+
+.live-insights__signals p,
+.live-insights__signals small {
+    display: block;
+    margin: 0.3rem 0 0;
+}
+
+.live-insights__signals small {
+    color: var(--muted);
+}
+
+.live-insights__card--ai {
+    border-color: rgba(37, 117, 255, 0.35);
+    background: linear-gradient(145deg, #ffffff, #f3f7ff);
+}
+
+.live-insights__question {
+    margin-block-end: 0;
+    color: var(--brand-navy);
+    font-weight: 600;
+}
+
+@media (max-width: 70rem) {
+    .wizard-live-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .live-insights {
+        position: static;
+        order: -1;
+    }
 }
 
 .field {
@@ -1187,6 +1316,89 @@
 .table th {
     background: var(--surface-soft);
     color: var(--brand-navy);
+}
+
+/*
+ * كتل مستند الوكالة. الأقسام المضمّنة تُخرج عنوانًا وجدولًا وملاحظة داخل
+ * غلاف واحد، فلا تنالها فجوة .panel__main التي تخص الأبناء المباشرين —
+ * وكانت العناوين تلتصق بالجدول الذي قبلها.
+ */
+.agency-doc > * + * {
+    margin-block-start: 1rem;
+}
+
+.agency-doc .section-title + .muted {
+    margin-block-start: -0.5rem;
+}
+
+.agency-doc .section-title:not(:first-child) {
+    margin-block-start: 2.5rem;
+}
+
+/* نصوص فقرات لا قيم قصيرة: أعمدة أضيق من 22rem تجعل البطاقة كتلة مزدحمة. */
+.card-grid--prose {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+}
+
+.card-grid--prose .card {
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+
+.card-grid--prose .card p {
+    overflow-wrap: anywhere;
+}
+
+/*
+ * جداول مستند الوكالة. تختلف عن .table في أمر واحد جوهري: خلاياها نصوص
+ * طويلة لا قيم قصيرة، فمنع الالتفاف هنا كان يجعل الأعمدة تتلاصق ويقرأ
+ * السطر كأنه جملة واحدة متصلة.
+ */
+.table-scroll {
+    overflow-x: auto;
+    margin-block: 0.9rem;
+}
+
+.data-table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: 0.94rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.75rem 1rem;
+    text-align: start;
+    vertical-align: top;
+    border: 1px solid var(--line);
+    line-height: 1.75;
+}
+
+.data-table th {
+    background: var(--surface-soft);
+    color: var(--brand-navy);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* عمود البند لا يُترك يتمدد على حساب القيمة المسجّلة. */
+.data-table td:first-child {
+    inline-size: 32%;
+    color: var(--brand-navy);
+}
+
+.data-table tbody tr:nth-child(even) td {
+    background: var(--surface-soft);
+}
+
+/* بطاقة القرار: جدول تسمية/قيمة بلا رأس، فالعمود الأول هو العنوان. */
+.card--decision .data-table th {
+    inline-size: 32%;
+}
+
+.card--decision h3 {
+    margin-block-start: 1.1rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2202,4 +2414,68 @@ button.competitor-list__x:hover {
 .matrix-table td.is-hot {
     background: #e7f8ef;
     color: #0a7d4f;
+}
+
+/* --- اختيار طريقة التقرير + توثيق المراجعة اليدوية --- */
+.delivery-options {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    margin-block-start: 1rem;
+}
+
+.delivery-option {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    padding: 1.4rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.delivery-option h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.delivery-option--manual {
+    border-color: rgba(255, 155, 39, 0.45);
+    background: var(--surface-warm, #fff8f2);
+}
+
+.verified-badge {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0 0 0.9rem;
+    padding: 0.7rem 0.9rem;
+    border-inline-start: 3px solid #0a7d4f;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: #e7f8ef;
+}
+
+.verified-badge b { color: #0a7d4f; font-size: 0.95rem; }
+.verified-badge span { color: var(--muted); font-size: 0.82rem; }
+
+/* توقيع صادق في نهاية التقرير اليدوي: بيان من كتبه، بلا مبالغة. */
+.report-sign {
+    margin-top: 1.6rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.code-block {
+    inline-size: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: #0e1730;
+    color: #d7e3ff;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
 }
