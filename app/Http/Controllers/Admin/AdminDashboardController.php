@@ -14,7 +14,15 @@ class AdminDashboardController extends Controller
 {
     public function index(): View
     {
-        return view('admin.dashboard', [
+        return view('admin.dashboard', $this->payload());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function payload(): array
+    {
+        return [
             'stats' => [
                 'users' => User::count(),
                 'tools_live' => Tool::runnable()->count(),
@@ -35,6 +43,6 @@ class AdminDashboardController extends Controller
                     'status' => $run->status,
                     'at' => $run->created_at->diffForHumans(),
                 ])->all(),
-        ]);
+        ];
     }
 }

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Billing\CreditManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class AdminUserController extends Controller
@@ -14,6 +15,14 @@ class AdminUserController extends Controller
     public function __construct(private readonly CreditManager $credits) {}
 
     public function index(Request $request): View
+    {
+        return view('admin.users.index', $this->payload($request));
+    }
+
+    /**
+     * @return array{users: Collection<int, array<string, mixed>>, search: string}
+     */
+    public function payload(Request $request): array
     {
         $search = trim((string) $request->query('q', ''));
 
@@ -36,7 +45,7 @@ class AdminUserController extends Controller
                 'joined' => $user->created_at->translatedFormat('j F Y'),
             ]);
 
-        return view('admin.users.index', ['users' => $users, 'search' => $search]);
+        return ['users' => $users, 'search' => $search];
     }
 
     public function grantCredits(Request $request, User $user): RedirectResponse

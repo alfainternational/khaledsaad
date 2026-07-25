@@ -1,6 +1,14 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Api\V1\Admin\BillingCatalogController as AdminBillingCatalogController;
+use App\Http\Controllers\Api\V1\Admin\ManualReportController as AdminManualReportController;
+use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\Api\V1\Admin\ToolController as AdminToolController;
+use App\Http\Controllers\Api\V1\Admin\UsageController as AdminUsageController;
+use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\AgencyReportController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CompetitorController;
@@ -130,6 +138,18 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::middleware('feature:'.FeatureKey::KPI_TRACKING)->group(function (): void {
             Route::post('projects/{project}/kpis', [TaskController::class, 'storeKpi'])->name('kpis.store');
             Route::post('kpis/{kpi}/entries', [TaskController::class, 'recordKpi'])->name('kpis.record');
+        });
+
+        Route::prefix('admin')->name('admin.')->middleware('admin')->group(function (): void {
+            Route::get('dashboard', AdminDashboardController::class)->name('dashboard');
+            Route::get('usage', AdminUsageController::class)->name('usage');
+            Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+            Route::get('tools', [AdminToolController::class, 'index'])->name('tools.index');
+            Route::get('tools/{tool}', [AdminToolController::class, 'show'])->name('tools.show');
+            Route::get('catalog', AdminBillingCatalogController::class)->name('catalog');
+            Route::get('payments', [AdminPaymentController::class, 'index'])->name('payments.index');
+            Route::get('manual-reports', [AdminManualReportController::class, 'index'])->name('manual-reports.index');
+            Route::get('settings', [AdminSettingController::class, 'index'])->name('settings.index');
         });
     });
 });
