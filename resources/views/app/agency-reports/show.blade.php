@@ -15,6 +15,28 @@
         </div>
     </header>
 
+    @if ($freshness['is_stale'])
+        <section class="card card--warn">
+            <p class="eyebrow">تحديث متاح</p>
+            <h2 class="section-title">هذا الإصدار يحتاج تحديثًا</h2>
+            <ul class="bullets">
+                @foreach ($freshness['reasons'] as $reason)
+                    <li>{{ $reason }}</li>
+                @endforeach
+            </ul>
+            <p class="muted">سيبقى هذا الإصدار محفوظًا كما هو، وسيُنشأ إصدار جديد بالمعلومات الحالية.</p>
+            <form method="POST" action="{{ route('app.projects.agency-reports.store', $agencyReport->project) }}">
+                @csrf
+                @foreach (($agencyReport->visibility ?? []) as $key => $value)
+                    <input type="hidden" name="visibility[{{ $key }}]" value="{{ $value }}">
+                @endforeach
+                <button type="submit" class="btn btn--primary">أنشئ إصدارًا محدثًا</button>
+            </form>
+        </section>
+    @else
+        <p class="badge">هذا الإصدار محدّث وفق آخر معلومات متاحة.</p>
+    @endif
+
     <section class="card">
         <h2 class="section-title">مشاركة المستند مع وكالة</h2>
 

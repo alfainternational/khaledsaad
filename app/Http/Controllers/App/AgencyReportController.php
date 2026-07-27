@@ -10,6 +10,7 @@ use App\Services\Marketing\BudgetPlanner;
 use App\Services\Reports\AgencyReportPdfGenerator;
 use App\Services\Reports\AgencyReportService;
 use App\Services\Reports\AgencyReportSharing;
+use App\Services\Reports\ReportFreshnessService;
 use App\Services\Tools\FullDiagnosisRunner;
 use App\Support\Marketing\BriefQuestions;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,7 @@ class AgencyReportController extends Controller
         private readonly AgencyReportService $service,
         private readonly AgencyReportPdfGenerator $pdf,
         private readonly AgencyReportSharing $sharing,
+        private readonly ReportFreshnessService $freshness,
     ) {}
 
     public function index(Request $request, Project $project): View
@@ -37,7 +39,10 @@ class AgencyReportController extends Controller
             'sweep' => app(FullDiagnosisRunner::class)->preview($project),
             'project' => $project,
             'readiness' => $this->service->readiness($project),
-            'reports' => $project->agencyReports()->latest('version')->get(),
+            'reports' => $reports = $project->agencyReports()->latest('version')->get(),
+            'freshnessByReport' => $reports->mapWithKeys(fn (AgencyReport $report) => [
+                $report->id => $this->freshness->status($report),
+            ]),
             // موجز التكليف: ما تسأل عنه الوكالة ولا تعرفه الأدوات التشخيصية.
             'briefGroups' => BriefQuestions::groups(),
             'brief' => $project->profile?->brief ?? [],
@@ -109,6 +114,7 @@ class AgencyReportController extends Controller
             'agencyReport' => $agencyReport,
             'snapshot' => $agencyReport->snapshot,
             'share' => $this->sharing->status($agencyReport),
+            'freshness' => $this->freshness->status($agencyReport),
         ]);
     }
 

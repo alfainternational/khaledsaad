@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Services\Reports\AgencyReportPdfGenerator;
 use App\Services\Reports\AgencyReportService;
 use App\Services\Reports\AgencyReportSharing;
+use App\Services\Reports\ReportFreshnessService;
 use App\Services\Tools\FullDiagnosisRunner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class AgencyReportController extends Controller
         private readonly AgencyReportService $service,
         private readonly AgencyReportPdfGenerator $pdf,
         private readonly AgencyReportSharing $sharing,
+        private readonly ReportFreshnessService $freshness,
     ) {}
 
     public function index(Request $request, Project $project): JsonResponse
@@ -123,6 +125,7 @@ class AgencyReportController extends Controller
             'generated_at' => $report->generated_at?->toIso8601String(),
             'visibility' => $report->visibility,
             'source_report_ids' => $report->source_report_ids,
+            'freshness' => $this->freshness->status($report),
             'share' => $this->sharing->status($report),
             'snapshot' => $withSnapshot ? $report->snapshot : null,
         ];

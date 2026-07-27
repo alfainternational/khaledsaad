@@ -209,6 +209,8 @@
                         <span class="eyebrow">الإصدار {{ $report->version }}</span>
                         <strong>{{ $report->title }}</strong>
                         <span class="muted">{{ $report->generated_at?->locale('ar')->translatedFormat('j F Y') }}</span>
+                        @php($reportFreshness = $freshnessByReport[$report->id])
+                        <span class="badge">{{ $reportFreshness['label'] }}</span>
                     </a>
                 @endforeach
             </div>
