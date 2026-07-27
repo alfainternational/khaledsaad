@@ -2,12 +2,13 @@
     $type = $question['type'];
     $current = $current ?? null;
     $validation = $question['validation'] ?? [];
+    $required = (bool) ($question['required'] ?? false);
 @endphp
 
 @if (in_array($type, ['select', 'radio', 'boolean', 'confirmation'], true))
     <div class="consultation-options">
         @foreach ($question['options'] as $option)
-            <label><input type="radio" name="value" value="{{ $option['value'] }}" @checked((string)$current === (string)$option['value']) @required($question['required'])> <span>{{ $option['label'] }}</span></label>
+            <label><input type="radio" name="value" value="{{ $option['value'] }}" @checked((string)$current === (string)$option['value']) @required($required)> <span>{{ $option['label'] }}</span></label>
         @endforeach
     </div>
 @elseif ($type === 'multiselect')
@@ -17,7 +18,7 @@
         @endforeach
     </div>
 @elseif ($type === 'number')
-    <input type="number" name="value" step="any" value="{{ $current }}" @required($question['required'])>
+    <input type="number" name="value" step="any" value="{{ $current }}" @required($required)>
 @elseif ($type === 'scale')
     <div class="field"><input type="range" name="value" min="{{ $validation['min'] ?? 1 }}" max="{{ $validation['max'] ?? 10 }}" step="{{ $validation['step'] ?? 1 }}" value="{{ $current ?? ($validation['min'] ?? 1) }}"><span class="field__help">من {{ $validation['min'] ?? 1 }} إلى {{ $validation['max'] ?? 10 }}</span></div>
 @elseif ($type === 'range')
@@ -32,10 +33,10 @@
 @elseif ($type === 'repeater')
     <p class="field__help">أدخل كل عنصر في خانة مستقلة.</p>
     @for ($index = 0; $index < min(10, $validation['max_items'] ?? 5); $index++)
-        <input type="text" name="value[]" value="{{ data_get($current, $index) }}" placeholder="عنصر {{ $index + 1 }}" @required($index === 0 && $question['required'])>
+        <input type="text" name="value[]" value="{{ data_get($current, $index) }}" placeholder="عنصر {{ $index + 1 }}" @required($index === 0 && $required)>
     @endfor
 @elseif (in_array($type, ['url', 'email', 'date', 'text'], true))
-    <input type="{{ $type === 'text' ? 'text' : $type }}" name="value" value="{{ $current }}" @required($question['required'])>
+    <input type="{{ $type === 'text' ? 'text' : $type }}" name="value" value="{{ $current }}" @required($required)>
 @else
-    <textarea name="value" rows="4" @required($question['required'])>{{ $current }}</textarea>
+    <textarea name="value" rows="4" @required($required)>{{ $current }}</textarea>
 @endif

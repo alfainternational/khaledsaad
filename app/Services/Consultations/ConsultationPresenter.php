@@ -90,6 +90,7 @@ class ConsultationPresenter
                 'type' => $answer->questionVersion->answer_type,
                 'options' => $this->options($answer->questionVersion),
                 'validation' => $answer->questionVersion->validation ?? [],
+                'required' => $answer->questionVersion->required,
                 'allow_unknown' => $answer->questionVersion->allow_unknown,
                 'allow_skip' => $answer->questionVersion->allow_skip,
             ];

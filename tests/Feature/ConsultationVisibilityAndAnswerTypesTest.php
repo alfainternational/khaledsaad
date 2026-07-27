@@ -6,6 +6,8 @@ use App\Models\QuestionDefinition;
 use App\Models\QuestionVersion;
 use App\Models\User;
 use App\Services\Consultations\AnswerTypeRegistry;
+use App\Services\Consultations\ConsultationPresenter;
+use App\Services\Consultations\ConsultationService;
 use App\Services\Consultations\Engine\AnswerValidator;
 use App\Services\Projects\ProjectService;
 use Database\Seeders\ConsultationCatalogSeeder;
@@ -43,6 +45,28 @@ class ConsultationVisibilityAndAnswerTypesTest extends TestCase
                 "{$key} should accept more than one answer",
             );
         }
+    }
+
+    #[Test]
+    public function the_web_review_renders_answer_fields_with_their_complete_validation_contract(): void
+    {
+        $this->seed([ToolCatalogSeeder::class, ConsultationCatalogSeeder::class]);
+        $user = User::factory()->create();
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروع المراجعة', 'stage' => 'growth']);
+        $service = app(ConsultationService::class);
+        $session = $service->start($project, $user);
+        $question = $session->currentQuestion()->with('definition')->firstOrFail();
+        $service->answer($session, $question, ['value' => [$question->options[0]['value']]]);
+        $session->forceFill(['status' => 'review', 'current_question_version_id' => null])->save();
+        $review = app(ConsultationPresenter::class)->show($session->refresh())['review'];
+        $reviewItem = collect([$review['facts'], $review['estimates'], $review['unknowns']])->flatten(1)->first();
+
+        $this->assertNotNull($reviewItem);
+        $this->assertArrayHasKey('required', $reviewItem);
+
+        $this->actingAs($user)->get(route('app.consultations.show', $session))
+            ->assertOk()
+            ->assertSee('صحّح الإجابة');
     }
 
     #[Test]
