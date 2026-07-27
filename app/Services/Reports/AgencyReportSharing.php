@@ -6,6 +6,7 @@ use App\Models\AgencyReport;
 use App\Models\AgencyReportView;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * رابط مشاركة موجز الوكالة.
@@ -22,8 +23,11 @@ class AgencyReportSharing
 
     private const DEFAULT_DAYS = 30;
 
+    public function __construct(private readonly AgencyReportDocumentAdapter $documents) {}
+
     public function share(AgencyReport $report, int $days = self::DEFAULT_DAYS): AgencyReport
     {
+        $this->assertReady($report);
         $days = in_array($days, self::EXPIRY_CHOICES, true) ? $days : self::DEFAULT_DAYS;
 
         $report->forceFill([
@@ -89,19 +93,46 @@ class AgencyReportSharing
      */
     public function dataFile(AgencyReport $report): array
     {
-        $snapshot = $report->snapshot;
-        unset($snapshot['owner_guide']);
+        $snapshot = $this->agencySnapshot($report);
 
         return [
             'document' => [
-                'title' => $report->title,
+                'title' => 'موجز التكليف — '.($report->snapshot['agency_brief']['project']['name'] ?? $report->project->name),
                 'version' => $report->version,
                 'generated_at' => $report->generated_at?->toIso8601String(),
-                'source_report_ids' => $report->source_report_ids,
-                'visibility' => $report->visibility,
             ],
             'snapshot' => $snapshot,
         ];
+    }
+
+    /**
+     * قائمة سماح لمحتوى الوكالة. ما لا يدخل هنا لا يمكن أن يتسرّب عبر
+     * الويب أو التطبيق أو الملف الآلي حتى لو أضيف لاحقًا إلى لقطة المالك.
+     *
+     * @return array{agency_brief: array<string, mixed>}
+     */
+    public function agencySnapshot(AgencyReport $report): array
+    {
+        if (! isset($report->snapshot['agency_brief']) && $this->isLive($report)) {
+            return $this->documents->legacyAgencySnapshot($report);
+        }
+
+        $this->assertReady($report);
+
+        return ['agency_brief' => $report->snapshot['agency_brief']];
+    }
+
+    public function assertReady(AgencyReport $report): void
+    {
+        $readiness = $report->snapshot['agency_brief']['readiness'] ?? null;
+
+        if (($readiness['is_ready'] ?? false) === true) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'brief' => $readiness['message'] ?? 'موجز الوكالة غير مكتمل. أنشئ إصدارًا جديدًا بعد حسم البنود المطلوبة.',
+        ]);
     }
 
     /**

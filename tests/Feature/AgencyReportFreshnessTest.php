@@ -84,8 +84,8 @@ class AgencyReportFreshnessTest extends TestCase
 
         $this->actingAs($user)->get(route('app.agency-reports.show', $agencyReport))
             ->assertOk()
-            ->assertSee('هذا الإصدار يحتاج تحديثًا')
-            ->assertSee('أنشئ إصدارًا محدثًا');
+            ->assertSee('لديك معلومات أحدث من هذا التقرير')
+            ->assertSee('أنشئ تقريرًا محدثًا');
         $this->actingAs($user)->get(route('app.projects.agency-reports.index', $project))
             ->assertOk()
             ->assertSee('يحتاج تحديثًا');

@@ -154,19 +154,18 @@ class AgencyStateDocumentTest extends TestCase
             'brand' => config('brand'),
         ])->render();
 
-        // هذه الأربعة كانت تُركَّب في اللقطة ولا تُطبع في الملف المُسلَّم.
+        // الحقائق التي تحتاجها الوكالة تصل إليها، أما تفاصيل المنهجية الداخلية فتبقى للمالك.
         $this->assertStringContainsString('منافس مؤكد', $html);
         $this->assertStringContainsString('معدل التحويل', $html);
         $this->assertStringContainsString('عميل الشريحة الأولى', $html);
-        $this->assertStringContainsString('المنهجية والمصادر', $html);
-        $this->assertStringContainsString('الملخص التنفيذي', $html);
-        // والملحقان الجديدان يصلان إلى الورقة لا إلى اللقطة وحدها.
-        $this->assertStringContainsString('ملحق أ — الأدلة المرفوعة', $html);
-        $this->assertStringContainsString('ملحق ب — أصول جاهزة للنشر', $html);
+        $this->assertStringNotContainsString('المنهجية والمصادر', $html);
+        $this->assertStringNotContainsString('الملخص التنفيذي', $html);
+        $this->assertStringNotContainsString('ملحق أ — الأدلة المرفوعة', $html);
+        $this->assertStringNotContainsString('ملحق ب — أصول جاهزة للنشر', $html);
     }
 
     #[Test]
-    public function private_visibility_is_honoured_in_the_printed_document_not_only_in_the_payload(): void
+    public function the_agency_brief_is_complete_for_the_agency_without_owner_only_evidence(): void
     {
         $user = User::factory()->create();
         $project = $this->readyProject($user);
@@ -190,9 +189,8 @@ class AgencyStateDocumentTest extends TestCase
             'brand' => config('brand'),
         ])->render();
 
-        $this->assertStringNotContainsString('منافس داخلي جدًا', $html);
+        $this->assertStringContainsString('منافس داخلي جدًا', $html);
         $this->assertStringNotContainsString('إجابة موثقة من المستخدم', $html);
-        $this->assertStringContainsString('داخلية ولم تُدرج', $html);
     }
 
     #[Test]

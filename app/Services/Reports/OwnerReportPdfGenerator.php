@@ -9,27 +9,25 @@ use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class AgencyReportPdfGenerator
+class OwnerReportPdfGenerator
 {
     private const DISK = 'local';
 
-    private const TEMPLATE_VERSION = 3;
+    private const TEMPLATE_VERSION = 1;
 
-    public function __construct(private readonly AgencyReportSharing $sharing) {}
+    public function __construct(private readonly AgencyReportDocumentAdapter $documents) {}
 
     public function ensure(AgencyReport $report): string
     {
-        $path = $this->path($report);
+        $path = "owner-reports/owner-report-{$report->id}-v".self::TEMPLATE_VERSION.'.pdf';
 
-        if ($report->pdf_path === $path && Storage::disk(self::DISK)->exists($path)) {
+        if (Storage::disk(self::DISK)->exists($path)) {
             return $path;
         }
 
-        $snapshot = $this->sharing->agencySnapshot($report);
-
-        $html = view('agency-reports.pdf', [
+        $html = view('agency-reports.owner-pdf', [
             'agencyReport' => $report,
-            'snapshot' => $snapshot,
+            'snapshot' => $this->documents->ownerSnapshot($report),
             'brand' => config('brand'),
         ])->render();
 
@@ -37,37 +35,15 @@ class AgencyReportPdfGenerator
         $mpdf->WriteHTML($html);
         Storage::disk(self::DISK)->put($path, $mpdf->Output('', 'S'));
 
-        /*
-         * إصدار قالب جديد يعني ملفًا جديدًا؛ القديم لم يعد يُشير إليه شيء.
-         * حذفه هنا يمنع تراكم ملفات يتيمة في التخزين مع كل ترقية قالب.
-         */
-        $stale = $report->pdf_path;
-
-        if (is_string($stale) && $stale !== '' && $stale !== $path) {
-            Storage::disk(self::DISK)->delete($stale);
-        }
-
-        $report->forceFill([
-            'pdf_path' => $path,
-            'pdf_generated_at' => now(),
-        ])->save();
-
         return $path;
     }
 
     public function download(AgencyReport $report): StreamedResponse
     {
-        $path = $this->ensure($report);
-
         return Storage::disk(self::DISK)->download(
-            $path,
-            "موجز-وكالة-{$report->project->slug}-v{$report->version}.pdf",
+            $this->ensure($report),
+            "تقرير-مشروعي-{$report->project->slug}-v{$report->version}.pdf",
         );
-    }
-
-    private function path(AgencyReport $report): string
-    {
-        return "agency-reports/agency-report-{$report->id}-v".self::TEMPLATE_VERSION.'.pdf';
     }
 
     private function engine(): Mpdf
@@ -99,7 +75,7 @@ class AgencyReportPdfGenerator
         ]);
 
         $mpdf->SetDirectionality('rtl');
-        $mpdf->SetHTMLFooter('<div style="border-top:1px solid #dfe8f5;padding-top:6px;font-size:8pt;color:#5d6b82;text-align:center;">'.e(config('brand.name', 'خالد سعد')).' · موجز وكالة · صفحة {PAGENO} من {nbpg}</div>');
+        $mpdf->SetHTMLFooter('<div style="border-top:1px solid #dfe8f5;padding-top:6px;font-size:8pt;color:#5d6b82;text-align:center;">'.e(config('brand.name', 'خالد سعد')).' · تقريرك الخاص · صفحة {PAGENO} من {nbpg}</div>');
 
         return $mpdf;
     }

@@ -121,6 +121,8 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
             ->middleware('throttle:6,60')->name('projects.full-diagnosis');
         Route::post('projects/{project}/agency-brief', [AgencyReportController::class, 'saveBrief'])->name('projects.agency-reports.brief');
         Route::get('agency-reports/{agencyReport}', [AgencyReportController::class, 'show'])->name('agency-reports.show');
+        Route::get('agency-reports/{agencyReport}/brief', [AgencyReportController::class, 'brief'])->name('agency-reports.brief');
+        Route::get('agency-reports/{agencyReport}/brief/pdf', [AgencyReportController::class, 'briefPdf'])->name('agency-reports.brief.pdf');
         Route::get('agency-reports/{agencyReport}/pdf', [AgencyReportController::class, 'pdf'])->name('agency-reports.pdf');
         Route::get('agency-reports/{agencyReport}/data.json', [AgencyReportController::class, 'data'])->name('agency-reports.data');
         Route::post('agency-reports/{agencyReport}/share', [AgencyReportController::class, 'share'])->name('agency-reports.share');

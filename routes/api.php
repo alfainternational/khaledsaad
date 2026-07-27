@@ -84,6 +84,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 ->middleware('throttle:6,60')->name('projects.full-diagnosis');
             Route::get('agency-reports/{agencyReport}', [AgencyReportController::class, 'show'])->name('agency-reports.show');
             Route::get('agency-reports/{agencyReport}/pdf', [AgencyReportController::class, 'pdf'])->name('agency-reports.pdf');
+            Route::get('agency-reports/{agencyReport}/brief/pdf', [AgencyReportController::class, 'briefPdf'])->name('agency-reports.brief.pdf');
             Route::get('agency-reports/{agencyReport}/data.json', [AgencyReportController::class, 'data'])->name('agency-reports.data');
             Route::post('agency-reports/{agencyReport}/share', [AgencyReportController::class, 'share'])->name('agency-reports.share');
             Route::delete('agency-reports/{agencyReport}/share', [AgencyReportController::class, 'revokeShare'])->name('agency-reports.share.revoke');

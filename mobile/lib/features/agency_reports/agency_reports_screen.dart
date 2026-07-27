@@ -27,11 +27,7 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
     widget.projectSlug,
   );
   bool _generating = false;
-  final Map<String, String> _visibility = {
-    'budget': 'full',
-    'competitors': 'full',
-    'evidence': 'full',
-  };
+  final Map<String, String> _visibility = const {};
 
   void _reload() {
     setState(
@@ -73,7 +69,7 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('موجز الوكالة')),
+      appBar: AppBar(title: const Text('تقارير مشروعك')),
       body: FutureBuilder<AgencyReportIndex>(
         future: _future,
         builder: (context, snapshot) => AsyncView(
@@ -91,7 +87,7 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'نسخة ثابتة تجمع أحدث تشخيصات مشروعك لتسليمها إلى وكالة ومقارنة عروضها.',
+                'تقرير كامل لك بلغة بسيطة، وموجز مستقل تسلّمه للوكالة عندما تكتمل معلوماته.',
                 style: TextStyle(color: BrandColors.muted),
               ),
               const SizedBox(height: 16),
@@ -100,23 +96,17 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Eyebrow('جاهز للإنشاء'),
+                          const Eyebrow('جاهز لإنشاء تقريرك'),
                           const SizedBox(height: 6),
                           Text(
-                            'سيُضمّن ${index.readiness.includedCount} تقارير بأحدث نتيجة صالحة من كل تشخيص.',
+                            'سنقرأ ${index.readiness.includedCount} تشخيصات معًا ونحوّلها إلى صورة واضحة بلا تكرار.',
                           ),
                           const SizedBox(height: 12),
-                          ExpansionTile(
-                            tilePadding: EdgeInsets.zero,
-                            shape: const Border(),
-                            title: const Text('ما الذي يظهر للوكالة؟'),
-                            children: [
-                              _visibilityField('budget', 'الميزانية'),
-                              _visibilityField('competitors', 'المنافسون'),
-                              _visibilityField('evidence', 'الأدلة التفصيلية'),
-                            ],
+                          const Text(
+                            'تقريرك يحتفظ بكل التفاصيل المفيدة لك، وموجز الوكالة يأخذ المعلومات التي تحتاجها للتسعير فقط.',
+                            style: TextStyle(color: BrandColors.muted),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
                           FilledButton(
                             onPressed: _generating ? null : _generate,
                             child: _generating
@@ -128,7 +118,7 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text('أنشئ إصدارًا ثابتًا جديدًا'),
+                                : const Text('أنشئ تقريرًا جديدًا'),
                           ),
                         ],
                       )
@@ -152,7 +142,7 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
               const SizedBox(height: 10),
               if (index.reports.isEmpty)
                 const Text(
-                  'لم يُنشأ موجز بعد.',
+                  'لم يُنشأ تقرير بعد.',
                   style: TextStyle(color: BrandColors.muted),
                 )
               else
@@ -197,20 +187,4 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
       ),
     );
   }
-
-  Widget _visibilityField(String key, String label) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: DropdownButtonFormField<String>(
-      initialValue: _visibility[key],
-      decoration: InputDecoration(labelText: label),
-      items: const [
-        DropdownMenuItem(value: 'full', child: Text('تظهر كاملة')),
-        DropdownMenuItem(value: 'summary', child: Text('تظهر كملخص')),
-        DropdownMenuItem(value: 'private', child: Text('تبقى داخلية')),
-      ],
-      onChanged: (value) {
-        if (value != null) _visibility[key] = value;
-      },
-    ),
-  );
 }

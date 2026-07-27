@@ -45,7 +45,7 @@ class AgencyReportSharingTest extends TestCase
         // زائر بلا حساب — هذا هو الغرض من الرابط.
         $this->get(route('shared.agency-report', $token))
             ->assertOk()
-            ->assertSee('مستند حالة مشترك', false);
+            ->assertSee('موجز تكليف مشترك', false);
 
         $this->assertSame(1, $report->fresh()->views()->count());
 
@@ -95,7 +95,7 @@ class AgencyReportSharingTest extends TestCase
 
         $this->getJson(route('api.v1.public.shared-reports.show', $token))
             ->assertOk()
-            ->assertJsonPath('data.document.title', $report->title)
+            ->assertJsonPath('data.document.title', 'موجز التكليف — مشروع المشاركة')
             ->assertJsonMissingPath('data.snapshot.owner_guide');
 
         $this->assertDatabaseHas('agency_report_views', [
@@ -151,6 +151,15 @@ class AgencyReportSharingTest extends TestCase
         $user = User::factory()->create();
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع المشاركة']);
         $project->profile()->updateOrCreate([], ['monthly_budget' => 8000]);
+        app(AgencyReportService::class)->saveBrief($project, [
+            'services' => ['ads'],
+            'primary_goal' => 'sales',
+            'success_metric' => '20 عملية شراء مدفوعة خلال 90 يومًا.',
+            'budget_includes_agency_fee' => 'yes',
+            'budget_currency' => 'SAR',
+            'account_ownership' => 'mine',
+            'proposal_deadline' => '15 أغسطس 2026',
+        ]);
 
         foreach (['marketing-score' => 60, 'brand-clarity' => 66, 'audience-map' => 57] as $key => $score) {
             $this->reportFor($project, $user, $key, $score);

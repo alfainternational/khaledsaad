@@ -11,6 +11,7 @@ use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Models\User;
 use App\Services\Projects\ProjectService;
+use App\Services\Reports\AgencyReportService;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -35,7 +36,8 @@ class AgencyReportDeliveryTest extends TestCase
         $this->actingAs($user)
             ->get(route('app.projects.agency-reports.index', $project))
             ->assertOk()
-            ->assertSee('جاهز لإنشاء موجز الوكالة');
+            ->assertSee('جاهز لإنشاء تقريرك الكامل')
+            ->assertSee('مكتمل: آخر موعد لاستقبال العروض');
 
         $response = $this->actingAs($user)
             ->post(route('app.projects.agency-reports.store', $project), [
@@ -53,11 +55,21 @@ class AgencyReportDeliveryTest extends TestCase
             ->get(route('app.agency-reports.show', $report))
             ->assertOk()
             ->assertSee($report->title)
-            ->assertSee('خطة 30 / 60 / 90 يومًا')
+            ->assertSee('خطة عملك الشخصية خلال 30 و60 و90 يومًا')
             ->assertSee('أسئلة مقارنة عروض الوكالات');
 
         $this->actingAs($user)
             ->get(route('app.agency-reports.pdf', $report))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        $this->actingAs($user)
+            ->get(route('app.agency-reports.brief', $report))
+            ->assertOk()
+            ->assertSee('ما يجب أن يتضمنه عرضكم');
+
+        $this->actingAs($user)
+            ->get(route('app.agency-reports.brief.pdf', $report))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
     }
@@ -102,6 +114,15 @@ class AgencyReportDeliveryTest extends TestCase
             'monthly_budget' => 9000,
             'primary_goal' => 'leads',
             'value_proposition' => 'تنفيذ أسرع وقياس أوضح.',
+        ]);
+        app(AgencyReportService::class)->saveBrief($project, [
+            'services' => ['ads'],
+            'primary_goal' => 'leads',
+            'success_metric' => '30 عميلًا مهتمًا مؤهلًا خلال 90 يومًا.',
+            'budget_includes_agency_fee' => 'yes',
+            'budget_currency' => 'SAR',
+            'account_ownership' => 'mine',
+            'proposal_deadline' => '15 أغسطس 2026',
         ]);
 
         foreach (['marketing-score' => 68, 'brand-clarity' => 72, 'audience-map' => 61] as $key => $score) {

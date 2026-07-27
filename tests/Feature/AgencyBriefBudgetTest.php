@@ -123,8 +123,12 @@ class AgencyBriefBudgetTest extends TestCase
         $this->actingAs($user)->post(route('app.projects.agency-reports.brief', $project), [
             'brief' => [
                 'services' => ['ads', 'content', 'social', 'design'],
+                'primary_goal' => 'sales',
                 'budget_includes_agency_fee' => 'yes',
+                'budget_currency' => 'SAR',
                 'success_metric' => '70 متجرًا يرفع أول منتج خلال 30 يومًا.',
+                'account_ownership' => 'mine',
+                'proposal_deadline' => '15 أغسطس 2026',
                 'previous_attempts' => 'أعلنّا شهرين بلا قياس.',
                 'decision_maker' => 'أنا شخصيًا.',
             ],
@@ -164,7 +168,12 @@ class AgencyBriefBudgetTest extends TestCase
 
         app(AgencyReportService::class)->saveBrief($project, [
             'services' => ['ads'],
+            'primary_goal' => 'sales',
+            'success_metric' => '20 عملية شراء مدفوعة خلال 90 يومًا.',
             'budget_includes_agency_fee' => 'yes',
+            'budget_currency' => 'SAR',
+            'account_ownership' => 'mine',
+            'proposal_deadline' => '15 أغسطس 2026',
         ]);
 
         foreach (['marketing-score', 'brand-clarity', 'audience-map'] as $key) {

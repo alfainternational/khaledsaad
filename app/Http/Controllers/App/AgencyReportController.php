@@ -7,9 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Models\AgencyReport;
 use App\Models\Project;
 use App\Services\Marketing\BudgetPlanner;
+use App\Services\Reports\AgencyReportDocumentAdapter;
 use App\Services\Reports\AgencyReportPdfGenerator;
 use App\Services\Reports\AgencyReportService;
 use App\Services\Reports\AgencyReportSharing;
+use App\Services\Reports\OwnerReportPdfGenerator;
 use App\Services\Reports\ReportFreshnessService;
 use App\Services\Tools\FullDiagnosisRunner;
 use App\Support\Marketing\BriefQuestions;
@@ -25,7 +27,9 @@ class AgencyReportController extends Controller
 
     public function __construct(
         private readonly AgencyReportService $service,
-        private readonly AgencyReportPdfGenerator $pdf,
+        private readonly AgencyReportDocumentAdapter $documents,
+        private readonly AgencyReportPdfGenerator $agencyPdf,
+        private readonly OwnerReportPdfGenerator $ownerPdf,
         private readonly AgencyReportSharing $sharing,
         private readonly ReportFreshnessService $freshness,
     ) {}
@@ -103,7 +107,7 @@ class AgencyReportController extends Controller
         );
 
         return redirect()->route('app.agency-reports.show', $report)
-            ->with('status', 'أُنشئ موجز الوكالة كنسخة ثابتة جاهزة للتسليم.');
+            ->with('status', 'أُنشئ تقرير جديد يشرح حالة مشروعك، ومعه موجز الوكالة عند اكتمال بياناته.');
     }
 
     public function show(Request $request, AgencyReport $agencyReport): View
@@ -112,17 +116,37 @@ class AgencyReportController extends Controller
 
         return view('app.agency-reports.show', [
             'agencyReport' => $agencyReport,
-            'snapshot' => $agencyReport->snapshot,
+            'snapshot' => $this->documents->ownerSnapshot($agencyReport),
             'share' => $this->sharing->status($agencyReport),
             'freshness' => $this->freshness->status($agencyReport),
         ]);
+    }
+
+    public function brief(Request $request, AgencyReport $agencyReport): View
+    {
+        $this->authorizeAgencyReport($request, $agencyReport);
+        abort_unless($agencyReport->snapshot['agency_brief']['readiness']['is_ready'] ?? false, 409);
+
+        return view('app.agency-reports.brief', [
+            'agencyReport' => $agencyReport,
+            'snapshot' => $agencyReport->snapshot,
+            'share' => $this->sharing->status($agencyReport),
+        ]);
+    }
+
+    public function briefPdf(Request $request, AgencyReport $agencyReport): StreamedResponse
+    {
+        $this->authorizeAgencyReport($request, $agencyReport);
+        abort_unless($agencyReport->snapshot['agency_brief']['readiness']['is_ready'] ?? false, 409);
+
+        return $this->agencyPdf->download($agencyReport);
     }
 
     public function pdf(Request $request, AgencyReport $agencyReport): StreamedResponse
     {
         $this->authorizeAgencyReport($request, $agencyReport);
 
-        return $this->pdf->download($agencyReport);
+        return $this->ownerPdf->download($agencyReport);
     }
 
     public function data(Request $request, AgencyReport $agencyReport): JsonResponse
