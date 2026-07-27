@@ -83,6 +83,18 @@ class ReportPdfParityTest extends TestCase
         ] as $needle) {
             $this->assertStringContainsString($needle, $html, "الملف المطبوع لا يحمل: {$needle}");
         }
+
+        foreach ([
+            'class="print-report"',
+            'class="summary-box print-section"',
+            'class="section-box print-section print-section--long"',
+            'class="matrix print-table"',
+            'break-inside: avoid',
+            'table-layout: fixed',
+            'overflow-wrap: anywhere',
+        ] as $layoutContract) {
+            $this->assertStringContainsString($layoutContract, $html, "عقد الطباعة يفتقد: {$layoutContract}");
+        }
     }
 
     #[Test]

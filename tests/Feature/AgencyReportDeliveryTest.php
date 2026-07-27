@@ -28,6 +28,21 @@ class AgencyReportDeliveryTest extends TestCase
     }
 
     #[Test]
+    public function the_agency_documents_declare_the_shared_print_layout_contract(): void
+    {
+        $pdf = file_get_contents(resource_path('views/agency-reports/pdf.blade.php'));
+        $document = file_get_contents(resource_path('views/agency-reports/partials/document.blade.php'));
+
+        foreach (['class="print-report"', 'print-section', 'print-section--long', 'print-table', 'break-inside: avoid', 'table-layout: fixed', 'overflow-wrap: anywhere'] as $contract) {
+            $this->assertStringContainsString($contract, $pdf, "قالب PDF يفتقد: {$contract}");
+        }
+
+        foreach (['print-report', 'print-section', 'print-section--long', 'print-table'] as $contract) {
+            $this->assertStringContainsString($contract, $document, "مستند الوكالة يفتقد: {$contract}");
+        }
+    }
+
+    #[Test]
     public function the_owner_can_generate_view_and_download_the_agency_report(): void
     {
         [$user, $project] = $this->readyProject();

@@ -88,9 +88,15 @@
         ul { margin: 3pt 0; padding-right: 14pt; }
         li { margin-bottom: 2pt; }
         .assumptions li { color: #6d5405; }
+
+        /* عقد تخطيط الطباعة: أقسام قصيرة متماسكة، وأقسام طويلة قابلة للتجزئة، وجداول بلا تجاوز أفقي. */
+        .print-section { break-inside: avoid; page-break-inside: avoid; }
+        .print-section--long { break-inside: auto; page-break-inside: auto; }
+        .print-report table, .print-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+        .print-report th, .print-report td, .print-table th, .print-table td { overflow-wrap: anywhere; word-break: break-word; }
     </style>
 </head>
-<body>
+<body class="print-report">
 
 {{-- الغلاف --}}
 <div class="cover">
@@ -152,7 +158,7 @@
     </tr>
 </table>
 
-<div class="summary-box">
+<div class="summary-box print-section">
     <h3>الخلاصة</h3>
     <p>{{ $report['summary'] }}</p>
     <p class="muted" style="font-size: 8.5pt; margin: 4pt 0 0;">
@@ -251,7 +257,7 @@
             @if ($charts['impact_effort'] !== null)
                 <td class="chart-card" style="vertical-align: top;">
                     <p class="chart-title">{{ $charts['impact_effort']['title'] }}</p>
-                    <table width="100%" cellpadding="0" cellspacing="0" class="matrix">
+                    <table width="100%" cellpadding="0" cellspacing="0" class="matrix print-table">
                         <tr>
                             <th></th>
                             @foreach (['low', 'medium', 'high'] as $effort)
@@ -330,7 +336,7 @@
 {{-- ما وجدناه وكيف تعالجه --}}
 <h2>ما وجدناه لك، وكيف تعالجه</h2>
 @forelse ($report['findings'] as $finding)
-    <div class="finding">
+    <div class="finding print-section">
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td><h3>{{ $finding['title'] }}</h3></td>
@@ -374,7 +380,7 @@
 <h2>تفاصيل التحليل</h2>
 @foreach ($report['sections'] as $section)
     @php($content = $section['content'] ?? [])
-    <div class="section-box">
+    <div class="section-box print-section print-section--long">
         <h3>{{ $section['title'] }}</h3>
 
         @if ($section['key'] === 'score')

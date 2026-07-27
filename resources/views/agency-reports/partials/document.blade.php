@@ -112,12 +112,12 @@
     </section>
 @endif
 
-<section class="agency-doc">
+<section class="agency-doc print-report">
     @include('agency-reports.partials.operations', ['snapshot' => $snapshot, 'print' => false])
 </section>
 
 <section class="report-head">
-    <article class="card card--score">
+    <article class="card card--score print-section">
         <p class="eyebrow">الجاهزية العامة</p>
         @if ($snapshot['readiness']['score'] !== null)
             <p class="score-big">{{ $snapshot['readiness']['score'] }}<small>/100</small></p>
@@ -153,7 +153,7 @@
         </p>
     </section>
 
-    <section>
+    <section class="print-section print-section--long">
         <h2 class="section-title">أبرز ما يحتاج معالجة</h2>
         @forelse ($snapshot['executive']['problems'] as $problem)
             <article class="finding">
@@ -220,7 +220,7 @@
 
                 @if ($theme['answered'] !== [])
                     <div class="table-scroll">
-                        <table class="data-table">
+                    <table class="data-table print-table">
                             {{--
                                 المصدر والتاريخ محفوظان في اللقطة ونسخة البيانات
                                 وملحق المنهجية، ولا يُطبعان في كل صف: عمود يتكرر
@@ -399,7 +399,7 @@
     </section>
 @endif
 
-<section class="agency-doc">
+<section class="agency-doc print-report">
     @include('agency-reports.partials.appendix', ['snapshot' => $snapshot, 'print' => false])
 </section>
 

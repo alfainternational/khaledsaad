@@ -24,9 +24,13 @@
         .small { font-size: 8pt; color: #5d6b82; }
         .chip { background: #f5f9ff; border: 1px solid #dfe8f5; padding: 1pt 4pt; font-size: 8pt; color: #071f5b; }
         .theme { page-break-inside: avoid; margin-bottom: 8pt; }
+        .print-section { break-inside: avoid; page-break-inside: avoid; }
+        .print-section--long { break-inside: auto; page-break-inside: auto; }
+        .print-report table, .print-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+        .print-report th, .print-report td, .print-table th, .print-table td { overflow-wrap: anywhere; word-break: break-word; }
     </style>
 </head>
-<body>
+<body class="print-report">
     <div class="cover">
         <h1>{{ $agencyReport->title }}</h1>
         <p>{{ $snapshot['project']['name'] }} · مستند حالة جاهز لبناء الخطة عليه مباشرة</p>
@@ -42,7 +46,7 @@
     <div style="page-break-after: always;"></div>
 
     <h2>الملخص التنفيذي</h2>
-    <table>
+    <table class="print-table print-section">
         <tr>
             <td style="width: 25%; text-align:center;">
                 @if ($snapshot['readiness']['score'] !== null)
@@ -71,7 +75,7 @@
 
         <h4>أبرز ما يحتاج معالجة</h4>
         @forelse ($snapshot['executive']['problems'] as $problem)
-            <div class="card problem">
+            <div class="card problem print-section">
                 <h3>{{ $problem['title'] }}</h3>
                 <p>{{ $problem['description'] }}</p>
                 <p class="small">{{ $problem['source_tool'] }} · الخطورة: {{ $problem['severity_label'] ?? $problem['severity'] }} · {{ $problem['basis'] }}</p>
@@ -82,7 +86,7 @@
 
         <h4>أسرع ما يمكن البدء به</h4>
         @forelse ($snapshot['executive']['opportunities'] as $item)
-            <div class="card priority">
+            <div class="card priority print-section">
                 <h3>{{ $item['title'] }}</h3>
                 <p>{{ $item['description'] }}</p>
                 <p class="small">{{ $item['source_tool'] }} · الأثر: {{ $item['impact_label'] ?? $item['impact'] }} · الجهد: {{ $item['effort_label'] ?? $item['effort'] }}</p>
@@ -195,7 +199,7 @@
         @endif
 
         @foreach ($snapshot['ledger']['themes'] as $theme)
-            <div class="theme">
+            <div class="theme print-section print-section--long">
                 <h3>{{ $theme['title'] }} <span class="chip">{{ $theme['coverage_percent'] }}٪</span></h3>
                 <p class="small">{{ $theme['intent'] }}</p>
 
