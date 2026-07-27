@@ -171,6 +171,8 @@
 
     @include('agency-reports.partials.operations', ['snapshot' => $snapshot, 'print' => true])
 
+    @include('agency-reports.partials.unified-context', ['snapshot' => $snapshot])
+
     @if (! empty($snapshot['ledger']['themes']))
         <h2>حالة المشروع كما وثّقها صاحبه</h2>
         <p class="small">

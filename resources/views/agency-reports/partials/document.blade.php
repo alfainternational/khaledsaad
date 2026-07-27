@@ -185,6 +185,8 @@
     </section>
 @endif
 
+@include('agency-reports.partials.unified-context', ['snapshot' => $snapshot])
+
 @if (! empty($snapshot['ledger']['themes']))
     <section>
         <h2 class="section-title">حالة المشروع كما وثّقها صاحبه</h2>
