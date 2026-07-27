@@ -40,7 +40,11 @@ return new class extends Migration
                     'value_json' => $valueJson,
                     'value_hash' => hash('sha256', (string) $valueJson),
                     'event_type' => 'asserted',
-                    'source_type' => $answer->source_tool_key === null ? 'profile' : 'tool',
+                    'source_type' => match ($answer->source_tool_key) {
+                        null => 'profile',
+                        'consultation' => 'consultation',
+                        default => 'tool',
+                    },
                     'source_key' => $answer->source_tool_key,
                     'source_id' => $answer->source_run_id,
                     'confidence' => 'medium',

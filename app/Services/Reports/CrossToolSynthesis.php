@@ -9,9 +9,9 @@ use Illuminate\Support\Collection;
 class CrossToolSynthesis
 {
     /** @param Collection<int,Report> $reports @return array<string,mixed> */
-    public function build(Collection $reports): array
+    public function build(Collection $reports, string $evidenceVisibility = 'full'): array
     {
-        $findings = $reports->flatMap(function (Report $report) {
+        $findings = $reports->flatMap(function (Report $report) use ($evidenceVisibility) {
             $tool = $report->toolRun->toolVersion->tool;
 
             return $report->findings->map(fn ($finding) => [
@@ -24,7 +24,7 @@ class CrossToolSynthesis
                 'severity' => $finding->severity,
                 'confidence' => $finding->confidence,
                 'claim_type' => $finding->is_assumption ? 'assumption' : 'evidence',
-                'evidence' => $finding->evidence,
+                'evidence' => $evidenceVisibility === 'full' ? $finding->evidence : null,
             ]);
         })->values();
 

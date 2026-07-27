@@ -168,7 +168,23 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
                     ),
                     child: Row(
                       children: [
-                        Expanded(child: Text(report.title)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(report.title),
+                              Text(
+                                report.freshness.label,
+                                style: TextStyle(
+                                  color: report.freshness.isStale
+                                      ? Colors.orange.shade800
+                                      : BrandColors.muted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         ScoreChip(label: 'الإصدار ${report.version}'),
                       ],
                     ),

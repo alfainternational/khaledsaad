@@ -32,12 +32,14 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
       : Future.value(widget.initial);
   bool _downloading = false;
   bool _sharing = false;
+  bool _regenerating = false;
+  late String _activeUuid = widget.uuid;
   AgencyShare? _share;
 
   void _reload() {
     setState(() {
       _share = null;
-      _future = widget.repository.agencyReport(widget.uuid);
+      _future = widget.repository.agencyReport(_activeUuid);
     });
   }
 
@@ -45,9 +47,9 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
     setState(() => _downloading = true);
 
     try {
-      final bytes = await widget.repository.agencyReportPdf(widget.uuid);
+      final bytes = await widget.repository.agencyReportPdf(_activeUuid);
       final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/agency-report-${widget.uuid}.pdf');
+      final file = File('${dir.path}/agency-report-$_activeUuid.pdf');
       await file.writeAsBytes(bytes, flush: true);
       await OpenFilex.open(file.path);
     } catch (error) {
@@ -87,7 +89,7 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
 
     try {
       final share = await widget.repository.shareAgencyReport(
-        widget.uuid,
+        _activeUuid,
         days,
       );
       if (mounted) setState(() => _share = share);
@@ -104,7 +106,7 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
 
     try {
       final share = await widget.repository.revokeAgencyReportShare(
-        widget.uuid,
+        _activeUuid,
       );
       if (mounted) setState(() => _share = share);
       _notify('أُلغي الرابط ولم يعد يفتح لدى أحد.');
@@ -120,6 +122,28 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _regenerate(AgencyReportDetail report) async {
+    setState(() => _regenerating = true);
+
+    try {
+      final updated = await widget.repository.generateAgencyReport(
+        report.projectSlug,
+        report.visibility,
+      );
+      if (!mounted) return;
+      setState(() {
+        _activeUuid = updated.uuid;
+        _share = updated.share;
+        _future = Future.value(updated);
+      });
+      _notify('أُنشئ إصدار محدث مع الاحتفاظ بإعدادات الخصوصية.');
+    } catch (error) {
+      _notify(error.toString());
+    } finally {
+      if (mounted) setState(() => _regenerating = false);
+    }
   }
 
   @override
@@ -154,6 +178,34 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
         report.title,
         style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
       ),
+      if (report.freshness.isStale) ...[
+        const SizedBox(height: 12),
+        BrandCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'هذا الإصدار يحتاج تحديثًا',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              for (final reason in report.freshness.reasons) Text('• $reason'),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: _regenerating ? null : () => _regenerate(report),
+                icon: _regenerating
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                label: const Text('أنشئ إصدارًا محدثًا'),
+              ),
+            ],
+          ),
+        ),
+      ],
       const SizedBox(height: 14),
       BrandCard(
         child: report.readinessScore == null
@@ -301,6 +353,16 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
             style: TextStyle(color: BrandColors.muted),
           ),
         for (final item in executive.opportunities) _itemCard(item),
+      ],
+      if (report.consultation != null) ...[
+        const SizedBox(height: 20),
+        _heading('سياق الاستشارة الذكية'),
+        _consultationCard(report.consultation!),
+      ],
+      if (report.crossTool.findings.isNotEmpty) ...[
+        const SizedBox(height: 20),
+        _heading('مقارنة نتائج التشخيصات'),
+        ..._crossToolCards(report.crossTool),
       ],
       if (report.ledgerThemes.isNotEmpty) ...[
         const SizedBox(height: 20),
@@ -568,6 +630,116 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
       ),
     );
   }
+
+  Widget _consultationCard(AgencyConsultationContext consultation) {
+    return BrandCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('عمق الاستشارة: ${consultation.depth}'),
+          if (consultation.inferences.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'استنتاجات تحتاج انتباهًا',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            for (final item in consultation.inferences)
+              Text('• ${item.statement} · ثقة ${item.confidence}٪'),
+          ],
+          if (consultation.conflicts.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'التعارضات وقرارات حسمها',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            for (final item in consultation.conflicts)
+              Text(
+                '• ${item.message}${item.resolution == null ? '' : ' — ${item.resolution}'}',
+              ),
+          ],
+          if (consultation.evidence.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'الأدلة المستخدمة',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            for (final item in consultation.evidence) ...[
+              Text('• ${item.name} · ${item.extractionLabel}'),
+              if (item.text != null && item.text!.isNotEmpty)
+                Text(
+                  item.text!,
+                  style: const TextStyle(
+                    color: BrandColors.muted,
+                    fontSize: 12,
+                  ),
+                ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _crossToolCards(AgencyCrossToolSynthesis synthesis) => [
+    if (synthesis.agreements.isNotEmpty)
+      BrandCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'نتائج متوافقة',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            for (final item in synthesis.agreements)
+              Text('• ${item.category}: ${item.findings.join('، ')}'),
+          ],
+        ),
+      ),
+    if (synthesis.divergences.isNotEmpty) ...[
+      const SizedBox(height: 10),
+      BrandCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'اختلاف يحتاج حسمًا',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            for (final item in synthesis.divergences) ...[
+              Text('• ${item.category}: ${item.findings.join('، ')}'),
+              if (item.resolution != null)
+                Text(
+                  item.resolution!,
+                  style: const TextStyle(
+                    color: BrandColors.muted,
+                    fontSize: 12,
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    ],
+    const SizedBox(height: 10),
+    BrandCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'النتائج ومصادرها',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          for (final item in synthesis.findings)
+            Text(
+              '• ${item.title} — ${item.sourceToolTitle} (تقرير ${item.sourceReportId})',
+            ),
+        ],
+      ),
+    ),
+  ];
 
   Widget _shareCard(AgencyShare share) {
     return BrandCard(

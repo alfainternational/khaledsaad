@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ProjectAnswer;
 use App\Models\User;
 use App\Services\Consultations\ConsultationEvidenceService;
+use App\Services\Consultations\ConsultationPresenter;
 use App\Services\Consultations\ConsultationService;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\FullDiagnosisRunner;
@@ -49,6 +50,10 @@ class ConsultationEvidenceIntegrationTest extends TestCase
         $this->assertSame('completed', $evidence->extraction_status);
         $this->assertStringContainsString('مئة طلب', $evidence->extracted_text);
         $this->assertSame(64, strlen((string) $evidence->sha256));
+        $presented = app(ConsultationPresenter::class)->show($session->refresh());
+        $this->assertSame('completed', data_get($presented, 'evidence.0.extraction_status'));
+        $this->assertSame($evidence->sha256, data_get($presented, 'evidence.0.sha256'));
+        $this->assertSame('text/plain', data_get($presented, 'evidence.0.mime_type'));
 
         app(FullDiagnosisRunner::class)->run(
             $project,

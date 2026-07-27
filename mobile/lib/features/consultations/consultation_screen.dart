@@ -702,7 +702,11 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(item.name),
             subtitle: Text(
-              item.reviewRequired ? 'بانتظار مراجعتك' : item.confidence,
+              [
+                item.extractionLabel,
+                'الثقة: ${item.confidence}',
+                if (item.reviewRequired) 'بانتظار مراجعتك',
+              ].join(' · '),
             ),
             trailing: IconButton(
               onPressed: _busy ? null : () => _deleteEvidence(item.id),

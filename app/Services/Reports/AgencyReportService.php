@@ -301,7 +301,7 @@ class AgencyReportService
             'behaviour' => $behaviour,
             'appendix' => $this->operational->appendix($project, $visibility['evidence']),
             'consultation' => $this->consultationSnapshot($consultation, $visibility['evidence']),
-            'cross_tool_synthesis' => $this->crossTool->build($reports),
+            'cross_tool_synthesis' => $this->crossTool->build($reports, $visibility['evidence']),
             'ledger' => $ledger,
             'audiences' => $project->audiences->map(fn ($audience) => [
                 'name' => $audience->name,

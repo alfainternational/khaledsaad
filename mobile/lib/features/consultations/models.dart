@@ -139,6 +139,9 @@ class ConsultationEvidence {
     required this.type,
     required this.confidence,
     this.size,
+    this.mimeType,
+    required this.extractionStatus,
+    this.sha256,
     required this.reviewRequired,
   });
   final int id;
@@ -146,7 +149,18 @@ class ConsultationEvidence {
   final String type;
   final String confidence;
   final int? size;
+  final String? mimeType;
+  final String extractionStatus;
+  final String? sha256;
   final bool reviewRequired;
+
+  String get extractionLabel => switch (extractionStatus) {
+    'completed' => 'تم استخراج المحتوى',
+    'pending' => 'بانتظار استخراج المحتوى',
+    'unsupported' => 'نوع الملف غير قابل للاستخراج النصي',
+    'failed' => 'تعذر استخراج المحتوى',
+    _ => 'حالة الاستخراج غير معروفة',
+  };
 
   factory ConsultationEvidence.fromJson(Map<String, dynamic> json) =>
       ConsultationEvidence(
@@ -155,6 +169,9 @@ class ConsultationEvidence {
         type: json['type'].toString(),
         confidence: json['confidence'].toString(),
         size: (json['size'] as num?)?.toInt(),
+        mimeType: json['mime_type']?.toString(),
+        extractionStatus: json['extraction_status']?.toString() ?? 'pending',
+        sha256: json['sha256']?.toString(),
         reviewRequired: json['review_required'] == true,
       );
 }

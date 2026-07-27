@@ -79,6 +79,16 @@ class UnifiedDiagnosticSynthesisTest extends TestCase
             $this->assertArrayHasKey('source_report_id', $finding);
             $this->assertArrayHasKey('source_tool_key', $finding);
         }
+
+        $private = app(AgencyReportService::class)->generate(
+            $project,
+            $user,
+            ['evidence' => 'private'],
+            $session,
+        );
+        $privateJson = json_encode($private->snapshot, JSON_UNESCAPED_UNICODE);
+        $this->assertStringNotContainsString('سجل مبيعات موثق', $privateJson);
+        $this->assertStringNotContainsString('إجابة المستخدم', $privateJson);
     }
 
     #[Test]

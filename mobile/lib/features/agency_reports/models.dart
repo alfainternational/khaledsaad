@@ -47,6 +47,7 @@ class AgencyReportCard {
     required this.uuid,
     required this.title,
     required this.version,
+    this.freshness = AgencyReportFreshness.fresh,
     this.generatedAt,
   });
 
@@ -55,13 +56,48 @@ class AgencyReportCard {
         uuid: json['uuid'] as String,
         title: json['title'] as String? ?? '',
         version: json['version'] as int? ?? 1,
+        freshness: AgencyReportFreshness.fromJson(
+          Map<String, dynamic>.from(json['freshness'] as Map? ?? const {}),
+        ),
         generatedAt: json['generated_at'] as String?,
       );
 
   final String uuid;
   final String title;
   final int version;
+  final AgencyReportFreshness freshness;
   final String? generatedAt;
+}
+
+class AgencyReportFreshness {
+  const AgencyReportFreshness({
+    required this.isStale,
+    required this.state,
+    required this.label,
+    required this.reasons,
+  });
+
+  factory AgencyReportFreshness.fromJson(Map<String, dynamic> json) =>
+      AgencyReportFreshness(
+        isStale: json['is_stale'] == true,
+        state: json['state'] as String? ?? 'fresh',
+        label: json['label'] as String? ?? 'محدّث',
+        reasons: (json['reasons'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+      );
+
+  static const fresh = AgencyReportFreshness(
+    isStale: false,
+    state: 'fresh',
+    label: 'محدّث',
+    reasons: [],
+  );
+
+  final bool isStale;
+  final String state;
+  final String label;
+  final List<String> reasons;
 }
 
 class AgencyReportCardWithShare extends AgencyReportCard {
@@ -70,6 +106,7 @@ class AgencyReportCardWithShare extends AgencyReportCard {
     required super.title,
     required super.version,
     required this.share,
+    super.freshness,
     super.generatedAt,
   });
 
@@ -78,6 +115,9 @@ class AgencyReportCardWithShare extends AgencyReportCard {
         uuid: json['uuid'] as String,
         title: json['title'] as String? ?? '',
         version: json['version'] as int? ?? 1,
+        freshness: AgencyReportFreshness.fromJson(
+          Map<String, dynamic>.from(json['freshness'] as Map? ?? const {}),
+        ),
         generatedAt: json['generated_at'] as String?,
         share: json['share'] == null
             ? AgencyShare.none
@@ -536,6 +576,222 @@ class AgencyShare {
   final List<int> expiryChoices;
 }
 
+class AgencyConsultationEvidence {
+  const AgencyConsultationEvidence({
+    required this.name,
+    required this.extractionStatus,
+    this.mimeType,
+    this.sha256,
+    this.text,
+  });
+
+  factory AgencyConsultationEvidence.fromJson(Map<String, dynamic> json) =>
+      AgencyConsultationEvidence(
+        name: json['name'] as String? ?? '',
+        extractionStatus: json['extraction_status'] as String? ?? 'pending',
+        mimeType: json['mime_type'] as String?,
+        sha256: json['sha256'] as String?,
+        text: json['text'] as String?,
+      );
+
+  final String name;
+  final String extractionStatus;
+  final String? mimeType;
+  final String? sha256;
+  final String? text;
+
+  String get extractionLabel => switch (extractionStatus) {
+    'completed' => 'تم استخراج المحتوى',
+    'unsupported' => 'نوع الملف غير قابل للاستخراج النصي',
+    'failed' => 'تعذر استخراج المحتوى',
+    _ => 'بانتظار استخراج المحتوى',
+  };
+}
+
+class AgencyConsultationInference {
+  const AgencyConsultationInference({
+    required this.statement,
+    required this.status,
+    required this.confidence,
+  });
+
+  factory AgencyConsultationInference.fromJson(Map<String, dynamic> json) =>
+      AgencyConsultationInference(
+        statement: json['statement'] as String? ?? '',
+        status: json['status'] as String? ?? '',
+        confidence: (json['confidence'] as num?)?.toInt() ?? 0,
+      );
+
+  final String statement;
+  final String status;
+  final int confidence;
+}
+
+class AgencyConsultationConflict {
+  const AgencyConsultationConflict({
+    required this.message,
+    required this.status,
+    this.resolution,
+  });
+
+  factory AgencyConsultationConflict.fromJson(Map<String, dynamic> json) {
+    final rawResolution = json['resolution'];
+
+    return AgencyConsultationConflict(
+      message: json['message'] as String? ?? '',
+      status: json['status'] as String? ?? 'open',
+      resolution: rawResolution is Map
+          ? rawResolution['statement']?.toString()
+          : rawResolution?.toString(),
+    );
+  }
+
+  final String message;
+  final String status;
+  final String? resolution;
+}
+
+class AgencyConsultationContext {
+  const AgencyConsultationContext({
+    required this.uuid,
+    required this.depth,
+    required this.inferences,
+    required this.conflicts,
+    required this.evidence,
+  });
+
+  factory AgencyConsultationContext.fromJson(Map<String, dynamic> json) =>
+      AgencyConsultationContext(
+        uuid: json['uuid'] as String? ?? '',
+        depth: json['depth'] as String? ?? '',
+        inferences: (json['inferences'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => AgencyConsultationInference.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .toList(),
+        conflicts: (json['conflicts'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => AgencyConsultationConflict.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .toList(),
+        evidence: (json['evidence'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => AgencyConsultationEvidence.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .toList(),
+      );
+
+  final String uuid;
+  final String depth;
+  final List<AgencyConsultationInference> inferences;
+  final List<AgencyConsultationConflict> conflicts;
+  final List<AgencyConsultationEvidence> evidence;
+}
+
+class AgencyCrossToolFinding {
+  const AgencyCrossToolFinding({
+    required this.sourceReportId,
+    required this.sourceToolKey,
+    required this.sourceToolTitle,
+    required this.title,
+    required this.claimType,
+  });
+
+  factory AgencyCrossToolFinding.fromJson(Map<String, dynamic> json) =>
+      AgencyCrossToolFinding(
+        sourceReportId: (json['source_report_id'] as num?)?.toInt() ?? 0,
+        sourceToolKey: json['source_tool_key'] as String? ?? '',
+        sourceToolTitle: json['source_tool_title'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        claimType: json['claim_type'] as String? ?? 'evidence',
+      );
+
+  final int sourceReportId;
+  final String sourceToolKey;
+  final String sourceToolTitle;
+  final String title;
+  final String claimType;
+}
+
+class AgencyCrossToolGroup {
+  const AgencyCrossToolGroup({
+    required this.category,
+    required this.findings,
+    required this.sourceTools,
+    this.resolution,
+  });
+
+  factory AgencyCrossToolGroup.fromJson(Map<String, dynamic> json) =>
+      AgencyCrossToolGroup(
+        category: json['category'] as String? ?? '',
+        findings: (json['findings'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+        sourceTools: (json['source_tools'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+        resolution: json['resolution'] as String?,
+      );
+
+  final String category;
+  final List<String> findings;
+  final List<String> sourceTools;
+  final String? resolution;
+}
+
+class AgencyCrossToolSynthesis {
+  const AgencyCrossToolSynthesis({
+    required this.findings,
+    required this.agreements,
+    required this.divergences,
+  });
+
+  factory AgencyCrossToolSynthesis.fromJson(
+    Map<String, dynamic> json,
+  ) => AgencyCrossToolSynthesis(
+    findings: (json['findings'] as List? ?? const [])
+        .whereType<Map>()
+        .map(
+          (item) =>
+              AgencyCrossToolFinding.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList(),
+    agreements: (json['agreements'] as List? ?? const [])
+        .whereType<Map>()
+        .map(
+          (item) =>
+              AgencyCrossToolGroup.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList(),
+    divergences: (json['divergences'] as List? ?? const [])
+        .whereType<Map>()
+        .map(
+          (item) =>
+              AgencyCrossToolGroup.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList(),
+  );
+
+  static const empty = AgencyCrossToolSynthesis(
+    findings: [],
+    agreements: [],
+    divergences: [],
+  );
+
+  final List<AgencyCrossToolFinding> findings;
+  final List<AgencyCrossToolGroup> agreements;
+  final List<AgencyCrossToolGroup> divergences;
+}
+
 class AgencyReportDetail extends AgencyReportCard {
   const AgencyReportDetail({
     required super.uuid,
@@ -544,6 +800,8 @@ class AgencyReportDetail extends AgencyReportCard {
     required this.projectSlug,
     required this.snapshot,
     required this.share,
+    required this.visibility,
+    super.freshness,
     super.generatedAt,
   });
 
@@ -555,6 +813,14 @@ class AgencyReportDetail extends AgencyReportCard {
     version: json['version'] as int? ?? 1,
     projectSlug: json['project_slug'] as String? ?? '',
     generatedAt: json['generated_at'] as String?,
+    freshness: AgencyReportFreshness.fromJson(
+      Map<String, dynamic>.from(json['freshness'] as Map? ?? const {}),
+    ),
+    visibility: Map<String, String>.from(
+      (json['visibility'] as Map? ?? const {}).map(
+        (key, value) => MapEntry(key.toString(), value.toString()),
+      ),
+    ),
     share: json['share'] == null
         ? AgencyShare.none
         : AgencyShare.fromJson(Map<String, dynamic>.from(json['share'] as Map)),
@@ -563,6 +829,7 @@ class AgencyReportDetail extends AgencyReportCard {
 
   final String projectSlug;
   final AgencyShare share;
+  final Map<String, String> visibility;
   final Map<String, dynamic> snapshot;
 
   Map<String, dynamic> get project =>
@@ -575,6 +842,22 @@ class AgencyReportDetail extends AgencyReportCard {
   int? get readinessScore => readiness['score'] as int?;
   String get readinessBand =>
       readiness['band'] as String? ?? 'بلا درجة رقمية بعد';
+
+  AgencyConsultationContext? get consultation {
+    final raw = snapshot['consultation'];
+
+    return raw is Map
+        ? AgencyConsultationContext.fromJson(Map<String, dynamic>.from(raw))
+        : null;
+  }
+
+  AgencyCrossToolSynthesis get crossTool {
+    final raw = snapshot['cross_tool_synthesis'];
+
+    return raw is Map
+        ? AgencyCrossToolSynthesis.fromJson(Map<String, dynamic>.from(raw))
+        : AgencyCrossToolSynthesis.empty;
+  }
 
   AgencyExecutive? get executive {
     final raw = snapshot['executive'];

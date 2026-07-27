@@ -3,6 +3,48 @@
     "description":  "سجل المطابقة الوظيفية بين الويب وواجهة API وتطبيق Flutter. صيغة JSON صحيحة ومتوافقة مع YAML.",
     "capabilities":  [
                          {
+                             "id":  "customer.consultation.evidence_integrated",
+                             "role":  "customer",
+                             "web":  {"applicable": true, "route": "app.consultations.show", "method": "GET|POST|DELETE"},
+                             "api":  {"applicable": true, "route": "api.v1.consultations.show", "method": "GET|POST|DELETE"},
+                             "mobile":  {"applicable": true, "screen": "ConsultationScreen", "action": "upload_and_view_extraction_state"},
+                             "states":  ["pending", "completed", "unsupported", "failed", "review"],
+                             "tests":  {
+                                           "web":  ["Tests\\Feature\\ConsultationEvidenceIntegrationTest"],
+                                           "api":  ["Tests\\Feature\\ConsultationEvidenceIntegrationTest"],
+                                           "mobile":  ["mobile/test/features/consultation_unified_context_test.dart"]
+                                       },
+                             "status":  "verified"
+                         },
+                         {
+                             "id":  "customer.agency_reports.unified_context",
+                             "role":  "customer",
+                             "web":  {"applicable": true, "route": "app.agency-reports.show", "method": "GET|POST"},
+                             "api":  {"applicable": true, "route": "api.v1.agency-reports.show", "method": "GET|POST"},
+                             "mobile":  {"applicable": true, "screen": "AgencyReportScreen", "action": "view_consultation_and_cross_tool_sources"},
+                             "states":  ["loading", "empty", "agreement", "divergence", "private", "success"],
+                             "tests":  {
+                                           "web":  ["Tests\\Feature\\UnifiedDiagnosticPresentationTest", "Tests\\Feature\\UnifiedDiagnosticSynthesisTest"],
+                                           "api":  ["Tests\\Feature\\UnifiedDiagnosticSynthesisTest"],
+                                           "mobile":  ["mobile/test/features/agency_report_freshness_test.dart"]
+                                       },
+                             "status":  "verified"
+                         },
+                         {
+                             "id":  "customer.agency_reports.freshness",
+                             "role":  "customer",
+                             "web":  {"applicable": true, "route": "app.agency-reports.show", "method": "GET|POST"},
+                             "api":  {"applicable": true, "route": "api.v1.agency-reports.show", "method": "GET|POST"},
+                             "mobile":  {"applicable": true, "screen": "AgencyReportScreen", "action": "detect_and_regenerate_stale_version"},
+                             "states":  ["fresh", "stale", "regenerating", "error", "success"],
+                             "tests":  {
+                                           "web":  ["Tests\\Feature\\AgencyReportFreshnessTest"],
+                                           "api":  ["Tests\\Feature\\AgencyReportFreshnessTest"],
+                                           "mobile":  ["mobile/test/features/agency_report_freshness_test.dart"]
+                                       },
+                             "status":  "verified"
+                         },
+                         {
                              "id":  "customer.consultation.complete",
                              "role":  "customer",
                              "web":  {
