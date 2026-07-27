@@ -1,0 +1,19 @@
+{
+    "version": "1.0.1",
+    "build": 2,
+    "published_at": "2026-07-27",
+    "api_base_url": "https://khaledsaad.net/api",
+    "apk": {
+        "download_path": "/download/android",
+        "filename": "Khaled-Saad-Growth-1.0.1.apk",
+        "size_bytes": 58830715,
+        "sha256": "13335fffc4506360a4c66fd788e7b40fceda1316b6950a38503896bddedb3f1d",
+        "signature_scheme": "v2",
+        "signer_certificate_sha256": "45b6a8e35aadb87004a11a6efefd8c21e453ce703763f2e93557c3fa5e5a3aff"
+    },
+    "aab": {
+        "filename": "Khaled-Saad-Growth-1.0.1.aab",
+        "size_bytes": 57843912,
+        "sha256": "031e0c02ce64c0299e0fccadffcd37d0128c181d7dd74b7fd2271b04cb5e7549"
+    }
+}

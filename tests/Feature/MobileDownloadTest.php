@@ -8,6 +8,23 @@ use Tests\TestCase;
 class MobileDownloadTest extends TestCase
 {
     #[Test]
+    public function the_release_manifest_matches_the_public_mobile_version(): void
+    {
+        $manifest = json_decode(
+            file_get_contents(public_path('downloads/release.json')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        $this->assertSame(config('mobile.version'), $manifest['version']);
+        $this->assertSame(config('mobile.build'), $manifest['build']);
+        $this->assertSame('/download/android', $manifest['apk']['download_path']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $manifest['apk']['sha256']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $manifest['aab']['sha256']);
+    }
+
+    #[Test]
     public function the_public_manifest_reports_the_signed_android_build(): void
     {
         $path = tempnam(sys_get_temp_dir(), 'ksgrowth-apk-');
