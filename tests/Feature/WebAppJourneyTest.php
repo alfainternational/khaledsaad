@@ -33,7 +33,7 @@ class WebAppJourneyTest extends TestCase
         ])->assertRedirect(route('app.dashboard'));
 
         $this->assertAuthenticated();
-        $this->get(route('app.dashboard'))->assertOk()->assertSee('أين وصلت مشاريعك؟');
+        $this->get(route('app.dashboard'))->assertOk()->assertSee('ملخص مشاريعك وخطوتك التالية');
     }
 
     #[Test]
@@ -46,7 +46,7 @@ class WebAppJourneyTest extends TestCase
         // الأدوات الإحدى عشرة كلها مبنية وقابلة للتشغيل.
         $this->assertSame(11, Tool::count());
         $this->assertSame(11, Tool::runnable()->count());
-        $response->assertSee('ابدأ من هنا');
+        $response->assertSee('اعرف التفاصيل وابدأ');
     }
 
     #[Test]

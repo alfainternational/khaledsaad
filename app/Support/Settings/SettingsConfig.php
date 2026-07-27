@@ -67,6 +67,13 @@ class SettingsConfig
                 ],
             ],
             [
+                'group' => 'الفوترة',
+                'fields' => [
+                    ['key' => 'billing.currency', 'label' => 'عملة الأسعار', 'type' => 'string',
+                        'hint' => 'رمز من ثلاثة أحرف (SAR مثلًا). تحويلها لعملة البوابة يُضبط داخل البوابة نفسها.'],
+                ],
+            ],
+            [
                 'group' => 'أرقام السوق واكتشاف المنافسين',
                 'fields' => [
                     ['key' => 'benchmarks.live_enabled', 'label' => 'تفعيل المصدر الحيّ', 'type' => 'bool',

@@ -6,7 +6,7 @@
     <header class="page-head">
         <div>
             <p class="eyebrow">الإشعارات</p>
-            <h1>ما الجديد؟</h1>
+            <h1>آخر التحديثات التي تهمك</h1>
         </div>
         @if ($notifications->contains(fn ($n) => ! $n['read']))
             <form method="POST" action="{{ route('app.notifications.read-all') }}">
@@ -19,7 +19,7 @@
     @if ($notifications->isEmpty())
         <section class="empty">
             <h2>لا إشعارات بعد</h2>
-            <p>سنخبرك هنا حين يجهز تقرير أو تتأخر مهمة أو ينخفض رصيدك.</p>
+            <p>ستظهر هنا تحديثات التقارير والمهام والرصيد عندما تحتاج إلى اطلاع أو إجراء.</p>
         </section>
     @else
         <ul class="list">
@@ -34,7 +34,7 @@
                     @if ($notification['url'])
                         <form method="POST" action="{{ route('app.notifications.read', $notification['id']) }}">
                             @csrf
-                            <button type="submit" class="btn btn--ghost btn--sm">افتح</button>
+                            <button type="submit" class="btn btn--ghost btn--sm">عرض التفاصيل</button>
                         </form>
                     @endif
                 </li>

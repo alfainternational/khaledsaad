@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $run['tool']['title'].' | تجربة بدون حساب')
+@section('title', $run['tool']['title'].' | تجربة من دون حساب')
 
 @section('content')
     @include('partials.site-header')
@@ -19,7 +19,7 @@
                     <div class="progress__bar">
                         <span style="inline-size: {{ (int) round($position / max(1, $total_steps) * 100) }}%"></span>
                     </div>
-                    <p class="muted">الخطوة {{ $position }} من {{ $total_steps }} · تجرّب الآن بدون حساب</p>
+                    <p class="muted">الخطوة {{ $position }} من {{ $total_steps }} · يمكنك المتابعة الآن من دون حساب</p>
                 </div>
             </header>
 
@@ -60,13 +60,13 @@
                         <a href="{{ route('try.step', [$run['uuid'], $previous_step]) }}" class="btn btn--ghost">السابق</a>
                     @endif
                     <button type="submit" class="btn btn--primary">
-                        {{ $next_step === null ? 'اعرض نتيجتك' : 'التالي' }}
+                        {{ $next_step === null ? 'اعرض النتيجة الأولية' : 'احفظ وانتقل للسؤال التالي' }}
                     </button>
                 </div>
             </form>
 
             <p class="try-note">
-                إجاباتك محفوظة على هذا الجهاز لمدة ثلاثين يومًا. لو أنشأت حسابًا لاحقًا تنتقل معك كما هي.
+                تُحفظ إجاباتك على هذا الجهاز لمدة ثلاثين يومًا، وتنتقل إلى حسابك كما هي إذا أنشأته لاحقًا.
             </p>
         </div>
     </main>

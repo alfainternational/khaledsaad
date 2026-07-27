@@ -45,7 +45,16 @@ class AccountController extends Controller
                 'current_plan' => $subscription->plan->key,
                 'project_count' => $workspace->projects()->count(),
                 'project_limit' => $subscription->plan->project_limit,
+                'current_period_ends_at' => $subscription->current_period_ends_at?->toISOString(),
+                'scheduled_plan' => $subscription->scheduledPlan?->only(['key', 'name']),
                 'payments_enabled' => $this->gateways->hasActiveGateway(),
+                'gateways' => $this->gateways->activeGateways()->map(fn ($gateway) => [
+                    'id' => $gateway->id,
+                    'provider' => $gateway->provider,
+                    'label' => $gateway->label,
+                    'instructions' => $gateway->instructions,
+                    'is_default' => $gateway->is_default,
+                ])->all(),
                 // ما يستحقه العميل الآن — يقرأه التطبيق ليخفي ما لا تسمح به خطته
                 // بدل أن يعرض زرًّا يُرفض عند الضغط.
                 'entitlements' => collect($this->entitlements->for($workspace))
@@ -72,6 +81,18 @@ class AccountController extends Controller
                         'price' => $pack->price,
                         'currency' => $pack->currency,
                     ])->all(),
+                'payments' => Payment::where('workspace_id', $workspace->id)->latest('id')->limit(20)->get()
+                    ->map(fn (Payment $payment) => [
+                        'id' => $payment->id,
+                        'provider' => $payment->provider,
+                        'purpose' => $payment->purpose,
+                        'amount' => $payment->amount,
+                        'currency' => $payment->currency,
+                        'status' => $payment->status,
+                        'status_label' => $payment->statusLabel(),
+                        'refunded_amount' => $payment->refunded_amount,
+                        'created_at' => $payment->created_at?->toISOString(),
+                    ])->all(),
             ],
         ]);
     }
@@ -83,7 +104,7 @@ class AccountController extends Controller
     {
         if ($plan->price > 0) {
             return response()->json([
-                'message' => 'هذه خطة مدفوعة. استخدم مسار الشراء عبر البوابة.',
+                'message' => 'هذه خطة مدفوعة. اخترها من صفحة الخطط ثم أكمل الدفع.',
             ], 422);
         }
 
@@ -104,12 +125,12 @@ class AccountController extends Controller
             return response()->json(['data' => ['completed' => true, 'message' => "فُعّلت خطة {$plan->name}."]]);
         }
 
-        return $this->beginCheckout($request, fn ($workspace, $urls) => $this->checkout->startPlanPurchase($workspace, $plan, $urls));
+        return $this->beginCheckout($request, fn ($workspace, $urls, $gateway) => $this->checkout->startPlanPurchase($workspace, $plan, $urls, $gateway));
     }
 
     public function checkoutPack(Request $request, CreditPack $pack): JsonResponse
     {
-        return $this->beginCheckout($request, fn ($workspace, $urls) => $this->checkout->startCreditPackPurchase($workspace, $pack, $urls));
+        return $this->beginCheckout($request, fn ($workspace, $urls, $gateway) => $this->checkout->startCreditPackPurchase($workspace, $pack, $urls, $gateway));
     }
 
     public function creditPacks(): JsonResponse
@@ -130,10 +151,17 @@ class AccountController extends Controller
     private function beginCheckout(Request $request, callable $starter): JsonResponse
     {
         if (! $this->gateways->hasActiveGateway()) {
-            return response()->json(['message' => 'لا توجد بوابة دفع مفعّلة حاليًا.'], 422);
+            return response()->json(['message' => 'الدفع الإلكتروني غير متاح حاليًا. حاول مرة أخرى لاحقًا.'], 422);
         }
 
         $workspace = $request->user()->primaryWorkspace();
+        $gateway = $request->filled('gateway_id')
+            ? $this->gateways->activeGatewayById($request->integer('gateway_id'))
+            : $this->gateways->defaultGateway();
+
+        if ($gateway === null) {
+            return response()->json(['message' => 'وسيلة الدفع المختارة غير متاحة.'], 422);
+        }
 
         $urls = fn (Payment $payment) => [
             route('api.v1.checkout.callback', $payment),
@@ -141,7 +169,7 @@ class AccountController extends Controller
         ];
 
         try {
-            ['payment' => $payment, 'session' => $session] = $starter($workspace, $urls);
+            ['payment' => $payment, 'session' => $session] = $starter($workspace, $urls, $gateway);
         } catch (\RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }

@@ -30,6 +30,12 @@ class ReportPresenter
             'score' => $report->score,
             'score_band' => $report->score_band,
             'summary' => $report->summary,
+            // توثيق أن التقرير رُوجع بشريًا: بيان صادق موجز، لا لافتة تمدح.
+            // الإحساس البشري يجيء من نص التقرير نفسه (تعليمات المُراجِع)، لا
+            // من جملة تدّعي أنها مكتوبة بيد.
+            'is_manually_reviewed' => $report->review_mode === 'manual',
+            'reviewed_at' => $report->reviewed_at?->locale('ar')->translatedFormat('j F Y'),
+            'reviewer_name' => $report->review_mode === 'manual' ? config('brand.name', 'خالد سعد') : null,
             'assumptions' => $report->assumptions ?? [],
             'next_step' => $report->next_step,
             'project' => ['name' => $report->project->name, 'slug' => $report->project->slug],
@@ -75,12 +81,28 @@ class ReportPresenter
                     'id' => $recommendation->id,
                     'title' => $recommendation->title,
                     'description' => $recommendation->description,
+                    'root_cause' => $recommendation->root_cause,
+                    'commercial_impact' => $recommendation->commercial_impact,
+                    'action_steps' => $recommendation->action_steps ?? [],
+                    'owner_role' => $recommendation->owner_role,
+                    'resources' => $recommendation->resources ?? [],
+                    'timeframe' => $recommendation->timeframe,
+                    'dependencies' => $recommendation->dependencies ?? [],
                     'impact' => $recommendation->impact,
                     'impact_label' => $recommendation->impactLabel(),
                     'effort' => $recommendation->effort,
                     'effort_label' => $recommendation->effortLabel(),
                     'priority' => $recommendation->priority,
                     'kpi_hint' => $recommendation->kpi_hint,
+                    'kpi_definition' => $recommendation->kpi_definition,
+                    'kpi_source' => $recommendation->kpi_source,
+                    'baseline' => $recommendation->baseline,
+                    'target' => $recommendation->target,
+                    'missing_baseline_reason' => $recommendation->missing_baseline_reason,
+                    'success_condition' => $recommendation->success_condition,
+                    'stop_condition' => $recommendation->stop_condition,
+                    'risks' => $recommendation->risks ?? [],
+                    'confidence' => $recommendation->confidence,
                     'task_id' => $recommendation->task?->id,
                 ])->values()->all(),
             ])->values()->all(),
@@ -110,6 +132,21 @@ class ReportPresenter
     }
 
     /**
+     * التقرير السابق لنفس الأداة — أساس المقارنة الزمنية.
+     *
+     * مشتركة بين الويب والـAPI وملف الطباعة كي تُقاس المقارنة بالطريقة نفسها.
+     */
+    public function previousFor(Report $report): ?Report
+    {
+        return Report::where('project_id', $report->project_id)
+            ->where('id', '!=', $report->id)
+            ->whereHas('toolRun', fn ($query) => $query->where('tool_version_id', $report->toolRun->tool_version_id))
+            ->where('created_at', '<', $report->created_at)
+            ->latest('created_at')
+            ->first();
+    }
+
+    /**
      * مقارنة تقريرين لنفس الأداة — القيمة التي لا تعطيها أداة تعمل مرة واحدة.
      *
      * @return array<string, mixed>|null
@@ -122,15 +159,23 @@ class ReportPresenter
 
         $delta = (int) $current->score - (int) $previous->score;
 
+        return $this->deltaBlock($previous, $current, $delta);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function deltaBlock(Report $previous, Report $current, int $delta): array
+    {
         return [
             'previous_score' => $previous->score,
             'current_score' => $current->score,
             'delta' => $delta,
             'direction' => $delta > 0 ? 'up' : ($delta < 0 ? 'down' : 'flat'),
             'label' => match (true) {
-                $delta > 0 => "تحسّن بمقدار {$delta} نقطة منذ التقرير السابق",
-                $delta < 0 => 'تراجع بمقدار '.abs($delta).' نقطة منذ التقرير السابق',
-                default => 'الدرجة لم تتغير منذ التقرير السابق',
+                $delta > 0 => "درجتك ارتفعت {$delta} نقطة منذ آخر مرة — تعبك واضح فيها",
+                $delta < 0 => 'درجتك تراجعت '.abs($delta).' نقطة منذ آخر مرة — تستحق وقفة',
+                default => 'درجتك ثابتة منذ آخر تقرير — لم يتغيّر شيء',
             },
             'days_between' => $previous->created_at?->diffInDays($current->created_at) ?? 0,
         ];

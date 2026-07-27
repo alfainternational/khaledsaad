@@ -7,6 +7,7 @@
         <meta name="robots" content="noindex, nofollow">
         <title>@yield('title', 'الحساب') — خالد سعد</title>
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        @include('partials.font')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="auth-page">

@@ -25,7 +25,7 @@ class CheckoutController extends Controller
 
     public function creditPack(Request $request, CreditPack $pack): RedirectResponse
     {
-        return $this->start($request, fn ($workspace, $urls) => $this->checkout->startCreditPackPurchase($workspace, $pack, $urls));
+        return $this->start($request, fn ($workspace, $urls, $gateway) => $this->checkout->startCreditPackPurchase($workspace, $pack, $urls, $gateway));
     }
 
     public function plan(Request $request, Plan $plan): RedirectResponse
@@ -38,7 +38,7 @@ class CheckoutController extends Controller
             return redirect()->route('app.billing')->with('status', "فُعّلت خطة «{$plan->name}».");
         }
 
-        return $this->start($request, fn ($workspace, $urls) => $this->checkout->startPlanPurchase($workspace, $plan, $urls));
+        return $this->start($request, fn ($workspace, $urls, $gateway) => $this->checkout->startPlanPurchase($workspace, $plan, $urls, $gateway));
     }
 
     public function callback(Request $request, Payment $payment): RedirectResponse
@@ -65,10 +65,19 @@ class CheckoutController extends Controller
     {
         if (! $this->gateways->hasActiveGateway()) {
             return redirect()->route('app.billing')
-                ->withErrors(['gateway' => 'لا توجد بوابة دفع مفعّلة حاليًا. حاول لاحقًا.']);
+                ->withErrors(['gateway' => 'الدفع الإلكتروني غير متاح حاليًا. حاول مرة أخرى لاحقًا.']);
         }
 
         $workspace = $request->user()->primaryWorkspace();
+        $gateway = $request->filled('gateway_id')
+            ? $this->gateways->activeGatewayById($request->integer('gateway_id'))
+            : $this->gateways->defaultGateway();
+
+        if ($gateway === null) {
+            return redirect()->route('app.billing')->withErrors([
+                'gateway_id' => 'وسيلة الدفع المختارة غير متاحة. اختر وسيلة مفعّلة.',
+            ]);
+        }
 
         // بنّاء الروابط يستقبل الدفعة بعد إنشائها فيضمّن معرّفها الحقيقي.
         $urls = fn (Payment $payment) => [
@@ -77,16 +86,27 @@ class CheckoutController extends Controller
         ];
 
         try {
-            ['payment' => $payment, 'session' => $session] = $starter($workspace, $urls);
+            ['payment' => $payment, 'session' => $session] = $starter($workspace, $urls, $gateway);
         } catch (RuntimeException $exception) {
             return redirect()->route('app.billing')->withErrors(['gateway' => $exception->getMessage()]);
         }
 
-        // البوابة اليدوية لا تحوّل: نعتمد الدفع مباشرة.
+        // بوابة بلا تحويل خارجي (التحويل البنكي): الطلب يُسجَّل معلّقًا
+        // ولا يُمنح شيء قبل اعتماد الآدمن.
         if (! $session->requiresRedirect) {
-            $this->checkout->complete($payment, []);
+            if ($session->pendingApproval) {
+                return redirect()->route('app.billing')->with(
+                    'status',
+                    $session->message ?? 'سجّلنا طلبك. سيُعتمد رصيدك فور تأكيد التحويل.',
+                );
+            }
 
-            return redirect()->route('app.billing')->with('status', 'تم اعتماد الدفع وأُضيف رصيدك.');
+            $paid = $this->checkout->complete($payment, []);
+
+            return redirect()->route('app.billing')->with(
+                'status',
+                $paid ? 'تم اعتماد الدفع وأُضيف رصيدك.' : 'سجّلنا طلبك وهو قيد المراجعة.',
+            );
         }
 
         return redirect()->away($session->redirectUrl);

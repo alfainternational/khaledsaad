@@ -5,17 +5,18 @@ use App\Services\Tools\PipelineSchemas;
 return [
     'key' => 'channel-fit',
     'name' => 'Channel Fit',
-    'title' => 'لا تعرف أين تركّز جهدك',
-    'description' => 'نحدد المكان الذي يوجد فيه عميلك ويناسب وقتك وميزانيتك.',
-    'pain' => 'موجود في كل مكان بجهد قليل، فلا تنجح في أي مكان.',
-    'promise' => 'منصة أو منصتان تركز فيهما، وسبب واضح لاختيارهما.',
-    'audience' => 'لمن يوزّع جهده على منصات كثيرة بلا نتيجة واضحة من أي منها.',
+    'title' => 'اختر القنوات التي تستحق وقتك وميزانيتك',
+    'description' => 'قارن القنوات بحسب وجود عميلك فيها، وطبيعة قرار الشراء، وقدرتك على الاستمرار.',
+    'pain' => 'توزّع جهدك على قنوات كثيرة، ولا تعرف أيها يقرّبك فعلًا من العميل المناسب.',
+    'promise' => 'قناة أو قناتان للتركيز، مع سبب الاختيار وما ينبغي قياسه في كل منهما.',
+    'audience' => 'لصاحب مشروع يوزع جهده على منصات كثيرة من دون نتيجة واضحة.',
     'duration_minutes' => 8,
     'category' => 'أين تسوّق',
     'sort_order' => 7,
     'status' => 'published',
 
     'version' => [
+        'number' => 2,
         'credit_cost' => 5,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -107,7 +108,7 @@ return [
 
         ['key' => 'best_channel_name', 'label' => 'إن كنت تعرفها، ما هي؟', 'type' => 'text', 'step' => 2,
             'required' => false, 'visible_when' => ['best_channel_today' => ['feeling', 'measured']],
-            'why' => 'حتى نبني الخطة على ما ينجح عندك بالفعل بدل أن نبدأ من الصفر.'],
+            'why' => 'حتى تُبنى الخطة على ما ينجح في مشروعك بالفعل بدل البدء من الصفر.'],
 
         ['key' => 'monthly_budget', 'label' => 'كم تستطيع أن تصرف شهريًا؟ (ريال)', 'type' => 'number', 'step' => 2,
             'profile_key' => 'monthly_budget', 'validation' => 'min:0',
@@ -122,7 +123,7 @@ return [
             'why' => 'المنفّذ يحدد نوع المحتوى الممكن. من ينفذ وحده وقت ما يقدر لا يستطيع التزامًا يوميًا مهما كانت الخطة جيدة.',
             'options' => [
                 ['value' => 'nobody', 'label' => 'لا أحد بانتظام'],
-                ['value' => 'me_sometimes', 'label' => 'أنا وقت ما أقدر'],
+                ['value' => 'me_sometimes', 'label' => 'أعمل حسب الوقت المتاح'],
                 ['value' => 'me_regular', 'label' => 'أنا بانتظام'],
                 ['value' => 'team', 'label' => 'فريق أو شخص مخصص'],
             ]],

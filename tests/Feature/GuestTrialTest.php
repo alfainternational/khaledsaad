@@ -68,7 +68,7 @@ class GuestTrialTest extends TestCase
 
         $this->get(route('try.step', [$run, 1]))
             ->assertOk()
-            ->assertSee('تجرّب الآن بدون حساب');
+            ->assertSee('يمكنك المتابعة الآن من دون حساب');
 
         $this->post(route('try.step.save', [$run, 1]), [
             'business_model' => 'services',

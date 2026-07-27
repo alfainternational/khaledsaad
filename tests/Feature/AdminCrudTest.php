@@ -43,7 +43,7 @@ class AdminCrudTest extends TestCase
         $this->actingAs($admin)->post(route('admin.plans.store'), [
             'key' => 'startup', 'name' => 'ناشئة', 'interval' => 'monthly',
             'price' => 79, 'monthly_credits' => 80, 'project_limit' => 5,
-            'features' => "ميزة أولى\nميزة ثانية", 'is_public' => '1',
+            'features_text' => "ميزة أولى\nميزة ثانية", 'is_public' => '1',
         ])->assertRedirect();
 
         $plan = Plan::where('key', 'startup')->firstOrFail();
@@ -76,12 +76,15 @@ class AdminCrudTest extends TestCase
     {
         $admin = $this->admin();
 
-        $this->actingAs($admin)->post(route('admin.gateways.store'), [
-            'provider' => 'paypal', 'label' => 'PayPal', 'mode' => 'test',
+        // صفّ PayPal مبذور بلا مفاتيح؛ الآدمن يضيفها من شاشة التعديل.
+        $gateway = PaymentGateway::where('provider', 'paypal')->firstOrFail();
+
+        $this->actingAs($admin)->put(route('admin.gateways.update', $gateway), [
+            'label' => 'PayPal', 'mode' => 'test', 'currency' => 'USD', 'fx_rate' => 0.2667,
             'credentials' => ['client_id' => 'CID-123', 'secret' => 'SEC-456'],
         ])->assertRedirect();
 
-        $gateway = PaymentGateway::where('provider', 'paypal')->firstOrFail();
+        $gateway->refresh();
         $this->assertSame('CID-123', $gateway->credential('client_id'));
 
         // المفاتيح مشفّرة في قاعدة البيانات، لا نصًّا.
@@ -90,19 +93,17 @@ class AdminCrudTest extends TestCase
     }
 
     #[Test]
-    public function activating_one_gateway_deactivates_the_others(): void
+    public function activating_a_gateway_keeps_the_other_customer_options_available(): void
     {
         $admin = $this->admin();
-        // بوابة manual مفعّلة من البذر.
-        $paypal = PaymentGateway::create([
-            'provider' => 'paypal', 'label' => 'PayPal', 'mode' => 'test',
-            'is_active' => false, 'credentials' => ['client_id' => 'x', 'secret' => 'y'],
-        ]);
+        // بوابة manual مفعّلة من البذر، وPayPal مبذورة معطّلة بلا مفاتيح.
+        $paypal = PaymentGateway::where('provider', 'paypal')->firstOrFail();
+        $paypal->update(['credentials' => ['client_id' => 'x', 'secret' => 'y']]);
 
         $this->actingAs($admin)->patch(route('admin.gateways.toggle', $paypal))->assertRedirect();
 
         $this->assertTrue($paypal->fresh()->is_active);
-        $this->assertFalse(PaymentGateway::where('provider', 'manual')->first()->is_active);
+        $this->assertTrue(PaymentGateway::where('provider', 'manual')->first()->is_active);
     }
 
     #[Test]

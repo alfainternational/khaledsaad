@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // بعض قواعد الإنتاج استلمت الجدول قبل مزامنة سجل migrations.
+        if (Schema::hasTable('device_tokens')) {
+            return;
+        }
+
         Schema::create('device_tokens', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();

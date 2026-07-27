@@ -23,7 +23,9 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  late Future<Map<String, List<TaskModel>>> _future = widget.repository.tasks(widget.slug);
+  late Future<Map<String, List<TaskModel>>> _future = widget.repository.tasks(
+    widget.slug,
+  );
 
   static const Map<String, String> _columns = {
     'todo': 'لم تبدأ',
@@ -31,7 +33,8 @@ class _TasksScreenState extends State<TasksScreen> {
     'done': 'منجزة',
   };
 
-  void _reload() => setState(() => _future = widget.repository.tasks(widget.slug));
+  void _reload() =>
+      setState(() => _future = widget.repository.tasks(widget.slug));
 
   Future<void> _update(TaskModel task, String status) async {
     try {
@@ -39,8 +42,9 @@ class _TasksScreenState extends State<TasksScreen> {
       _reload();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -62,10 +66,15 @@ class _TasksScreenState extends State<TasksScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  Text(widget.projectName, style: const TextStyle(color: BrandColors.muted)),
+                  Text(
+                    widget.projectName,
+                    style: const TextStyle(color: BrandColors.muted),
+                  ),
                   const SizedBox(height: 6),
-                  const Text('من التوصية إلى التنفيذ',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  const Text(
+                    'من التوصية إلى التنفيذ',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 4),
                   const Text(
                     'كل مهمة هنا جاءت من توصية في تقرير، ومعها أثرها وجهدها وموعدها.',
@@ -76,25 +85,40 @@ class _TasksScreenState extends State<TasksScreen> {
                   if (isEmpty)
                     const EmptyState(
                       title: 'لا مهام بعد',
-                      message: 'افتح أي تقرير وحوّل توصياته إلى مهام — هنا يتحول التحليل إلى عمل.',
+                      message:
+                          'افتح أحد التقارير وحوّل التوصيات التي تريد تنفيذها إلى مهام قابلة للمتابعة.',
                     )
                   else
                     for (final entry in _columns.entries) ...[
-                      Text('${entry.value} (${groups[entry.key]?.length ?? 0})',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      Text(
+                        '${entry.value} (${groups[entry.key]?.length ?? 0})',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 10),
-                      for (final task in groups[entry.key] ?? const <TaskModel>[]) ...[
+                      for (final task
+                          in groups[entry.key] ?? const <TaskModel>[]) ...[
                         BrandCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(task.title,
-                                  style: const TextStyle(fontWeight: FontWeight.w700)),
+                              Text(
+                                task.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                               if (task.description != null) ...[
                                 const SizedBox(height: 4),
-                                Text(task.description!,
-                                    style: const TextStyle(
-                                        color: BrandColors.muted, fontSize: 13)),
+                                Text(
+                                  task.description!,
+                                  style: const TextStyle(
+                                    color: BrandColors.muted,
+                                    fontSize: 13,
+                                  ),
+                                ),
                               ],
                               const SizedBox(height: 10),
                               Wrap(
@@ -109,10 +133,14 @@ class _TasksScreenState extends State<TasksScreen> {
                                     ),
                                   if (task.impact != null)
                                     SeverityBadge(
-                                        label: 'الأثر: ${task.impact}', severity: 'low'),
+                                      label: 'الأثر: ${task.impact}',
+                                      severity: 'low',
+                                    ),
                                   if (task.effort != null)
                                     SeverityBadge(
-                                        label: 'الجهد: ${task.effort}', severity: 'low'),
+                                      label: 'الجهد: ${task.effort}',
+                                      severity: 'low',
+                                    ),
                                 ],
                               ),
                               const SizedBox(height: 10),
@@ -120,12 +148,18 @@ class _TasksScreenState extends State<TasksScreen> {
                                 initialValue: task.status,
                                 decoration: const InputDecoration(
                                   isDense: true,
-                                  contentPadding:
-                                      EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
                                 ),
                                 items: _columns.entries
-                                    .map((entry) => DropdownMenuItem(
-                                        value: entry.key, child: Text(entry.value)))
+                                    .map(
+                                      (entry) => DropdownMenuItem(
+                                        value: entry.key,
+                                        child: Text(entry.value),
+                                      ),
+                                    )
                                     .toList(),
                                 onChanged: (status) {
                                   if (status != null && status != task.status) {

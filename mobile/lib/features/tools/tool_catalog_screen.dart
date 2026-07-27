@@ -23,7 +23,7 @@ class _ToolCatalogScreenState extends State<ToolCatalogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الأدوات')),
+      appBar: AppBar(title: const Text('التشخيصات')),
       body: FutureBuilder<List<ToolCard>>(
         future: _future,
         builder: (context, snapshot) => AsyncView(
@@ -32,11 +32,15 @@ class _ToolCatalogScreenState extends State<ToolCatalogScreen> {
           builder: (tools) => ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text('إحدى عشرة أداة، مصدر بيانات واحد',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
+              const Text(
+                'اختر ما تريد تشخيصه الآن',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 4),
-              const Text('كل أداة تقرأ من ملف مشروعك، فلا تُسأل عن الشيء نفسه مرتين.',
-                  style: TextStyle(color: BrandColors.muted)),
+              const Text(
+                'اختر التحدي الأقرب إلى مشروعك. ستُستخدم معلوماتك المحفوظة لتقليل الأسئلة المتكررة.',
+                style: TextStyle(color: BrandColors.muted),
+              ),
               const SizedBox(height: 18),
 
               for (final tool in tools) ...[
@@ -55,11 +59,21 @@ class _ToolCatalogScreenState extends State<ToolCatalogScreen> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text(tool.title,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      Text(
+                        tool.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 6),
-                      Text(tool.description,
-                          style: const TextStyle(color: BrandColors.muted, fontSize: 13)),
+                      Text(
+                        tool.description,
+                        style: const TextStyle(
+                          color: BrandColors.muted,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),

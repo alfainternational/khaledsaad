@@ -33,7 +33,7 @@ class ResumeEngagementTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get(route('app.tools.index'))
             ->assertOk()
-            ->assertSee('ابدأ من هنا')
+            ->assertSee('اعرف التفاصيل وابدأ')
             ->assertDontSee('أكمل من حيث وقفت');
     }
 

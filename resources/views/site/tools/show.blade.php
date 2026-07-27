@@ -37,23 +37,23 @@
                             <ul class="tool-hero__meta">
                                 <li><strong>{{ $tool['duration_minutes'] ?? 10 }} دقائق</strong><span>وقتك تقريبًا</span></li>
                                 <li><strong>{{ $tool['step_count'] }} خطوات</strong><span>تُحفظ أولًا بأول</span></li>
-                                <li><strong>مجانًا</strong><span>لا نطلب بطاقة</span></li>
+                                <li><strong>ابدأ مباشرة</strong><span>من دون بطاقة دفع</span></li>
                             </ul>
 
                             <div class="page-hero__actions">
                                 @auth
                                     <a class="button button--primary button--large" href="{{ route('app.tools.show', $tool['key']) }}">
-                                        ابدأ على مشروعك <span aria-hidden="true">←</span>
+                                        ابدأ التشخيص لهذا المشروع <span aria-hidden="true">←</span>
                                     </a>
                                 @else
                                     {{-- يجرّب أولًا بلا حساب؛ وما يكتبه ينتقل معه إن سجّل. --}}
                                     <form method="POST" action="{{ route('try.start', $tool['key']) }}">
                                         @csrf
                                         <button type="submit" class="button button--primary button--large">
-                                            جرّبها الآن بدون حساب <span aria-hidden="true">←</span>
+                                            ابدأ من دون حساب <span aria-hidden="true">←</span>
                                         </button>
                                     </form>
-                                    <a class="button button--ghost button--large" href="{{ route('login', ['tool' => $tool['key']]) }}">عندي حساب</a>
+                                    <a class="button button--ghost button--large" href="{{ route('login', ['tool' => $tool['key']]) }}">تسجيل الدخول</a>
                                 @endauth
                             </div>
 
@@ -62,9 +62,9 @@
                             @endif
                         @else
                             <div class="notice">
-                                <strong>هذه لم تفتح بعد، ونعمل عليها الآن.</strong>
-                                <p>نفضّل أن نقول لك الحقيقة بدل أن نفتح لك بابًا لا يعمل. ابدأ بما هو جاهز، وسنخبرك أول ما تفتح هذه.</p>
-                                <a class="button button--primary" href="{{ route('tools.index') }}">اطّلع على الأدوات المتاحة</a>
+                                <strong>هذا التشخيص غير متاح حاليًا.</strong>
+                                <p>يمكنك اختيار تشخيص متاح الآن والبدء بالتحدي الأقرب إلى مشروعك.</p>
+                                <a class="button button--primary" href="{{ route('tools.index') }}">استكشف التشخيصات المتاحة</a>
                             </div>
                         @endif
                     </div>
@@ -72,7 +72,7 @@
                     @if ($tool['is_runnable'])
                         <aside class="tool-hero__panel" aria-label="ماذا يحدث هنا">
                             <div class="panel-block">
-                                <h2>ما الذي تخرج به؟</h2>
+                                <h2>ما الذي ستحصل عليه؟</h2>
                                 <ul class="check-list">
                                     @if ($tool['promise'])
                                         <li><span>✓</span> {{ $tool['promise'] }}</li>
@@ -86,8 +86,8 @@
                             <div class="panel-block">
                                 <h2>ماذا نطلب منك؟</h2>
                                 <ul class="check-list">
-                                    <li><span>✓</span> إجابات من واقع شغلك، لا أرقام تبحث عنها</li>
-                                    <li><span>✓</span> ما لا تعرفه اتركه فارغًا — نقول لك كيف تعرفه</li>
+                                    <li><span>✓</span> إجابات من واقع مشروعك، من دون الحاجة إلى تجهيز ملف معقد</li>
+                                    <li><span>✓</span> يمكنك ترك ما لا تعرفه فارغًا، وسترى كيف تستكمل المعلومة لاحقًا</li>
                                     <li><span>✓</span> ما تكتبه هنا لن نسألك عنه في أي خطوة أخرى</li>
                                 </ul>
                             </div>
@@ -101,9 +101,9 @@
             <section class="section steps-section">
                 <div class="container">
                     <x-section-heading
-                        eyebrow="بدون مفاجآت"
-                        title="الأسئلة التي سنسألك عنها"
-                        description="اقرأها قبل أن تبدأ. وبجانب كل سؤال داخل المنصة سبب واضح: لماذا نسأله، وكيف يغيّر النتيجة."
+                        eyebrow="اعرف ما ينتظرك"
+                        title="المعلومات التي ستحتاج إليها"
+                        description="راجعها قبل أن تبدأ. سترى بجانب كل سؤال سبب طلبه وكيف يؤثر في دقة النتيجة."
                     />
                     <div class="steps-grid">
                         @foreach ($tool['steps'] as $step)

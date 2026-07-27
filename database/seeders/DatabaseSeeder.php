@@ -13,8 +13,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             PlanSeeder::class,
+            // الميزات بعد الخطط: توزيعها يحتاج الخطط موجودة.
+            FeatureSeeder::class,
             PaymentSeeder::class,
             ToolCatalogSeeder::class,
+            ConsultationCatalogSeeder::class,
             // حساب الآدمن يبقى عبر عمليات إعادة التهيئة.
             AdminUserSeeder::class,
         ]);

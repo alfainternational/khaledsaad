@@ -9,10 +9,10 @@
         <div class="container try-layout">
             <header class="try-head">
                 <p class="eyebrow">{{ $run['tool']['title'] }}</p>
-                <h1>جاهز. إجاباتك مكتملة.</h1>
+                <h1>اكتملت إجاباتك، وأصبحت جاهزة للتحليل.</h1>
                 <p class="page-hero__lead">
-                    راجع ما كتبته أدناه. الخطوة الأخيرة أن تنشئ حسابًا مجانيًا في دقيقة،
-                    فنبدأ التحليل ونحفظ لك النتيجة والمهام في مشروعك.
+                    راجع ما كتبته أدناه، ثم أنشئ حسابك لبدء التحليل وحفظ النتيجة
+                    والمهام المقترحة ضمن مشروعك.
                 </p>
             </header>
 
@@ -20,8 +20,8 @@
                 <div>
                     <h2>لماذا نطلب الحساب هنا تحديدًا؟</h2>
                     <ul class="check-list">
-                        <li><span>✓</span> التحليل يأخذ دقيقة أو دقيقتين، والحساب هو ما يخبرك حين يجهز</li>
-                        <li><span>✓</span> نتيجتك ومهامك تبقى محفوظة، وترجع لها بعد شهر لتقارن</li>
+                        <li><span>✓</span> يصلك إشعار عند اكتمال التحليل</li>
+                        <li><span>✓</span> تبقى النتيجة والمهام محفوظة لتعود إليها وتقارن التقدم</li>
                         <li><span>✓</span> ما كتبته الآن ينتقل معك كما هو — لن نسألك عنه من جديد</li>
                     </ul>
                 </div>
@@ -29,7 +29,7 @@
                     <a class="button button--primary button--large" href="{{ route('register', ['tool' => $tool->key]) }}">
                         أنشئ حسابك واحفظ نتيجتك <span aria-hidden="true">←</span>
                     </a>
-                    <a class="text-link" href="{{ route('login', ['tool' => $tool->key]) }}">عندي حساب بالفعل ←</a>
+                    <a class="text-link" href="{{ route('login', ['tool' => $tool->key]) }}">لدي حساب بالفعل ←</a>
                 </div>
             </section>
 
@@ -57,7 +57,7 @@
 
             @if ($preflight['missing'] !== [])
                 <p class="alert alert--info" role="status">
-                    ناقص عليك: {{ implode('، ', $preflight['missing']) }}
+                    لتحسين دقة النتيجة، يمكنك استكمال: {{ implode('، ', $preflight['missing']) }}
                 </p>
             @endif
         </div>

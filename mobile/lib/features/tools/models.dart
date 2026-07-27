@@ -17,18 +17,18 @@ class ToolCard {
   });
 
   factory ToolCard.fromJson(Map<String, dynamic> json) => ToolCard(
-        key: json['key'] as String,
-        title: json['title'] as String,
-        description: json['description'] as String,
-        category: json['category'] as String,
-        isRunnable: json['is_runnable'] as bool,
-        statusLabel: json['status_label'] as String,
-        // لغة العميل، مطابقة لما يعرضه ToolPresenter::card في الويب.
-        pain: json['pain'] as String?,
-        promise: json['promise'] as String?,
-        audience: json['audience'] as String?,
-        durationMinutes: json['duration_minutes'] as int?,
-      );
+    key: json['key'] as String,
+    title: json['title'] as String,
+    description: json['description'] as String,
+    category: json['category'] as String,
+    isRunnable: json['is_runnable'] as bool,
+    statusLabel: json['status_label'] as String,
+    // لغة العميل، مطابقة لما يعرضه ToolPresenter::card في الويب.
+    pain: json['pain'] as String?,
+    promise: json['promise'] as String?,
+    audience: json['audience'] as String?,
+    durationMinutes: json['duration_minutes'] as int?,
+  );
 
   final String key;
   final String title;
@@ -42,7 +42,8 @@ class ToolCard {
   final int? durationMinutes;
 
   /// ما يُعرض للعميل: وعد الأداة إن وُجد، وإلا وصفها.
-  String get headline => (promise != null && promise!.isNotEmpty) ? promise! : description;
+  String get headline =>
+      (promise != null && promise!.isNotEmpty) ? promise! : description;
 }
 
 class ToolDetail {
@@ -54,11 +55,15 @@ class ToolDetail {
   });
 
   factory ToolDetail.fromJson(Map<String, dynamic> json) => ToolDetail(
-        card: ToolCard.fromJson(json),
-        stepCount: json['step_count'] as int? ?? 0,
-        inputs: (json['inputs'] as List? ?? const []).map((e) => e.toString()).toList(),
-        outputs: (json['outputs'] as List? ?? const []).map((e) => e.toString()).toList(),
-      );
+    card: ToolCard.fromJson(json),
+    stepCount: json['step_count'] as int? ?? 0,
+    inputs: (json['inputs'] as List? ?? const [])
+        .map((e) => e.toString())
+        .toList(),
+    outputs: (json['outputs'] as List? ?? const [])
+        .map((e) => e.toString())
+        .toList(),
+  );
 
   final ToolCard card;
   final int stepCount;
@@ -69,8 +74,10 @@ class ToolDetail {
 class FieldOption {
   const FieldOption({required this.value, required this.label});
 
-  factory FieldOption.fromJson(Map<String, dynamic> json) =>
-      FieldOption(value: json['value'].toString(), label: json['label'].toString());
+  factory FieldOption.fromJson(Map<String, dynamic> json) => FieldOption(
+    value: json['value'].toString(),
+    label: json['label'].toString(),
+  );
 
   final String value;
   final String label;
@@ -88,16 +95,16 @@ class ToolFieldModel {
   });
 
   factory ToolFieldModel.fromJson(Map<String, dynamic> json) => ToolFieldModel(
-        key: json['key'] as String,
-        label: json['label'] as String,
-        type: json['type'] as String,
-        required: json['required'] as bool? ?? true,
-        help: json['help'] as String?,
-        options: (json['options'] as List? ?? const [])
-            .map((e) => FieldOption.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-        value: json['value'],
-      );
+    key: json['key'] as String,
+    label: json['label'] as String,
+    type: json['type'] as String,
+    required: json['required'] as bool? ?? true,
+    help: json['help'] as String?,
+    options: (json['options'] as List? ?? const [])
+        .map((e) => FieldOption.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    value: json['value'],
+  );
 
   final String key;
   final String label;
@@ -115,15 +122,21 @@ class ToolFieldModel {
 }
 
 class WizardStep {
-  const WizardStep({required this.step, required this.title, required this.fields});
+  const WizardStep({
+    required this.step,
+    required this.title,
+    required this.fields,
+  });
 
   factory WizardStep.fromJson(Map<String, dynamic> json) => WizardStep(
-        step: json['step'] as int,
-        title: json['title'] as String,
-        fields: (json['fields'] as List)
-            .map((e) => ToolFieldModel.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-      );
+    step: json['step'] as int,
+    title: json['title'] as String,
+    fields: (json['fields'] as List)
+        .map(
+          (e) => ToolFieldModel.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
+  );
 
   final int step;
   final String title;
@@ -140,18 +153,128 @@ class RunStage {
   });
 
   factory RunStage.fromJson(Map<String, dynamic> json) => RunStage(
-        key: json['key'] as String,
-        label: json['label'] as String,
-        status: json['status'] as String,
-        statusLabel: json['status_label'] as String,
-        error: json['error'] as String?,
-      );
+    key: json['key'] as String,
+    label: json['label'] as String,
+    status: json['status'] as String,
+    statusLabel: json['status_label'] as String,
+    error: json['error'] as String?,
+  );
 
   final String key;
   final String label;
   final String status;
   final String statusLabel;
   final String? error;
+}
+
+class HybridInsightSummary {
+  const HybridInsightSummary({
+    required this.completenessPercent,
+    required this.missingCount,
+    required this.missing,
+    required this.agencyReadinessPercent,
+    required this.agencyReadinessLabel,
+    required this.agencyMissing,
+  });
+
+  factory HybridInsightSummary.fromJson(Map<String, dynamic> json) =>
+      HybridInsightSummary(
+        completenessPercent: json['completeness_percent'] as int? ?? 0,
+        missingCount: json['missing_count'] as int? ?? 0,
+        missing: (json['missing'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+        agencyReadinessPercent: json['agency_readiness_percent'] as int? ?? 0,
+        agencyReadinessLabel: json['agency_readiness_label'] as String? ?? '',
+        agencyMissing: (json['agency_missing'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+      );
+
+  final int completenessPercent;
+  final int missingCount;
+  final List<String> missing;
+  final int agencyReadinessPercent;
+  final String agencyReadinessLabel;
+  final List<String> agencyMissing;
+}
+
+class HybridSignal {
+  const HybridSignal({
+    required this.type,
+    required this.title,
+    required this.description,
+    required this.basis,
+  });
+
+  factory HybridSignal.fromJson(Map<String, dynamic> json) => HybridSignal(
+    type: json['type'] as String? ?? 'info',
+    title: json['title'] as String? ?? '',
+    description: json['description'] as String? ?? '',
+    basis: json['basis'] as String? ?? '',
+  );
+
+  final String type;
+  final String title;
+  final String description;
+  final String basis;
+}
+
+class PreliminaryInsight {
+  const PreliminaryInsight({
+    required this.status,
+    required this.label,
+    required this.meaning,
+    required this.riskOrOpportunity,
+    required this.recommendation,
+    required this.deepenQuestion,
+  });
+
+  factory PreliminaryInsight.fromJson(Map<String, dynamic> json) =>
+      PreliminaryInsight(
+        status: json['status'] as String? ?? 'not_requested',
+        label: json['label'] as String? ?? 'مؤشر أولي',
+        meaning: json['meaning'] as String? ?? '',
+        riskOrOpportunity: json['risk_or_opportunity'] as String? ?? '',
+        recommendation: json['recommendation'] as String? ?? '',
+        deepenQuestion: json['deepen_question'] as String? ?? '',
+      );
+
+  final String status;
+  final String label;
+  final String meaning;
+  final String riskOrOpportunity;
+  final String recommendation;
+  final String deepenQuestion;
+
+  bool get isReady => status == 'ready';
+}
+
+class HybridInsights {
+  const HybridInsights({
+    required this.summary,
+    required this.signals,
+    required this.preliminary,
+  });
+
+  factory HybridInsights.fromJson(Map<String, dynamic> json) => HybridInsights(
+    summary: HybridInsightSummary.fromJson(
+      Map<String, dynamic>.from(json['summary'] as Map? ?? const {}),
+    ),
+    signals: (json['signals'] as List? ?? const [])
+        .whereType<Map>()
+        .map(
+          (signal) => HybridSignal.fromJson(Map<String, dynamic>.from(signal)),
+        )
+        .toList(),
+    preliminary: PreliminaryInsight.fromJson(
+      Map<String, dynamic>.from(json['preliminary'] as Map? ?? const {}),
+    ),
+  );
+
+  final HybridInsightSummary summary;
+  final List<HybridSignal> signals;
+  final PreliminaryInsight preliminary;
 }
 
 class ToolRunModel {
@@ -170,28 +293,34 @@ class ToolRunModel {
     this.baseScore,
     this.reportId,
     this.failureReason,
+    this.insights,
   });
 
   factory ToolRunModel.fromJson(Map<String, dynamic> json) => ToolRunModel(
-        uuid: json['uuid'] as String,
-        status: json['status'] as String,
-        statusLabel: json['status_label'] as String,
-        currentStep: json['current_step'] as int? ?? 1,
-        isTerminal: json['is_terminal'] as bool? ?? false,
-        progressPercent: json['progress_percent'] as int? ?? 0,
-        completenessPercent: json['completeness_percent'] as int? ?? 0,
-        baseScore: json['base_score'] as int?,
-        reportId: json['report_id'] as int?,
-        failureReason: json['failure_reason'] as String?,
-        toolTitle: (json['tool'] as Map?)?['title']?.toString() ?? '',
-        projectName: (json['project'] as Map?)?['name']?.toString() ?? '',
-        steps: (json['steps'] as List? ?? const [])
-            .map((e) => WizardStep.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-        stages: (json['stages'] as List? ?? const [])
-            .map((e) => RunStage.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-      );
+    uuid: json['uuid'] as String,
+    status: json['status'] as String,
+    statusLabel: json['status_label'] as String,
+    currentStep: json['current_step'] as int? ?? 1,
+    isTerminal: json['is_terminal'] as bool? ?? false,
+    progressPercent: json['progress_percent'] as int? ?? 0,
+    completenessPercent: json['completeness_percent'] as int? ?? 0,
+    baseScore: json['base_score'] as int?,
+    reportId: json['report_id'] as int?,
+    failureReason: json['failure_reason'] as String?,
+    insights: json['insights'] is Map
+        ? HybridInsights.fromJson(
+            Map<String, dynamic>.from(json['insights'] as Map),
+          )
+        : null,
+    toolTitle: (json['tool'] as Map?)?['title']?.toString() ?? '',
+    projectName: (json['project'] as Map?)?['name']?.toString() ?? '',
+    steps: (json['steps'] as List? ?? const [])
+        .map((e) => WizardStep.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    stages: (json['stages'] as List? ?? const [])
+        .map((e) => RunStage.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+  );
 
   final String uuid;
   final String status;
@@ -203,6 +332,7 @@ class ToolRunModel {
   final int? baseScore;
   final int? reportId;
   final String? failureReason;
+  final HybridInsights? insights;
   final String toolTitle;
   final String projectName;
   final List<WizardStep> steps;
@@ -210,13 +340,21 @@ class ToolRunModel {
 }
 
 class Preflight {
-  const Preflight({required this.missing, required this.percent, required this.assumptions});
+  const Preflight({
+    required this.missing,
+    required this.percent,
+    required this.assumptions,
+  });
 
   factory Preflight.fromJson(Map<String, dynamic> json) => Preflight(
-        missing: (json['missing'] as List? ?? const []).map((e) => e.toString()).toList(),
-        percent: json['percent'] as int? ?? 0,
-        assumptions: (json['assumptions'] as List? ?? const []).map((e) => e.toString()).toList(),
-      );
+    missing: (json['missing'] as List? ?? const [])
+        .map((e) => e.toString())
+        .toList(),
+    percent: json['percent'] as int? ?? 0,
+    assumptions: (json['assumptions'] as List? ?? const [])
+        .map((e) => e.toString())
+        .toList(),
+  );
 
   final List<String> missing;
   final int percent;

@@ -84,6 +84,7 @@ class ApiParityTest extends TestCase
             'answers' => [
                 'landing_experience' => 'optimized',
                 'retention_motion' => 'systematic',
+                'trial_conversion' => 'medium',
                 'known_cac' => 90,
             ],
         ])->assertOk()->assertJsonPath('data.completeness_percent', 100);

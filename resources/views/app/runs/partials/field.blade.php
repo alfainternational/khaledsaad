@@ -2,6 +2,12 @@
     $value = old($field['key'], $field['value']);
     $isMulti = $field['type'] === 'multiselect';
     $selected = $isMulti ? (array) ($value ?? []) : [];
+
+    // قيمة مصفوفة لحقل مفرد (قادمة من old أو ذاكرة قديمة): نأخذ أول قيمة صالحة.
+    if (! $isMulti && is_array($value)) {
+        $scalars = array_values(array_filter($value, is_scalar(...)));
+        $value = $scalars[0] ?? null;
+    }
 @endphp
 
 <div class="field">
@@ -84,7 +90,7 @@
     @if (! empty($field['competitor_view']))
         {{-- رؤية كاملة للمنافسين: أين ترى إعلاناتهم على كل منصة. --}}
         <details class="field__competitors">
-            <summary>شوف إعلانات منافسيك على هذه المنصات</summary>
+            <summary>اطّلع على إعلانات منافسيك في هذه المنصات</summary>
             <ul>
                 @foreach ($field['competitor_view'] as $view)
                     <li @class(['is-limited' => $view['limited']])>

@@ -60,24 +60,24 @@ class DeterministicInsights
             default => 'low',
         };
 
-        $title = $advice['title'] ?? "«{$label}» يحتاج اهتمامك أولًا";
+        $title = $advice['title'] ?? "«{$label}» هو أول ما يستحق انتباهك";
         $description = $advice['description']
-            ?? 'هذا الجانب من أضعف ما في مشروعك الآن مقارنة بأثره على النتيجة، فمعالجته تعطيك أكبر تحسّن بأقل جهد.';
+            ?? 'هذا من أضعف النقاط عندك الآن، وهو في نفس الوقت من أكثرها تأثيرًا على نتيجتك. يعني لو رتّبته، تكسب أكبر تحسّن بأقل مجهود.';
 
         $recommendation = $advice['recommendation']
-            ?? "خصّص وقتًا هذا الأسبوع لمعالجة «{$label}»: اكتب وضعه الحالي بصراحة، وحدّد خطوة واحدة ملموسة تحسّنه.";
+            ?? "خذ وقتًا هذا الأسبوع لـ«{$label}»: اكتب وضعه الحالي بصراحة، ثم اختر خطوة واحدة صغيرة تنقله للأفضل.";
 
         return [
             'title' => $title,
             'description' => $description,
-            'category' => 'أولوية محسوبة',
+            'category' => 'ابدأ من هنا',
             'severity' => $severity,
             // حتمية لا افتراضية: مبنية على إجاباته ودرجته لا على تخمين.
             'is_assumption' => false,
-            'evidence' => "درجة هذا الجانب {$this->percent($factor)}% من الحد الأعلى، وهو من أعلى بنود الأثر.",
+            'evidence' => "هذا الجانب وصل {$this->percent($factor)}% من الكامل، وهو من أكثر النقاط تأثيرًا في نتيجتك.",
             'confidence' => 90,
             'recommendations' => [[
-                'title' => $advice['title'] ?? "ابدأ بمعالجة «{$label}»",
+                'title' => $advice['title'] ?? "اجعل «{$label}» أول خطوة",
                 'description' => $recommendation,
                 'impact' => $factor <= 0.4 ? 'high' : 'medium',
                 'effort' => 'medium',

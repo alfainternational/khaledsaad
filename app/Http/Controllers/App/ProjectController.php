@@ -75,7 +75,7 @@ class ProjectController extends Controller
         }
 
         return redirect()->route('app.projects.show', $project)
-            ->with('status', 'أُنشئ المشروع. ابدأ بالتشخيص لتعرف من أين تبدأ.');
+            ->with('status', 'أُضيف المشروع. اختر التشخيص الذي يناسب أولويتك الحالية.');
     }
 
     public function show(Request $request, Project $project): View

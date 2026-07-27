@@ -5,7 +5,7 @@
 @section('content')
     <header class="page-head">
         <div>
-            <p class="eyebrow">محرك النمو · {{ $project->name }}</p>
+            <p class="eyebrow">اختبار الرسائل · {{ $project->name }}</p>
             <h1>مختبر الجمهور</h1>
             <p class="muted">
                 اختبر رسالتك على جمهور اصطناعي مبني من بيانات مشروعك —

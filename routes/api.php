@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AccountController;
-use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\BillingCatalogController as AdminBillingCatalogController;
+use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\ManualReportController as AdminManualReportController;
 use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\AgencyReportController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CompetitorController;
+use App\Http\Controllers\Api\V1\ConsultationController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\EngagementController;
 use App\Http\Controllers\Api\V1\GrowthController;
@@ -41,6 +42,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::prefix('public')->name('public.')->middleware('throttle:60,1')->group(function (): void {
         Route::get('bootstrap', [PublicContentController::class, 'bootstrap'])->name('bootstrap');
         Route::get('legal/{page}', [PublicContentController::class, 'legal'])->name('legal');
+        Route::get('mobile-app', [PublicContentController::class, 'mobileApp'])->name('mobile-app');
         Route::post('tools/{tool}/runs', [GuestRunController::class, 'start'])->name('runs.start');
         Route::get('runs/{run}', [GuestRunController::class, 'show'])->name('runs.show');
         Route::put('runs/{run}/steps/{step}', [GuestRunController::class, 'saveStep'])->name('runs.step');
@@ -62,6 +64,18 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
         Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
         Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+        Route::post('projects/{project}/consultations', [ConsultationController::class, 'store'])->middleware('throttle:10,1')->name('consultations.store');
+        Route::get('consultations/{consultation}', [ConsultationController::class, 'show'])->name('consultations.show');
+        Route::put('consultations/{consultation}/answers/{question}', [ConsultationController::class, 'answer'])->middleware('throttle:120,1')->name('consultations.answer');
+        Route::post('consultations/{consultation}/review', [ConsultationController::class, 'review'])->name('consultations.review');
+        Route::post('consultations/{consultation}/confirm', [ConsultationController::class, 'confirm'])->middleware('throttle:6,1')->name('consultations.confirm');
+        Route::post('consultations/{consultation}/retry', [ConsultationController::class, 'retry'])->name('consultations.retry');
+        Route::get('consultations/{consultation}/status', [ConsultationController::class, 'status'])->name('consultations.status');
+        Route::post('consultations/{consultation}/conflicts/{conflict}/resolve', [ConsultationController::class, 'resolveConflict'])->name('consultations.conflicts.resolve');
+        Route::get('consultations/{consultation}/export', [ConsultationController::class, 'export'])->name('consultations.export');
+        Route::delete('consultations/{consultation}', [ConsultationController::class, 'destroy'])->name('consultations.destroy');
+        Route::post('consultations/{consultation}/evidence', [ConsultationController::class, 'uploadEvidence'])->middleware('throttle:20,1')->name('consultations.evidence.store');
+        Route::delete('consultations/{consultation}/evidence/{evidence}', [ConsultationController::class, 'deleteEvidence'])->name('consultations.evidence.destroy');
         // نفس بوابات الميزات التي تحكم الويب حرفيًا: التطبيق ليس بابًا خلفيًا.
         Route::middleware('feature:'.FeatureKey::REPORTS_AGENCY)->group(function (): void {
             Route::get('projects/{project}/agency-reports', [AgencyReportController::class, 'index'])->name('projects.agency-reports.index');
@@ -151,6 +165,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('dashboard', AdminDashboardController::class)->name('dashboard');
             Route::get('usage', AdminUsageController::class)->name('usage');
             Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+            Route::post('users/plans/preview', [AdminUserController::class, 'previewPlans'])->name('users.plans.preview');
+            Route::post('users/plans/assign', [AdminUserController::class, 'assignPlans'])->name('users.plans.assign');
             Route::put('users/{user}', [AdminUserController::class, 'update'])->name('users.update');
             Route::post('users/{user}/credits', [AdminUserController::class, 'grantCredits'])->name('users.credits');
             Route::patch('users/{user}/admin', [AdminUserController::class, 'toggleAdmin'])->name('users.admin');
@@ -173,11 +189,14 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::delete('packs/{pack}', [AdminBillingCatalogController::class, 'destroyPack'])->name('packs.destroy');
             Route::post('gateways', [AdminBillingCatalogController::class, 'storeGateway'])->name('gateways.store');
             Route::put('gateways/{gateway}', [AdminBillingCatalogController::class, 'updateGateway'])->name('gateways.update');
+            Route::post('gateways/{gateway}/test', [AdminBillingCatalogController::class, 'testGateway'])->name('gateways.test');
+            Route::patch('gateways/{gateway}/default', [AdminBillingCatalogController::class, 'defaultGateway'])->name('gateways.default');
             Route::patch('gateways/{gateway}/toggle', [AdminBillingCatalogController::class, 'toggleGateway'])->name('gateways.toggle');
             Route::delete('gateways/{gateway}', [AdminBillingCatalogController::class, 'destroyGateway'])->name('gateways.destroy');
             Route::get('payments', [AdminPaymentController::class, 'index'])->name('payments.index');
             Route::post('payments/{payment}/approve', [AdminPaymentController::class, 'approve'])->name('payments.approve');
             Route::post('payments/{payment}/reject', [AdminPaymentController::class, 'reject'])->name('payments.reject');
+            Route::post('payments/{payment}/refund', [AdminPaymentController::class, 'refund'])->name('payments.refund');
             Route::get('manual-reports', [AdminManualReportController::class, 'index'])->name('manual-reports.index');
             Route::get('manual-reports/{run}', [AdminManualReportController::class, 'show'])->name('manual-reports.show');
             Route::post('manual-reports/{run}', [AdminManualReportController::class, 'store'])->name('manual-reports.store');

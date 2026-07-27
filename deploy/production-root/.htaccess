@@ -1,0 +1,38 @@
+# ============================================================================
+#  .htaccess لجذر public_html — يجعل الموقع يعمل بدون /public
+#
+#  الفكرة: كل طلب يقابل ملفًا حقيقيًا داخل public/ (الأصول المبنية، الأيقونات)
+#  يُخدَم منه؛ وأي شيء آخر يُوجَّه إلى واجهة Laravel public/index.php. ولا حاجة
+#  لملف index.php في الجذر. كما يُمنع الوصول المباشر لملفات التطبيق الحساسة.
+# ============================================================================
+<IfModule LiteSpeed>
+RewriteEngine On
+</IfModule>
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# صحّة رأس Authorization خلف بعض الخوادم.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# أزل /public من الطلبات الخارجية القديمة فقط. استخدام THE_REQUEST يمنع
+# إعادة توجيه التحويلات الداخلية إلى public/index.php في حلقة لا نهائية.
+RewriteCond %{THE_REQUEST} \s/+public(?:[/?\s]|$) [NC]
+RewriteRule ^public(?:/(.*))?$ /$1 [R=301,L,NE]
+
+# /app هو مسار لوحة العميل في Laravel، وليس طلبًا مباشرًا لمجلد app البرمجي.
+# وجّهه إلى Laravel قبل قواعد حماية مجلدات المصدر.
+RewriteRule ^app(?:/|$) public/index.php [L]
+
+# منع الوصول المباشر لمجلدات وملفات التطبيق (يقفل التسريب: vendor، logs، .env…).
+RewriteRule ^(bootstrap|config|database|resources|routes|scripts|storage|tests|vendor|deploy|docs|node_modules)(/|$) - [F,L]
+RewriteRule ^(artisan|composer\.json|composer\.lock|package(-lock)?\.json)$ - [F,L]
+RewriteRule (^|/)\.env - [F,L]
+
+# قدّم أصول public/ الحقيقية كما هي (build، favicon، robots…).
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+RewriteRule ^(.*)$ public/$1 [L]
+
+# وجّه كل شيء آخر إلى واجهة Laravel.
+RewriteRule ^ public/index.php [L]
+</IfModule>

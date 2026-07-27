@@ -2,17 +2,26 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ConsultationBlueprint;
+use App\Models\ConsultationEvent;
+use App\Models\QuestionVersion;
+use App\Models\ToolField;
+use App\Services\Consultations\AnswerTypeRegistry;
+use App\Services\Consultations\Catalog\ConsultationCatalogValidator;
 use App\Support\ProductQuality\NeutralArabicScanner;
 use App\Support\ProductQuality\ParityMatrix;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class AuditProductQuality extends Command
 {
     protected $signature = 'product:audit
         {--matrix= : Override the product parity matrix path}
-        {--require-verified : Fail unless every capability is verified}';
+        {--require-verified : Fail unless every capability is verified}
+        {--require-consultation : Fail unless the consultation catalog is installed and valid}
+        {--require-formats : Fail unless all stored form types have web and mobile widgets}';
 
     protected $description = 'Validate the product parity ledger and neutral-Arabic source copy';
 
@@ -21,6 +30,9 @@ class AuditProductQuality extends Command
         [$records, $matrixIssues] = $this->auditMatrix();
         $apiRouteIssues = $this->auditApiRoutes($records);
         $languageIssues = $scanner->scanDefaultPaths();
+        $promptFixtureIssues = $this->auditPromptFixtures();
+        $consultationIssues = $this->auditConsultation();
+        $formatIssues = $this->option('require-formats') ? $this->auditFormats() : [];
 
         if ($matrixIssues === []) {
             $counts = array_count_values(array_column($records, 'status'));
@@ -70,9 +82,127 @@ class AuditProductQuality extends Command
             }
         }
 
-        return $matrixIssues === [] && $apiRouteIssues === [] && $languageIssues === []
+        if ($promptFixtureIssues === []) {
+            $this->info('Prompt v2 evaluation: PASS (88 fixtures; 11 tools)');
+        } else {
+            $this->error(sprintf('Prompt v2 evaluation: FAIL (%d issues)', count($promptFixtureIssues)));
+
+            foreach ($promptFixtureIssues as $issue) {
+                $this->line(" - {$issue}");
+            }
+        }
+
+        if ($consultationIssues === []) {
+            $this->info('Consultation integrity: PASS (catalog and event privacy)');
+        } else {
+            $this->error(sprintf('Consultation integrity: FAIL (%d issues)', count($consultationIssues)));
+            foreach ($consultationIssues as $issue) {
+                $this->line(" - {$issue}");
+            }
+        }
+
+        if ($this->option('require-formats')) {
+            if ($formatIssues === []) {
+                $this->info('Form answer formats: PASS (catalog, validator, Blade, and Flutter)');
+            } else {
+                $this->error(sprintf('Form answer formats: FAIL (%d issues)', count($formatIssues)));
+                foreach ($formatIssues as $issue) {
+                    $this->line(" - {$issue}");
+                }
+            }
+        }
+
+        return $matrixIssues === [] && $apiRouteIssues === [] && $languageIssues === [] && $promptFixtureIssues === [] && $consultationIssues === [] && $formatIssues === []
             ? self::SUCCESS
             : self::FAILURE;
+    }
+
+    /** @return list<string> */
+    private function auditFormats(): array
+    {
+        $issues = [];
+        $supported = AnswerTypeRegistry::all();
+        $stored = QuestionVersion::query()->distinct()->pluck('answer_type')->all();
+        $toolTypes = ToolField::query()->distinct()->pluck('type')->all();
+
+        foreach (array_unique([...$stored, ...$toolTypes]) as $type) {
+            if (! in_array($type, $supported, true)) {
+                $issues[] = "unsupported stored answer type: {$type}";
+            }
+        }
+
+        $blade = file_get_contents(resource_path('views/app/consultations/_answer-field.blade.php')) ?: '';
+        $flutter = (file_get_contents(base_path('mobile/lib/features/consultations/consultation_screen.dart')) ?: '')
+            .(file_get_contents(base_path('mobile/lib/features/consultations/models.dart')) ?: '');
+        foreach ($supported as $type) {
+            $bladeCovered = in_array($type, ['textarea'], true) || str_contains($blade, "'{$type}'");
+            $flutterCovered = in_array($type, ['text', 'textarea', 'url', 'email', 'date'], true)
+                || str_contains($flutter, "'{$type}'");
+            if (! $bladeCovered) {
+                $issues[] = "Blade widget missing for {$type}";
+            }
+            if (! $flutterCovered) {
+                $issues[] = "Flutter widget missing for {$type}";
+            }
+        }
+
+        return $issues;
+    }
+
+    /** @return list<string> */
+    private function auditConsultation(): array
+    {
+        $issues = [];
+        if (count(config('consultation.modules', [])) !== 19 || count(config('consultation.gateway_questions', [])) !== 12) {
+            $issues[] = 'consultation config must define 19 modules and 12 gateway questions';
+        }
+        if (! Schema::hasTable('consultation_blueprints')) {
+            if ($this->option('require-consultation')) {
+                $issues[] = 'consultation tables are not installed';
+            }
+
+            return $issues;
+        }
+
+        $blueprint = ConsultationBlueprint::where('key', 'smart-marketing-consultation')->first();
+        if ($blueprint?->currentVersion === null) {
+            $issues[] = 'published consultation blueprint is missing';
+        } else {
+            try {
+                app(ConsultationCatalogValidator::class)->validate($blueprint->currentVersion);
+            } catch (Throwable $exception) {
+                $issues[] = 'catalog validation failed: '.$exception->getMessage();
+            }
+        }
+
+        if (Schema::hasTable('consultation_events')) {
+            foreach (ConsultationEvent::query()->select(['id', 'metadata'])->cursor() as $event) {
+                if ($this->containsSensitiveEventMetadata($event->metadata ?? [])) {
+                    $issues[] = "consultation event {$event->id} contains sensitive metadata";
+                }
+            }
+        }
+
+        return array_values(array_unique($issues));
+    }
+
+    /** @param array<string,mixed> $metadata */
+    private function containsSensitiveEventMetadata(array $metadata): bool
+    {
+        $forbidden = ['answer', 'value', 'content', 'email', 'phone', 'payment', 'secret', 'token', 'file_text'];
+        foreach ($metadata as $key => $value) {
+            if (in_array(strtolower((string) $key), $forbidden, true)) {
+                return true;
+            }
+            if (is_array($value) && $this->containsSensitiveEventMetadata($value)) {
+                return true;
+            }
+            if (is_string($value) && preg_match('/[^\s@]+@[^\s@]+\.[^\s@]+|\b(?:\+?\d[\s-]?){8,}\b/u', $value)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -179,5 +309,44 @@ class AuditProductQuality extends Command
         }
 
         return $issues;
+    }
+
+    /** @return list<string> */
+    private function auditPromptFixtures(): array
+    {
+        $path = base_path('tests/Fixtures/prompt-v2/catalog.php');
+        if (! is_file($path)) {
+            return ['prompt fixture catalog is missing'];
+        }
+
+        $catalog = require $path;
+        if (! is_array($catalog) || count($catalog) !== 11) {
+            return ['prompt fixture catalog must cover exactly 11 tools'];
+        }
+
+        $issues = [];
+        $ids = [];
+        foreach ($catalog as $tool => $fixtures) {
+            if (! is_array($fixtures) || count($fixtures) < 8) {
+                $issues[] = "{$tool} must have at least 8 fixtures";
+
+                continue;
+            }
+
+            foreach ($fixtures as $fixture) {
+                $id = is_array($fixture) ? ($fixture['id'] ?? null) : null;
+                if (! is_string($id) || $id === '' || isset($ids[$id])) {
+                    $issues[] = "{$tool} has a missing or duplicate fixture id";
+                } else {
+                    $ids[$id] = true;
+                }
+            }
+        }
+
+        if (count($ids) < 88) {
+            $issues[] = 'prompt fixture catalog must contain at least 88 unique cases';
+        }
+
+        return array_values(array_unique($issues));
     }
 }

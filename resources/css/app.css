@@ -7,21 +7,6 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
-/*
- * الخط يُحمّل من المشروع لا من نظام الزائر.
- * بدون هذا الإعلان كان اسم الخط يعمل فقط على أجهزة مثبت عليها الخط محليًا،
- * ويسقط صامتًا إلى Tahoma عند كل زائر آخر.
- */
-@font-face {
-    font-family: 'Hacen Tunisia';
-    /* مسار نسبي من ملف CSS المبني (public/build/assets/) إلى public/assets/.
-       المسار المطلق كان سيكسر التشغيل تحت مجلد فرعي مثل /khaledsaad/public. */
-    src: url('../../assets/fonts/Hacen-Tunisia.ttf') format('truetype');
-    font-weight: 100 900;
-    font-style: normal;
-    font-display: swap;
-}
-
 @theme {
     --font-sans: 'Hacen Tunisia', Tahoma, Arial, sans-serif;
     --color-brand-cyan: #09d7e5;
@@ -2568,6 +2553,73 @@ svg {
         justify-content: center;
         padding-block: 1.2rem;
     }
+}
+
+.consultation-shell {
+    display: grid;
+    max-width: 52rem;
+    gap: 1rem;
+    margin-inline: auto;
+}
+
+.consultation-progress {
+    overflow: hidden;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: #dfe8f5;
+}
+
+.consultation-progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--brand-blue);
+}
+
+.consultation-question {
+    display: grid;
+    gap: 1rem;
+}
+
+.consultation-options {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.consultation-options label {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid #dfe8f5;
+    border-radius: var(--radius-sm);
+}
+
+.consultation-review-group,
+.consultation-conflicts,
+.consultation-evidence,
+.consultation-status { margin-block: 1rem; }
+.consultation-review-group { padding-block: 0.75rem; border-bottom: 1px solid var(--line); }
+.consultation-review-group:last-child { border-bottom: 0; }
+.consultation-conflicts .card--warning { margin-block: 0.75rem; border-color: #f2b47c; background: #fff8f2; }
+.consultation-conflicts textarea,
+.admin-question textarea { display: block; width: 100%; min-height: 5rem; margin-block: 0.4rem 0.75rem; }
+.consultation-data-actions,
+.consultation-file { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.consultation-data-actions { margin-block-start: 1.5rem; padding-block: 1rem; border-top: 1px solid var(--line); }
+.consultation-data-actions form,
+.consultation-file form { margin: 0; }
+.link-button { appearance: none; border: 0; padding: 0; background: none; color: #a22b23; text-decoration: underline; cursor: pointer; font: inherit; }
+.consultation-evidence form { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.consultation-file { padding-block: 0.6rem; border-bottom: 1px solid var(--line); }
+.admin-question { padding-block: 1rem; border-top: 1px solid var(--line); }
+.admin-question code { direction: ltr; unicode-bidi: isolate; }
+
+@media (max-width: 640px) {
+    .consultation-shell { padding-inline: 0.25rem; }
+    .consultation-options label { min-height: 48px; }
+    .consultation-data-actions { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 520px) {

@@ -98,7 +98,7 @@ class CompetitorAiContextTest extends TestCase
         $svc->saveStep($run, 1, ['business_model' => 'services', 'description' => str_repeat('وصف واضح للخدمة ', 3), 'geography' => 'الرياض', 'monthly_budget' => 5000]);
         $svc->saveStep($run, 2, ['primary_goal' => 'leads', 'value_proposition' => 'نسلّم خلال 48 ساعة أو المبلغ يُعاد كاملًا', 'audience_clarity' => 'documented']);
         $svc->saveStep($run, 3, ['active_channels' => ['seo', 'paid'], 'tracking_maturity' => 'basic', 'content_cadence' => 'weekly']);
-        $svc->saveStep($run, 4, ['landing_experience' => 'basic', 'retention_motion' => 'manual', 'known_cac' => 120]);
+        $svc->saveStep($run, 4, ['landing_experience' => 'basic', 'retention_motion' => 'manual', 'sales_cycle' => 'medium', 'known_cac' => 120]);
 
         if ($names !== null) {
             ToolRunAnswer::updateOrCreate(

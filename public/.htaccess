@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # Canonicalize old browser URLs that expose Laravel's public directory.
+    # THE_REQUEST stays unchanged during the root's internal rewrite, so this
+    # does not redirect normal requests back out of the front controller.
+    RewriteCond %{THE_REQUEST} \s/+public(?:[/?\s]|$) [NC]
+    RewriteRule ^(.*)$ /$1 [R=301,L,NE]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

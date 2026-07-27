@@ -14,6 +14,7 @@ class ProductQualityCommandTest extends TestCase
             ->expectsOutputToContain('Parity matrix')
             ->expectsOutputToContain('API route coverage')
             ->expectsOutputToContain('Neutral Arabic')
+            ->expectsOutputToContain('Prompt v2 evaluation: PASS (88 fixtures; 11 tools)')
             ->assertSuccessful();
     }
 

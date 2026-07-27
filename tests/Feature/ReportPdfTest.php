@@ -3,11 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\Finding;
+use App\Models\Plan;
 use App\Models\Recommendation;
 use App\Models\Report;
 use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Models\User;
+use App\Services\Billing\Entitlements;
+use App\Services\Billing\SubscriptionManager;
 use App\Services\Projects\ProjectService;
 use App\Services\Reports\ReportPdfGenerator;
 use App\Services\Tools\ToolRunService;
@@ -50,6 +53,9 @@ class ReportPdfTest extends TestCase
         $report = $this->report();
         $owner = $report->project->workspace->owner;
 
+        // تصدير PDF عنصر ميزة: يبدأ من الخطة الفردية فصاعدًا.
+        $this->onAPlanWithPdf($report);
+
         $this->actingAs($owner)
             ->get(route('app.reports.pdf', $report->id))
             ->assertOk()
@@ -60,10 +66,24 @@ class ReportPdfTest extends TestCase
     public function a_stranger_cannot_download_someone_elses_pdf(): void
     {
         $report = $this->report();
+        $this->onAPlanWithPdf($report);
 
         $this->actingAs(User::factory()->create())
             ->get(route('app.reports.pdf', $report->id))
             ->assertNotFound();
+    }
+
+    /**
+     * ترقية مساحة صاحب التقرير إلى خطة تشمل تصدير PDF.
+     */
+    private function onAPlanWithPdf(Report $report): void
+    {
+        app(SubscriptionManager::class)->subscribe(
+            $report->project->workspace,
+            Plan::where('key', 'individual')->firstOrFail(),
+        );
+
+        app(Entitlements::class)->flush();
     }
 
     private function report(): Report

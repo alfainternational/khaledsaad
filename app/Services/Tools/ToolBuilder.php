@@ -38,8 +38,9 @@ class ToolBuilder
                 ],
             );
 
+            $versionNumber = max(1, (int) ($definition['version']['number'] ?? 1));
             $version = ToolVersion::updateOrCreate(
-                ['tool_id' => $tool->id, 'version' => 1],
+                ['tool_id' => $tool->id, 'version' => $versionNumber],
                 [
                     'credit_cost' => $definition['version']['credit_cost'],
                     'status' => 'published',

@@ -129,7 +129,14 @@ class ToolRunController extends Controller
     public function queue(Request $request, ToolRun $run): RedirectResponse
     {
         $this->authorizeRun($request, $run);
-        $this->service->queue($run);
+
+        try {
+            $this->service->queue($run);
+        } catch (RuntimeException $exception) {
+            // رصيد غير كافٍ أو حصة خطة منتهية: رسالة واضحة في مكانها،
+            // لا صفحة خطأ تقني تُخرج المستخدم من المسار.
+            return back()->withErrors(['queue' => $exception->getMessage()]);
+        }
 
         return redirect()->route('app.runs.status', $run);
     }

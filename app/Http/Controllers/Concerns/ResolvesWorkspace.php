@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Models\AgencyReport;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\Task;
@@ -24,6 +25,13 @@ trait ResolvesWorkspace
     protected function authorizeReport(Request $request, Report $report): Report
     {
         return $this->assert($request, $report);
+    }
+
+    protected function authorizeAgencyReport(Request $request, AgencyReport $report): AgencyReport
+    {
+        $this->assert($request, $report->project);
+
+        return $report;
     }
 
     protected function authorizeTask(Request $request, Task $task): Task

@@ -26,8 +26,10 @@ class ReportChartsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('المؤشرات في لمحة',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        const Text(
+          'المؤشرات في لمحة',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 12),
         if (charts.gauge != null) ...[
           BrandCard(child: _GaugeChart(gauge: charts.gauge!)),
@@ -60,8 +62,10 @@ class _ChartTitle extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) =>
-      Text(text, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+  );
 }
 
 /// عدّاد الدرجة: حلقة تتلون حسب النطاق.
@@ -91,13 +95,21 @@ class _GaugeChart extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('${gauge.value}',
-                        style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                            color: BrandColors.navy)),
-                    Text('/${gauge.max}',
-                        style: const TextStyle(fontSize: 12, color: BrandColors.muted)),
+                    Text(
+                      '${gauge.value}',
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        color: BrandColors.navy,
+                      ),
+                    ),
+                    Text(
+                      '/${gauge.max}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: BrandColors.muted,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -105,7 +117,9 @@ class _GaugeChart extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Center(child: SeverityBadge(label: gauge.band, severity: 'low')),
+        Center(
+          child: SeverityBadge(label: gauge.band, severity: 'low'),
+        ),
       ],
     );
   }
@@ -174,8 +188,13 @@ class _HorizontalBars extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 68,
-                  child: Text(item.label,
-                      style: const TextStyle(fontSize: 13, color: BrandColors.muted)),
+                  child: Text(
+                    item.label,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: BrandColors.muted,
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: ClipRRect(
@@ -184,16 +203,22 @@ class _HorizontalBars extends StatelessWidget {
                       value: series.total <= 0 ? 0 : item.count / series.total,
                       minHeight: 9,
                       backgroundColor: BrandColors.surfaceSoft,
-                      valueColor: AlwaysStoppedAnimation<Color>(_hex(item.colorHex)),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _hex(item.colorHex),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
                   width: 22,
-                  child: Text('${item.count}',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700, color: BrandColors.navy)),
+                  child: Text(
+                    '${item.count}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: BrandColors.navy,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -229,11 +254,14 @@ class _StackedBar extends StatelessWidget {
                     height: 22,
                     color: _hex(item.colorHex),
                     alignment: Alignment.center,
-                    child: Text('${item.count}',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700)),
+                    child: Text(
+                      '${item.count}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -257,8 +285,13 @@ class _StackedBar extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 5),
-                  Text('${item.label} (${item.count})',
-                      style: const TextStyle(fontSize: 12.5, color: BrandColors.muted)),
+                  Text(
+                    '${item.label} (${item.count})',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: BrandColors.muted,
+                    ),
+                  ),
                 ],
               ),
           ],
@@ -291,18 +324,22 @@ class _ScoreHistoryChart extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('${point.value}',
-                        style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: BrandColors.navy)),
+                    Text(
+                      '${point.value}',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: BrandColors.navy,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Container(
                       width: 18,
                       height: math.max(
-                          6.0,
-                          chartHeight *
-                              (history.max <= 0 ? 0 : point.value / history.max)),
+                        6.0,
+                        chartHeight *
+                            (history.max <= 0 ? 0 : point.value / history.max),
+                      ),
                       decoration: BoxDecoration(
                         gradient: point.isCurrent
                             ? const LinearGradient(
@@ -313,15 +350,20 @@ class _ScoreHistoryChart extends StatelessWidget {
                             : null,
                         color: point.isCurrent ? null : const Color(0xFF9DB7E8),
                         borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(6)),
+                          top: Radius.circular(6),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text(point.label,
-                        style:
-                            const TextStyle(fontSize: 11, color: BrandColors.muted),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+                    Text(
+                      point.label,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: BrandColors.muted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -343,17 +385,20 @@ class _ImpactEffortMatrix extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     TableCell header(String text) => TableCell(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            color: BrandColors.surfaceSoft,
-            child: Text(text,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: BrandColors.navy)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        color: BrandColors.surfaceSoft,
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            color: BrandColors.navy,
           ),
-        );
+        ),
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,39 +408,47 @@ class _ImpactEffortMatrix extends StatelessWidget {
         Table(
           border: TableBorder.all(color: BrandColors.line),
           children: [
-            TableRow(children: [
-              header(''),
-              for (final effort in _levels) header(matrix.effortLabels[effort] ?? effort),
-            ]),
-            for (final impact in ['high', 'medium', 'low'])
-              TableRow(children: [
-                header(matrix.impactLabels[impact] ?? impact),
+            TableRow(
+              children: [
+                header(''),
                 for (final effort in _levels)
-                  TableCell(
-                    child: Builder(builder: (context) {
-                      final count = matrix.countFor(impact, effort);
-                      final isHot = impact == 'high' && effort == 'low';
+                  header(matrix.effortLabels[effort] ?? effort),
+              ],
+            ),
+            for (final impact in ['high', 'medium', 'low'])
+              TableRow(
+                children: [
+                  header(matrix.impactLabels[impact] ?? impact),
+                  for (final effort in _levels)
+                    TableCell(
+                      child: Builder(
+                        builder: (context) {
+                          final count = matrix.countFor(impact, effort);
+                          final isHot = impact == 'high' && effort == 'low';
 
-                      return Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        color: isHot ? const Color(0xFFE7F8EF) : null,
-                        child: Text(
-                          count > 0 ? '$count' : '—',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight:
-                                count > 0 ? FontWeight.w700 : FontWeight.w400,
-                            color: isHot
-                                ? const Color(0xFF0A7D4F)
-                                : count > 0
+                          return Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            color: isHot ? const Color(0xFFE7F8EF) : null,
+                            child: Text(
+                              count > 0 ? '$count' : '—',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontWeight: count > 0
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                                color: isHot
+                                    ? const Color(0xFF0A7D4F)
+                                    : count > 0
                                     ? BrandColors.navy
                                     : const Color(0xFFB6C1D4),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-              ]),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
           ],
         ),
         if (matrix.quickWins > 0) ...[

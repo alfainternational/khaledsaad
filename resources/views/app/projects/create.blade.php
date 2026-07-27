@@ -5,9 +5,9 @@
 @section('content')
     <header class="page-head">
         <div>
-            <p class="eyebrow">مشروع جديد</p>
-            <h1>عرّفنا على مشروعك</h1>
-            <p class="muted">مرة واحدة فقط. كل ما تكتبه هنا نستخدمه في كل خطوة بعدها، ولن نسألك عنه مجددًا.</p>
+            <p class="eyebrow">إضافة مشروع</p>
+            <h1>ابدأ بالمعلومات الأساسية</h1>
+            <p class="muted">أدخلها مرة واحدة لتخصيص الأسئلة والتقارير، ويمكنك تعديلها لاحقًا من ملف المشروع.</p>
         </div>
     </header>
 
@@ -38,7 +38,7 @@
             <label class="field">
                 <span class="field__label">إلى أي مرحلة وصل مشروعك؟</span>
                 <select name="stage">
-                    @foreach (['idea' => 'مجرد فكرة', 'launch' => 'بدأت للتو', 'growth' => 'شغّال وأبيع', 'scale' => 'أبيع وأريد التوسع'] as $value => $label)
+                    @foreach (['idea' => 'فكرة قيد الدراسة', 'launch' => 'بدأ المشروع حديثًا', 'growth' => 'يحقق مبيعات حاليًا', 'scale' => 'يحقق مبيعات ويستعد للتوسع'] as $value => $label)
                         <option value="{{ $value }}" @selected(old('stage', 'growth') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
@@ -48,7 +48,7 @@
         <label class="field">
             <span class="field__label">ماذا تبيع بالضبط؟</span>
             <textarea name="description" rows="3" maxlength="2000">{{ old('description') }}</textarea>
-            <span class="field__help">اكتبها كما تشرحها لصديق. مثال: أبيع عسلًا طبيعيًا وأوصّله داخل المدينة خلال يوم.</span>
+            <span class="field__help">اكتب وصفًا مباشرًا. مثال: نبيع عسلًا طبيعيًا ونوصله داخل المدينة خلال يوم.</span>
         </label>
 
         <div class="field-row">
@@ -63,6 +63,6 @@
             </label>
         </div>
 
-        <button type="submit" class="btn btn--primary">احفظ وأكمل</button>
+        <button type="submit" class="btn btn--primary">احفظ المشروع وتابع</button>
     </form>
 @endsection

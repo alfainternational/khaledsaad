@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/platform_repository.dart';
+import '../../core/firebase/firebase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/common.dart';
 import '../account/billing_screen.dart';
 import '../account/notifications_screen.dart';
+import '../admin/admin_hub_screen.dart';
+import '../consultations/consultation_screen.dart';
 import '../tools/engagement.dart';
 import '../tools/models.dart';
 import '../tools/resume_navigator.dart';
@@ -13,11 +16,20 @@ import 'models.dart';
 import 'project_form_screen.dart';
 import 'project_screen.dart';
 
-typedef _DashboardData = (List<ProjectCard>, List<ToolCard>, List<ResumeCard>);
+typedef _DashboardData = (
+  List<ProjectCard>,
+  List<ToolCard>,
+  List<ResumeCard>,
+  bool,
+);
 
 /// يقابل resources/views/app/dashboard.blade.php
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key, required this.repository, required this.onLogout});
+  const DashboardScreen({
+    super.key,
+    required this.repository,
+    required this.onLogout,
+  });
 
   final PlatformRepository repository;
   final VoidCallback onLogout;
@@ -39,8 +51,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final projects = await widget.repository.projects();
     final tools = await widget.repository.tools();
     final unfinished = await widget.repository.unfinished();
+    final account = await widget.repository.me();
 
-    return (projects, tools.where((tool) => tool.isRunnable).take(4).toList(), unfinished);
+    return (
+      projects,
+      tools.where((tool) => tool.isRunnable).take(4).toList(),
+      unfinished,
+      account['is_admin'] == true,
+    );
   }
 
   void _reload() => setState(() => _future = _load());
@@ -49,14 +67,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('مشاريعك'),
+        title: const Text('لوحة التحكم'),
         actions: [
           IconButton(
             tooltip: 'الإشعارات',
             icon: const Icon(Icons.notifications_none),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => NotificationsScreen(repository: widget.repository),
+                builder: (_) =>
+                    NotificationsScreen(repository: widget.repository),
               ),
             ),
           ),
@@ -70,11 +89,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'بماذا نساعدك',
+            tooltip: 'التشخيصات',
             icon: const Icon(Icons.grid_view_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => ToolCatalogScreen(repository: widget.repository),
+                builder: (_) =>
+                    ToolCatalogScreen(repository: widget.repository),
               ),
             ),
           ),
@@ -82,6 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: 'خروج',
             icon: const Icon(Icons.logout),
             onPressed: () async {
+              await FirebaseService.instance.removeDevice(widget.repository);
               await widget.repository.logout();
               widget.onLogout();
             },
@@ -99,7 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (created == true) _reload();
         },
         icon: const Icon(Icons.add),
-        label: const Text('مشروع جديد'),
+        label: const Text('أضف مشروعًا'),
       ),
       body: FutureBuilder<_DashboardData>(
         future: _future,
@@ -107,23 +128,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
           snapshot: snapshot,
           onRetry: _reload,
           builder: (data) {
-            final (projects, tools, unfinished) = data;
+            final (projects, tools, unfinished, isAdmin) = data;
 
             return RefreshIndicator(
               onRefresh: () async => _reload(),
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
                 children: [
+                  if (isAdmin) ...[
+                    BrandCard(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              AdminHubScreen(repository: widget.repository),
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.admin_panel_settings_outlined),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'لوحة الإدارة',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  'المستخدمون والأدوات والبرومبتات والمدفوعات والإعدادات.',
+                                  style: TextStyle(color: BrandColors.muted),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   // طريق العودة: من ترك شيئًا في المنتصف يجده أول ما يفتح التطبيق.
                   if (unfinished.isNotEmpty) ...[
-                    const Text('أكمل ما بدأته',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                    const Text(
+                      'أكمل ما بدأته',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     for (final card in unfinished) ...[
                       _ResumeTile(
                         card: card,
                         onTap: () async {
-                          await ResumeNavigator.openCard(context, widget.repository, card);
+                          await ResumeNavigator.openCard(
+                            context,
+                            widget.repository,
+                            card,
+                          );
                           _reload();
                         },
                       ),
@@ -134,12 +196,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   if (projects.isEmpty)
                     const EmptyState(
-                      title: 'ما عرّفتنا على مشروعك بعد',
-                      message: 'عرّفنا على مشروعك مرة واحدة، وبعدها كل خطوة تقرأ منه ولا تسألك من جديد.',
+                      title: 'أضف مشروعك الأول',
+                      message:
+                          'أدخل معلوماته الأساسية مرة واحدة لتخصيص الأسئلة والتقارير من دون تكرار.',
                     )
                   else ...[
-                    const Text('مشاريعك',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                    const Text(
+                      'مشاريعك',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     for (final project in projects) ...[
                       BrandCard(
@@ -157,17 +225,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(project.name,
-                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                            Text(
+                              project.name,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             if (project.latestScore != null)
-                              ScoreChip(label: '${project.latestScore}/100 · ${project.scoreBand}')
+                              ScoreChip(
+                                label:
+                                    '${project.latestScore}/100 · ${project.scoreBand}',
+                              )
                             else
-                              const Text('ما بدأنا فيه بعد',
-                                  style: TextStyle(color: BrandColors.muted)),
+                              const Text(
+                                'لم يبدأ التشخيص بعد',
+                                style: TextStyle(color: BrandColors.muted),
+                              ),
                             const SizedBox(height: 6),
-                            Text(project.industry ?? 'قطاع غير محدد',
-                                style: const TextStyle(color: BrandColors.muted, fontSize: 13)),
+                            Text(
+                              project.industry ?? 'قطاع غير محدد',
+                              style: const TextStyle(
+                                color: BrandColors.muted,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: FilledButton.tonalIcon(
+                                onPressed: () async {
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ConsultationScreen(
+                                        repository: widget.repository,
+                                        projectSlug: project.slug,
+                                      ),
+                                    ),
+                                  );
+                                  _reload();
+                                },
+                                icon: const Icon(Icons.auto_awesome, size: 18),
+                                label: const Text('ابدأ التشخيص'),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -176,8 +278,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
 
                   const SizedBox(height: 20),
-                  const Text('ابدأ من هنا',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const Text(
+                    'تشخيصات مقترحة للبدء',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 12),
                   for (final tool in tools) ...[
                     BrandCard(
@@ -186,11 +290,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Eyebrow(tool.category),
                           const SizedBox(height: 4),
-                          Text(tool.title,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                          Text(
+                            tool.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                           const SizedBox(height: 6),
-                          Text(tool.headline,
-                              style: const TextStyle(color: BrandColors.muted, fontSize: 13)),
+                          Text(
+                            tool.headline,
+                            style: const TextStyle(
+                              color: BrandColors.muted,
+                              fontSize: 13,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -227,8 +341,13 @@ class _ResumeTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(card.toolTitle,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(
+                card.toolTitle,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(
                 '${card.projectName ?? ''} · ${card.hint ?? ''}',
@@ -238,7 +357,10 @@ class _ResumeTile extends StatelessWidget {
                 const SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(value: card.percent / 100, minHeight: 6),
+                  child: LinearProgressIndicator(
+                    value: card.percent / 100,
+                    minHeight: 6,
+                  ),
                 ),
               ],
               const SizedBox(height: 12),

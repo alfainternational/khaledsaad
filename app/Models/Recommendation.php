@@ -10,8 +10,16 @@ class Recommendation extends Model
 {
     protected $fillable = [
         'finding_id', 'report_id', 'title', 'description',
-        'impact', 'effort', 'priority', 'kpi_hint',
+        'root_cause', 'commercial_impact', 'action_steps', 'owner_role', 'resources',
+        'timeframe', 'dependencies', 'impact', 'effort', 'priority', 'kpi_hint',
+        'kpi_definition', 'kpi_source', 'baseline', 'target', 'missing_baseline_reason',
+        'success_condition', 'stop_condition', 'risks', 'confidence',
     ];
+
+    protected function casts(): array
+    {
+        return ['action_steps' => 'array', 'resources' => 'array', 'dependencies' => 'array', 'risks' => 'array'];
+    }
 
     public function finding(): BelongsTo
     {

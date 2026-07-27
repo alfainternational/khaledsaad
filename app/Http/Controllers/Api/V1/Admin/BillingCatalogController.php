@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminPlanController;
 use App\Http\Controllers\Controller;
 use App\Models\CreditPack;
 use App\Models\Feature;
+use App\Models\Payment;
 use App\Models\PaymentGateway;
 use App\Models\Plan;
 use App\Services\Payments\PaymentGatewayManager;
@@ -172,8 +173,49 @@ class BillingCatalogController extends Controller
                 'message' => 'أضف كل المفاتيح الإلزامية قبل تفعيل البوابة.',
             ], 422);
         }
+        if (! $gateway->is_active && $gateway->isLive() && ! $gateway->isHealthy()) {
+            return response()->json(['message' => 'اختبر اتصال البوابة بنجاح قبل تفعيل الوضع المباشر.'], 422);
+        }
 
         $gateways->toggle($gateway);
+
+        return response()->json(['data' => $this->gateway($gateway->fresh())]);
+    }
+
+    public function testGateway(
+        Request $request,
+        PaymentGateway $gateway,
+        AdminGatewayController $gateways,
+    ): JsonResponse {
+        $this->confirm($request);
+        if (! $gateway->hasRequiredCredentials()) {
+            return response()->json(['message' => 'أضف كل بيانات الربط الإلزامية أولًا.'], 422);
+        }
+        $health = app(PaymentGatewayManager::class)->provider($gateway)->healthCheck();
+        $gateway->update([
+            'health_status' => $health->healthy ? 'healthy' : 'unhealthy',
+            'last_health_check_at' => now(),
+            'last_health_message' => $health->message,
+        ]);
+        if (! $health->healthy) {
+            return response()->json(['message' => $health->message, 'data' => $this->gateway($gateway->fresh())], 422);
+        }
+
+        return response()->json(['data' => $this->gateway($gateway->fresh())]);
+    }
+
+    public function defaultGateway(
+        Request $request,
+        PaymentGateway $gateway,
+        AdminGatewayController $gateways,
+    ): JsonResponse {
+        $this->confirm($request);
+
+        if (! $gateway->is_active || ! $gateway->hasRequiredCredentials()) {
+            return response()->json(['message' => 'فعّل البوابة المهيأة أولًا.'], 422);
+        }
+
+        $gateways->setDefault($gateway);
 
         return response()->json(['data' => $this->gateway($gateway->fresh())]);
     }
@@ -184,6 +226,9 @@ class BillingCatalogController extends Controller
         AdminGatewayController $gateways,
     ): JsonResponse {
         $this->confirm($request);
+        if (Payment::where('payment_gateway_id', $gateway->id)->exists()) {
+            return response()->json(['message' => 'لا يمكن حذف بوابة مرتبطة بمدفوعات سابقة.'], 409);
+        }
         $gateways->destroy($gateway);
 
         return response()->json(['message' => 'حُذفت البوابة.']);
@@ -196,8 +241,9 @@ class BillingCatalogController extends Controller
     {
         return [
             ...$gateway->only([
-                'id', 'provider', 'label', 'mode', 'is_active', 'currency',
-                'fx_rate', 'instructions', 'sort_order',
+                'id', 'provider', 'label', 'mode', 'is_active', 'is_default', 'currency',
+                'fx_rate', 'instructions', 'sort_order', 'health_status',
+                'last_health_check_at', 'last_health_message',
             ]),
             'configured' => $gateway->hasRequiredCredentials(),
         ];

@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
-@section('title', 'بماذا نساعدك؟ | خالد سعد')
-@section('description', 'اختر المشكلة التي تواجهك الآن في تسويق مشروعك، وخذ خطة واضحة بخطوات تنفذها هذا الأسبوع.')
+@section('title', 'اختر ما تريد تحسينه في مشروعك | خالد سعد')
+@section('description', 'اختر التحدي الأقرب إلى مشروعك، واحصل على تشخيص يوضح الفجوات والأولويات والخطوة التالية.')
 
 @section('content')
     @include('partials.site-header')
@@ -9,19 +9,19 @@
     <main id="main-content">
         <section class="page-hero">
             <div class="container page-hero__inner">
-                <p class="eyebrow">ابدأ من مشكلتك</p>
-                <h1>أين المشكلة عندك الآن؟</h1>
+                <p class="eyebrow">ابدأ من التحدي الأهم</p>
+                <h1>ما الذي تريد فهمه أو تحسينه الآن؟</h1>
                 <p class="page-hero__lead">
-                    اختَر الحالة الأقرب لوضعك، ونمشي معك خطوة خطوة: نسألك أسئلة تعرف إجابتها،
-                    ونقدّم لك إرشادات واضحة يمكنك تنفيذها — لا تقارير تقرؤها ثم تنساها.
+                    اختر الحالة الأقرب إلى وضع مشروعك. ستجيب عن أسئلة واضحة، ثم تحصل على أولويات
+                    وخطوات يمكنك تنفيذها أو مناقشتها مع فريقك ووكالتك.
                 </p>
 
                 <div class="page-hero__actions">
                     @auth
-                        <a class="button button--primary button--large" href="{{ route('app.dashboard') }}">تابع من حيث وقفت <span aria-hidden="true">←</span></a>
+                        <a class="button button--primary button--large" href="{{ route('app.dashboard') }}">تابع من لوحة التحكم <span aria-hidden="true">←</span></a>
                     @else
-                        <a class="button button--primary button--large" href="#الحالات">اختر حالتك وابدأ <span aria-hidden="true">←</span></a>
-                        <a class="button button--ghost button--large" href="{{ route('login') }}">عندي حساب</a>
+                        <a class="button button--primary button--large" href="#الحالات">اختر التحدي وابدأ <span aria-hidden="true">←</span></a>
+                        <a class="button button--ghost button--large" href="{{ route('login') }}">تسجيل الدخول</a>
                     @endauth
                 </div>
             </div>
@@ -47,7 +47,7 @@
                             <p class="catalog-card__desc">{{ $tool['promise'] ?: $tool['description'] }}</p>
 
                             <span class="catalog-card__link">
-                                اعرف التفاصيل <b aria-hidden="true">←</b>
+                                اعرف ما ستحصل عليه <b aria-hidden="true">←</b>
                                 @if ($tool['duration_minutes'])
                                     <em>{{ $tool['duration_minutes'] }} دقائق تقريبًا</em>
                                 @endif
@@ -61,23 +61,23 @@
         <section class="section how-section">
             <div class="container">
                 <x-section-heading
-                    eyebrow="قبل أن تبدأ"
-                    title="كيف تمشي معك الخطوات؟"
-                    description="أربع خطوات فقط، وكل خطوة محفوظة ويمكنك العودة إليها في أي وقت."
+                    eyebrow="رحلة واضحة"
+                    title="كيف تصل من السؤال إلى الخطوة التالية؟"
+                    description="تبدأ بالتحدي الأقرب إلى مشروعك، ثم تحفظ النتيجة وتتابع أولوياتك من مكان واحد."
                 />
                 <ol class="journey-steps">
-                    <li><span>01</span><h3>تبدأ فورًا</h3><p>بدون حساب وبدون بطاقة — تضغط وتبدأ في نفس اللحظة.</p></li>
-                    <li><span>02</span><h3>أسئلة تعرف إجابتها</h3><p>أسئلة عن شغلك اليومي، وبجانب كل سؤال نقول لك لماذا نسأله.</p></li>
-                    <li><span>03</span><h3>تحفظ نتيجتك</h3><p>حساب مجاني في دقيقة، وكل ما كتبته ينتقل معك كما هو.</p></li>
-                    <li><span>04</span><h3>خطة يمكنك تنفيذها</h3><p>أين المشكلة بالتحديد، وما الذي تبدأ به، ومهام لها مواعيد تتابعها.</p></li>
+                    <li><span>01</span><h3>ابدأ مباشرة</h3><p>ابدأ التشخيص من دون إنشاء حساب أو إدخال بطاقة دفع.</p></li>
+                    <li><span>02</span><h3>صف واقع مشروعك</h3><p>أجب عن أسئلة مرتبطة بعملك، واعرف سبب كل سؤال وأثره في النتيجة.</p></li>
+                    <li><span>03</span><h3>احفظ ما أنجزته</h3><p>أنشئ حسابك بعد التجربة، وستنتقل إجاباتك معك كما هي.</p></li>
+                    <li><span>04</span><h3>رتّب أولوياتك</h3><p>راجع الفجوات والخطوات المقترحة، وحوّل ما تختاره إلى مهام قابلة للمتابعة.</p></li>
                 </ol>
 
                 <div class="cta-band">
-                        <p>تجرّب أولًا وتقرر بعدها. ما تكتبه لا يضيع، ينتقل معك حين تنشئ حسابك.</p>
+                        <p>ابدأ أولًا، ثم قرر إن كنت تريد حفظ النتيجة. ستنتقل إجاباتك إلى حسابك كما هي.</p>
                     @auth
-                        <a class="button button--primary" href="{{ route('app.dashboard') }}">ادخل على مشروعك</a>
+                        <a class="button button--primary" href="{{ route('app.dashboard') }}">افتح لوحة مشروعك</a>
                     @else
-                        <a class="button button--primary" href="{{ route('register') }}">ابدأ الآن</a>
+                        <a class="button button--primary" href="{{ route('register') }}">أنشئ حسابك</a>
                     @endauth
                 </div>
             </div>

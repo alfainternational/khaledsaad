@@ -2,7 +2,7 @@
 
 @section('title', 'نسيت كلمة المرور')
 @section('heading', 'نسيت كلمة المرور؟')
-@section('lead', 'اكتب بريدك ونرسل لك رابطًا تختار به كلمة جديدة. شغلك ومشاريعك كما هي، لن يضيع شيء.')
+@section('lead', 'أدخل بريد حسابك، وسنرسل رابطًا يتيح لك اختيار كلمة مرور جديدة. ستبقى مشاريعك وتقاريرك محفوظة.')
 
 @section('context')
     @if (session('status'))
@@ -20,10 +20,10 @@
             <span class="field__help">البريد نفسه الذي أنشأت به الحساب.</span>
         </label>
 
-        <button type="submit" class="btn btn--primary btn--block">أرسل لي الرابط</button>
+        <button type="submit" class="btn btn--primary btn--block">أرسل رابط الاستعادة</button>
     </form>
 @endsection
 
 @section('alt')
-    تذكرتها؟ <a href="{{ route('login') }}">ارجع لتسجيل الدخول</a>
+    تذكرت كلمة المرور؟ <a href="{{ route('login') }}">العودة إلى تسجيل الدخول</a>
 @endsection

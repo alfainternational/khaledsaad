@@ -99,7 +99,7 @@ class ToolRunPipelineTest extends TestCase
 
         $this->assertSame(ToolRun::STATUS_PARTIAL, $run->status);
         $this->assertNotNull($run->base_score);
-        $this->assertSame(13, $run->answers()->count());
+        $this->assertSame(14, $run->answers()->count());
 
         $report = $run->report;
         $this->assertNotNull($report, 'التقرير الأساسي يجب أن يبقى متاحًا رغم فشل المزود.');
@@ -162,6 +162,23 @@ class ToolRunPipelineTest extends TestCase
         $prompt->update(['content' => 'محتوى جديد']);
     }
 
+    #[Test]
+    public function a_specialist_tool_does_not_overwrite_the_projects_marketing_score(): void
+    {
+        $user = User::factory()->create();
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروع بدرجة مستقرة']);
+        $project->forceFill(['latest_score' => 73])->save();
+
+        $tool = Tool::where('key', 'brand-clarity')->firstOrFail();
+        $run = app(ToolRunService::class)->start($project, $tool, $user)
+            ->load(['toolVersion.fields', 'toolVersion.tool', 'answers', 'project']);
+
+        $baseline = new \ReflectionMethod(ToolRunPipeline::class, 'baseline');
+        $baseline->invoke(app(ToolRunPipeline::class), $run);
+
+        $this->assertSame(73, $project->fresh()->latest_score);
+    }
+
     private function completedDraft(): ToolRun
     {
         $user = User::factory()->create();
@@ -174,7 +191,7 @@ class ToolRunPipelineTest extends TestCase
             1 => ['business_model' => 'services', 'description' => str_repeat('وصف واضح للخدمة المقدمة ', 3), 'geography' => 'الرياض', 'monthly_budget' => 5000],
             2 => ['primary_goal' => 'leads', 'value_proposition' => 'نسلّم خلال 48 ساعة أو المبلغ يُعاد', 'audience_clarity' => 'documented'],
             3 => ['active_channels' => ['seo', 'paid'], 'tracking_maturity' => 'basic', 'content_cadence' => 'weekly'],
-            4 => ['landing_experience' => 'basic', 'retention_motion' => 'manual', 'known_cac' => 120],
+            4 => ['landing_experience' => 'basic', 'retention_motion' => 'manual', 'sales_cycle' => 'medium', 'known_cac' => 120],
         ];
 
         foreach ($answers as $step => $input) {

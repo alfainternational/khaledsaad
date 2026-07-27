@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContentFeedback;
 use App\Models\ProjectCompetitor;
+use App\Models\Report;
+use App\Models\ReportWatcher;
 use App\Models\Tool;
+use App\Models\ToolRun;
 use App\Models\User;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ToolRunService;
@@ -92,5 +96,53 @@ class MobileParityGapsTest extends TestCase
 
         $this->getJson(route('api.v1.competitors.index', $project->slug))->assertNotFound();
         $this->postJson(route('api.v1.competitors.store', $project->slug), ['names' => 'x'])->assertNotFound();
+    }
+
+    #[Test]
+    public function report_api_exposes_the_same_review_and_growth_context_as_the_web(): void
+    {
+        $user = User::factory()->create();
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروع تقرير التطبيق']);
+        $tool = Tool::where('key', 'marketing-score')->firstOrFail();
+        $run = app(ToolRunService::class)->start($project, $tool, $user);
+        $run->forceFill(['status' => ToolRun::STATUS_COMPLETED, 'base_score' => 64])->save();
+
+        $report = Report::create([
+            'tool_run_id' => $run->id,
+            'project_id' => $project->id,
+            'title' => 'تقرير مراجع',
+            'status' => 'published',
+            'score' => 64,
+            'score_band' => Report::bandFor(64),
+            'summary' => 'ملخص مراجع.',
+            'review_mode' => 'manual',
+            'reviewed_by' => $user->id,
+            'reviewed_at' => now(),
+        ]);
+
+        ReportWatcher::create([
+            'report_id' => $report->id,
+            'project_id' => $project->id,
+            'user_id' => $user->id,
+            'status' => ReportWatcher::STATUS_ACTIVE,
+            'baseline_fingerprint' => 'baseline',
+            'changes' => [],
+        ]);
+
+        ContentFeedback::create([
+            'user_id' => $user->id,
+            'subject_type' => Report::class,
+            'subject_id' => $report->id,
+            'verdict' => ContentFeedback::VERDICT_UP,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson(route('api.v1.reports.show', $report))
+            ->assertOk()
+            ->assertJsonPath('data.is_manually_reviewed', true)
+            ->assertJsonPath('watcher.status', ReportWatcher::STATUS_ACTIVE)
+            ->assertJsonPath('my_verdict', ContentFeedback::VERDICT_UP)
+            ->assertJsonPath('suggestion.tool.key', 'brand-clarity');
     }
 }

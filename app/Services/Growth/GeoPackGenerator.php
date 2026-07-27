@@ -137,7 +137,7 @@ class GeoPackGenerator
         $faq = [
             [
                 'question' => "ما هو {$name}؟",
-                'answer' => trim(($facts['description'] ?? '')." ".($facts['value_proposition'] ?? '')) ?: "{$name} مشروع في مجال {$facts['industry']}.",
+                'answer' => trim(($facts['description'] ?? '').' '.($facts['value_proposition'] ?? '')) ?: "{$name} مشروع في مجال {$facts['industry']}.",
             ],
             [
                 'question' => "أين يقدم {$name} خدماته؟",

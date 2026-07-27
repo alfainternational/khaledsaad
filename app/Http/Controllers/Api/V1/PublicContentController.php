@@ -61,4 +61,22 @@ class PublicContentController extends Controller
             ],
         ]);
     }
+
+    public function mobileApp(): JsonResponse
+    {
+        $path = (string) config('mobile.apk_path');
+        $available = is_file($path);
+
+        return response()->json(['data' => [
+            'name' => 'Khaled Saad Growth',
+            'version' => (string) config('mobile.version'),
+            'build' => (int) config('mobile.build'),
+            'android_package' => (string) config('mobile.android_package'),
+            'ios_bundle' => (string) config('mobile.ios_bundle'),
+            'available' => $available,
+            'download_url' => $available ? route('mobile.download') : null,
+            'size_bytes' => $available ? filesize($path) : null,
+            'sha256' => $available ? hash_file('sha256', $path) : null,
+        ]]);
+    }
 }

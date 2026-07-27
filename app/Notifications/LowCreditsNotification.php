@@ -28,8 +28,8 @@ class LowCreditsNotification extends Notification
         return (new MailMessage)
             ->subject('رصيدك أوشك على الانتهاء')
             ->greeting('تنبيه رصيد')
-            ->line("رصيدك الحالي {$this->balance}، وقد لا يكفي لتشغيل أداة جديدة.")
-            ->action('عرض الخطط والأرصدة', route('app.billing'))
+            ->line("رصيدك الحالي {$this->balance}، وقد لا يكفي لبدء تشخيص جديد.")
+            ->action('راجع الخطط وخيارات الرصيد', route('app.billing'))
             ->line('يمكنك الترقية أو شراء حزمة أرصدة في أي وقت.');
     }
 

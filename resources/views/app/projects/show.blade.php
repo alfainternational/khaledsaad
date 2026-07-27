@@ -10,6 +10,13 @@
             <p class="muted">{{ $project['industry'] ?? 'قطاع غير محدد' }}</p>
         </div>
         <div class="page-head__actions">
+            <form method="POST" action="{{ route('app.consultations.start', $project['slug']) }}">
+                @csrf
+                <button type="submit" class="btn btn--primary">ابدأ تشخيص مشروعك</button>
+            </form>
+            @feature(\App\Support\Billing\FeatureKey::REPORTS_AGENCY)
+                <a href="{{ route('app.projects.agency-reports.index', $project['slug']) }}" class="btn btn--ghost">موجز الوكالة</a>
+            @endfeature
             <a href="{{ route('app.projects.tasks', $project['slug']) }}" class="btn btn--ghost">المهام ({{ $project['tasks']['open'] }})</a>
             <a href="{{ route('app.projects.edit', $project['slug']) }}" class="btn btn--ghost">تعديل الملف</a>
         </div>
@@ -28,7 +35,7 @@
                 @endif
             @else
                 <p class="eyebrow">درجة الجاهزية</p>
-                <p class="muted">لم تُحتسب بعد. شغّل تشخيص الجاهزية لتظهر هنا.</p>
+                <p class="muted">لم تُحتسب بعد. ابدأ تشخيص الجاهزية لعرض الدرجة والأولويات هنا.</p>
             @endif
         </article>
 
@@ -44,27 +51,39 @@
 
     {{-- محرك النمو: القدرات المستمرة فوق أدوات التشغيل الاعتيادية --}}
     <section aria-labelledby="growth-heading">
-        <h2 id="growth-heading" class="section-title">محرك النمو</h2>
+        <h2 id="growth-heading" class="section-title">فرص إضافية لتحسين المشروع</h2>
         <div class="card-grid">
             <article class="card card--link">
                 <p class="eyebrow">قبل أن تنفق</p>
                 <h3>مختبر الجمهور</h3>
                 <p class="muted">اختبر رسالتك على جمهور اصطناعي مبني من بياناتك — درجة واعتراض لكل شخصية.</p>
-                <a href="{{ route('app.audience.show', $project['slug']) }}" class="btn btn--ghost btn--sm">ادخل المختبر</a>
+                @feature(\App\Support\Billing\FeatureKey::AUDIENCE_LAB)
+                    <a href="{{ route('app.audience.show', $project['slug']) }}" class="btn btn--ghost btn--sm">اختبر رسالتك</a>
+                @else
+                    <a href="{{ route('app.billing') }}" class="btn btn--ghost btn--sm">متاح في خطة أعلى</a>
+                @endfeature
             </article>
 
             <article class="card card--link">
                 <p class="eyebrow">عملاؤك يسألون ChatGPT</p>
                 <h3>الظهور في محركات الذكاء</h3>
                 <p class="muted">حزمة تجعل مشروعك قابلًا للقراءة والاقتباس من مساعدات الذكاء الاصطناعي.</p>
-                <a href="{{ route('app.geo.show', $project['slug']) }}" class="btn btn--ghost btn--sm">ابنِ حزمتك</a>
+                @feature(\App\Support\Billing\FeatureKey::GROWTH_GEO)
+                    <a href="{{ route('app.geo.show', $project['slug']) }}" class="btn btn--ghost btn--sm">ابنِ حزمتك</a>
+                @else
+                    <a href="{{ route('app.billing') }}" class="btn btn--ghost btn--sm">متاح في خطة أعلى</a>
+                @endfeature
             </article>
 
             <article class="card card--link">
                 <p class="eyebrow">كل اثنين</p>
                 <h3>النبض الأسبوعي</h3>
                 <p class="muted">ما تغيّر، ما تأخر، وخطوة الأسبوع — يصلك دون أن تطلب.</p>
-                <a href="{{ route('app.pulse.index') }}" class="btn btn--ghost btn--sm">افتح النبض</a>
+                @feature(\App\Support\Billing\FeatureKey::GROWTH_PULSE)
+                    <a href="{{ route('app.pulse.index') }}" class="btn btn--ghost btn--sm">افتح النبض</a>
+                @else
+                    <a href="{{ route('app.billing') }}" class="btn btn--ghost btn--sm">متاح في خطة أعلى</a>
+                @endfeature
             </article>
         </div>
     </section>
@@ -73,7 +92,7 @@
         <h2 id="reports-heading" class="section-title">التقارير</h2>
 
         @if ($project['reports'] === [])
-            <p class="muted">لا توجد تقارير بعد.</p>
+            <p class="muted">لا توجد تقارير لهذا المشروع بعد. ابدأ أحد التشخيصات لإنشاء التقرير الأول.</p>
         @else
             <ul class="list">
                 @foreach ($project['reports'] as $report)
@@ -179,7 +198,7 @@
     @endpush
 
     <section aria-labelledby="tools-heading">
-        <h2 id="tools-heading" class="section-title">شغّل أداة على هذا المشروع</h2>
+        <h2 id="tools-heading" class="section-title">ابدأ تشخيصًا لهذا المشروع</h2>
         <div class="card-grid">
             @foreach ($tools as $tool)
                 @php($state = $engagements[$tool['key']] ?? null)

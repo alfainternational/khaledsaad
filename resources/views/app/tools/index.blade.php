@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'بماذا نساعدك')
+@section('title', 'التشخيصات')
 
 @section('content')
     <header class="page-head">
         <div>
-            <p class="eyebrow">اختر من أين تبدأ</p>
-            <h1>بماذا نساعدك الآن؟</h1>
-            <p class="muted">كل خطوة تقرأ ما كتبته سابقًا، فلا نسألك عن الشيء نفسه مرتين.</p>
+            <p class="eyebrow">اختر الأولوية</p>
+            <h1>ما الذي تريد تشخيصه الآن؟</h1>
+            <p class="muted">اختر التحدي الأقرب إلى مشروعك. ستُستخدم معلوماتك المحفوظة لتقليل الأسئلة المتكررة.</p>
         </div>
     </header>
 
@@ -40,7 +40,7 @@
                         @endif
                     </div>
                 @else
-                    <a href="{{ route('app.tools.show', $tool['key']) }}" class="btn btn--ghost btn--sm">ابدأ من هنا</a>
+                    <a href="{{ route('app.tools.show', $tool['key']) }}" class="btn btn--ghost btn--sm">اعرف التفاصيل وابدأ</a>
                 @endif
             </article>
         @endforeach

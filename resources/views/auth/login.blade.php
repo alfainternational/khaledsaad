@@ -2,14 +2,14 @@
 
 @section('title', 'تسجيل الدخول')
 @section('heading', 'أهلًا بعودتك')
-@section('lead', 'ادخل لتكمل من حيث توقفت. تقاريرك ومهامك محفوظة.')
+@section('lead', 'سجّل الدخول للمتابعة من حيث توقفت والوصول إلى تقاريرك ومهامك المحفوظة.')
 
 @section('context')
     @if ($startTool !== null)
         <div class="auth-intent" role="note">
             <span class="auth-intent__tag">{{ $startTool['category'] }}</span>
             <strong>{{ $startTool['title'] }}</strong>
-            <p>سننقلك إلى هذه الأداة مباشرة بعد الدخول.</p>
+            <p>سننقلك إلى هذا التشخيص مباشرة بعد تسجيل الدخول.</p>
         </div>
     @endif
 @endsection
@@ -37,12 +37,12 @@
             <span>أبقني مسجلًا</span>
         </label>
 
-        <button type="submit" class="btn btn--primary btn--block">دخول</button>
+        <button type="submit" class="btn btn--primary btn--block">سجّل الدخول</button>
     </form>
 @endsection
 
 @section('alt')
     ليس لديك حساب؟ <a href="{{ route('register', $startTool !== null ? ['tool' => $startTool['key']] : []) }}">أنشئ حسابًا</a>
     <span class="auth-card__sep" aria-hidden="true">·</span>
-    <a href="{{ route('tools.index') }}">استعرض الأدوات</a>
+    <a href="{{ route('tools.index') }}">استكشف التشخيصات المتاحة</a>
 @endsection

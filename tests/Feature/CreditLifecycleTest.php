@@ -106,7 +106,7 @@ class CreditLifecycleTest extends TestCase
             1 => ['business_model' => 'services', 'description' => str_repeat('وصف واضح ', 4), 'geography' => 'الرياض', 'monthly_budget' => 3000],
             2 => ['primary_goal' => 'leads', 'value_proposition' => 'نسلّم خلال 48 ساعة أو نعيد المبلغ كاملًا بلا أسئلة', 'audience_clarity' => 'documented'],
             3 => ['active_channels' => ['seo'], 'tracking_maturity' => 'full', 'content_cadence' => 'weekly'],
-            4 => ['landing_experience' => 'optimized', 'retention_motion' => 'systematic', 'known_cac' => 90],
+            4 => ['landing_experience' => 'optimized', 'retention_motion' => 'systematic', 'sales_cycle' => 'medium', 'known_cac' => 90],
         ];
 
         foreach ($steps as $step => $input) {

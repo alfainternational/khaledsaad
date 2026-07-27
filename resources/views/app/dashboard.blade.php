@@ -5,10 +5,10 @@
 @section('content')
     <header class="page-head">
         <div>
-            <p class="eyebrow">مكانك</p>
-            <h1>أين وصلت مشاريعك؟</h1>
+            <p class="eyebrow">لوحة التحكم</p>
+            <h1>ملخص مشاريعك وخطوتك التالية</h1>
         </div>
-        <a href="{{ route('app.projects.create') }}" class="btn btn--primary">مشروع جديد</a>
+        <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعًا</a>
     </header>
 
     <section class="stat-row" aria-label="ملخص">
@@ -24,6 +24,13 @@
             <span class="stat__value">{{ $open_tasks }}</span>
             <span class="stat__label">مهمة تنتظرك</span>
         </article>
+    </section>
+
+    <section class="card consultation-entry" aria-labelledby="smart-consultation-heading">
+        <p class="eyebrow">المستشار التسويقي الذكي</p>
+        <h2 id="smart-consultation-heading">لا تعرف أي تشخيص تبدأ به؟</h2>
+        <p>ابدأ باستشارة واحدة تفهم مشروعك، تسمح بأكثر من اختيار عندما ينطبق، ثم تحدد التحليلات والأولويات المناسبة.</p>
+        <a href="{{ route('app.consultations.index') }}" class="btn btn--primary">ابدأ التشخيص الذكي الشامل</a>
     </section>
 
     @if (($unfinished ?? []) !== [])
@@ -55,9 +62,9 @@
 
     @if ($projects === [])
         <section class="empty">
-            <h2>ما عرّفتنا على مشروعك بعد</h2>
-            <p>عرّفنا على مشروعك مرة واحدة، وبعدها كل خطوة تقرأ منه ولا تسألك من جديد.</p>
-            <a href="{{ route('app.projects.create') }}" class="btn btn--primary">عرّفنا على مشروعك</a>
+            <h2>أضف مشروعك الأول</h2>
+            <p>أدخل معلوماته الأساسية مرة واحدة، وسنستخدمها لتخصيص الأسئلة والتقارير من دون تكرار.</p>
+            <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعك الأول</a>
         </section>
     @else
         <section aria-labelledby="projects-heading">
@@ -69,7 +76,7 @@
                         @if ($project['latest_score'] !== null)
                             <p class="score-chip">{{ $project['latest_score'] }}/100 · {{ $project['score_band'] }}</p>
                         @else
-                            <p class="muted">ما بدأنا فيه بعد</p>
+                            <p class="muted">لم يبدأ التشخيص بعد</p>
                         @endif
                         <p class="muted">{{ $project['industry'] ?? 'قطاع غير محدد' }}</p>
                     </a>
@@ -79,7 +86,7 @@
     @endif
 
     <section aria-labelledby="tools-heading">
-        <h2 id="tools-heading" class="section-title">ابدأ من هنا</h2>
+        <h2 id="tools-heading" class="section-title">تشخيصات مقترحة للبدء</h2>
         <div class="card-grid">
             @foreach ($suggested_tools as $tool)
                 <a class="card card--link" href="{{ route('app.tools.show', $tool['key']) }}">

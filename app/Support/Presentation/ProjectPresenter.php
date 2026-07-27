@@ -35,6 +35,7 @@ class ProjectPresenter
         $project->loadMissing(['profile', 'reports', 'tasks', 'kpis.entries']);
 
         $reports = $project->reports->sortByDesc('created_at')->values();
+        $latestReport = $reports->first();
         $openTasks = $project->tasks->where('status', '!=', Task::STATUS_DONE);
 
         return [
@@ -43,11 +44,10 @@ class ProjectPresenter
                 'business_model', 'description', 'geography', 'website',
                 'monthly_budget', 'primary_goal', 'value_proposition',
             ]) ?? [],
-            'latest_report' => $reports->first() ? $this->reports->card($reports->first()) : null,
-            'comparison' => $this->reports->comparison(
-                $reports->first() ?? new Report,
-                $reports->get(1),
-            ),
+            'latest_report' => $latestReport ? $this->reports->card($latestReport) : null,
+            'comparison' => $latestReport
+                ? $this->reports->comparison($latestReport, $this->reports->previousFor($latestReport))
+                : null,
             'reports' => $reports->map(fn ($report) => $this->reports->card($report))->all(),
             'tasks' => [
                 'open' => $openTasks->count(),

@@ -12,15 +12,15 @@
 
     <section class="stat-row">
         <article class="stat"><span class="stat__value">{{ $stats['users'] }}</span><span class="stat__label">مستخدم</span></article>
-        <article class="stat"><span class="stat__value">{{ $stats['tools_live'] }}/{{ $stats['tools_total'] }}</span><span class="stat__label">أدوات حية</span></article>
-        <article class="stat"><span class="stat__value">{{ $stats['runs_completed'] }}</span><span class="stat__label">تشغيل مكتمل</span></article>
-        <article class="stat"><span class="stat__value">{{ $stats['runs_failed'] }}</span><span class="stat__label">تشغيل فاشل</span></article>
+        <article class="stat"><span class="stat__value">{{ $stats['tools_live'] }}/{{ $stats['tools_total'] }}</span><span class="stat__label">تشخيصات منشورة</span></article>
+        <article class="stat"><span class="stat__value">{{ $stats['runs_completed'] }}</span><span class="stat__label">تحليلات مكتملة</span></article>
+        <article class="stat"><span class="stat__value">{{ $stats['runs_failed'] }}</span><span class="stat__label">تحليلات متعثرة</span></article>
         <article class="stat"><span class="stat__value">{{ $stats['reports'] }}</span><span class="stat__label">تقرير</span></article>
         <article class="stat"><span class="stat__value">{{ $stats['ai_cost_usd'] }}$</span><span class="stat__label">تكلفة الذكاء</span></article>
     </section>
 
     <section aria-labelledby="recent-heading">
-        <h2 id="recent-heading" class="section-title">آخر التشغيلات</h2>
+        <h2 id="recent-heading" class="section-title">آخر التحليلات</h2>
         <div class="table-wrap">
             <table class="table">
                 <thead>
@@ -35,7 +35,7 @@
                             <td>{{ $run['at'] }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="4">لا تشغيلات بعد.</td></tr>
+                        <tr><td colspan="4">لا توجد تحليلات مسجلة بعد.</td></tr>
                     @endforelse
                 </tbody>
             </table>

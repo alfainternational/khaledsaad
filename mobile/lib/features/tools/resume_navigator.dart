@@ -23,12 +23,14 @@ abstract final class ResumeNavigator {
 
       if (screen == null || !context.mounted) return;
 
-      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => screen));
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -46,11 +48,17 @@ abstract final class ResumeNavigator {
 
       case 'status':
         if (runUuid == null) return null;
-        return RunStatusScreen(repository: repository, run: await repository.progress(runUuid));
+        return RunStatusScreen(
+          repository: repository,
+          run: await repository.progress(runUuid),
+        );
 
       case 'wizard':
         if (runUuid == null) return null;
-        return RunWizardScreen(repository: repository, run: await repository.run(runUuid));
+        return RunWizardScreen(
+          repository: repository,
+          run: await repository.run(runUuid),
+        );
 
       default:
         return null;
@@ -61,11 +69,10 @@ abstract final class ResumeNavigator {
     BuildContext context,
     PlatformRepository repository,
     ResumeCard card,
-  ) =>
-      open(
-        context,
-        repository,
-        target: card.isDraft ? 'wizard' : 'status',
-        runUuid: card.runUuid,
-      );
+  ) => open(
+    context,
+    repository,
+    target: card.isDraft ? 'wizard' : 'status',
+    runUuid: card.runUuid,
+  );
 }

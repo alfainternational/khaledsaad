@@ -23,15 +23,7 @@
         <meta name="twitter:title" content="@yield('title', 'خالد سعد | تشخيص وتسويق ونمو رقمي')">
         <meta name="twitter:description" content="@yield('description', config('brand.tagline'))">
 
-        <style>
-            @font-face {
-                font-family: 'Hacen Tunisia';
-                src: url('{{ asset('assets/fonts/Hacen-Tunisia.ttf') }}') format('truetype');
-                font-style: normal;
-                font-weight: 100 950;
-                font-display: swap;
-            }
-        </style>
+        @include('partials.font')
 
         <script type="application/ld+json">
             {!! json_encode([

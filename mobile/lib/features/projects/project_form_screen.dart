@@ -52,10 +52,16 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     try {
       await widget.repository.createProject({
         'name': _name.text.trim(),
-        'industry': _industry.text.trim().isEmpty ? null : _industry.text.trim(),
+        'industry': _industry.text.trim().isEmpty
+            ? null
+            : _industry.text.trim(),
         'stage': _stage,
-        'description': _description.text.trim().isEmpty ? null : _description.text.trim(),
-        'geography': _geography.text.trim().isEmpty ? null : _geography.text.trim(),
+        'description': _description.text.trim().isEmpty
+            ? null
+            : _description.text.trim(),
+        'geography': _geography.text.trim().isEmpty
+            ? null
+            : _geography.text.trim(),
       });
 
       if (mounted) Navigator.of(context).pop(true);
@@ -69,25 +75,29 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('مشروع جديد')),
+      appBar: AppBar(title: const Text('إضافة مشروع')),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             const Text(
-              'ما تكتبه هنا تستخدمه كل الأدوات لاحقًا، فلن تُسأل عنه مرة أخرى.',
+              'أدخل المعلومات الأساسية مرة واحدة لتخصيص الأسئلة والتقارير، ويمكنك تعديلها لاحقًا.',
               style: TextStyle(color: Color(0xFF5D6B82)),
             ),
             const SizedBox(height: 20),
 
-            if (_error != null) ...[ErrorNotice(message: _error!), const SizedBox(height: 16)],
+            if (_error != null) ...[
+              ErrorNotice(message: _error!),
+              const SizedBox(height: 16),
+            ],
 
             TextFormField(
               controller: _name,
               decoration: const InputDecoration(labelText: 'اسم المشروع'),
-              validator: (value) =>
-                  (value == null || value.trim().isEmpty) ? 'الاسم مطلوب.' : null,
+              validator: (value) => (value == null || value.trim().isEmpty)
+                  ? 'الاسم مطلوب.'
+                  : null,
             ),
             const SizedBox(height: 14),
 
@@ -104,7 +114,12 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
               initialValue: _stage,
               decoration: const InputDecoration(labelText: 'مرحلة المشروع'),
               items: _stages.entries
-                  .map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value)))
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                  )
                   .toList(),
               onChanged: (value) => setState(() => _stage = value ?? 'growth'),
             ),
@@ -114,7 +129,8 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
               controller: _description,
               decoration: const InputDecoration(
                 labelText: 'ماذا يقدم المشروع؟',
-                helperText: 'بلغة عميلك، لا بلغة تسويقية.',
+                helperText:
+                    'اكتب وصفًا مباشرًا يفهمه شخص يتعرف إلى مشروعك للمرة الأولى.',
               ),
               maxLines: 3,
             ),
@@ -132,9 +148,12 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
-                  : const Text('إنشاء المشروع'),
+                  : const Text('احفظ المشروع'),
             ),
           ],
         ),

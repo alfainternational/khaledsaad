@@ -12,7 +12,11 @@ import 'models.dart';
 /// يقابل resources/views/app/runs/status.blade.php
 /// بنفس فترة الاستطلاع ونفس نصوص المراحل.
 class RunStatusScreen extends StatefulWidget {
-  const RunStatusScreen({super.key, required this.repository, required this.run});
+  const RunStatusScreen({
+    super.key,
+    required this.repository,
+    required this.run,
+  });
 
   final PlatformRepository repository;
   final ToolRunModel run;
@@ -40,7 +44,10 @@ class _RunStatusScreenState extends State<RunStatusScreen> {
   }
 
   void _startPolling() {
-    _timer = Timer.periodic(AppEnvironment.progressPollInterval, (_) => _poll());
+    _timer = Timer.periodic(
+      AppEnvironment.progressPollInterval,
+      (_) => _poll(),
+    );
     _poll();
   }
 
@@ -71,7 +78,8 @@ class _RunStatusScreenState extends State<RunStatusScreen> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => ReportScreen(repository: widget.repository, reportId: reportId),
+        builder: (_) =>
+            ReportScreen(repository: widget.repository, reportId: reportId),
       ),
     );
   }
@@ -100,20 +108,29 @@ class _RunStatusScreenState extends State<RunStatusScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('${_run.toolTitle} · ${_run.projectName}',
-              style: const TextStyle(color: BrandColors.muted)),
+          Text(
+            '${_run.toolTitle} · ${_run.projectName}',
+            style: const TextStyle(color: BrandColors.muted),
+          ),
           const SizedBox(height: 6),
-          const Text('إجاباتك محفوظة. يمكنك إغلاق الشاشة والعودة لاحقًا.',
-              style: TextStyle(color: BrandColors.muted)),
+          const Text(
+            'إجاباتك محفوظة. يمكنك إغلاق الشاشة والعودة لاحقًا.',
+            style: TextStyle(color: BrandColors.muted),
+          ),
           const SizedBox(height: 18),
 
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(value: _run.progressPercent / 100, minHeight: 8),
+            child: LinearProgressIndicator(
+              value: _run.progressPercent / 100,
+              minHeight: 8,
+            ),
           ),
           const SizedBox(height: 6),
-          Text('${_run.progressPercent}% مكتمل',
-              style: const TextStyle(color: BrandColors.muted, fontSize: 13)),
+          Text(
+            '${_run.progressPercent}% مكتمل',
+            style: const TextStyle(color: BrandColors.muted, fontSize: 13),
+          ),
           const SizedBox(height: 18),
 
           for (final stage in _run.stages) ...[
@@ -140,8 +157,13 @@ class _RunStatusScreenState extends State<RunStatusScreen> {
                   ),
                   if (stage.error != null) ...[
                     const SizedBox(height: 6),
-                    Text(stage.error!,
-                        style: const TextStyle(color: BrandColors.red, fontSize: 12)),
+                    Text(
+                      stage.error!,
+                      style: const TextStyle(
+                        color: BrandColors.red,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -159,7 +181,10 @@ class _RunStatusScreenState extends State<RunStatusScreen> {
 
           if (_error != null && _run.failureReason == null) ...[
             const SizedBox(height: 10),
-            Text(_error!, style: const TextStyle(color: BrandColors.muted, fontSize: 12)),
+            Text(
+              _error!,
+              style: const TextStyle(color: BrandColors.muted, fontSize: 12),
+            ),
           ],
         ],
       ),

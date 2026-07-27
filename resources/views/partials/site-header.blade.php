@@ -4,7 +4,7 @@
     $startUrl = auth()->check()
         ? route('app.dashboard')
         : route('register', $startTool ?? []);
-    $startLabel = auth()->check() ? 'لوحة العمل' : 'ابدأ الآن';
+    $startLabel = auth()->check() ? 'لوحة التحكم' : 'ابدأ تشخيص مشروعك';
 @endphp
 
 <header class="site-header" data-site-header>
@@ -15,7 +15,7 @@
 
         <nav class="desktop-nav" aria-label="التنقل الرئيسي">
             <a href="{{ $anchorBase }}#method">المنهجية</a>
-            <a href="{{ route('tools.index') }}" @class(['is-active' => request()->routeIs('tools.*')])>الأدوات</a>
+            <a href="{{ route('tools.index') }}" @class(['is-active' => request()->routeIs('tools.*')])>التشخيصات</a>
             <a href="{{ $anchorBase }}#about">عن خالد</a>
             <a href="{{ $anchorBase }}#knowledge">المعرفة</a>
             <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>
@@ -23,7 +23,7 @@
 
         <div class="nav-actions">
             @guest
-                <a class="nav-login" href="{{ route('login') }}">دخول</a>
+                <a class="nav-login" href="{{ route('login') }}">تسجيل الدخول</a>
             @endguest
             <a class="button button--primary nav-cta" href="{{ $startUrl }}">{{ $startLabel }}</a>
         </div>
@@ -37,7 +37,7 @@
 
     <nav id="mobile-menu" class="mobile-menu" aria-label="تنقل الجوال" data-mobile-menu hidden>
         <a href="{{ $anchorBase }}#method">المنهجية</a>
-        <a href="{{ route('tools.index') }}">الأدوات</a>
+        <a href="{{ route('tools.index') }}">التشخيصات</a>
         <a href="{{ $anchorBase }}#about">عن خالد</a>
         <a href="{{ $anchorBase }}#knowledge">المعرفة</a>
         <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>

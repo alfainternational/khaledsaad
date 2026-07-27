@@ -140,13 +140,13 @@ class ReportComposer
     {
         $report->sections()->create([
             'key' => 'score',
-            'title' => 'الدرجة وتفصيلها',
+            'title' => 'درجتك وسبب كل نقطة فيها',
             'sort_order' => 0,
             'content_json' => [
                 'score' => $baseline['score'],
                 'band' => $baseline['band'],
                 'breakdown' => $baseline['breakdown'],
-                'method' => 'قواعد حتمية — لا يشارك الذكاء الاصطناعي في احتساب هذه الدرجة.',
+                'method' => 'هذه الدرجة محسوبة من إجاباتك أنت بقواعد ثابتة — نفس الإجابات تعطي نفس الدرجة دائمًا.',
             ],
         ]);
     }
@@ -173,17 +173,17 @@ class ReportComposer
             'title' => 'راقب منافسيك',
             'sort_order' => 60,
             'content_json' => [
-                'intro' => 'أقوى تحليل للمنافسة يبدأ من منافسيك المحليين — أنت أعرف بهم منّا. '
-                    .'هنا نجمع من سمّيتهم، وأين ترى إعلانات الجميع، وما تبحث عنه بالضبط.',
+                'intro' => 'أنت أعرف بمنافسيك المحليين منّا — هم أقرب خطر عليك وأكثر من يسحب عملاءك. '
+                    .'هنا جمعنا من سمّيتهم، وأين ترى إعلانات الجميع، وعلى ماذا تركّز نظرك بالضبط.',
                 'confirmed' => $competitorView['confirmed'],
                 'candidates' => $competitorView['candidates'],
                 // دعوة صريحة حين لا يكون قد سمّى محليًا: هم الأهم.
                 'prompt_local' => ! $competitorView['has_local'],
                 'watchlist' => $watchlist,
                 'look_for' => [
-                    'العرض الذي يكررونه (خصم، ضمان، توصيل مجاني) — هو ما يجذب عملاءهم، وتحتاج ما يوازيه أو يتفوّق عليه.',
-                    'الإعلان الذي بقي نشطًا مدة طويلة — استمراره دليل أنه يبيع، فادرس زاويته ورسالته.',
-                    'شكل الإعلان ونبرته (فيديو، صورة، شهادة عميل) — لتعرف ما اعتاد جمهورك التفاعل معه.',
+                    'العرض الذي يكررونه، مثل الخصم أو الضمان أو التوصيل المجاني؛ فقد يكون سببًا في جذب عملائهم، ويجب أن تحدد ما يميّز عرضك عنه.',
+                    'الإعلان الذي استمر مدة طويلة؛ فقد يدل استمراره على فعاليته، لذلك ادرس فكرته ورسالته.',
+                    'شكل الإعلان ونبرته، مثل الفيديو أو الصورة أو رأي العميل، لكي تعرف ما اعتاد جمهورك التفاعل معه.',
                 ],
             ],
         ]);
@@ -211,33 +211,33 @@ class ReportComposer
                 ->take(3)
                 ->implode('، ');
 
-            $title = 'راقب إعلانات منافسيك المحليين';
-            $recTitle = "افحص إعلانات: {$names}";
-            $recDescription = 'افتح مكتبات الإعلانات، وابحث عن كل واحد منهم، وسجّل عرضهم المتكرر '
-                .'وأطول إعلان بقي نشطًا. أنجز هذا قبل ضبط رسالتك.';
+            $title = 'تابع إعلانات منافسيك المحليين';
+            $recTitle = "ادرس إعلانات: {$names}";
+            $recDescription = 'افتح مكتبات الإعلانات، وابحث عن كل منافس، ثم سجّل العرض الذي يكرره '
+                .'وأطول إعلان استمر في الظهور. نفّذ ذلك قبل ضبط رسالتك.';
         } else {
-            $title = 'حدّد منافسيك المحليين أولًا';
-            $recTitle = 'اكتب اسمين أو ثلاثة لمنافسيك المحليين';
-            $recDescription = 'من يأخذ عملاءك في مدينتك هو من يوجّه خطتك، لا العلامات الكبيرة البعيدة. '
-                .'اكتب من يذكره عميلك حين يقارن، ومن أخذ عميلًا توقعته — ثم راقب إعلاناتهم.';
+            $title = 'حدّد منافسيك المحليين قبل أي شيء';
+            $recTitle = 'اكتب اسمين أو ثلاثة من منافسيك المحليين';
+            $recDescription = 'المنافس الذي يجذب عملاءك في مدينتك هو الأجدر بتوجيه خطتك، وليس العلامات الكبيرة البعيدة. '
+                .'اكتب اسم الجهة التي يذكرها عميلك عند المقارنة، ومن سبقك إلى عميل كنت تتوقعه — ثم تابع إعلاناتهم.';
         }
 
         return [
             'title' => $title,
-            'description' => 'المنافسة المحلية مصدر أغلب ضغط السوق عليك. مراقبتها المنظمة أرخص بحث سوق وأدقّه.',
+            'description' => 'غالبًا يكون منافسك القريب مصدر الضغط الذي تشعر به في السوق. متابعته بانتظام من أقل طرق بحث السوق تكلفة وأكثرها دقة.',
             'category' => 'المنافسون',
             'severity' => 'medium',
             'is_assumption' => false,
             'evidence' => $competitorView['has_local']
-                ? 'مبني على المنافسين الذين سمّيتهم.'
-                : 'لم تُسجَّل أسماء منافسين محليين بعد.',
+                ? 'مبني على المنافسين الذين ذكرتهم بنفسك.'
+                : 'لم تسجّل أسماء منافسين محليين حتى الآن.',
             'confidence' => 85,
             'recommendations' => [[
                 'title' => $recTitle,
                 'description' => $recDescription,
                 'impact' => 'high',
                 'effort' => 'low',
-                'kpi_hint' => 'عدد المنافسين الذين درست عروضهم',
+                'kpi_hint' => 'كم منافسًا درست عرضه',
             ]],
         ];
     }
@@ -314,10 +314,26 @@ class ReportComposer
                 'report_id' => $report->id,
                 'title' => $payload['title'],
                 'description' => $payload['description'],
+                'root_cause' => $payload['root_cause'] ?? $finding->description,
+                'commercial_impact' => $payload['commercial_impact'] ?? 'يؤثر في كفاءة النمو أو تكلفة الوصول إلى النتيجة المستهدفة.',
+                'action_steps' => array_values($payload['action_steps'] ?? [$payload['description']]),
+                'owner_role' => $payload['owner_role'] ?? 'مسؤول التسويق بالتنسيق مع صاحب القرار',
+                'resources' => array_values($payload['resources'] ?? ['وقت الفريق', 'بيانات القياس المتاحة']),
+                'timeframe' => $payload['timeframe'] ?? 'خلال 30 يومًا',
+                'dependencies' => array_values($payload['dependencies'] ?? []),
                 'impact' => $payload['impact'] ?? 'medium',
                 'effort' => $payload['effort'] ?? 'medium',
                 'priority' => $this->priority($payload, $finding),
                 'kpi_hint' => $payload['kpi_hint'] ?? null,
+                'kpi_definition' => $payload['kpi_definition'] ?? ($payload['kpi_hint'] ?? 'مؤشر النتيجة المرتبط بالتوصية'),
+                'kpi_source' => $payload['kpi_source'] ?? 'لوحة القياس المعتمدة للمشروع',
+                'baseline' => isset($payload['baseline']) ? (string) $payload['baseline'] : null,
+                'target' => isset($payload['target']) ? (string) $payload['target'] : null,
+                'missing_baseline_reason' => $payload['missing_baseline_reason'] ?? (! isset($payload['baseline']) ? 'لم يُثبّت خط الأساس بعد؛ يُقاس قبل بدء التنفيذ.' : null),
+                'success_condition' => $payload['success_condition'] ?? 'تحسن المؤشر المتفق عليه مقارنة بخط الأساس خلال المدة المحددة.',
+                'stop_condition' => $payload['stop_condition'] ?? 'توقف المبادرة وتُراجع إذا لم تتحسن الإشارة المبكرة بعد دورة قياس كاملة.',
+                'risks' => array_values($payload['risks'] ?? ['نقص البيانات أو تأخر التنفيذ قد يخفض الثقة في النتيجة.']),
+                'confidence' => max(0, min(100, (int) ($payload['confidence'] ?? $finding->confidence))),
             ]);
         }
     }
@@ -350,11 +366,11 @@ class ReportComposer
         $assumptions = $synthesis['assumptions'] ?? [];
 
         foreach ($gaps['missing'] ?? [] as $missing) {
-            $assumptions[] = "بيانات ناقصة: {$missing['field']} — {$missing['why_it_matters']}";
+            $assumptions[] = "ناقص نعرفه عنك: {$missing['field']} — {$missing['why_it_matters']}";
         }
 
         foreach ($gaps['conflicts'] ?? [] as $conflict) {
-            $assumptions[] = "تعارض: {$conflict['statement']} — {$conflict['explanation']}";
+            $assumptions[] = "في كلامك شيئان ما يتفقان: {$conflict['statement']} — {$conflict['explanation']}";
         }
 
         return array_values(array_unique($assumptions));
@@ -369,11 +385,11 @@ class ReportComposer
 
         // حين تعمل الأرضية الحتمية، لا نعتذر: العميل أمامه أولويات حقيقية من إجاباته.
         if ($usedFloor) {
-            return $head.'رتّبنا لك أهم الجوانب التي تستحق التحسين الآن، مبدوءة بالأعلى أثرًا على نتيجتك. '
-                .'كل أولوية مشتقة من إجاباتك ودرجتك، لا من تخمين.';
+            return $head.'رتّبنا لك أهم النقاط التي تستحق أن تبدأ بها الآن، من الأعلى تأثيرًا في نتيجتك. '
+                .'كل نقطة مأخوذة من إجاباتك ودرجتك، لا من تخمين.';
         }
 
-        return $head.'الدرجة وإجاباتك محفوظة بالكامل، ويمكنك إعادة طلب التحليل دون إعادة إدخال أي بيانات.';
+        return $head.'درجتك وإجاباتك محفوظة كاملة، ويمكنك طلب التحليل مجددًا دون إعادة كتابة أي شيء.';
     }
 
     /**
@@ -382,8 +398,8 @@ class ReportComposer
     private function fallbackNextStep(): array
     {
         return [
-            'title' => 'أعد طلب التحليل الموسع',
-            'description' => 'إجاباتك ودرجتك محفوظة. إعادة الطلب لا تكلفك إدخالًا جديدًا.',
+            'title' => 'اطلب التحليل الموسّع مرة ثانية',
+            'description' => 'إجاباتك ودرجتك محفوظة، وإعادة الطلب ما تكلّفك أي كتابة جديدة.',
         ];
     }
 

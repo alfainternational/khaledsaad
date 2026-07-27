@@ -1,15 +1,15 @@
 @extends('layouts.public')
 
-@section('title', 'خالد سعد | اعرف من أين تبدأ في تسويق مشروعك')
-@section('description', 'جاوب على أسئلة بسيطة عن مشروعك، واعرف أين المشكلة الحقيقية وما الذي تعمله هذا الأسبوع — مجانًا وفي أقل من عشر دقائق.')
+@section('title', 'خالد سعد | شخّص تسويق مشروعك وحدد أولوياتك')
+@section('description', 'ابدأ بتشخيص واضح لتسويق مشروعك، واكتشف أهم الفجوات والخطوات التي تستحق التنفيذ قبل زيادة الوقت أو الميزانية.')
 
 @section('content')
     @php
         // مسار البداية الحقيقي: تجربة تبدأ فورًا، لا مرساة تعيدك لأعلى الصفحة.
         $startUrl = auth()->check()
             ? route('app.dashboard')
-            : ($entryTool !== null ? route('tools.show', $entryTool['key']) : route('register'));
-        $startLabel = auth()->check() ? 'ادخل على مشروعك' : 'جرّب الآن بدون حساب';
+            : route('register');
+        $startLabel = auth()->check() ? 'افتح لوحة مشروعك' : 'ابدأ تشخيص مشروعك';
     @endphp
 
     @include('partials.site-header', ['startTool' => $entryTool !== null ? ['tool' => $entryTool['key']] : []])
@@ -21,37 +21,27 @@
 
             <div class="container hero-grid">
                 <div class="hero-copy">
-                    <p class="eyebrow reveal">قبل ما تصرف أكثر · اعرف أين المشكلة</p>
+                    <p class="eyebrow reveal">قبل أن تزيد الإنفاق · اعرف ما يحتاجه مشروعك أولًا</p>
                     <h1 class="reveal">
-                        لا تحتاج تسويقًا أكثر.
-                        <span>تحتاج أن تعرف أين تبدأ.</span>
+                        كثرة التسويق لا تعني نموًا أفضل.
+                        <span>ابدأ بتشخيص يوضح أولوياتك.</span>
                     </h1>
                     <p class="hero-lead reveal">
-                        جاوب على أسئلة بسيطة عن مشروعك، وأقول لك بلغة واضحة:
-                        أين المشكلة الحقيقية، وما أول ثلاث خطوات تعملها هذا الأسبوع.
+                        أجب عن أسئلة واضحة حول مشروعك، لتحصل على صورة أقرب إلى واقعك:
+                        أين تتعطل النتائج، وما الخطوات التي تستحق أن تبدأ بها الآن.
                     </p>
                     <div class="hero-actions reveal">
-                        @if (! auth()->check() && $entryTool !== null)
-                            {{-- يبدأ التجربة فورًا: لا حساب ولا بطاقة قبل أن يرى قيمة. --}}
-                            <form method="POST" action="{{ route('try.start', $entryTool['key']) }}">
-                                @csrf
-                                <button type="submit" class="button button--primary button--large">
-                                    {{ $startLabel }}
-                                    <span aria-hidden="true">←</span>
-                                </button>
-                            </form>
-                        @else
-                            <a class="button button--primary button--large" href="{{ $startUrl }}">
-                                {{ $startLabel }}
-                                <span aria-hidden="true">←</span>
-                            </a>
-                        @endif
-                        <a class="button button--ghost button--large" href="{{ route('tools.index') }}">اطّلع على ما نقدمه</a>
+                        <a class="button button--primary button--large" href="{{ $startUrl }}">
+                            {{ $startLabel }}
+                            <span aria-hidden="true">←</span>
+                        </a>
+                        <a class="button button--ghost button--large" href="{{ route('tools.index') }}">اختر ما تريد تحسينه</a>
+                        <a class="button button--ghost button--large" href="{{ route('mobile.download') }}">تنزيل تطبيق أندرويد</a>
                     </div>
                     <ul class="hero-trust reveal" aria-label="ما الذي يميّز الطريقة">
-                        <li><strong>+10</strong><span>سنوات خبرة معك</span></li>
-                        <li><strong>10 دقائق</strong><span>وتخرج بخطوتك الأولى</span></li>
-                        <li><strong>مجانًا</strong><span>لا نطلب بطاقة</span></li>
+                        <li><strong>+10</strong><span>سنوات من الخبرة العملية</span></li>
+                        <li><strong>نحو 10 دقائق</strong><span>للتشخيص الأولي</span></li>
+                        <li><strong>ابدأ مباشرة</strong><span>من دون بطاقة دفع</span></li>
                     </ul>
                 </div>
 
@@ -67,8 +57,8 @@
                                 <span>من 100</span>
                             </div>
                             <div>
-                                <p class="status-label">وضعك: محتاج ترتيب أولويات</p>
-                                <h2>المشكلة ليست في قلة الشغل، بل في ترتيبه.</h2>
+                                <p class="status-label">وضع المشروع: يحتاج إلى ترتيب الأولويات</p>
+                                <h2>المشكلة ليست في قلة الجهد، بل في ترتيب ما يستحقه أولًا.</h2>
                             </div>
                         </div>
                         <div class="mini-findings">
@@ -109,7 +99,7 @@
                     </div>
                     <div class="floating-note floating-note--bottom">
                         <span class="pulse-icon"></span>
-                        <div><strong>مجاني بالكامل</strong><small>ولا نطلب منك بطاقة</small></div>
+                        <div><strong>ابدأ من دون دفع</strong><small>لا نطلب بطاقة عند بدء التشخيص</small></div>
                     </div>
                 </div>
             </div>
@@ -131,7 +121,7 @@
             <div class="container">
                 <x-section-heading
                     eyebrow="قبل أن تجرّب شيئًا جديدًا"
-                    title="أي واحدة من هذه تحصل معك؟"
+                    title="هل تصف إحدى هذه الحالات مشروعك؟"
                     description="إذا كانت إحداها تصف حالتك، فالمشكلة غالبًا ليست في حجم العمل، بل في عدم وضوح موضع هدر المال والوقت."
                 />
 
@@ -153,10 +143,10 @@
                 <div class="insight-banner reveal">
                     <div class="insight-banner__mark" aria-hidden="true">!</div>
                     <p>
-                        <strong>لن نزيدك تقريرًا تقرأه وتنساه.</strong>
-                        نقول لك بوضوح: هذه اعملها هذا الأسبوع، وهذه أجّلها — حتى تركّز فيما يفرق فعلًا.
+                        <strong>لن تحصل على توصيات عامة يصعب تطبيقها.</strong>
+                        سترى ما يستحق البدء به، وما يمكن تأجيله، حتى توجّه وقتك وميزانيتك إلى الأولوية الأوضح.
                     </p>
-                    <a href="{{ $startUrl }}">اعرف وضعك في 10 دقائق <span aria-hidden="true">←</span></a>
+                    <a href="{{ $startUrl }}">ابدأ التشخيص الأولي <span aria-hidden="true">←</span></a>
                 </div>
             </div>
         </section>
@@ -166,11 +156,11 @@
                 <div class="split-heading">
                     <x-section-heading
                         eyebrow="خبرة عشر سنوات في خدمتك"
-                        title="بماذا أقدر أساعدك؟"
+                        title="ما الذي سيساعدك على اتخاذ قرار أوضح؟"
                         description="لا نبدأ من إعلان ولا من منصة. نبدأ من سؤال: ما أهم شيء تحتاج حلّه الآن؟"
                         align="start"
                     />
-                    <p class="split-heading__aside">من «لا أعرف من أين أبدأ» إلى خطة تمشي عليها بثقة.</p>
+                    <p class="split-heading__aside">من سؤال «أين أبدأ؟» إلى أولويات يمكنك مناقشتها وتنفيذها بثقة.</p>
                 </div>
 
                 <div class="services-grid">
@@ -190,9 +180,9 @@
             <div class="container method-layout">
                 <div class="method-copy">
                     <x-section-heading
-                        eyebrow="كيف نمشي معك"
-                        title="أربع خطوات فقط"
-                        description="أسئلة قليلة منك، وعمل متكامل من جانبنا، ونتيجة يمكنك تنفيذها بنفسك."
+                        eyebrow="كيف تصل إلى النتيجة"
+                        title="من واقع مشروعك إلى أولويات عملية"
+                        description="تقدّم معلومات مشروعك، ثم تحصل على تشخيص مرتب يوضح ما يحتاج إلى إجراء الآن."
                         align="start"
                     />
                     <div class="method-quote">
@@ -218,9 +208,9 @@
         <section class="section tools-section" id="tools">
             <div class="container">
                 <x-section-heading
-                    eyebrow="ابدأ من وجعك أنت"
-                    title="أي حالة من هذه تشبه وضعك؟"
-                    description="اختر الأقرب إلى حالتك، ونرافقك من السؤال إلى خطة يمكنك تنفيذها بنفسك."
+                    eyebrow="ابدأ من التحدي الأهم"
+                    title="ما الذي تريد فهمه أو تحسينه الآن؟"
+                    description="اختر الحالة الأقرب إلى مشروعك، وانتقل من الأسئلة إلى خطوات واضحة يمكنك تنفيذها أو مشاركتها مع فريقك."
                 />
 
                 <div class="tools-grid">
@@ -270,9 +260,9 @@
             <div class="container sample-layout">
                 <div class="sample-copy">
                     <x-section-heading
-                        eyebrow="مثال من الواقع"
-                        title="شكل النتيجة التي ستستلمها"
-                        description="أين أنت الآن، ولماذا، وما الذي تعمله بعده — بكلام واضح بدون مصطلحات."
+                        eyebrow="مثال توضيحي"
+                        title="هكذا تساعدك النتيجة على اتخاذ القرار"
+                        description="ترى وضعك الحالي، وأسباب الفجوات، والخطوة التالية بلغة واضحة بعيدًا عن المصطلحات المعقدة."
                         align="start"
                     />
                     <ul class="check-list">
@@ -281,7 +271,7 @@
                         <li><span>✓</span> ترتيب واضح: ابدأ بهذه، وأجّل تلك</li>
                         <li><span>✓</span> كل توصية تتحول إلى مهمة لها موعد</li>
                     </ul>
-                    <a class="text-link" href="{{ $startUrl }}">اعمل واحدة لمشروعك <span aria-hidden="true">←</span></a>
+                    <a class="text-link" href="{{ $startUrl }}">أنشئ تشخيص مشروعك <span aria-hidden="true">←</span></a>
                 </div>
 
                 <div class="sample-report reveal">
@@ -388,14 +378,14 @@
         <section class="section principles-section" id="principles">
             <div class="container principles-layout">
                 <div>
-                    <p class="eyebrow">نتكلم بصراحة</p>
-                    <h2>أشياء لن أعدك بها</h2>
-                    <p>لا توجد وصفة واحدة تنفع كل المشاريع، ولا أرقام مضمونة قبل أن نرى وضعك. ما أعدك به: وضوح تام في ما نعرفه وما نفترضه.</p>
+                    <p class="eyebrow">وضوح قبل الوعود</p>
+                    <h2>ما الذي يمكنك أن تتوقعه؟</h2>
+                    <p>لا توجد وصفة واحدة تناسب كل المشاريع، ولا أرقام مضمونة قبل فهم وضعك. ما نقدمه هو فصل واضح بين ما تؤكده بياناتك وما يحتاج إلى تحقق إضافي.</p>
                 </div>
                 <div class="principles-grid">
-                    <article class="reveal"><span>01</span><h3>لا نصيحة بدون سبب</h3><p>كل خطوة نقولها، نقول معها لماذا هذه بالذات وما المتوقع منها.</p></article>
-                    <article class="reveal"><span>02</span><h3>التقنية تساعد ولا تقرر</h3><p>نستخدم أدوات حديثة تختصر الوقت، لكن الكلام النهائي يمر على مراجعة.</p></article>
-                    <article class="reveal"><span>03</span><h3>لا خطة بدون متابعة</h3><p>كل خطة تنتهي بمهام لها مواعيد وأرقام تعرف بها إن كانت نجحت.</p></article>
+                    <article class="reveal"><span>01</span><h3>لا نصيحة من دون سبب</h3><p>كل خطوة مقترحة توضح سببها والأثر المتوقع منها.</p></article>
+                    <article class="reveal"><span>02</span><h3>التقنية تساعد ولا تستبدل قرارك</h3><p>يساعدك مسار التشخيص على تنظيم الصورة، وتبقى النتيجة مرتبطة بإجاباتك وما تؤكده بيانات المشروع.</p></article>
+                    <article class="reveal"><span>03</span><h3>لا خطة من دون متابعة</h3><p>تنتهي الخطة بمهام ومواعيد ومؤشرات تساعدك على قياس التقدم.</p></article>
                     <article class="reveal"><span>04</span><h3>معلوماتك تخصك أنت</h3><p>نستخدمها لتحليل مشروعك فقط، ولا نعرضها ولا نستخدمها كمثال أمام الناس.</p></article>
                 </div>
             </div>
@@ -435,7 +425,7 @@
                     <x-section-heading
                         eyebrow="أسئلة يسألها أصحاب مشاريع مثلك"
                         title="الأسئلة الشائعة"
-                        description="ولو عندك سؤال غير هذه، اسألني مباشرة."
+                        description="إذا لم تجد سؤالك هنا، يمكنك التواصل مباشرة."
                         align="start"
                     />
                     <div class="faq-contact">
@@ -459,15 +449,15 @@
                 <div class="diagnosis-card">
                     <div class="diagnosis-card__glow" aria-hidden="true"></div>
                     <div class="diagnosis-card__content">
-                        <p class="eyebrow">أربع خطوات وتكون عندك خطة</p>
-                        <h2>ابدأ بمعرفة أين أنت بالضبط.</h2>
-                        <p>تبدأ فورًا بدون تسجيل: أسئلة تعرف إجابتها، ثم نتيجتك، والحساب المجاني في النهاية ليحفظ لك كل شيء.</p>
+                        <p class="eyebrow">أربع خطوات من السؤال إلى القرار</p>
+                        <h2>ابدأ بصورة أوضح عن مشروعك.</h2>
+                        <p>ابدأ من دون حساب، أجب عن الأسئلة، ثم أنشئ حسابك لحفظ النتيجة ومتابعة الخطوات المقترحة.</p>
 
                         <ol class="journey-strip">
-                            <li><b>1</b> جرّب بدون حساب</li>
-                            <li><b>2</b> جاوب على أسئلة بسيطة</li>
-                            <li><b>3</b> احفظ نتيجتك بحساب مجاني</li>
-                            <li><b>4</b> خذ خطتك ومهامك</li>
+                            <li><b>1</b> ابدأ من دون حساب</li>
+                            <li><b>2</b> أجب عن أسئلة واضحة</li>
+                            <li><b>3</b> أنشئ حسابك لحفظ النتيجة</li>
+                            <li><b>4</b> راجع أولوياتك ومهامك</li>
                         </ol>
 
                         <div class="diagnosis-actions">
@@ -485,6 +475,10 @@
                                     <span aria-hidden="true">←</span>
                                 </a>
                             @endif
+                            <a class="button button--outline button--large" href="{{ auth()->check() ? route('app.consultations.index') : route('register', ['intent' => 'consultation']) }}">
+                                الاستشارة التسويقية الذكية الشاملة
+                                <span aria-hidden="true">←</span>
+                            </a>
                             <span>من 7 إلى 10 دقائق · كل خطوة تُحفظ · يمكنك العودة في أي وقت</span>
                         </div>
                     </div>

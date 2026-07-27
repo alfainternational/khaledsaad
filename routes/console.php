@@ -19,3 +19,6 @@ Schedule::command('growth:watch')->dailyAt('04:10')->withoutOverlapping();
 
 // نبض الأسبوع: صباح الاثنين، بعد أن تكون أرقام السوق والمنافسون قد تحدّثوا.
 Schedule::command('growth:pulse')->weeklyOn(1, '07:30')->withoutOverlapping();
+
+// إكمال الدفعات التي أغلق العميل متصفحها قبل العودة، دون لمس التحويل اليدوي.
+Schedule::command('payments:reconcile --minutes=15 --limit=100')->everyTenMinutes()->withoutOverlapping();

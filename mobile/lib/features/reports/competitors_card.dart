@@ -8,7 +8,11 @@ import '../tools/attachments.dart';
 /// إدارة المنافسين من داخل التقرير — نظير قسم المنافسين في تقرير الويب.
 /// يؤكّد مرشّحًا، يستبعده، أو يضيف منافسًا محليًا سمّاه بنفسه.
 class CompetitorsCard extends StatefulWidget {
-  const CompetitorsCard({super.key, required this.repository, required this.projectSlug});
+  const CompetitorsCard({
+    super.key,
+    required this.repository,
+    required this.projectSlug,
+  });
 
   final PlatformRepository repository;
   final String projectSlug;
@@ -18,7 +22,9 @@ class CompetitorsCard extends StatefulWidget {
 }
 
 class _CompetitorsCardState extends State<CompetitorsCard> {
-  late Future<CompetitorView> _future = widget.repository.competitors(widget.projectSlug);
+  late Future<CompetitorView> _future = widget.repository.competitors(
+    widget.projectSlug,
+  );
   final _namesController = TextEditingController();
   bool _busy = false;
 
@@ -36,7 +42,9 @@ class _CompetitorsCardState extends State<CompetitorsCard> {
       setState(() => _future = Future.value(view));
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -58,8 +66,10 @@ class _CompetitorsCardState extends State<CompetitorsCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('منافسوك',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const Text(
+                'منافسوك',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
 
               if (view.confirmed.isNotEmpty) ...[
@@ -77,8 +87,10 @@ class _CompetitorsCardState extends State<CompetitorsCard> {
               ],
 
               if (!view.hasLocal)
-                const Text('أضف منافسيك المحليين الذين تعرفهم — هم الأقرب أثرًا عليك.',
-                    style: TextStyle(color: BrandColors.muted, fontSize: 13)),
+                const Text(
+                  'أضف منافسيك المحليين الذين تعرفهم — هم الأقرب أثرًا عليك.',
+                  style: TextStyle(color: BrandColors.muted, fontSize: 13),
+                ),
 
               const SizedBox(height: 8),
               Row(
@@ -100,7 +112,12 @@ class _CompetitorsCardState extends State<CompetitorsCard> {
                             final names = _namesController.text.trim();
                             if (names.isEmpty) return;
                             _namesController.clear();
-                            _run(() => widget.repository.addCompetitors(widget.projectSlug, names));
+                            _run(
+                              () => widget.repository.addCompetitors(
+                                widget.projectSlug,
+                                names,
+                              ),
+                            );
                           },
                     child: const Text('أضف'),
                   ),
@@ -125,18 +142,34 @@ class _CompetitorsCardState extends State<CompetitorsCard> {
             IconButton(
               tooltip: 'استبعاد',
               icon: const Icon(Icons.close, size: 18),
-              onPressed: _busy ? null : () => _run(() => widget.repository.dismissCompetitor(competitor.id)),
+              onPressed: _busy
+                  ? null
+                  : () => _run(
+                      () => widget.repository.dismissCompetitor(competitor.id),
+                    ),
             )
           else ...[
             IconButton(
               tooltip: 'تأكيد',
-              icon: const Icon(Icons.check, size: 18, color: BrandColors.success),
-              onPressed: _busy ? null : () => _run(() => widget.repository.confirmCompetitor(competitor.id)),
+              icon: const Icon(
+                Icons.check,
+                size: 18,
+                color: BrandColors.success,
+              ),
+              onPressed: _busy
+                  ? null
+                  : () => _run(
+                      () => widget.repository.confirmCompetitor(competitor.id),
+                    ),
             ),
             IconButton(
               tooltip: 'استبعاد',
               icon: const Icon(Icons.close, size: 18),
-              onPressed: _busy ? null : () => _run(() => widget.repository.dismissCompetitor(competitor.id)),
+              onPressed: _busy
+                  ? null
+                  : () => _run(
+                      () => widget.repository.dismissCompetitor(competitor.id),
+                    ),
             ),
           ],
         ],

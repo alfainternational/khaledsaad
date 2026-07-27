@@ -12,20 +12,20 @@
             <div>
                 <strong>استكشف</strong>
                 <a href="{{ $anchorBase }}#method">المنهجية</a>
-                <a href="{{ route('tools.index') }}">الأدوات</a>
+                <a href="{{ route('tools.index') }}">التشخيصات</a>
                 <a href="{{ $anchorBase }}#about">عن خالد</a>
                 <a href="{{ $anchorBase }}#knowledge">المعرفة</a>
             </div>
             <div>
                 <strong>ابدأ</strong>
                 @auth
-                    <a href="{{ route('app.dashboard') }}">لوحة العمل</a>
-                    <a href="{{ route('app.tools.index') }}">أدواتي</a>
+                    <a href="{{ route('app.dashboard') }}">لوحة التحكم</a>
+                    <a href="{{ route('app.tools.index') }}">ابدأ تشخيصًا</a>
                 @else
                     <a href="{{ route('register') }}">إنشاء حساب</a>
                     <a href="{{ route('login') }}">تسجيل الدخول</a>
                 @endauth
-                <a href="{{ $anchorBase }}#faq">كيف تعمل المنصة؟</a>
+                <a href="{{ $anchorBase }}#faq">قبل أن تبدأ</a>
             </div>
             <div>
                 <strong>تواصل</strong>
@@ -44,6 +44,6 @@
     </div>
     <div class="container footer-bottom">
         <span>© {{ date('Y') }} خالد سعد. جميع الحقوق محفوظة.</span>
-        <span>صُمّم لاتخاذ قرار أوضح، لا لإضافة ضوضاء جديدة.</span>
+        <span>وضوح يساعدك على اتخاذ الخطوة التالية بثقة.</span>
     </div>
 </footer>

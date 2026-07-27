@@ -9,6 +9,7 @@ use App\Models\ToolRunStage;
 use App\Services\Billing\CreditManager;
 use App\Services\Competitors\CompetitorRegistry;
 use App\Services\Notifications\RunNotifier;
+use App\Services\Tools\V2\ReportSemanticGuard;
 use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;
 use Illuminate\Support\Facades\Log;
@@ -48,6 +49,7 @@ class ToolRunPipeline
         private readonly CreditManager $credits,
         private readonly RunNotifier $notifier,
         private readonly CompetitorRegistry $competitors,
+        private readonly ReportSemanticGuard $semanticGuard,
     ) {}
 
     public static function seedStages(ToolRun $run): void
@@ -94,6 +96,14 @@ class ToolRunPipeline
         $sections = $this->attempt($run, 'sections', fn () => $this->sections($run, $snapshot, $gaps), $degraded) ?? [];
         $consistency = $this->attempt($run, 'consistency', fn () => $this->consistency($run, $sections), $degraded);
         $synthesis = $this->attempt($run, 'synthesis', fn () => $this->synthesis($run, $snapshot, $sections, $consistency, $baseline), $degraded);
+        if (is_array($synthesis)) {
+            $synthesis = $this->semanticGuard->repair($synthesis, [
+                'snapshot' => $snapshot,
+                'sections' => $sections,
+                'consistency' => $consistency,
+                'competitors' => $this->competitorContext($run),
+            ], $baseline);
+        }
 
         try {
             $this->run($run, 'persist', fn () => $this->composer->compose($run, $baseline, $sections, $synthesis, $gaps));

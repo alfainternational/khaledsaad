@@ -50,6 +50,13 @@ dependencies:
 
   # فتح رابط بوابة الدفع في المتصفح لإتمام الشراء.
   url_launcher: ^6.3.0
+  firebase_core: ^4.12.1
+  firebase_messaging: ^16.4.3
+  firebase_crashlytics: ^5.2.6
+  firebase_analytics: ^12.4.5
+  flutter_localizations:
+    sdk: flutter
+  app_links: ^7.2.1
 
 dev_dependencies:
   flutter_test:

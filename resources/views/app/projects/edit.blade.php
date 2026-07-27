@@ -32,7 +32,7 @@
             <label class="field">
                 <span class="field__label">أين وصل مشروعك؟</span>
                 <select name="stage">
-                    @foreach (['idea' => 'مجرد فكرة', 'launch' => 'بدأت للتو', 'growth' => 'شغّال وأبيع', 'scale' => 'أبيع وأريد التوسع'] as $value => $label)
+                    @foreach (['idea' => 'فكرة قيد الدراسة', 'launch' => 'بدأ المشروع حديثًا', 'growth' => 'يحقق مبيعات حاليًا', 'scale' => 'يحقق مبيعات ويستعد للتوسع'] as $value => $label)
                         <option value="{{ $value }}" @selected(old('stage', $project->stage) === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
@@ -42,7 +42,7 @@
         <label class="field">
             <span class="field__label">ماذا تبيع بالضبط؟</span>
             <textarea name="description" rows="3" maxlength="2000">{{ old('description', $project->profile?->description) }}</textarea>
-            <span class="field__help">اكتبها كما تشرحها لصديق، لا كما تكتبها في إعلان.</span>
+            <span class="field__help">اكتب وصفًا مباشرًا يفهمه شخص يتعرف إلى مشروعك للمرة الأولى.</span>
         </label>
 
         <label class="field">
@@ -70,8 +70,8 @@
     @if (($known ?? []) !== [])
         {{-- كل ما كتبه المستخدم داخل الخطوات يظهر هنا في مكان واحد، لا يضيع داخل أداة. --}}
         <section class="card known-summary">
-            <h2 class="section-title">أشياء أخرى نعرفها عن مشروعك</h2>
-            <p class="muted">إجابات كتبتها أثناء الخطوات السابقة. نستخدمها بدل أن نسألك عنها مرة أخرى.</p>
+            <h2 class="section-title">معلومات محفوظة من تشخيصاتك</h2>
+            <p class="muted">ستُستخدم هذه الإجابات في الخطوات المناسبة حتى لا تحتاج إلى إدخالها مرة أخرى.</p>
 
             <ul class="kv">
                 @foreach ($known as $item)

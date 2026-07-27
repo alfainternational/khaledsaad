@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Recommendation;
 use App\Models\Report;
+use App\Services\Growth\NextToolSuggester;
 use App\Services\Tools\ToolRunService;
 use App\Support\Presentation\ProjectPresenter;
 use App\Support\Presentation\ReportPresenter;
@@ -21,6 +22,7 @@ class ReportController extends Controller
         private readonly ReportPresenter $presenter,
         private readonly ProjectPresenter $projects,
         private readonly ToolRunService $runs,
+        private readonly NextToolSuggester $suggester,
     ) {}
 
     public function index(Request $request, Project $project): JsonResponse
@@ -36,10 +38,28 @@ class ReportController extends Controller
     public function show(Request $request, Report $report): JsonResponse
     {
         $this->authorizeReport($request, $report);
+        $watcher = $report->watcher;
+        $suggestion = $this->suggester->suggest($report->project);
 
         return response()->json([
             'data' => $this->presenter->full($report),
-            'comparison' => $this->presenter->comparison($report, $this->previous($report)),
+            'comparison' => $this->presenter->comparison($report, $this->presenter->previousFor($report)),
+            'watcher' => $watcher ? [
+                'status' => $watcher->status,
+                'last_checked_at' => $watcher->last_checked_at?->toIso8601String(),
+                'last_changed_at' => $watcher->last_changed_at?->toIso8601String(),
+                'changes' => $watcher->changes ?? [],
+            ] : null,
+            'my_verdict' => $report->feedback()
+                ->where('user_id', $request->user()->id)
+                ->value('verdict'),
+            'suggestion' => $suggestion ? [
+                'tool' => [
+                    'key' => $suggestion['tool']->key,
+                    'title' => $suggestion['tool']->title,
+                ],
+                'reason' => $suggestion['reason'],
+            ] : null,
         ]);
     }
 
@@ -59,15 +79,5 @@ class ReportController extends Controller
         return response()->json([
             'data' => array_map(fn ($task) => $this->projects->task($task), $tasks),
         ], 201);
-    }
-
-    private function previous(Report $report): ?Report
-    {
-        return Report::where('project_id', $report->project_id)
-            ->where('id', '!=', $report->id)
-            ->whereHas('toolRun', fn ($query) => $query->where('tool_version_id', $report->toolRun->tool_version_id))
-            ->where('created_at', '<', $report->created_at)
-            ->latest('created_at')
-            ->first();
     }
 }

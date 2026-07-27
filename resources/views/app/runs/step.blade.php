@@ -79,7 +79,7 @@
             <article class="card live-insights__card">
                 <p class="eyebrow">جاهزية بياناتك الآن</p>
                 <div class="live-insights__metrics">
-                    <p><strong id="insight-completeness">{{ $run['insights']['summary']['completeness_percent'] }}%</strong><span>اكتمال الأداة</span></p>
+                    <p><strong id="insight-completeness">{{ $run['insights']['summary']['completeness_percent'] }}%</strong><span>اكتمال المعلومات</span></p>
                     <p><strong id="insight-agency">{{ $run['insights']['summary']['agency_readiness_percent'] }}%</strong><span>جاهزية الوكالة</span></p>
                 </div>
                 <p id="insight-agency-label" class="muted">{{ $run['insights']['summary']['agency_readiness_label'] }}</p>
@@ -210,7 +210,7 @@
                     })
                     .then(function (payload) { render(payload.data); })
                     .catch(function () {
-                        status.textContent = 'تعذّر تحديث التوجيه الآن؛ يمكنك مواصلة تعبئة الأداة بصورة طبيعية.';
+                        status.textContent = 'تعذّر تحديث الإرشادات الآن؛ يمكنك مواصلة الإجابة بصورة طبيعية.';
                     });
             }
 

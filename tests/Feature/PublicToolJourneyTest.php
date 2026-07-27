@@ -47,7 +47,7 @@ class PublicToolJourneyTest extends TestCase
         $response = $this->get(route('tools.index'))->assertOk();
 
         $this->assertSame(11, Tool::count());
-        $response->assertSee('أين المشكلة عندك الآن؟');
+        $response->assertSee('ما الذي تريد فهمه أو تحسينه الآن؟');
         $response->assertSee('قريبًا');
         $response->assertSee(route('tools.show', 'funnel-audit'), false);
     }
@@ -57,7 +57,7 @@ class PublicToolJourneyTest extends TestCase
     {
         $response = $this->get(route('tools.show', 'marketing-score'))->assertOk();
 
-        $response->assertSee('الأسئلة التي سنسألك عنها');
+        $response->assertSee('المعلومات التي ستحتاج إليها');
         $response->assertSee(route('register', ['tool' => 'marketing-score']), false);
         $response->assertSee(route('login', ['tool' => 'marketing-score']), false);
     }
@@ -71,7 +71,7 @@ class PublicToolJourneyTest extends TestCase
 
         $response = $this->get(route('tools.show', $tool->key))->assertOk();
 
-        $response->assertSee('لم تفتح بعد');
+        $response->assertSee('غير متاح حاليًا');
         $response->assertDontSee(route('register', ['tool' => $tool->key]), false);
     }
 

@@ -5,7 +5,7 @@
 @section('content')
     <header class="page-head">
         <div>
-            <p class="eyebrow">محرك النمو · {{ $project->name }}</p>
+            <p class="eyebrow">تحسين الظهور · {{ $project->name }}</p>
             <h1>الظهور في محركات الذكاء</h1>
             <p class="muted">
                 عملاؤك اليوم يسألون ChatGPT قبل أن يبحثوا في جوجل.

@@ -23,7 +23,7 @@
         </article>
 
         <article class="card">
-            <p class="eyebrow">ماذا تخرج به</p>
+            <p class="eyebrow">ما الذي ستحصل عليه</p>
             <ul class="bullets">
                 <li>رقم واضح يقول لك أين أنت الآن</li>
                 @foreach ($tool['outputs'] as $output)
@@ -55,12 +55,12 @@
     @endif
 
     @if (! $tool['is_runnable'])
-        <p class="alert alert--info">هذه لم تفتح بعد، ونعمل عليها الآن.</p>
+        <p class="alert alert--info">هذا التشخيص غير متاح حاليًا. اختر تشخيصًا آخر للبدء.</p>
     @elseif ($projects === [])
         <section class="empty">
-            <h2>عرّفنا على مشروعك أولًا</h2>
-            <p>نحفظ كل شيء داخل مشروعك لكي تتمكن من العودة إليه ومقارنة تقدمك بعد شهر.</p>
-            <a href="{{ route('app.projects.create') }}" class="btn btn--primary">عرّفنا على مشروعك</a>
+            <h2>أضف مشروعك قبل بدء التشخيص</h2>
+            <p>سيُحفظ التشخيص والتقرير داخل المشروع لتتمكن من العودة إليهما ومقارنة التقدم.</p>
+            <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعك وتابع</a>
         </section>
     @else
         <section class="card">

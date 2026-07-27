@@ -4,13 +4,22 @@ import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/common.dart';
+import 'password_reset_request_screen.dart';
 
 /// يقابل resources/views/auth/login.blade.php وregister.blade.php
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key, required this.repository, required this.onAuthenticated});
+  const AuthScreen({
+    super.key,
+    required this.repository,
+    required this.onAuthenticated,
+    this.onBack,
+    this.registering = true,
+  });
 
   final PlatformRepository repository;
   final VoidCallback onAuthenticated;
+  final VoidCallback? onBack;
+  final bool registering;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -22,7 +31,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
 
-  bool _isRegistering = true;
+  late bool _isRegistering = widget.registering;
   bool _busy = false;
   String? _error;
 
@@ -67,6 +76,15 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: widget.onBack == null
+          ? null
+          : AppBar(
+              leading: IconButton(
+                tooltip: 'عودة',
+                onPressed: widget.onBack,
+                icon: const Icon(Icons.arrow_back),
+              ),
+            ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -79,13 +97,16 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     Text(
                       _isRegistering ? 'ابدأ تشخيص مشروعك' : 'أهلًا بعودتك',
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       _isRegistering
-                          ? 'الحساب يحفظ إجاباتك وتقاريرك ويتيح مقارنة تقدمك لاحقًا.'
-                          : 'ادخل لتكمل من حيث توقفت. تقاريرك ومهامك محفوظة.',
+                          ? 'اجمع إجاباتك وتقاريرك ومهامك في مكان واحد، وتابع تقدم مشروعك.'
+                          : 'سجّل الدخول للمتابعة من حيث توقفت والوصول إلى تقاريرك ومهامك.',
                       style: const TextStyle(color: BrandColors.muted),
                     ),
                     const SizedBox(height: 20),
@@ -101,17 +122,22 @@ class _AuthScreenState extends State<AuthScreen> {
                         decoration: const InputDecoration(labelText: 'الاسم'),
                         textInputAction: TextInputAction.next,
                         validator: (value) =>
-                            (value == null || value.trim().isEmpty) ? 'الاسم مطلوب.' : null,
+                            (value == null || value.trim().isEmpty)
+                            ? 'الاسم مطلوب.'
+                            : null,
                       ),
                       const SizedBox(height: 14),
                     ],
 
                     TextFormField(
                       controller: _email,
-                      decoration: const InputDecoration(labelText: 'البريد الإلكتروني'),
+                      decoration: const InputDecoration(
+                        labelText: 'البريد الإلكتروني',
+                      ),
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      validator: (value) => (value == null || !value.contains('@'))
+                      validator: (value) =>
+                          (value == null || !value.contains('@'))
                           ? 'أدخل بريدًا صحيحًا.'
                           : null,
                     ),
@@ -124,8 +150,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         helperText: 'ثمانية أحرف على الأقل.',
                       ),
                       obscureText: true,
-                      validator: (value) =>
-                          (value == null || value.length < 8) ? 'ثمانية أحرف على الأقل.' : null,
+                      validator: (value) => (value == null || value.length < 8)
+                          ? 'ثمانية أحرف على الأقل.'
+                          : null,
                     ),
                     const SizedBox(height: 22),
 
@@ -135,21 +162,44 @@ class _AuthScreenState extends State<AuthScreen> {
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
-                          : Text(_isRegistering ? 'إنشاء الحساب' : 'دخول'),
+                          : Text(
+                              _isRegistering
+                                  ? 'أنشئ حسابك وتابع'
+                                  : 'سجّل الدخول',
+                            ),
                     ),
                     const SizedBox(height: 10),
+
+                    if (!_isRegistering)
+                      TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => PasswordResetRequestScreen(
+                                    repository: widget.repository,
+                                  ),
+                                ),
+                              ),
+                        child: const Text('نسيت كلمة المرور؟'),
+                      ),
 
                     TextButton(
                       onPressed: _busy
                           ? null
                           : () => setState(() {
-                                _isRegistering = !_isRegistering;
-                                _error = null;
-                              }),
+                              _isRegistering = !_isRegistering;
+                              _error = null;
+                            }),
                       child: Text(
-                        _isRegistering ? 'لديك حساب؟ سجّل الدخول' : 'ليس لديك حساب؟ أنشئ حسابًا',
+                        _isRegistering
+                            ? 'لديك حساب؟ سجّل الدخول'
+                            : 'ليس لديك حساب؟ أنشئ حسابًا',
                       ),
                     ),
                   ],

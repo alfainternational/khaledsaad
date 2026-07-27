@@ -17,6 +17,15 @@
 /public/build
 /public/hot
 /public/storage
+/public/downloads/*.apk
+/deploy/backups/
+/deploy/cpanel.env
+/deploy/cpanel_deploy.key
+/khaledsaad.zip
+/mobile/release/
+/mobile/android/app/google-services.json
+/mobile/ios/Runner/GoogleService-Info.plist
+/output/
 /storage/*.key
 /storage/pail
 /vendor

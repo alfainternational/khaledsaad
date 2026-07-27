@@ -17,6 +17,7 @@ class Report extends Model
         'tool_run_id', 'project_id', 'title', 'status', 'score', 'score_band',
         'summary', 'assumptions', 'next_step', 'generated_by_model', 'tool_version',
         'published_at', 'pdf_path', 'pdf_generated_at',
+        'review_mode', 'reviewed_by', 'reviewed_at',
     ];
 
     protected function casts(): array
@@ -25,6 +26,7 @@ class Report extends Model
             'assumptions' => 'array',
             'next_step' => 'array',
             'published_at' => 'datetime',
+            'reviewed_at' => 'datetime',
             'pdf_generated_at' => 'datetime',
         ];
     }

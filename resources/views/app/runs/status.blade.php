@@ -9,13 +9,13 @@
             <h1 id="run-status-title">{{ $run['status_label'] }}</h1>
             <p class="muted">
                 إجاباتك محفوظة. يمكنك إغلاق الصفحة الآن —
-                ستجد هذا التحليل في «أكمل ما بدأته» داخل لوحتك، وسنكمله في الخلفية.
+                ستجد هذا التحليل في قسم «أكمل ما بدأته» داخل لوحة التحكم، وسنرسل إشعارًا عند اكتماله.
             </p>
         </div>
 
         {{-- الوعد بالعودة يحتاج طريقًا فعليًا، لا طمأنة فقط. --}}
         <div class="page-head__actions">
-            <a href="{{ route('app.dashboard') }}" class="btn btn--ghost">لوحتي</a>
+            <a href="{{ route('app.dashboard') }}" class="btn btn--ghost">لوحة التحكم</a>
             <a href="{{ route('app.projects.show', $run['project']['slug']) }}" class="btn btn--ghost">
                 {{ $run['project']['name'] }}
             </a>

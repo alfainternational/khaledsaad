@@ -42,7 +42,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               return const Center(
                 child: EmptyState(
                   title: 'لا إشعارات بعد',
-                  message: 'سنخبرك هنا حين يجهز تقرير أو تتأخر مهمة أو ينخفض رصيدك.',
+                  message:
+                      'ستظهر هنا تحديثات التقارير والمهام والرصيد عندما تحتاج إلى اطلاع أو إجراء.',
                 ),
               );
             }
@@ -52,7 +53,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: list.items.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 10),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final notification = list.items[index];
 
@@ -61,16 +63,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: notification.read ? BrandColors.line : BrandColors.blue,
+                        color: notification.read
+                            ? BrandColors.line
+                            : BrandColors.blue,
                       ),
                     ),
                     child: ListTile(
-                      title: Text(notification.title,
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                      title: Text(
+                        notification.title,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                       subtitle: Text(notification.body),
                       trailing: notification.read
                           ? null
-                          : const Icon(Icons.circle, size: 10, color: BrandColors.blue),
+                          : const Icon(
+                              Icons.circle,
+                              size: 10,
+                              color: BrandColors.blue,
+                            ),
                       onTap: () => _open(notification),
                     ),
                   );

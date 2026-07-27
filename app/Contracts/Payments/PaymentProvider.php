@@ -23,6 +23,10 @@ interface PaymentProvider
      */
     public function verify(Payment $payment, array $callbackData): bool;
 
+    public function healthCheck(): GatewayHealth;
+
+    public function refund(Payment $payment, float $amount, string $reason): RefundResult;
+
     /**
      * اسم المزوّد كما في جدول payment_gateways.
      */

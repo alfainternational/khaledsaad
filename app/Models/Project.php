@@ -46,6 +46,11 @@ class Project extends Model
         return $this->hasMany(Report::class);
     }
 
+    public function agencyReports(): HasMany
+    {
+        return $this->hasMany(AgencyReport::class);
+    }
+
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
@@ -59,6 +64,11 @@ class Project extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(ProjectAnswer::class);
+    }
+
+    public function consultationSessions(): HasMany
+    {
+        return $this->hasMany(ConsultationSession::class);
     }
 
     public function pulseDigests(): HasMany

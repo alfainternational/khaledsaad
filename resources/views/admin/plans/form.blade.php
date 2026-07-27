@@ -55,9 +55,64 @@
             </label>
         </div>
 
+        <fieldset class="field">
+            <legend class="field__label">عناصر الميزات</legend>
+            <p class="field__help">
+                اختر ما تشمله الخطة وحدّد عدده. العدد الفارغ في الحدود والحصص يعني «بلا حد»، والصفر يعني المنع.
+                ما لا تختاره لا يُعرض ولا يُسمح به. العناصر الموسومة «عرضية» تظهر للعميل ولا يمنعها النظام تقنيًا.
+            </p>
+
+            @foreach ($features->groupBy('group') as $group => $items)
+                <p class="eyebrow">{{ $items->first()->groupLabel() }}</p>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr><th>ضمن الخطة</th><th>العنصر</th><th>العدد</th><th>نص بديل (اختياري)</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($items as $feature)
+                                @php($row = $selection[$feature->id] ?? null)
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="features[{{ $feature->id }}][enabled]" value="1"
+                                            @checked(old("features.{$feature->id}.enabled", $row?->enabled))>
+                                    </td>
+                                    <td>
+                                        {{ $feature->name }}
+                                        @unless ($feature->isEnforced())
+                                            <span class="badge badge--assumption">عرضي</span>
+                                        @endunless
+                                        @if ($feature->description)
+                                            <p class="muted">{{ $feature->description }}</p>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($feature->isNumeric())
+                                            <input type="number" min="0" style="max-width:7rem"
+                                                name="features[{{ $feature->id }}][value]"
+                                                value="{{ old("features.{$feature->id}.value", $row?->value) }}"
+                                                placeholder="بلا حد">
+                                            <span class="muted">{{ $feature->unit }}</span>
+                                        @else
+                                            <span class="muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <input type="text" maxlength="190" name="features[{{ $feature->id }}][note]"
+                                            value="{{ old("features.{$feature->id}.note", $row?->note) }}"
+                                            placeholder="{{ $feature->describeValue($row?->value) }}">
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endforeach
+        </fieldset>
+
         <label class="field">
-            <span class="field__label">الميزات (ميزة في كل سطر)</span>
-            <textarea name="features" rows="4">{{ old('features', implode("\n", $plan->features ?? [])) }}</textarea>
+            <span class="field__label">سطور وصف إضافية (تُعرض فقط إن لم تُحدَّد أي عناصر أعلاه)</span>
+            <textarea name="features_text" rows="3">{{ old('features_text', implode("\n", $plan->features ?? [])) }}</textarea>
         </label>
 
         <label class="field field--inline">

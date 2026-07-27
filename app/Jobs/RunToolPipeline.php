@@ -4,12 +4,13 @@ namespace App\Jobs;
 
 use App\Models\ToolRun;
 use App\Services\Tools\ToolRunPipeline;
+use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
 class RunToolPipeline implements ShouldQueue
 {
-    use Queueable;
+    use Batchable, Queueable;
 
     public int $tries = 1;
 

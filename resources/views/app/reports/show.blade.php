@@ -9,7 +9,12 @@
             <h1>{{ $report['title'] }}</h1>
         </div>
         <div class="page-head__actions">
-            <a href="{{ route('app.reports.pdf', $report['id']) }}" class="btn btn--ghost">حمّل PDF</a>
+            @feature(\App\Support\Billing\FeatureKey::REPORTS_PDF)
+                <a href="{{ route('app.reports.pdf', $report['id']) }}" class="btn btn--ghost">حمّل PDF</a>
+            @else
+                {{-- الترقية أوضح من زر يُرفض عند الضغط. --}}
+                <a href="{{ route('app.billing') }}" class="btn btn--ghost">تصدير PDF · في الخطط المدفوعة</a>
+            @endfeature
             <form method="POST" action="{{ route('app.reports.convert', $report['id']) }}">
                 @csrf
                 <button type="submit" class="btn btn--primary">حوّل أهم 3 توصيات إلى مهام</button>
@@ -17,7 +22,7 @@
         </div>
     </header>
 
-    <section class="split">
+    <section class="report-head">
         <article class="card card--score">
             <p class="eyebrow">الدرجة</p>
             <p class="score-big">{{ $report['score'] }}<small>/100</small></p>
@@ -30,6 +35,15 @@
         </article>
 
         <article class="card">
+            @if ($report['is_manually_reviewed'])
+                {{-- بيان صادق موجز يخاطب خوف العميل: أنها ليست نتيجة آلة.
+                     بلا مدح ولا ادّعاء «متعوب عليه» — النص نفسه يثبت ذلك. --}}
+                <p class="verified-badge">
+                    <b>مراجعة يدوية بواسطة {{ $report['reviewer_name'] }}</b>
+                    <span>قُرئت إجاباتك ودُقّق هذا التحليل{{ $report['reviewed_at'] ? ' في '.$report['reviewed_at'] : '' }}.</span>
+                </p>
+            @endif
+
             <p class="eyebrow">الخلاصة</p>
             <p>{{ $report['summary'] }}</p>
 
@@ -49,7 +63,7 @@
     <section @class(['card', 'watch-card', 'card--warn' => ($watcher?->isActive() && $watcher->changes)])>
         @if ($watcher?->isActive())
             @if ($watcher->changes)
-                <p class="eyebrow">تقريرك الحي رصد تغييرًا</p>
+                <p class="eyebrow">تغيّرت بيانات تؤثر في التقرير</p>
                 <ul class="bullets">
                     @foreach ($watcher->changes as $change)
                         <li>{{ $change['text'] }}</li>
@@ -63,31 +77,30 @@
                     </form>
                     <form method="POST" action="{{ route('app.reports.unwatch', $report['id']) }}">
                         @csrf
-                        <button type="submit" class="btn btn--ghost btn--sm">أوقف المراقبة</button>
+                        <button type="submit" class="btn btn--ghost btn--sm">أوقف المتابعة</button>
                     </form>
                 </div>
             @else
-                <p class="eyebrow">التقرير الحي</p>
+                <p class="eyebrow">متابعة التقرير مفعّلة</p>
                 <p class="muted">
-                    المراقبة فعّالة — نفحص مشروعك يوميًا وننبهك إذا تغيّر ما بُني عليه هذا التقرير.
+                    سننبهك إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
                     @if ($watcher->last_checked_at)
                         آخر فحص {{ $watcher->last_checked_at->diffForHumans() }}.
                     @endif
                 </p>
                 <form method="POST" action="{{ route('app.reports.unwatch', $report['id']) }}">
                     @csrf
-                    <button type="submit" class="btn btn--ghost btn--sm">أوقف المراقبة</button>
+                    <button type="submit" class="btn btn--ghost btn--sm">أوقف المتابعة</button>
                 </form>
             @endif
         @else
-            <p class="eyebrow">لا تدع هذا التقرير يشيخ</p>
+            <p class="eyebrow">تابع تغيّر البيانات المهمة</p>
             <p class="muted">
-                خلّيه حيًّا: نراقب مشروعك يوميًا — ملفك، منافسيك، إجاباتك —
-                وننبهك فور أن يتغيّر ما بُنيت عليه هذه النتائج. بلا أي تكلفة.
+                فعّل المتابعة لتصلك تنبيهات عندما تتغيّر بيانات المشروع التي بُنيت عليها هذه النتائج.
             </p>
             <form method="POST" action="{{ route('app.reports.watch', $report['id']) }}">
                 @csrf
-                <button type="submit" class="btn btn--primary btn--sm">فعّل التقرير الحي</button>
+                <button type="submit" class="btn btn--primary btn--sm">فعّل متابعة التقرير</button>
             </form>
         @endif
     </section>
@@ -96,7 +109,7 @@
          ما يهم العميل هو على ماذا بُنيت النتيجة. --}}
     <p class="provenance">
         {{ $report['counts']['evidence_backed'] }} نتيجة مبنية على ما كتبته،
-        و{{ $report['counts']['assumptions'] }} اجتهاد يحتاج تأكيدًا منك.
+        و{{ $report['counts']['assumptions'] }} معلومة تحتاج إلى تأكيد منك.
     </p>
 
     {{-- حلقة التعلّم: تقييم واحد بسيط يعلّم المنصة ما ينفع فعلًا --}}
@@ -116,7 +129,7 @@
 
     @if ($report['assumptions'] !== [])
         <section class="card card--warn">
-            <h2 class="section-title">ما لم يُتحقق منه</h2>
+            <h2 class="section-title">معلومات تحتاج إلى تأكيد منك</h2>
             <ul class="bullets">
                 @foreach ($report['assumptions'] as $assumption)
                     <li>{{ $assumption }}</li>
@@ -126,7 +139,7 @@
     @endif
 
     <section aria-labelledby="findings-heading">
-        <h2 id="findings-heading" class="section-title">النتائج والتوصيات</h2>
+        <h2 id="findings-heading" class="section-title">أهم ما وجدناه والخطوات المقترحة</h2>
 
         @forelse ($report['findings'] as $finding)
             <article class="finding">
@@ -171,10 +184,9 @@
         @empty
             {{-- طلب «أعد التحليل» بلا زر يترك المستخدم أمام تعليمة لا يقدر ينفذها. --}}
             <section class="card card--resume">
-                <h3>التحليل الموسع لم يكتمل هذه المرة</h3>
+                <h3>لم يكتمل التحليل الموسّع هذه المرة</h3>
                 <p class="muted">
-                    درجتك وكل إجاباتك محفوظة. إعادة الطلب لا تكلفك إدخالًا جديدًا،
-                    وتستغرق دقيقتين تقريبًا.
+                    درجتك وإجاباتك محفوظة. يمكنك طلب التحليل مرة أخرى من دون إعادة كتابة المعلومات.
                 </p>
 
                 <div class="card__actions">
@@ -228,7 +240,7 @@
 
                     @if (! empty($section['content']['prompt_local']))
                         <div class="competitor-prompt">
-                            <p>لم تسمِّ منافسيك المحليين بعد — وهم الأهم. من يأخذ عملاءك في مدينتك يوجّه خطتك أكثر من أي علامة بعيدة.</p>
+                            <p>لم تضف منافسيك المحليين بعد. إضافتهم تساعد على مقارنة مشروعك بالجهات الأقرب إلى عملائك وسوقك.</p>
                             <form method="POST" action="{{ route('app.competitors.store', $report['project']['slug']) }}" class="competitor-add">
                                 @csrf
                                 <input type="text" name="names" placeholder="اسم منافس أو اسمين، أو @حسابهم" maxlength="500" required>
@@ -238,7 +250,7 @@
                     @endif
 
                     @if (! empty($section['content']['candidates']))
-                        <p class="muted">مرشّحون اكتشفناهم — أكّد من ينافسك فعلًا واستبعد الباقي:</p>
+                        <p class="muted">جهات مقترحة للمراجعة. أكّد المنافسين الفعليين واستبعد غير المناسب:</p>
                         <ul class="competitor-list competitor-list--candidates">
                             @foreach ($section['content']['candidates'] as $candidate)
                                 <li>
@@ -306,13 +318,18 @@
     {{-- بذرة التنسيق: مخرج الأداة يقود إلى الأداة التالية تلقائيًا --}}
     @if ($suggestion)
         <section class="card next-step">
-            <p class="eyebrow">اقتراحك الجاهز التالي</p>
+            <p class="eyebrow">التشخيص المقترح بعد ذلك</p>
             <h3>{{ $suggestion['tool']->title }}</h3>
             <p class="muted">{{ $suggestion['reason'] }}</p>
             <form method="POST" action="{{ route('app.runs.start', [$report['project']['slug'], $suggestion['tool']->key]) }}">
                 @csrf
-                <button type="submit" class="btn btn--primary btn--sm">ابدأها الآن — إجاباتك السابقة تُملأ تلقائيًا</button>
+                <button type="submit" class="btn btn--primary btn--sm">ابدأ التشخيص بالإجابات المحفوظة</button>
             </form>
         </section>
+    @endif
+
+    {{-- توقيع صادق في نهاية التقرير اليدوي: بيان من كتبه ومتى، بلا مبالغة. --}}
+    @if ($report['is_manually_reviewed'])
+        <p class="report-sign">راجعه وكتبه بنفسه: {{ $report['reviewer_name'] }}@if ($report['reviewed_at']) · {{ $report['reviewed_at'] }}@endif</p>
     @endif
 @endsection

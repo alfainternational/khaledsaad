@@ -8,14 +8,14 @@
             <p class="eyebrow">المشاريع</p>
             <h1>كل مشاريعك</h1>
         </div>
-        <a href="{{ route('app.projects.create') }}" class="btn btn--primary">مشروع جديد</a>
+        <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعًا</a>
     </header>
 
     @if ($projects === [])
         <section class="empty">
-            <h2>القائمة فارغة</h2>
-            <p>المشروع هو الذاكرة التي تتشاركها كل الأدوات — تُدخل البيانات مرة واحدة فقط.</p>
-            <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أنشئ مشروعًا</a>
+            <h2>لا توجد مشاريع بعد</h2>
+            <p>أضف مشروعك الأول لتجميع معلوماته وتشخيصاته وتقاريره في مكان واحد.</p>
+            <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعك الأول</a>
         </section>
     @else
         <div class="card-grid">

@@ -1,13 +1,26 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/api/api_client.dart';
 import 'core/api/platform_repository.dart';
+import 'core/firebase/firebase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth_screen.dart';
+import 'features/auth/password_reset_screen.dart';
 import 'features/projects/dashboard_screen.dart';
+import 'features/public/public_home_screen.dart';
+import 'features/public/shared_report_screen.dart';
 
-void main() {
-  runApp(KhaledSaadApp(repository: PlatformRepository(ApiClient())));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final repository = PlatformRepository(ApiClient());
+  await FirebaseService.instance.initialize();
+
+  runApp(KhaledSaadApp(repository: repository));
 }
 
 class KhaledSaadApp extends StatefulWidget {
@@ -20,7 +33,68 @@ class KhaledSaadApp extends StatefulWidget {
 }
 
 class _KhaledSaadAppState extends State<KhaledSaadApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  final _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
   late Future<bool> _session = _restore();
+  bool _showAuth = false;
+  bool _registering = true;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_listenForLinks());
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _listenForLinks() async {
+    final initial = await _appLinks.getInitialLink();
+    if (initial != null) _openLink(initial);
+    _linkSubscription = _appLinks.uriLinkStream.listen(_openLink);
+  }
+
+  void _openLink(Uri uri) {
+    final segments = [
+      if (uri.scheme == 'khaledsaad' && uri.host.isNotEmpty) uri.host,
+      ...uri.pathSegments,
+    ];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = _navigatorKey.currentState;
+      if (navigator == null || segments.isEmpty) return;
+
+      if (segments.first == 'r' && segments.length >= 2) {
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => SharedReportScreen(
+              repository: widget.repository,
+              token: segments[1],
+            ),
+          ),
+        );
+      }
+
+      if (segments.first == 'reset-password' && segments.length >= 2) {
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => PasswordResetScreen(
+              repository: widget.repository,
+              token: segments[1],
+              email: uri.queryParameters['email'] ?? '',
+              onComplete: () {
+                navigator.pop();
+                _openAuth(registering: false);
+              },
+            ),
+          ),
+        );
+      }
+    });
+  }
 
   Future<bool> _restore() async {
     final token = await widget.repository.client.tokens.read();
@@ -29,6 +103,7 @@ class _KhaledSaadAppState extends State<KhaledSaadApp> {
 
     try {
       await widget.repository.me();
+      await FirebaseService.instance.syncDevice(widget.repository);
       return true;
     } catch (_) {
       // رمز منتهٍ: نبدأ من شاشة الدخول بدل شاشة بيضاء أو سبينر بلا نهاية.
@@ -36,17 +111,34 @@ class _KhaledSaadAppState extends State<KhaledSaadApp> {
     }
   }
 
-  void _setAuthenticated(bool value) {
-    setState(() => _session = Future.value(value));
+  Future<void> _setAuthenticated(bool value) async {
+    if (value) {
+      await FirebaseService.instance.syncDevice(widget.repository);
+    }
+    if (!mounted) return;
+    setState(() {
+      _showAuth = false;
+      _session = Future.value(value);
+    });
+  }
+
+  void _openAuth({required bool registering}) {
+    setState(() {
+      _registering = registering;
+      _showAuth = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'خالد سعد',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(),
       locale: const Locale('ar'),
+      supportedLocales: const [Locale('ar')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       // الواجهة عربية RTL أولًا، تمامًا كما في الويب.
       builder: (context, child) => Directionality(
         textDirection: TextDirection.rtl,
@@ -56,18 +148,32 @@ class _KhaledSaadAppState extends State<KhaledSaadApp> {
         future: _session,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
           }
 
-          return snapshot.data == true
-              ? DashboardScreen(
-                  repository: widget.repository,
-                  onLogout: () => _setAuthenticated(false),
-                )
-              : AuthScreen(
-                  repository: widget.repository,
-                  onAuthenticated: () => _setAuthenticated(true),
-                );
+          if (snapshot.data == true) {
+            return DashboardScreen(
+              repository: widget.repository,
+              onLogout: () => _setAuthenticated(false),
+            );
+          }
+
+          if (_showAuth) {
+            return AuthScreen(
+              repository: widget.repository,
+              registering: _registering,
+              onBack: () => setState(() => _showAuth = false),
+              onAuthenticated: () => _setAuthenticated(true),
+            );
+          }
+
+          return PublicHomeScreen(
+            repository: widget.repository,
+            onLogin: () => _openAuth(registering: false),
+            onRegister: () => _openAuth(registering: true),
+          );
         },
       ),
     );

@@ -129,6 +129,24 @@ class ProjectAnswerMemory
      * @param  Collection<int, ToolField>  $fields
      * @return array<int, array{key: string, label: string, value: mixed}>
      */
+    /**
+     * كل ما يعرفه المشروع بمفاتيحه وقيمه المجردة — للاستعراض والحساب لا للعرض.
+     *
+     * @return array<string, mixed>
+     */
+    public function knownValues(Project $project): array
+    {
+        return ProjectAnswer::where('project_id', $project->id)
+            ->get()
+            ->mapWithKeys(fn (ProjectAnswer $answer) => [
+                $answer->field_key => $answer->value_json['value'] ?? $answer->value_json,
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{key: string, label: string, value: mixed}>
+     */
     public function knownFor(Project $project, $fields): array
     {
         $known = ProjectAnswer::where('project_id', $project->id)->pluck('value_json', 'field_key');

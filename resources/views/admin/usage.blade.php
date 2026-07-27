@@ -7,7 +7,7 @@
         <div>
             <p class="eyebrow">الإدارة</p>
             <h1>تكلفة الذكاء الاصطناعي</h1>
-            <p class="muted">آخر {{ $days }} يومًا. هذه اللوحة تجيب على سؤال واحد: أي أداة تحرق أكثر مما تعيد؟</p>
+            <p class="muted">آخر {{ $days }} يومًا. استخدم هذه الأرقام لمقارنة تكلفة كل تشخيص بحجم استخدامه.</p>
         </div>
     </header>
 
@@ -18,7 +18,7 @@
         </article>
         <article class="stat">
             <span class="stat__value">{{ $totals['runs'] }}</span>
-            <span class="stat__label">عملية تشغيل</span>
+            <span class="stat__label">عملية تحليل</span>
         </article>
         <article class="stat">
             <span class="stat__value">{{ $totals['calls'] }}</span>
@@ -72,7 +72,7 @@
                             <td>{{ number_format($row['cost_usd'], 4) }}$</td>
                         </tr>
                     @empty
-                        <tr><td colspan="3">لا بيانات بعد.</td></tr>
+                        <tr><td colspan="3">لا توجد استدعاءات مسجلة حسب المرحلة في هذه المدة.</td></tr>
                     @endforelse
                 </tbody>
             </table>

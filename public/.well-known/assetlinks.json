@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "net.khaledsaad.ksgrowth_mobile",
+      "sha256_cert_fingerprints": [
+        "45:B6:A8:E3:5A:AD:B8:70:04:A1:1A:6E:FE:FD:8C:21:E4:53:CE:70:37:63:F2:E9:35:57:C3:FA:5E:5A:3A:FF"
+      ]
+    }
+  }
+]

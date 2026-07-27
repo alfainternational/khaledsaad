@@ -32,7 +32,7 @@ class TaskOverdueNotification extends Notification
             ->greeting('مهمة تنتظرك')
             ->line("تأخرت مهمة «{$this->task->title}» عن موعدها.")
             ->action('افتح المهام', route('app.projects.tasks', $this->task->project->slug))
-            ->line('حدّث حالتها أو أجّل موعدها متى ما ناسبك.');
+            ->line('حدّث حالة المهمة أو اختر لها موعدًا جديدًا.');
     }
 
     /**

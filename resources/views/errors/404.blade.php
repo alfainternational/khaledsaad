@@ -16,9 +16,9 @@
                 </p>
 
                 <div class="page-hero__actions">
-                    <a class="button button--primary button--large" href="{{ route('tools.index') }}">اطّلع على الأدوات <span aria-hidden="true">←</span></a>
+                    <a class="button button--primary button--large" href="{{ route('tools.index') }}">استكشف التشخيصات <span aria-hidden="true">←</span></a>
                     @auth
-                        <a class="button button--ghost button--large" href="{{ route('app.dashboard') }}">ادخل على مشروعك</a>
+                        <a class="button button--ghost button--large" href="{{ route('app.dashboard') }}">افتح لوحة مشروعك</a>
                     @else
                         <a class="button button--ghost button--large" href="{{ route('home') }}">الصفحة الرئيسية</a>
                     @endauth

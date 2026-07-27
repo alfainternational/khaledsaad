@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/common.dart';
+import '../agency_reports/agency_reports_screen.dart';
+import '../consultations/consultation_screen.dart';
+import '../growth/growth_hub_screen.dart';
 import '../reports/report_screen.dart';
 import '../tools/models.dart';
 import '../tools/run_wizard_screen.dart';
@@ -11,7 +14,11 @@ import 'tasks_screen.dart';
 
 /// يقابل resources/views/app/projects/show.blade.php
 class ProjectScreen extends StatefulWidget {
-  const ProjectScreen({super.key, required this.repository, required this.slug});
+  const ProjectScreen({
+    super.key,
+    required this.repository,
+    required this.slug,
+  });
 
   final PlatformRepository repository;
   final String slug;
@@ -46,15 +53,17 @@ class _ProjectScreenState extends State<ProjectScreen> {
 
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => RunWizardScreen(repository: widget.repository, run: run),
+          builder: (_) =>
+              RunWizardScreen(repository: widget.repository, run: run),
         ),
       );
 
       _reload();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -76,10 +85,30 @@ class _ProjectScreenState extends State<ProjectScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  Text(project.card.name,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-                  Text(project.card.industry ?? 'قطاع غير محدد',
-                      style: const TextStyle(color: BrandColors.muted)),
+                  FilledButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ConsultationScreen(
+                          repository: widget.repository,
+                          projectSlug: widget.slug,
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(Icons.auto_awesome),
+                    label: const Text('ابدأ تشخيص مشروعك'),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    project.card.name,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    project.card.industry ?? 'قطاع غير محدد',
+                    style: const TextStyle(color: BrandColors.muted),
+                  ),
                   const SizedBox(height: 16),
 
                   BrandCard(
@@ -88,9 +117,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
                             children: [
                               Eyebrow('درجة الجاهزية'),
                               SizedBox(height: 8),
-                              Text('لم تُحتسب بعد. شغّل تشخيص الجاهزية لتظهر هنا.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: BrandColors.muted)),
+                              Text(
+                                'لم تُحتسب بعد. ابدأ تشخيص الجاهزية لعرض الدرجة والأولويات هنا.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: BrandColors.muted),
+                              ),
                             ],
                           )
                         : BigScore(
@@ -124,13 +155,81 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  const Text('التقارير',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  BrandCard(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AgencyReportsScreen(
+                          repository: widget.repository,
+                          projectSlug: widget.slug,
+                          projectName: project.card.name,
+                        ),
+                      ),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Eyebrow('للتسليم والمقارنة'),
+                        SizedBox(height: 5),
+                        Text(
+                          'موجز الوكالة الموحّد',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'اجمع أحدث نتائج أدواتك في نسخة ثابتة وPDF جاهز للوكالات.',
+                          style: TextStyle(color: BrandColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  BrandCard(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => GrowthHubScreen(
+                          repository: widget.repository,
+                          projectSlug: widget.slug,
+                          projectName: project.card.name,
+                        ),
+                      ),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Eyebrow('التحسين المستمر'),
+                        SizedBox(height: 5),
+                        Text(
+                          'فرص إضافية لتحسين المشروع',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'النبض الأسبوعي، الظهور في محركات الإجابة، الجمهور، ومؤشرات القياس.',
+                          style: TextStyle(color: BrandColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    'التقارير',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 10),
 
                   if (project.reports.isEmpty)
-                    const Text('لا توجد تقارير بعد.',
-                        style: TextStyle(color: BrandColors.muted))
+                    const Text(
+                      'لا توجد تقارير بعد. ابدأ أحد التشخيصات لإنشاء التقرير الأول.',
+                      style: TextStyle(color: BrandColors.muted),
+                    )
                   else
                     for (final report in project.reports) ...[
                       BrandCard(
@@ -153,8 +252,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     ],
 
                   const SizedBox(height: 20),
-                  const Text('المؤشرات',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const Text(
+                    'المؤشرات',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 10),
 
                   if (project.kpis.isEmpty)
@@ -171,15 +272,25 @@ class _ProjectScreenState extends State<ProjectScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(kpi.name,
-                                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                                  Text('${kpi.latest ?? '—'} ${kpi.unit ?? ''}',
-                                      style: const TextStyle(color: BrandColors.muted)),
+                                  Text(
+                                    kpi.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${kpi.latest ?? '—'} ${kpi.unit ?? ''}',
+                                    style: const TextStyle(
+                                      color: BrandColors.muted,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             if (kpi.attainmentPercent != null)
-                              ScoreChip(label: '${kpi.attainmentPercent}% من الهدف'),
+                              ScoreChip(
+                                label: '${kpi.attainmentPercent}% من الهدف',
+                              ),
                           ],
                         ),
                       ),
@@ -187,8 +298,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     ],
 
                   const SizedBox(height: 20),
-                  const Text('شغّل أداة على هذا المشروع',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const Text(
+                    'ابدأ تشخيصًا لهذا المشروع',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 10),
 
                   for (final tool in tools) ...[
@@ -199,19 +312,32 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         children: [
                           Eyebrow(tool.category),
                           const SizedBox(height: 4),
-                          Text(tool.title,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                          Text(
+                            tool.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                           const SizedBox(height: 6),
-                          Text(tool.description,
-                              style: const TextStyle(color: BrandColors.muted, fontSize: 13)),
+                          Text(
+                            tool.description,
+                            style: const TextStyle(
+                              color: BrandColors.muted,
+                              fontSize: 13,
+                            ),
+                          ),
                           const SizedBox(height: 12),
                           if (tool.isRunnable)
                             FilledButton(
                               onPressed: () => _startRun(tool.key),
-                              child: const Text('ابدأ'),
+                              child: const Text('ابدأ التشخيص'),
                             )
                           else
-                            const SeverityBadge(label: 'قريبًا', severity: 'low'),
+                            const SeverityBadge(
+                              label: 'قريبًا',
+                              severity: 'low',
+                            ),
                         ],
                       ),
                     ),
@@ -227,13 +353,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   Widget _row(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: const TextStyle(color: BrandColors.muted)),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: BrandColors.muted)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+      ],
+    ),
+  );
 }

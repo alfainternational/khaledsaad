@@ -31,11 +31,11 @@ class ReportReadyNotification extends Notification
 
         return (new MailMessage)
             ->subject('تقريرك جاهز — '.$this->report->title)
-            ->greeting('تحليلك اكتمل')
-            ->line("انتهى تحليل «{$this->report->title}».")
+            ->greeting('اكتمل تقريرك')
+            ->line("أصبح تقرير «{$this->report->title}» جاهزًا للمراجعة.")
             ->line("درجتك: {$this->report->score} من 100.")
             ->action('افتح التقرير', $url)
-            ->line('إجاباتك ومهامك محفوظة، ويمكنك تحويل التوصيات إلى مهام في أي وقت.');
+            ->line('راجع الأولويات، وحوّل التوصيات التي تختارها إلى مهام قابلة للمتابعة.');
     }
 
     /**

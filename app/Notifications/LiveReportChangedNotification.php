@@ -34,17 +34,17 @@ class LiveReportChangedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $mail = (new MailMessage)
-            ->subject('تغيّر شيء في مشروعك — '.$this->report->title)
-            ->greeting('تقريرك الحي رصد تغييرًا')
-            ->line("منذ إصدار «{$this->report->title}» تغيّر ما بُني عليه:");
+            ->subject('بيانات مشروعك تغيّرت — '.$this->report->title)
+            ->greeting('يوجد تحديث قد يؤثر في تقريرك')
+            ->line("تغيّرت بعض البيانات التي بُني عليها «{$this->report->title}»:");
 
         foreach (array_slice($this->changes, 0, 4) as $change) {
             $mail->line('• '.$change['text']);
         }
 
         return $mail
-            ->action('افتح التقرير وقرر', route('app.reports.show', $this->report->id))
-            ->line('إجاباتك محفوظة — إعادة التحليل ببياناتك الجديدة تأخذ دقائق.');
+            ->action('راجع التقرير والتغييرات', route('app.reports.show', $this->report->id))
+            ->line('إجاباتك محفوظة، ويمكنك طلب تحليل جديد بعد مراجعة التغييرات.');
     }
 
     /**

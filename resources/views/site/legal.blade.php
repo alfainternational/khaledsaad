@@ -36,7 +36,7 @@
                 @endforeach
 
                 <div class="cta-band">
-                    <p>عندك سؤال عن أي بند هنا؟ اسأل مباشرة ونجاوبك بلغة واضحة.</p>
+                    <p>هل لديك سؤال عن أي بند؟ تواصل معنا للحصول على توضيح مباشر.</p>
                     <a class="button button--primary" href="{{ $brand['contact']['whatsapp'] }}" target="_blank" rel="noopener noreferrer">تواصل عبر واتساب</a>
                 </div>
             </div>

@@ -5,7 +5,7 @@
 @section('content')
     <header class="page-head">
         <div>
-            <p class="eyebrow">محرك النمو</p>
+            <p class="eyebrow">متابعة التحسين</p>
             <h1>النبض الأسبوعي</h1>
             <p class="muted">كل اثنين: ماذا تغيّر في مشاريعك، وما خطوة هذا الأسبوع.</p>
         </div>

@@ -8,12 +8,12 @@ class ProjectCard {
   });
 
   factory ProjectCard.fromJson(Map<String, dynamic> json) => ProjectCard(
-        slug: json['slug'] as String,
-        name: json['name'] as String,
-        industry: json['industry'] as String?,
-        latestScore: json['latest_score'] as int?,
-        scoreBand: json['score_band'] as String?,
-      );
+    slug: json['slug'] as String,
+    name: json['name'] as String,
+    industry: json['industry'] as String?,
+    latestScore: json['latest_score'] as int?,
+    scoreBand: json['score_band'] as String?,
+  );
 
   final String slug;
   final String name;
@@ -23,9 +23,14 @@ class ProjectCard {
 }
 
 class ScoreComparison {
-  const ScoreComparison({required this.delta, required this.direction, required this.label});
+  const ScoreComparison({
+    required this.delta,
+    required this.direction,
+    required this.label,
+  });
 
-  factory ScoreComparison.fromJson(Map<String, dynamic> json) => ScoreComparison(
+  factory ScoreComparison.fromJson(Map<String, dynamic> json) =>
+      ScoreComparison(
         delta: json['delta'] as int? ?? 0,
         direction: json['direction'] as String? ?? 'flat',
         label: json['label'] as String? ?? '',
@@ -46,12 +51,12 @@ class ReportCard {
   });
 
   factory ReportCard.fromJson(Map<String, dynamic> json) => ReportCard(
-        id: json['id'] as int,
-        title: json['title'] as String,
-        score: json['score'] as int? ?? 0,
-        scoreBand: json['score_band'] as String? ?? '',
-        createdAt: json['created_at'] as String?,
-      );
+    id: json['id'] as int,
+    title: json['title'] as String,
+    score: json['score'] as int? ?? 0,
+    scoreBand: json['score_band'] as String? ?? '',
+    createdAt: json['created_at'] as String?,
+  );
 
   final int id;
   final String title;
@@ -70,12 +75,12 @@ class KpiModel {
   });
 
   factory KpiModel.fromJson(Map<String, dynamic> json) => KpiModel(
-        id: json['id'] as int,
-        name: json['name'] as String,
-        unit: json['unit'] as String?,
-        latest: (json['latest'] as num?)?.toDouble(),
-        attainmentPercent: json['attainment_percent'] as int?,
-      );
+    id: json['id'] as int,
+    name: json['name'] as String,
+    unit: json['unit'] as String?,
+    latest: (json['latest'] as num?)?.toDouble(),
+    attainmentPercent: json['attainment_percent'] as int?,
+  );
 
   final int id;
   final String name;
@@ -103,10 +108,14 @@ class ProjectOverview {
       card: ProjectCard.fromJson(json),
       latestReport: json['latest_report'] == null
           ? null
-          : ReportCard.fromJson(Map<String, dynamic>.from(json['latest_report'] as Map)),
+          : ReportCard.fromJson(
+              Map<String, dynamic>.from(json['latest_report'] as Map),
+            ),
       comparison: json['comparison'] == null
           ? null
-          : ScoreComparison.fromJson(Map<String, dynamic>.from(json['comparison'] as Map)),
+          : ScoreComparison.fromJson(
+              Map<String, dynamic>.from(json['comparison'] as Map),
+            ),
       reports: (json['reports'] as List? ?? const [])
           .map((e) => ReportCard.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
@@ -143,16 +152,16 @@ class TaskModel {
   });
 
   factory TaskModel.fromJson(Map<String, dynamic> json) => TaskModel(
-        id: json['id'] as int,
-        title: json['title'] as String,
-        status: json['status'] as String,
-        statusLabel: json['status_label'] as String,
-        isOverdue: json['is_overdue'] as bool? ?? false,
-        description: json['description'] as String?,
-        dueDate: json['due_date'] as String?,
-        impact: json['impact'] as String?,
-        effort: json['effort'] as String?,
-      );
+    id: json['id'] as int,
+    title: json['title'] as String,
+    status: json['status'] as String,
+    statusLabel: json['status_label'] as String,
+    isOverdue: json['is_overdue'] as bool? ?? false,
+    description: json['description'] as String?,
+    dueDate: json['due_date'] as String?,
+    impact: json['impact'] as String?,
+    effort: json['effort'] as String?,
+  );
 
   final int id;
   final String title;

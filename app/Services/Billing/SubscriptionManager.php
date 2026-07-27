@@ -2,9 +2,11 @@
 
 namespace App\Services\Billing;
 
+use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Workspace;
+use App\Support\Billing\FeatureKey;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -31,21 +33,38 @@ class SubscriptionManager
         return $this->subscribe($workspace, $this->freePlan());
     }
 
-    public function subscribe(Workspace $workspace, Plan $plan): Subscription
-    {
-        return DB::transaction(function () use ($workspace, $plan): Subscription {
-            $subscription = Subscription::updateOrCreate(
-                ['workspace_id' => $workspace->id],
-                [
-                    'plan_id' => $plan->id,
-                    'status' => 'active',
-                    'renews_at' => $plan->isFree() ? null : now()->addMonth(),
-                    'ends_at' => null,
-                ],
-            );
+    public function subscribe(
+        Workspace $workspace,
+        Plan $plan,
+        ?Payment $payment = null,
+        bool $grantCredits = true,
+        string $source = 'customer',
+    ): Subscription {
+        return DB::transaction(function () use ($workspace, $plan, $payment, $grantCredits, $source): Subscription {
+            $subscription = Subscription::where('workspace_id', $workspace->id)->lockForUpdate()->first();
+            $isNew = $subscription === null;
+            $planChanged = $subscription !== null && $subscription->plan_id !== $plan->id;
+            $newPaidPeriod = $payment !== null && $subscription?->last_payment_id !== $payment->id;
+            $periodEnd = $plan->isFree() ? null : now()->addMonth();
 
-            // منح رصيد الخطة عند الاشتراك، مرة واحدة لهذا التفعيل.
-            if ($plan->monthly_credits > 0) {
+            $subscription ??= new Subscription(['workspace_id' => $workspace->id]);
+            $subscription->fill([
+                'plan_id' => $plan->id,
+                'status' => 'active',
+                'renews_at' => $periodEnd,
+                'ends_at' => null,
+                'current_period_starts_at' => now(),
+                'current_period_ends_at' => $periodEnd,
+                'cancel_at_period_end' => false,
+                'scheduled_plan_id' => null,
+                'scheduled_change_at' => null,
+                'source' => $source,
+                'last_payment_id' => $payment?->id ?? $subscription->last_payment_id,
+                'suspended_at' => null,
+            ])->save();
+
+            // لا تمنح إعادة إرسال الطلب نفسه أو إعادة اختيار الخطة الحالية رصيدًا.
+            if ($grantCredits && ($isNew || $planChanged || $newPaidPeriod) && $plan->monthly_credits > 0) {
                 $this->credits->grant($workspace, $plan->monthly_credits, "رصيد خطة {$plan->name}");
             }
 
@@ -58,9 +77,23 @@ class SubscriptionManager
         return $this->ensure($workspace)->plan;
     }
 
+    /**
+     * حد المشاريع من عنصر الميزة إن ضُبط، وإلا من عمود الخطة القديم.
+     * (يُحلّ Entitlements كسولًا لأنه يعتمد على هذه الخدمة نفسها.)
+     */
     public function projectLimit(Workspace $workspace): int
     {
-        return $this->currentPlan($workspace)->project_limit;
+        $plan = $this->currentPlan($workspace);
+        $limit = app(Entitlements::class)->planLimit($plan, FeatureKey::PROJECTS_LIMIT);
+
+        // null = بلا حد.
+        if ($limit === null) {
+            return PHP_INT_MAX;
+        }
+
+        // صفر يعني أن الآدمن أغلق العنصر؛ لا نصفّر المشاريع لأن منتجًا بلا
+        // مشروع واحد لا معنى له، فنرجع لعمود الخطة.
+        return $limit > 0 ? $limit : $plan->project_limit;
     }
 
     /**

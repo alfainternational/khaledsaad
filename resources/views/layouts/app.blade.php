@@ -8,9 +8,10 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         @php($isAdminArea = request()->routeIs('admin.*'))
-        <title>@yield('title', $isAdminArea ? 'لوحة الإدارة' : 'لوحة العمل') — خالد سعد</title>
+        <title>@yield('title', $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم') — خالد سعد</title>
 
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        @include('partials.font')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('head')
     </head>
@@ -23,10 +24,10 @@
         {{-- السايدبار: العمود الثابت للتنقل في اللوحتين --}}
         <aside id="panel-sidebar" class="panel__side">
             <div class="panel__brand">
-                <a href="{{ $isAdminArea ? route('admin.dashboard') : route('app.dashboard') }}" aria-label="{{ $isAdminArea ? 'لوحة الإدارة' : 'لوحة العمل' }}">
+                <a href="{{ $isAdminArea ? route('admin.dashboard') : route('app.dashboard') }}" aria-label="{{ $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم' }}">
                     <x-brand-logo light />
                 </a>
-                <span class="panel__brand-context">{{ $isAdminArea ? 'لوحة الإدارة' : 'لوحة العمل' }}</span>
+                <span class="panel__brand-context">{{ $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم' }}</span>
             </div>
 
             @include('partials.panel-nav')
@@ -36,7 +37,7 @@
                     @if ($isAdminArea)
                         <a href="{{ route('app.dashboard') }}" class="panel__switch">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3"/><path d="m15 7 5 5-5 5"/><path d="M20 12H8"/></svg>
-                            <span>العودة إلى لوحة العمل</span>
+                            <span>العودة إلى لوحة التحكم</span>
                         </a>
                     @else
                         <a href="{{ route('admin.dashboard') }}" class="panel__switch">
@@ -73,7 +74,7 @@
 
                 <div class="panel__top-title">
                     <small>{{ $isAdminArea ? 'الإدارة' : 'مساحة العمل' }}</small>
-                    <strong>@yield('title', $isAdminArea ? 'لوحة الإدارة' : 'لوحة العمل')</strong>
+                    <strong>@yield('title', $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم')</strong>
                 </div>
 
                 <div class="panel__top-actions">
@@ -85,7 +86,7 @@
                     </a>
 
                     @if (! $isAdminArea)
-                        <a href="{{ route('app.projects.create') }}" class="btn btn--primary btn--sm panel__top-cta">مشروع جديد</a>
+                        <a href="{{ route('app.projects.create') }}" class="btn btn--primary btn--sm panel__top-cta">أضف مشروعًا</a>
                     @endif
                 </div>
             </header>

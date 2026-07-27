@@ -12,6 +12,9 @@ use App\Models\ToolRun;
 use App\Models\ToolRunAnswer;
 use App\Models\User;
 use App\Services\Billing\CreditManager;
+use App\Services\Billing\Entitlements;
+use App\Support\Billing\FeatureKey;
+use Illuminate\Bus\PendingBatch;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -24,11 +27,24 @@ use RuntimeException;
  */
 class ToolRunService
 {
+    /**
+     * دفعة التشغيل الجارية، إن كنا داخل تشخيص شامل.
+     */
+    private ?PendingBatch $batch = null;
+
     public function __construct(
         private readonly AnswerCompleteness $completeness,
         private readonly ProjectAnswerMemory $memory,
         private readonly CreditManager $credits,
     ) {}
+
+    /**
+     * توجيه مهام التشغيل إلى دفعة واحدة بدل إرسالها فرادى.
+     */
+    public function collectInto(?PendingBatch $batch): void
+    {
+        $this->batch = $batch;
+    }
 
     public function start(Project $project, Tool $tool, ?User $user, ?int $guestSessionId = null, bool $fresh = false): ToolRun
     {
@@ -132,15 +148,24 @@ class ToolRunService
         ];
     }
 
-    public function queue(ToolRun $run): ToolRun
+    /**
+     * @param  bool  $allowIncomplete  التشخيص الشامل يشغّل بما هو معروف ويُعلن
+     *                                 فراغاته في التقرير. الاستثناء صريح هنا
+     *                                 كي يبقى المعالج اليدوي محميًا كما هو.
+     */
+    public function queue(ToolRun $run, bool $allowIncomplete = false): ToolRun
     {
         $missing = $this->completeness->missingRequired($run->loadMissing(['toolVersion.fields', 'answers']));
 
-        if ($missing !== []) {
+        if ($missing !== [] && ! $allowIncomplete) {
             throw ValidationException::withMessages([
                 'answers' => 'أكمل الحقول التالية أولًا: '.implode('، ', $missing),
             ]);
         }
+
+        // حصة التشغيل الشهرية عنصر ميزة مستقل عن الرصيد: الرصيد يقيس التكلفة،
+        // والحصة تقيس ما تسمح به الخطة. يُفحص قبل الحجز حتى لا يُحجز ثم يُرفض.
+        $this->assertWithinMonthlyQuota($run);
 
         // BR-004: يُحجز الرصيد عند بدء التشغيل. رصيد غير كافٍ يوقف الطابور
         // قبل أي استدعاء مدفوع، برسالة واضحة لا خطأ تقني.
@@ -153,9 +178,51 @@ class ToolRunService
             'failure_reason' => null,
         ])->save();
 
-        RunToolPipeline::dispatch($run->id);
+        $job = new RunToolPipeline($run->id);
+
+        // داخل تشخيص شامل تُضاف المهمة إلى دفعته ليُعرف متى انتهت كلها،
+        // وخارجه تُرسَل وحدها كما كانت.
+        if ($this->batch !== null) {
+            $this->batch->add([$job]);
+        } else {
+            dispatch($job);
+        }
 
         return $run->refresh();
+    }
+
+    /**
+     * حصة الشهر الجاري: كل تشغيل غادر المسودة يُحسب مرة، والإعادة على تشغيل
+     * قائم لا تُحسب مرتين لأنها لا تنشئ صفًّا جديدًا.
+     */
+    private function assertWithinMonthlyQuota(ToolRun $run): void
+    {
+        $workspace = $run->project?->workspace;
+
+        if ($workspace === null) {
+            return; // تجربة الزائر بلا مساحة عمل: تحكمها حدود أخرى.
+        }
+
+        $limit = app(Entitlements::class)->limit($workspace, FeatureKey::TOOL_RUNS_MONTHLY);
+
+        if ($limit === null) {
+            return;
+        }
+
+        $used = ToolRun::query()
+            ->whereHas('project', fn ($query) => $query->where('workspace_id', $workspace->id))
+            ->where('status', '!=', ToolRun::STATUS_DRAFT)
+            ->where('id', '!=', $run->id)
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->count();
+
+        if ($used >= $limit) {
+            throw new RuntimeException(
+                $limit === 0
+                    ? 'خطتك الحالية لا تسمح بتشغيل الأدوات. فعّل خطة مناسبة من صفحة الفوترة.'
+                    : "استهلكت حصة خطتك لهذا الشهر ({$limit} تشغيل). ارفع خطتك أو انتظر بداية الشهر القادم."
+            );
+        }
     }
 
     public function retry(ToolRun $run): ToolRun

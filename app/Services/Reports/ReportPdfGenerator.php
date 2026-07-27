@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Models\Report;
+use App\Services\Growth\NextToolSuggester;
 use App\Support\Presentation\ReportPresenter;
 use Illuminate\Support\Facades\Storage;
 use Mpdf\Config\ConfigVariables;
@@ -14,7 +15,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * يولّد PDF عربيًا للتقرير ويخزّنه، فلا يُعاد بناؤه عند كل تنزيل.
  *
  * المحرك mPDF لأنه الوحيد الذي يطبّق تشكيل الحروف العربية واتجاه RTL
- * فعليًا (dompdf يرسم المحارف منفصلة ومعكوسة). الخط خط المنصة نفسه.
+ * فعليًا (dompdf يرسم المحارف منفصلة ومعكوسة).
+ *
+ * الملف المطبوع يحمل كل ما يراه المستخدم على الشاشة — لا نسخة مختصرة:
+ * المقارنة الزمنية، حالة المراجعة، الرسوم، المنافسون، تفصيل الدرجة،
+ * ما رصده التقرير الحي، والخطوة المقترحة تاليًا.
  */
 class ReportPdfGenerator
 {
@@ -23,11 +28,12 @@ class ReportPdfGenerator
     /**
      * يرتفع مع كل تغيير في قالب الـPDF كي تتجدد الملفات المخزّنة القديمة.
      */
-    private const TEMPLATE_VERSION = 2;
+    private const TEMPLATE_VERSION = 5;
 
     public function __construct(
         private readonly ReportPresenter $presenter,
         private readonly ReportCharts $charts,
+        private readonly NextToolSuggester $suggester,
     ) {}
 
     /**
@@ -49,6 +55,10 @@ class ReportPdfGenerator
         $html = view('reports.pdf', [
             'report' => $this->presenter->full($report),
             'charts' => $this->charts->build($report),
+            // نفس ما تعرضه صفحة التقرير في الويب والتطبيق.
+            'comparison' => $this->presenter->comparison($report, $this->presenter->previousFor($report)),
+            'watcher' => $report->watcher,
+            'suggestion' => $this->suggester->suggest($report->project),
             'brand' => config('brand'),
             'generatedAt' => now(),
         ])->render();
@@ -95,17 +105,28 @@ class ReportPdfGenerator
             'mode' => 'utf-8',
             'format' => 'A4',
             'directionality' => 'rtl',
-            'autoScriptToLang' => true,
-            'autoLangToFont' => true,
+            /*
+             * إيقاف التبديل التلقائي للخط حاسم: mPDF كان يستبدل خط المنصة
+             * بخط عربي مدمج عنده (XBRiyaz) فور رؤيته نصًا عربيًا، فيخرج
+             * الملف بخط لا يشبه الموقع. الخط الآن هو ملف الموقع نفسه.
+             */
+            'autoScriptToLang' => false,
+            'autoLangToFont' => false,
             'tempDir' => $tempDir,
             'fontDir' => [...$fontDirs, public_path('assets/fonts')],
             'fontdata' => $fontData + [
-                'hacen' => [
+                /*
+                 * useOTL كامل ضروري لوصل الحروف العربية: بدونه تُرسم منفصلة.
+                 * ملاحظة: هذا الملف لا يحمل جدول GPOS لتموضع الحركات، فعلامات
+                 * التشكيل الاختيارية (ضمة/كسرة) قد تُزاح قليلًا — والمتصفح
+                 * يخفيها بتموضع احتياطي لا يملكه mPDF. النص بلا تشكيل سليم تمامًا.
+                 */
+                'hacentunisia' => [
                     'R' => 'Hacen-Tunisia.ttf',
                     'useOTL' => 0xFF,
                 ],
             ],
-            'default_font' => 'hacen',
+            'default_font' => 'hacentunisia',
             'margin_top' => 16,
             'margin_bottom' => 18,
             'margin_left' => 13,
@@ -113,7 +134,7 @@ class ReportPdfGenerator
         ]);
 
         $mpdf->SetDirectionality('rtl');
-        $mpdf->SetHTMLFooter('<div style="border-top: 1px solid #dfe8f5; padding-top: 6px; font-size: 8pt; color: #5d6b82; text-align: center;">'.e(config('brand.name', 'خالد سعد')).' · صفحة {PAGENO} من {nbpg}</div>');
+        $mpdf->SetHTMLFooter('<div style="border-top: 1px solid #dfe8f5; padding-top: 6px; font-size: 8pt; color: #5d6b82; text-align: center;">'.e(config('brand.name', 'خالد سعد')).' — صفحة {PAGENO} من {nbpg}</div>');
 
         return $mpdf;
     }

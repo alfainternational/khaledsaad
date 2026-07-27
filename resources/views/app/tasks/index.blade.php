@@ -15,7 +15,7 @@
     @if ($tasks['todo'] === [] && $tasks['doing'] === [] && $tasks['done'] === [])
         <section class="empty">
             <h2>لا مهام بعد</h2>
-            <p>افتح أي تقرير وحوّل توصياته إلى مهام — هنا يتحول التحليل إلى عمل.</p>
+            <p>افتح أحد تقارير المشروع وحوّل التوصيات التي تريد تنفيذها إلى مهام قابلة للمتابعة.</p>
         </section>
     @else
         <div class="board">
@@ -56,7 +56,7 @@
                             </form>
                         </article>
                     @empty
-                        <p class="muted">لا شيء هنا.</p>
+                        <p class="muted">لا توجد مهام في هذه الحالة.</p>
                     @endforelse
                 </section>
             @endforeach

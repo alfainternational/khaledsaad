@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khaledsaad_app/features/account/models.dart';
+import 'package:khaledsaad_app/features/agency_reports/models.dart';
 import 'package:khaledsaad_app/features/projects/models.dart';
 import 'package:khaledsaad_app/features/reports/models.dart';
 import 'package:khaledsaad_app/features/tools/models.dart';
@@ -39,6 +40,32 @@ void main() {
       'is_terminal': false,
       'progress_percent': 0,
       'completeness_percent': 40,
+      'insights': {
+        'summary': {
+          'completeness_percent': 40,
+          'missing_count': 3,
+          'missing': ['الهدف'],
+          'agency_readiness_percent': 64,
+          'agency_readiness_label': 'قريبة من الجاهزية',
+          'agency_missing': ['website'],
+        },
+        'signals': [
+          {
+            'type': 'risk',
+            'title': 'الهدف بلا مورد محدد',
+            'description': 'حدد قناة أو ميزانية.',
+            'basis': 'الهدف مقابل الميزانية.',
+          },
+        ],
+        'preliminary': {
+          'status': 'not_requested',
+          'label': 'مؤشر أولي',
+          'meaning': '',
+          'risk_or_opportunity': '',
+          'recommendation': '',
+          'deepen_question': '',
+        },
+      },
       'tool': {'title': 'درجة الجاهزية التسويقية'},
       'project': {'name': 'مشروعي'},
       'report_id': null,
@@ -68,6 +95,8 @@ void main() {
     expect(run.steps.single.fields.single.options.single.label, 'بيع مباشر');
     expect(run.completenessPercent, 40);
     expect(run.isTerminal, isFalse);
+    expect(run.insights!.summary.agencyReadinessPercent, 64);
+    expect(run.insights!.signals.single.type, 'risk');
   });
 
   test('حقل متعدد الاختيار يقرأ القيم كقائمة', () {
@@ -90,11 +119,24 @@ void main() {
       'score': 62,
       'score_band': 'مستقر',
       'summary': 'ملخص',
+      'is_manually_reviewed': true,
+      'reviewed_at': '24 يوليو 2026',
       'assumptions': ['بيانات ناقصة'],
       'next_step': {'title': 'ابدأ هنا', 'description': 'وصف'},
       'project': {'name': 'مشروعي'},
       'tool': {'title': 'الأداة'},
-      'provenance': {'model': 'deepseek-v4-flash', 'tool_version': 1},
+      'provenance': {'tool_version': 1},
+      'comparison': {
+        'delta': 8,
+        'direction': 'up',
+        'label': 'تحسّن بمقدار 8 نقاط',
+      },
+      'watcher': {'status': 'active', 'changes': []},
+      'my_verdict': 'up',
+      'suggestion': {
+        'tool': {'key': 'brand-clarity', 'title': 'وضوح العلامة'},
+        'reason': 'الخطوة التالية في الرحلة.',
+      },
       'sections': [],
       'counts': {'findings': 2, 'evidence_backed': 1, 'assumptions': 1},
       'findings': [
@@ -131,7 +173,12 @@ void main() {
     expect(report.assumptionCount, 1);
     expect(report.findings.first.basisLabel, 'مدعوم بدليل');
     expect(report.findings.last.basisLabel, 'افتراض');
-    expect(report.model, 'deepseek-v4-flash');
+    expect(report.isManuallyReviewed, isTrue);
+    expect(report.reviewedAt, '24 يوليو 2026');
+    expect(report.comparison!.delta, 8);
+    expect(report.watcher!.isActive, isTrue);
+    expect(report.myVerdict, 'up');
+    expect(report.suggestion!.toolKey, 'brand-clarity');
   });
 
   test('نظرة المشروع تقرأ المقارنة الزمنية', () {
@@ -143,8 +190,17 @@ void main() {
       'latest_score': 62,
       'score_band': 'مستقر',
       'profile': {},
-      'latest_report': {'id': 7, 'title': 'تقرير', 'score': 62, 'score_band': 'مستقر'},
-      'comparison': {'delta': 8, 'direction': 'up', 'label': 'تحسّن بمقدار 8 نقاط'},
+      'latest_report': {
+        'id': 7,
+        'title': 'تقرير',
+        'score': 62,
+        'score_band': 'مستقر',
+      },
+      'comparison': {
+        'delta': 8,
+        'direction': 'up',
+        'label': 'تحسّن بمقدار 8 نقاط',
+      },
       'reports': [],
       'tasks': {'open': 3, 'overdue': 1, 'done': 2},
       'kpis': [],
@@ -153,6 +209,63 @@ void main() {
     expect(project.card.latestScore, 62);
     expect(project.comparison!.direction, 'up');
     expect(project.overdueTasks, 1);
+  });
+
+  test('موجز الوكالة يقرأ الجاهزية واللقطة الثابتة', () {
+    final index = AgencyReportIndex.fromJson(const {
+      'readiness': {
+        'can_generate': true,
+        'required_count': 3,
+        'completed_count': 3,
+        'included_count': 4,
+        'missing_core': [],
+        'included_tools': [],
+      },
+      'reports': [
+        {
+          'uuid': 'agency-1',
+          'title': 'موجز الوكالة',
+          'version': 1,
+          'generated_at': '2026-07-24T00:00:00Z',
+        },
+      ],
+    });
+    final detail = AgencyReportDetail.fromJson(const {
+      'uuid': 'agency-1',
+      'project_slug': 'my-project',
+      'title': 'موجز الوكالة',
+      'version': 1,
+      'status': 'published',
+      'generated_at': '2026-07-24T00:00:00Z',
+      'visibility': {},
+      'source_report_ids': [1, 2, 3],
+      'snapshot': {
+        'project': {'name': 'مشروعي'},
+        'readiness': {'score': 68, 'band': 'مستقر'},
+        'tools': [],
+        'priorities': [
+          {
+            'title': 'فعّل القياس',
+            'description': 'اربط التحويل.',
+            'source_tool': 'الجاهزية',
+          },
+        ],
+        'plan': {'30_days': [], '60_days': [], '90_days': []},
+        'scope': {
+          'out_of_scope': [],
+          'account_ownership': 'للمشروع',
+          'review_cadence': 'أسبوعي',
+        },
+        'agency_questions': ['ما النتيجة؟'],
+        'assumptions': [],
+        'data_gaps': [],
+      },
+    });
+
+    expect(index.readiness.canGenerate, isTrue);
+    expect(index.reports.single.version, 1);
+    expect(detail.readinessScore, 68);
+    expect(detail.priorities.single.title, 'فعّل القياس');
   });
 
   test('الفحص المسبق يمنع التشغيل عند وجود نواقص', () {
