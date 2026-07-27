@@ -21,20 +21,20 @@
     </form>
 
     <div class="table-wrap">
-        <table class="table">
+        <table class="table" data-table="entity">
             <thead>
                 <tr><th>الاسم</th><th>البريد</th><th>الخطة</th><th>مساحات</th><th>رصيد</th><th>انضم</th><th>الإجراءات</th></tr>
             </thead>
             <tbody>
                 @forelse ($users as $user)
                     <tr>
-                        <td>{{ $user['name'] }} @if ($user['is_admin'])<span class="badge">إدارة</span>@endif</td>
-                        <td>{{ $user['email'] }}</td>
-                        <td>{{ $user['plan'] }}</td>
-                        <td>{{ $user['workspaces'] }}</td>
-                        <td>{{ $user['balance'] }}</td>
-                        <td>{{ $user['joined'] }}</td>
-                        <td class="table__actions">
+                        <td data-label="الاسم">{{ $user['name'] }} @if ($user['is_admin'])<span class="badge">إدارة</span>@endif</td>
+                        <td data-label="البريد">{{ $user['email'] }}</td>
+                        <td data-label="الخطة">{{ $user['plan'] }}</td>
+                        <td data-label="مساحات">{{ $user['workspaces'] }}</td>
+                        <td data-label="رصيد">{{ $user['balance'] }}</td>
+                        <td data-label="انضم">{{ $user['joined'] }}</td>
+                        <td class="table__actions" data-label="الإجراءات">
                             <a href="{{ route('admin.users.edit', $user['id']) }}" class="btn btn--ghost btn--sm">تعديل</a>
                             <form method="POST" action="{{ route('admin.users.credits', $user['id']) }}" class="inline-form">
                                 @csrf
@@ -44,7 +44,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7">لا يوجد مستخدم يطابق البحث. جرّب الاسم أو البريد بصيغة أخرى.</td></tr>
+                    <tr><td colspan="7" data-label="">لا يوجد مستخدم يطابق البحث. جرّب الاسم أو البريد بصيغة أخرى.</td></tr>
                 @endforelse
             </tbody>
         </table>

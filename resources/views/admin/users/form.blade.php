@@ -13,7 +13,7 @@
         <a href="{{ route('admin.users.index') }}" class="btn btn--ghost">عودة</a>
     </header>
 
-    <form method="POST" action="{{ route('admin.users.update', $user) }}" class="form form--wide">
+    <form method="POST" action="{{ route('admin.users.update', $user) }}" class="form form--wide form-layout">
         @csrf @method('PUT')
 
         <label class="field">
@@ -32,7 +32,7 @@
     <section class="card" aria-labelledby="plan-heading">
         <h2 id="plan-heading">إدارة الخطة</h2>
         <p class="muted">اختر مساحة العمل والخطة وموعد النفاذ. لا يتغير الرصيد إلا إذا اخترت ذلك صراحة.</p>
-        <form method="POST" action="{{ route('admin.users.plan.assign', $user) }}" class="form form--wide">
+        <form method="POST" action="{{ route('admin.users.plan.assign', $user) }}" class="form form--wide form-layout">
             @csrf
             <label class="field"><span class="field__label">مساحة العمل</span>
                 <select name="workspace_id" required>

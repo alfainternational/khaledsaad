@@ -18,7 +18,7 @@
         </p>
     @endif
 
-    <form method="POST" action="{{ route('app.projects.store') }}" class="form form--wide">
+    <form method="POST" action="{{ route('app.projects.store') }}" class="form form--wide form-layout">
         @csrf
 
         @if (($startTool ?? null) !== null)

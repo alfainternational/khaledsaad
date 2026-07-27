@@ -26,7 +26,7 @@
     </section>
 
     <div class="table-wrap">
-        <table class="table">
+        <table class="table" data-table="entity">
             <thead>
                 <tr>
                     <th>#</th><th>المستخدم</th><th>الغرض</th><th>السعر</th><th>المحصَّل</th>
@@ -36,24 +36,24 @@
             <tbody>
                 @forelse ($payments as $payment)
                     <tr>
-                        <td>{{ $payment['id'] }}</td>
-                        <td>{{ $payment['user'] }}</td>
-                        <td>{{ $payment['purpose'] }}</td>
-                        <td>{{ $payment['amount'] }}</td>
-                        <td>{{ $payment['charged'] }}</td>
-                        <td>{{ $payment['credits'] }}</td>
-                        <td>{{ $payment['provider'] }}</td>
-                        <td>
+                        <td data-label="#">{{ $payment['id'] }}</td>
+                        <td data-label="المستخدم">{{ $payment['user'] }}</td>
+                        <td data-label="الغرض">{{ $payment['purpose'] }}</td>
+                        <td data-label="السعر">{{ $payment['amount'] }}</td>
+                        <td data-label="المحصّل">{{ $payment['charged'] }}</td>
+                        <td data-label="الأرصدة">{{ $payment['credits'] }}</td>
+                        <td data-label="البوابة">{{ $payment['provider'] }}</td>
+                        <td data-label="الحالة">
                             {{ $payment['status'] }}
                             @if ($payment['reason'])
                                 <p class="muted">{{ $payment['reason'] }}</p>
                             @endif
                         </td>
-                        <td>{{ $payment['at'] }}</td>
-                        <td class="table__actions">
+                        <td data-label="التاريخ">{{ $payment['at'] }}</td>
+                        <td class="table__actions" data-label="الإجراءات">
                             @if ($payment['awaiting'])
                                 <form method="POST" action="{{ route('admin.payments.approve', $payment['id']) }}"
-                                    onsubmit="return confirm('تأكيد استلام التحويل ومنح ما يقابله؟')">
+                                    data-confirm="تأكيد استلام التحويل ومنح ما يقابله؟">
                                     @csrf
                                     <button type="submit" class="btn btn--primary btn--sm">اعتماد</button>
                                 </form>
@@ -64,7 +64,7 @@
                             @endif
                             @if ($payment['refundable'] > 0)
                                 <form method="POST" action="{{ route('admin.payments.refund', $payment['id']) }}"
-                                    onsubmit="return confirm('تنفيذ الاسترداد عبر بوابة الدفع؟')">
+                                    data-confirm="تنفيذ الاسترداد عبر بوابة الدفع؟">
                                     @csrf
                                     <input type="number" name="amount" min="0.01" step="0.01" max="{{ $payment['refundable'] }}" value="{{ $payment['refundable'] }}" required>
                                     <input type="text" name="reason" value="requested_by_customer" required>
@@ -74,7 +74,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10">لا مدفوعات بعد.</td></tr>
+                    <tr><td colspan="10" data-label="">لا مدفوعات بعد.</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -12,7 +12,7 @@
         <a href="{{ route('admin.gateways.index') }}" class="btn btn--ghost">عودة</a>
     </header>
 
-    <form method="POST" action="{{ $gateway->exists ? route('admin.gateways.update', $gateway) : route('admin.gateways.store') }}" class="form form--wide">
+    <form method="POST" action="{{ $gateway->exists ? route('admin.gateways.update', $gateway) : route('admin.gateways.store') }}" class="form form--wide form-layout">
         @csrf
         @if ($gateway->exists) @method('PUT') @endif
 

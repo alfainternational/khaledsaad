@@ -12,7 +12,7 @@
         <a href="{{ route('admin.plans.index') }}" class="btn btn--ghost">عودة</a>
     </header>
 
-    <form method="POST" action="{{ $plan->exists ? route('admin.plans.update', $plan) : route('admin.plans.store') }}" class="form form--wide">
+    <form method="POST" action="{{ $plan->exists ? route('admin.plans.update', $plan) : route('admin.plans.store') }}" class="form form--wide form-layout">
         @csrf
         @if ($plan->exists) @method('PUT') @endif
 
@@ -66,7 +66,7 @@
             @foreach ($features->groupBy('group') as $group => $items)
                 <p class="eyebrow">{{ $items->first()->groupLabel() }}</p>
                 <div class="table-wrap">
-                    <table class="table">
+                    <table class="table" data-table="matrix">
                         <thead>
                             <tr><th>ضمن الخطة</th><th>العنصر</th><th>العدد</th><th>نص بديل (اختياري)</th></tr>
                         </thead>

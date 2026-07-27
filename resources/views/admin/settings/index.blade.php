@@ -13,7 +13,7 @@
         <a href="{{ route('admin.dashboard') }}" class="btn btn--ghost">عودة</a>
     </header>
 
-    <form method="POST" action="{{ route('admin.settings.update') }}" class="form form--wide">
+    <form method="POST" action="{{ route('admin.settings.update') }}" class="form form--wide form-layout">
         @csrf
         @method('PUT')
 

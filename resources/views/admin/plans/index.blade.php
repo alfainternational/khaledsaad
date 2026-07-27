@@ -28,7 +28,7 @@
                         <td>{{ $plan->is_public ? 'نعم' : 'لا' }}</td>
                         <td class="table__actions">
                             <a href="{{ route('admin.plans.edit', $plan) }}" class="btn btn--ghost btn--sm">تعديل</a>
-                            <form method="POST" action="{{ route('admin.plans.destroy', $plan) }}" onsubmit="return confirm('حذف هذه الخطة؟')">
+                            <form method="POST" action="{{ route('admin.plans.destroy', $plan) }}" data-confirm="حذف هذه الخطة؟">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn--ghost btn--sm">حذف</button>
                             </form>

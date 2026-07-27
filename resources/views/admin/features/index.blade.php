@@ -56,7 +56,7 @@
                         <td class="table__actions">
                             <a href="{{ route('admin.features.edit', $feature) }}" class="btn btn--ghost btn--sm">تعديل</a>
                             @unless (in_array($feature->key, $wired, true))
-                                <form method="POST" action="{{ route('admin.features.destroy', $feature) }}" onsubmit="return confirm('حذف هذا العنصر من كل الخطط؟')">
+                                <form method="POST" action="{{ route('admin.features.destroy', $feature) }}" data-confirm="حذف هذا العنصر من كل الخطط؟">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn--ghost btn--sm">حذف</button>
                                 </form>

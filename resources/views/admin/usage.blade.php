@@ -36,7 +36,7 @@
     <section aria-labelledby="models-heading">
         <h2 id="models-heading" class="section-title">حسب النموذج</h2>
         <div class="table-wrap">
-            <table class="table">
+            <table class="table" data-table="matrix">
                 <thead>
                     <tr><th>النموذج</th><th>الاستدعاءات</th><th>التكلفة</th><th>متوسط الزمن</th></tr>
                 </thead>
@@ -59,7 +59,7 @@
     <section aria-labelledby="stages-heading">
         <h2 id="stages-heading" class="section-title">حسب المرحلة</h2>
         <div class="table-wrap">
-            <table class="table">
+            <table class="table" data-table="matrix">
                 <thead>
                     <tr><th>المرحلة</th><th>الاستدعاءات</th><th>التكلفة</th></tr>
                 </thead>
@@ -89,7 +89,7 @@
     <section aria-labelledby="tools-heading">
         <h2 id="tools-heading" class="section-title">حالة الأدوات</h2>
         <div class="table-wrap">
-            <table class="table">
+            <table class="table" data-table="matrix">
                 <thead>
                     <tr><th>الأداة</th><th>المفتاح</th><th>الحالة</th></tr>
                 </thead>

@@ -13,7 +13,7 @@
         <a href="{{ route('admin.tools.index') }}" class="btn btn--ghost">عودة</a>
     </header>
 
-    <form method="POST" action="{{ $tool ? route('admin.tools.update', $tool) : route('admin.tools.store') }}" class="form form--wide">
+    <form method="POST" action="{{ $tool ? route('admin.tools.update', $tool) : route('admin.tools.store') }}" class="form form--wide form-layout">
         @csrf
         @if ($tool) @method('PUT') @endif
 

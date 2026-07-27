@@ -125,18 +125,18 @@
             <p class="muted">لا حركات بعد.</p>
         @else
             <div class="table-wrap">
-                <table class="table">
+                <table class="table" data-table="entity">
                     <thead>
                         <tr><th>النوع</th><th>المقدار</th><th>الرصيد بعدها</th><th>السبب</th><th>التاريخ</th></tr>
                     </thead>
                     <tbody>
                         @foreach ($transactions as $transaction)
                             <tr>
-                                <td>{{ $transaction['type_label'] }}</td>
-                                <td>{{ $transaction['amount'] > 0 ? '+' : '' }}{{ $transaction['amount'] }}</td>
-                                <td>{{ $transaction['balance_after'] }}</td>
-                                <td>{{ $transaction['reason'] }}</td>
-                                <td>{{ $transaction['at'] }}</td>
+                                <td data-label="النوع">{{ $transaction['type_label'] }}</td>
+                                <td data-label="المقدار">{{ $transaction['amount'] > 0 ? '+' : '' }}{{ $transaction['amount'] }}</td>
+                                <td data-label="الرصيد بعدها">{{ $transaction['balance_after'] }}</td>
+                                <td data-label="السبب">{{ $transaction['reason'] }}</td>
+                                <td data-label="التاريخ">{{ $transaction['at'] }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -150,12 +150,12 @@
         @if ($payments === [])
             <p class="muted">لا توجد مدفوعات بعد.</p>
         @else
-            <div class="table-wrap"><table class="table">
+            <div class="table-wrap"><table class="table" data-table="entity">
                 <thead><tr><th>#</th><th>الغرض</th><th>وسيلة الدفع</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
                 <tbody>@foreach ($payments as $payment)<tr>
-                    <td>{{ $payment['id'] }}</td><td>{{ $payment['purpose'] }}</td><td>{{ $payment['provider'] }}</td>
-                    <td>{{ $payment['amount'] }} @if($payment['refunded'] > 0)<small>· مسترد {{ $payment['refunded'] }}</small>@endif</td>
-                    <td>{{ $payment['status'] }}</td><td>{{ $payment['at'] }}</td>
+                    <td data-label="#">{{ $payment['id'] }}</td><td data-label="الغرض">{{ $payment['purpose'] }}</td><td data-label="وسيلة الدفع">{{ $payment['provider'] }}</td>
+                    <td data-label="المبلغ">{{ $payment['amount'] }} @if($payment['refunded'] > 0)<small>· مسترد {{ $payment['refunded'] }}</small>@endif</td>
+                    <td data-label="الحالة">{{ $payment['status'] }}</td><td data-label="التاريخ">{{ $payment['at'] }}</td>
                 </tr>@endforeach</tbody>
             </table></div>
         @endif

@@ -113,6 +113,17 @@
             </main>
         </div>
 
+        <dialog class="dialog dialog--confirm" data-confirm-dialog aria-labelledby="confirm-dialog-title">
+            <form method="dialog" class="layout-flow">
+                <h2 id="confirm-dialog-title" class="section-title">تأكيد الإجراء</h2>
+                <p data-confirm-message></p>
+                <div class="form__actions">
+                    <button type="submit" value="cancel" class="btn btn--ghost">إلغاء</button>
+                    <button type="submit" value="confirm" class="btn btn--primary">تأكيد</button>
+                </div>
+            </form>
+        </dialog>
+
         <script>
             (function () {
                 var body = document.body;
@@ -137,6 +148,41 @@
                         close();
                     }
                 });
+            })();
+
+            (function () {
+                var dialog = document.querySelector('[data-confirm-dialog]');
+                var message = dialog ? dialog.querySelector('[data-confirm-message]') : null;
+                var pendingForm = null;
+
+                document.addEventListener('submit', function (event) {
+                    var form = event.target.closest('form[data-confirm]');
+
+                    if (!form || form.dataset.confirmed === 'true') return;
+
+                    if (!dialog || typeof dialog.showModal !== 'function') {
+                        if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+                        return;
+                    }
+
+                    event.preventDefault();
+                    pendingForm = form;
+                    message.textContent = form.dataset.confirm;
+                    dialog.showModal();
+                }, true);
+
+                if (dialog) {
+                    dialog.addEventListener('close', function () {
+                        var form = pendingForm;
+                        pendingForm = null;
+
+                        if (dialog.returnValue !== 'confirm' || !form) return;
+
+                        form.dataset.confirmed = 'true';
+                        form.requestSubmit();
+                        delete form.dataset.confirmed;
+                    });
+                }
             })();
         </script>
 

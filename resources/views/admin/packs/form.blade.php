@@ -12,7 +12,7 @@
         <a href="{{ route('admin.packs.index') }}" class="btn btn--ghost">عودة</a>
     </header>
 
-    <form method="POST" action="{{ $pack->exists ? route('admin.packs.update', $pack) : route('admin.packs.store') }}" class="form form--wide">
+    <form method="POST" action="{{ $pack->exists ? route('admin.packs.update', $pack) : route('admin.packs.store') }}" class="form form--wide form-layout">
         @csrf
         @if ($pack->exists) @method('PUT') @endif
 

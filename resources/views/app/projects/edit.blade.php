@@ -15,7 +15,7 @@
         </div>
     </header>
 
-    <form method="POST" action="{{ route('app.projects.update', $project) }}" class="form form--wide">
+    <form method="POST" action="{{ route('app.projects.update', $project) }}" class="form form--wide form-layout">
         @csrf
         @method('PUT')
 

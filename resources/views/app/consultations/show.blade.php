@@ -100,7 +100,7 @@
 
     <footer class="consultation-data-actions">
         <a href="{{ route('app.consultations.export', $consultation['uuid']) }}">نزّل بيانات الاستشارة</a>
-        <form method="POST" action="{{ route('app.consultations.destroy', $consultation['uuid']) }}" onsubmit="return confirm('حذف بيانات الاستشارة؟ سيبقى المشروع وأي تقرير منشور.')">
+        <form method="POST" action="{{ route('app.consultations.destroy', $consultation['uuid']) }}" data-confirm="حذف بيانات الاستشارة؟ سيبقى المشروع وأي تقرير منشور.">
             @csrf @method('DELETE')
             <button type="submit" class="link-button">حذف بيانات الاستشارة</button>
         </form>

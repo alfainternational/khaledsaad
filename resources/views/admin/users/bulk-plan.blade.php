@@ -5,10 +5,10 @@
 
 @section('content')
 <header class="page-head"><div><p class="eyebrow">الإدارة · المستخدمون</p><h1>تعيين خطة لمجموعة</h1></div><a href="{{ route('admin.users.index') }}" class="btn btn--ghost">عودة</a></header>
-<form method="POST" action="{{ route('admin.users.plans.preview') }}" class="form form--wide">
+<form method="POST" action="{{ route('admin.users.plans.preview') }}" class="form form--wide form-layout">
     @csrf
     <fieldset><legend class="field__label">المستخدمون ومساحات العمل</legend>
-        <div class="table-wrap"><table class="table"><thead><tr><th>اختيار</th><th>المستخدم</th><th>المساحة</th><th>الخطة الحالية</th></tr></thead><tbody>
+        <div class="table-wrap"><table class="table" data-table="matrix"><thead><tr><th>اختيار</th><th>المستخدم</th><th>المساحة</th><th>الخطة الحالية</th></tr></thead><tbody>
         @foreach($users as $user) @foreach($user->workspaces as $workspace)
             <tr><td><input type="checkbox" name="workspace_ids[]" value="{{ $workspace->id }}" aria-label="اختيار {{ $workspace->name }}"></td><td>{{ $user->name }}<br><small>{{ $user->email }}</small></td><td>{{ $workspace->name }}</td><td>{{ $workspace->subscription?->plan?->name ?? 'بلا خطة' }}</td></tr>
         @endforeach @endforeach

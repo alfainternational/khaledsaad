@@ -131,4 +131,46 @@ class AdaptiveInterfaceLayoutTest extends TestCase
             $this->assertStringContainsString($hook, $css, $hook);
         }
     }
+
+    #[Test]
+    public function tables_forms_and_windows_declare_their_responsive_intent(): void
+    {
+        foreach (['admin/users/index', 'admin/payments/index', 'app/billing/index'] as $view) {
+            $contents = file_get_contents(resource_path("views/{$view}.blade.php"));
+
+            $this->assertStringContainsString('data-table="entity"', $contents, $view);
+            $this->assertStringContainsString('data-label=', $contents, $view);
+        }
+
+        foreach ([
+            'app/projects/create',
+            'app/projects/edit',
+            'admin/features/form',
+            'admin/gateways/form',
+            'admin/packs/form',
+            'admin/plans/form',
+            'admin/settings/index',
+            'admin/tools/form',
+            'admin/users/bulk-plan',
+            'admin/users/form',
+            'admin/users/plan-preview',
+        ] as $view) {
+            $this->assertStringContainsString(
+                'form-layout',
+                file_get_contents(resource_path("views/{$view}.blade.php")),
+                $view,
+            );
+        }
+
+        $consultation = file_get_contents(resource_path('views/app/consultations/show.blade.php'));
+        $layout = file_get_contents(resource_path('views/layouts/app.blade.php'));
+        $css = file_get_contents(resource_path('css/workspace.css'));
+
+        $this->assertStringContainsString('data-confirm=', $consultation);
+        $this->assertStringContainsString('data-confirm-dialog', $layout);
+
+        foreach (['[data-table="entity"]', '[data-table="matrix"]', '.form-layout', '.dialog--confirm', '.dialog--edit', '.drawer--detail'] as $hook) {
+            $this->assertStringContainsString($hook, $css, $hook);
+        }
+    }
 }

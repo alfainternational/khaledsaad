@@ -17,7 +17,7 @@
         <a href="{{ route('admin.features.index') }}" class="btn btn--ghost">عودة</a>
     </header>
 
-    <form method="POST" action="{{ $feature->exists ? route('admin.features.update', $feature) : route('admin.features.store') }}" class="form form--wide">
+    <form method="POST" action="{{ $feature->exists ? route('admin.features.update', $feature) : route('admin.features.store') }}" class="form form--wide form-layout">
         @csrf
         @if ($feature->exists) @method('PUT') @endif
 
