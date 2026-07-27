@@ -70,4 +70,29 @@ class ParityMatrixTest extends TestCase
 
         $this->assertSame(['admin', 'customer', 'visitor'], $roles);
     }
+
+    /**
+     * @throws JsonException
+     */
+    #[Test]
+    public function the_matrix_records_verified_layout_evidence_for_every_surface(): void
+    {
+        $contract = (new ParityMatrix)->layoutContract();
+
+        $this->assertSame([4, 8, 12], $contract['web']['columns']);
+        $this->assertSame([600, 1024], $contract['mobile']['breakpoints']);
+        $this->assertContains('no_page_horizontal_scroll_320', $contract['constraints']);
+        $this->assertContains('colors_unchanged', $contract['constraints']);
+        $this->assertContains('shadows_unchanged', $contract['constraints']);
+
+        foreach (['web', 'mobile', 'print'] as $surface) {
+            $this->assertSame('verified', $contract[$surface]['status']);
+            $this->assertNotEmpty($contract[$surface]['implementation']);
+            $this->assertNotEmpty($contract[$surface]['tests']);
+
+            foreach ($contract[$surface]['implementation'] as $path) {
+                $this->assertFileExists(dirname(__DIR__, 3).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $path));
+            }
+        }
+    }
 }

@@ -22,22 +22,29 @@ final class ParityMatrix
      */
     public function records(): array
     {
-        $path = $this->path ?? dirname(__DIR__, 3).DIRECTORY_SEPARATOR.'docs'
-            .DIRECTORY_SEPARATOR.'product'.DIRECTORY_SEPARATOR.'parity-matrix.yaml';
-
-        $contents = file_get_contents($path);
-
-        if ($contents === false) {
-            throw new RuntimeException("Unable to read parity matrix at {$path}.");
-        }
-
-        $decoded = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+        $decoded = $this->document();
 
         if (! is_array($decoded) || ! isset($decoded['capabilities']) || ! is_array($decoded['capabilities'])) {
             throw new RuntimeException('The parity matrix must contain a capabilities array.');
         }
 
         return array_values($decoded['capabilities']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws JsonException
+     */
+    public function layoutContract(): array
+    {
+        $decoded = $this->document();
+
+        if (! isset($decoded['layout_contract']) || ! is_array($decoded['layout_contract'])) {
+            throw new RuntimeException('The parity matrix must contain a layout_contract object.');
+        }
+
+        return $decoded['layout_contract'];
     }
 
     /**
@@ -64,5 +71,30 @@ final class ParityMatrix
             $this->records(),
             fn (array $record) => ($record[$surface]['applicable'] ?? false) === true,
         ));
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws JsonException
+     */
+    private function document(): array
+    {
+        $path = $this->path ?? dirname(__DIR__, 3).DIRECTORY_SEPARATOR.'docs'
+            .DIRECTORY_SEPARATOR.'product'.DIRECTORY_SEPARATOR.'parity-matrix.yaml';
+
+        $contents = file_get_contents($path);
+
+        if ($contents === false) {
+            throw new RuntimeException("Unable to read parity matrix at {$path}.");
+        }
+
+        $decoded = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+
+        if (! is_array($decoded)) {
+            throw new RuntimeException('The parity matrix must contain an object.');
+        }
+
+        return $decoded;
     }
 }

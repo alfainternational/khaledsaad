@@ -1,6 +1,29 @@
 {
     "schema_version":  1,
     "description":  "سجل المطابقة الوظيفية بين الويب وواجهة API وتطبيق Flutter. صيغة JSON صحيحة ومتوافقة مع YAML.",
+    "layout_contract":  {
+                            "web":  {
+                                        "status":  "verified",
+                                        "columns":  [4, 8, 12],
+                                        "families":  ["reading", "form", "operational", "dashboard", "detail", "report", "board"],
+                                        "implementation":  ["resources/css/workspace.css"],
+                                        "tests":  ["Tests\\Feature\\PageLayoutContractTest", "Tests\\Feature\\WorkspaceLayoutTest"]
+                                    },
+                            "mobile":  {
+                                           "status":  "verified",
+                                           "breakpoints":  [600, 1024],
+                                           "families":  ["reading", "form", "operational"],
+                                           "implementation":  ["mobile/lib/core/widgets/adaptive_layout.dart"],
+                                           "tests":  ["mobile/test/core/widgets/adaptive_layout_test.dart"]
+                                       },
+                            "print":  {
+                                          "status":  "verified",
+                                          "families":  ["report", "agency_report"],
+                                          "implementation":  ["resources/views/reports/pdf.blade.php", "resources/views/agency-reports/pdf.blade.php"],
+                                          "tests":  ["Tests\\Feature\\ReportPdfParityTest", "Tests\\Feature\\AgencyReportDeliveryTest"]
+                                      },
+                            "constraints":  ["no_page_horizontal_scroll_320", "colors_unchanged", "shadows_unchanged"]
+                        },
     "capabilities":  [
                          {
                              "id":  "customer.consultation.evidence_integrated",
