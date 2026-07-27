@@ -19,6 +19,8 @@ class MobileDownloadTest extends TestCase
             $this->getJson(route('api.v1.public.mobile-app'))
                 ->assertOk()
                 ->assertJsonPath('data.available', true)
+                ->assertJsonPath('data.version', '1.0.1')
+                ->assertJsonPath('data.build', 2)
                 ->assertJsonPath('data.android_package', 'net.khaledsaad.ksgrowth_mobile')
                 ->assertJsonPath('data.ios_bundle', 'net.khaledsaad.ksgrowthMobile')
                 ->assertJsonPath('data.sha256', hash_file('sha256', $path));
