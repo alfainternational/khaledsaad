@@ -91,4 +91,9 @@ class ConsultationSession extends Model
     {
         return $this->hasOne(AgencyReport::class);
     }
+
+    public function toolRuns(): HasMany
+    {
+        return $this->hasMany(ToolRun::class);
+    }
 }

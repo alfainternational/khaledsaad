@@ -103,6 +103,9 @@ class FullDiagnosisRunner
             foreach ($tools as $tool) {
                 try {
                     $run = $this->runs->start($project, $tool, $user);
+                    if ($consultationSessionId !== null) {
+                        $run->forceFill(['consultation_session_id' => $consultationSessionId])->save();
+                    }
                     $this->memory->prefill($run);
 
                     if ($mode === self::MODE_MANUAL) {

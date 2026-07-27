@@ -33,7 +33,7 @@ class ToolRun extends Model
     public const STALE_AFTER_MINUTES = 10;
 
     protected $fillable = [
-        'uuid', 'project_id', 'tool_version_id', 'user_id', 'guest_session_id', 'status',
+        'uuid', 'project_id', 'consultation_session_id', 'tool_version_id', 'user_id', 'guest_session_id', 'status',
         'current_step', 'base_score', 'confidence', 'snapshot', 'failure_reason',
         'attempts', 'started_at', 'completed_at',
     ];
@@ -66,6 +66,11 @@ class ToolRun extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function consultationSession(): BelongsTo
+    {
+        return $this->belongsTo(ConsultationSession::class);
     }
 
     public function toolVersion(): BelongsTo

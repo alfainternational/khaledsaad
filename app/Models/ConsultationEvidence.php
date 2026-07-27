@@ -9,7 +9,11 @@ class ConsultationEvidence extends Model
 {
     protected $table = 'consultation_evidence';
 
-    protected $fillable = ['consultation_session_id', 'consultation_answer_id', 'type', 'source_label', 'source_locator', 'confidence', 'metadata', 'observed_at'];
+    protected $fillable = [
+        'consultation_session_id', 'consultation_answer_id', 'type', 'source_label',
+        'source_locator', 'disk', 'mime_type', 'size_bytes', 'extraction_status',
+        'extracted_text', 'sha256', 'confidence', 'metadata', 'observed_at',
+    ];
 
     protected function casts(): array
     {

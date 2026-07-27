@@ -34,41 +34,52 @@ class AttachmentExtractor
     public function extract(ToolRunFile $file): void
     {
         try {
-            $text = $this->readText($file);
-
-            if ($text === null) {
-                $file->forceFill(['extraction_status' => 'unsupported', 'extracted_text' => null])->save();
-
-                return;
-            }
-
-            $file->forceFill([
-                'extraction_status' => 'completed',
-                'extracted_text' => mb_substr($this->clean($text), 0, self::MAX_CHARACTERS),
-            ])->save();
+            $file->forceFill($this->extractStoredFile(
+                $file->disk,
+                $file->path,
+                $file->mime_type,
+                $file->original_name,
+            ))->save();
         } catch (Throwable $exception) {
             // فشل القراءة لا يوقف التحليل؛ الملف يُوسم ويُذكر في الافتراضات.
             $file->forceFill(['extraction_status' => 'failed', 'extracted_text' => null])->save();
         }
     }
 
-    private function readText(ToolRunFile $file): ?string
+    /** @return array{extraction_status:string,extracted_text:?string} */
+    public function extractStoredFile(string $disk, string $path, string $mimeType, string $originalName): array
     {
-        if (in_array($file->mime_type, self::PLAIN_TEXT_MIMES, true)) {
-            return Storage::disk($file->disk)->get($file->path) ?? '';
+        try {
+            $text = $this->readText($disk, $path, $mimeType, $originalName);
+
+            return $text === null
+                ? ['extraction_status' => 'unsupported', 'extracted_text' => null]
+                : [
+                    'extraction_status' => 'completed',
+                    'extracted_text' => mb_substr($this->clean($text), 0, self::MAX_CHARACTERS),
+                ];
+        } catch (Throwable) {
+            return ['extraction_status' => 'failed', 'extracted_text' => null];
+        }
+    }
+
+    private function readText(string $diskName, string $path, string $mimeType, string $originalName): ?string
+    {
+        if (in_array($mimeType, self::PLAIN_TEXT_MIMES, true)) {
+            return Storage::disk($diskName)->get($path) ?? '';
         }
 
-        $extension = strtolower(pathinfo($file->original_name, PATHINFO_EXTENSION));
-        $absolute = $this->absolutePath($file);
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $absolute = $this->absolutePath($diskName, $path);
 
         if ($absolute === null) {
             return null;
         }
 
         return match (true) {
-            $file->mime_type === 'application/pdf' || $extension === 'pdf' => $this->readPdf($absolute),
-            str_contains($file->mime_type, 'wordprocessingml') || $extension === 'docx' => $this->readWord($absolute, 'Word2007'),
-            str_contains($file->mime_type, 'spreadsheetml') || in_array($extension, ['xlsx', 'xls'], true) => $this->readSpreadsheet($absolute),
+            $mimeType === 'application/pdf' || $extension === 'pdf' => $this->readPdf($absolute),
+            str_contains($mimeType, 'wordprocessingml') || $extension === 'docx' => $this->readWord($absolute, 'Word2007'),
+            str_contains($mimeType, 'spreadsheetml') || in_array($extension, ['xlsx', 'xls'], true) => $this->readSpreadsheet($absolute),
             default => null,
         };
     }
@@ -136,15 +147,15 @@ class AttachmentExtractor
     /**
      * dompdf وpdfparser يحتاجان مسارًا حقيقيًا على القرص لا محتوى في الذاكرة.
      */
-    private function absolutePath(ToolRunFile $file): ?string
+    private function absolutePath(string $diskName, string $path): ?string
     {
-        $disk = Storage::disk($file->disk);
+        $disk = Storage::disk($diskName);
 
-        if (! $disk->exists($file->path)) {
+        if (! $disk->exists($path)) {
             return null;
         }
 
-        return $disk->path($file->path);
+        return $disk->path($path);
     }
 
     private function clean(string $contents): string

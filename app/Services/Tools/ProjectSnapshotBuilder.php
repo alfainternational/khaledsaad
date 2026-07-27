@@ -3,6 +3,7 @@
 namespace App\Services\Tools;
 
 use App\Models\ToolRun;
+use App\Services\Consultations\ConsultationContextBuilder;
 
 /**
  * BR-005 / BR-006: التقرير يُبنى على لقطة مجمدة، فتعديل ملف المشروع لاحقًا
@@ -10,6 +11,8 @@ use App\Models\ToolRun;
  */
 class ProjectSnapshotBuilder
 {
+    public function __construct(private readonly ConsultationContextBuilder $consultations) {}
+
     /**
      * @return array<string, mixed>
      */
@@ -18,7 +21,7 @@ class ProjectSnapshotBuilder
         $project = $run->project->loadMissing(['profile', 'audiences', 'competitors']);
         $version = $run->toolVersion->loadMissing('tool');
 
-        return [
+        $snapshot = [
             'captured_at' => now()->toIso8601String(),
             'tool' => [
                 'key' => $version->tool->key,
@@ -51,6 +54,14 @@ class ProjectSnapshotBuilder
                 ->values()
                 ->all(),
         ];
+
+        if ($run->consultation_session_id !== null) {
+            $snapshot['consultation'] = $this->consultations->build(
+                $run->consultationSession()->firstOrFail(),
+            );
+        }
+
+        return $snapshot;
     }
 
     /**
