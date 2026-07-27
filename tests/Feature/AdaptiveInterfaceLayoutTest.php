@@ -205,4 +205,13 @@ class AdaptiveInterfaceLayoutTest extends TestCase
 
         $this->assertStringContainsString('.layout-page--auth', $workspaceCss);
     }
+
+    #[Test]
+    public function the_public_shell_does_not_force_page_overflow_at_320_pixels(): void
+    {
+        $css = file_get_contents(resource_path('css/app.css'));
+
+        $this->assertStringNotContainsString('min-width: 320px', $css);
+        $this->assertStringContainsString('min-inline-size: 0', $css);
+    }
 }
