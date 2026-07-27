@@ -127,3 +127,4 @@
 - [ ] Merge the branch into `main`, push the exact commit, back up production, deploy, migrate, seed, clear caches, and restart workers.
 - [ ] Publish the APK and release manifest, verify the production API/web/admin/download paths, hash, authenticated consultation, unified report, and rollback backup.
 
+<!-- end of implementation plan -->
