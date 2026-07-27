@@ -33,7 +33,12 @@ class WebAppJourneyTest extends TestCase
         ])->assertRedirect(route('app.dashboard'));
 
         $this->assertAuthenticated();
-        $this->get(route('app.dashboard'))->assertOk()->assertSee('ملخص مشاريعك وخطوتك التالية');
+        $this->get(route('app.dashboard'))
+            ->assertOk()
+            ->assertSee('ملخص مشاريعك وخطوتك التالية')
+            ->assertSee('data-layout="dashboard"', false)
+            ->assertSee('layout-metrics', false)
+            ->assertSee('layout-main-aside', false);
     }
 
     #[Test]

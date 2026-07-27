@@ -23,33 +23,8 @@
         </div>
     </header>
 
-    <section class="split">
-        <article class="card card--score">
-            @if ($project['latest_score'] !== null)
-                <p class="eyebrow">درجة الجاهزية</p>
-                <p class="score-big">{{ $project['latest_score'] }}<small>/100</small></p>
-                <p class="score-chip">{{ $project['score_band'] }}</p>
-                @if ($project['comparison'])
-                    <p @class(['delta', 'delta--up' => $project['comparison']['direction'] === 'up', 'delta--down' => $project['comparison']['direction'] === 'down'])>
-                        {{ $project['comparison']['label'] }}
-                    </p>
-                @endif
-            @else
-                <p class="eyebrow">درجة الجاهزية</p>
-                <p class="muted">لم تُحتسب بعد. ابدأ تشخيص الجاهزية لعرض الدرجة والأولويات هنا.</p>
-            @endif
-        </article>
-
-        <article class="card">
-            <p class="eyebrow">التنفيذ</p>
-            <ul class="kv">
-                <li><span>مهام مفتوحة</span><strong>{{ $project['tasks']['open'] }}</strong></li>
-                <li><span>مهام متأخرة</span><strong>{{ $project['tasks']['overdue'] }}</strong></li>
-                <li><span>مهام منجزة</span><strong>{{ $project['tasks']['done'] }}</strong></li>
-            </ul>
-        </article>
-    </section>
-
+    <div class="layout-main-aside">
+    <div class="layout-flow">
     {{-- محرك النمو: القدرات المستمرة فوق أدوات التشغيل الاعتيادية --}}
     <section aria-labelledby="growth-heading">
         <h2 id="growth-heading" class="section-title">فرص إضافية لتحسين المشروع</h2>
@@ -241,4 +216,34 @@
             @endforeach
         </div>
     </section>
+    </div>
+
+    <aside class="layout-aside layout-flow" aria-label="ملخص المشروع">
+        <article class="card card--score">
+            @if ($project['latest_score'] !== null)
+                <p class="eyebrow">درجة الجاهزية</p>
+                <p class="score-big">{{ $project['latest_score'] }}<small>/100</small></p>
+                <p class="score-chip">{{ $project['score_band'] }}</p>
+                @if ($project['comparison'])
+                    <p @class(['delta', 'delta--up' => $project['comparison']['direction'] === 'up', 'delta--down' => $project['comparison']['direction'] === 'down'])>
+                        {{ $project['comparison']['label'] }}
+                    </p>
+                @endif
+            @else
+                <p class="eyebrow">درجة الجاهزية</p>
+                <p class="muted">لم تُحتسب بعد. ابدأ تشخيص الجاهزية لعرض الدرجة والأولويات هنا.</p>
+            @endif
+        </article>
+
+        <article class="card">
+            <p class="eyebrow">التنفيذ</p>
+            <ul class="kv">
+                <li><span>مهام مفتوحة</span><strong>{{ $project['tasks']['open'] }}</strong></li>
+                <li><span>مهام متأخرة</span><strong>{{ $project['tasks']['overdue'] }}</strong></li>
+                <li><span>مهام منجزة</span><strong>{{ $project['tasks']['done'] }}</strong></li>
+            </ul>
+        </article>
+    </aside>
+    </div>
+
 @endsection

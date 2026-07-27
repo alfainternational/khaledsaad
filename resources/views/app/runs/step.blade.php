@@ -25,7 +25,7 @@
         <p class="muted">الخطوة {{ $position }} من {{ $total_steps }} · إجاباتك تُحفظ تلقائيًا بعد كل خطوة</p>
     </div>
 
-    <div class="wizard-live-layout">
+    <div class="wizard-live-layout layout-main-aside">
         <form id="tool-run-form" method="POST" action="{{ route('app.runs.step.save', [$run['uuid'], $step_number]) }}" class="form form--wide">
             @csrf
 
@@ -71,7 +71,7 @@
 
         <aside
             id="live-insights"
-            class="live-insights"
+            class="live-insights layout-aside"
             aria-live="polite"
             data-url="{{ route('app.runs.insights', $run['uuid']) }}"
             data-step="{{ $step_number }}"

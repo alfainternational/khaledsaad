@@ -33,7 +33,10 @@ class AdminPanelTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('نظرة عامة');
+            ->assertSee('نظرة عامة')
+            ->assertSee('data-layout="dashboard"', false)
+            ->assertSee('layout-metrics', false)
+            ->assertSee('layout-main-aside', false);
     }
 
     #[Test]

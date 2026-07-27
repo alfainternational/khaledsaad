@@ -103,4 +103,32 @@ class AdaptiveInterfaceLayoutTest extends TestCase
         $this->assertStringContainsString('layout-page--{{', $app);
         $this->assertStringContainsString('layout-page--reading', $auth);
     }
+
+    #[Test]
+    public function representative_pages_use_the_approved_structural_patterns(): void
+    {
+        $expectations = [
+            'app/dashboard' => ['layout-metrics', 'layout-main-aside'],
+            'admin/dashboard' => ['layout-metrics', 'layout-main-aside'],
+            'admin/usage' => ['layout-metrics', 'layout-main-aside'],
+            'app/projects/show' => ['layout-main-aside', 'layout-aside'],
+            'app/runs/step' => ['layout-main-aside', 'layout-aside'],
+            'app/reports/show' => ['layout-report', 'layout-aside'],
+            'app/tasks/index' => ['layout-board'],
+        ];
+
+        foreach ($expectations as $view => $hooks) {
+            $contents = file_get_contents(resource_path("views/{$view}.blade.php"));
+
+            foreach ($hooks as $hook) {
+                $this->assertStringContainsString($hook, $contents, "{$view}: {$hook}");
+            }
+        }
+
+        $css = file_get_contents(resource_path('css/workspace.css'));
+
+        foreach (['.layout-flow', '.layout-aside', '.layout-board'] as $hook) {
+            $this->assertStringContainsString($hook, $css, $hook);
+        }
+    }
 }

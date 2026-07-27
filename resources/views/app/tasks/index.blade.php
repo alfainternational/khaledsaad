@@ -19,7 +19,7 @@
             <p>افتح أحد تقارير المشروع وحوّل التوصيات التي تريد تنفيذها إلى مهام قابلة للمتابعة.</p>
         </section>
     @else
-        <div class="board">
+        <div class="board layout-board">
             @foreach (['todo' => 'لم تبدأ', 'doing' => 'قيد التنفيذ', 'done' => 'منجزة'] as $key => $label)
                 <section class="board__column" aria-labelledby="column-{{ $key }}">
                     <h2 id="column-{{ $key }}">{{ $label }} ({{ count($tasks[$key]) }})</h2>

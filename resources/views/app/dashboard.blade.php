@@ -12,7 +12,7 @@
         <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعًا</a>
     </header>
 
-    <section class="stat-row" aria-label="ملخص">
+    <section class="layout-metrics" aria-label="الملخص الأساسي">
         <article class="stat">
             <span class="stat__value">{{ count($projects) }}</span>
             <span class="stat__label">مشروع</span>
@@ -27,14 +27,9 @@
         </article>
     </section>
 
-    <section class="card consultation-entry" aria-labelledby="smart-consultation-heading">
-        <p class="eyebrow">المستشار التسويقي الذكي</p>
-        <h2 id="smart-consultation-heading">لا تعرف أي تشخيص تبدأ به؟</h2>
-        <p>ابدأ باستشارة واحدة تفهم مشروعك، تسمح بأكثر من اختيار عندما ينطبق، ثم تحدد التحليلات والأولويات المناسبة.</p>
-        <a href="{{ route('app.consultations.index') }}" class="btn btn--primary">ابدأ التشخيص الذكي الشامل</a>
-    </section>
-
-    @if (($unfinished ?? []) !== [])
+    <div class="layout-main-aside">
+        <div class="layout-flow">
+        @if (($unfinished ?? []) !== [])
         {{-- طريق العودة. وعدنا المستخدم بأنه يقدر يغلق الصفحة ويرجع،
              وهذا هو المكان الذي يرجع منه. --}}
         <section aria-labelledby="resume-heading" class="resume-section">
@@ -59,15 +54,15 @@
                 @endforeach
             </ul>
         </section>
-    @endif
+        @endif
 
-    @if ($projects === [])
+        @if ($projects === [])
         <section class="empty">
             <h2>أضف مشروعك الأول</h2>
             <p>أدخل معلوماته الأساسية مرة واحدة، وسنستخدمها لتخصيص الأسئلة والتقارير من دون تكرار.</p>
             <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعك الأول</a>
         </section>
-    @else
+        @else
         <section aria-labelledby="projects-heading">
             <h2 id="projects-heading" class="section-title">مشاريعك</h2>
             <div class="card-grid">
@@ -84,18 +79,29 @@
                 @endforeach
             </div>
         </section>
-    @endif
-
-    <section aria-labelledby="tools-heading">
-        <h2 id="tools-heading" class="section-title">تشخيصات مقترحة للبدء</h2>
-        <div class="card-grid">
-            @foreach ($suggested_tools as $tool)
-                <a class="card card--link" href="{{ route('app.tools.show', $tool['key']) }}">
-                    <p class="eyebrow">{{ $tool['category'] }}</p>
-                    <h3>{{ $tool['title'] }}</h3>
-                    <p class="muted">{{ $tool['promise'] ?: $tool['description'] }}</p>
-                </a>
-            @endforeach
+        @endif
         </div>
-    </section>
+
+        <aside class="layout-aside layout-flow" aria-label="الخطوة التالية">
+            <section class="card consultation-entry" aria-labelledby="smart-consultation-heading">
+                <p class="eyebrow">المستشار التسويقي الذكي</p>
+                <h2 id="smart-consultation-heading">لا تعرف أي تشخيص تبدأ به؟</h2>
+                <p>ابدأ باستشارة واحدة تفهم مشروعك، تسمح بأكثر من اختيار عندما ينطبق، ثم تحدد التحليلات والأولويات المناسبة.</p>
+                <a href="{{ route('app.consultations.index') }}" class="btn btn--primary">ابدأ التشخيص الذكي الشامل</a>
+            </section>
+
+            <section aria-labelledby="tools-heading">
+                <h2 id="tools-heading" class="section-title">تشخيصات مقترحة للبدء</h2>
+                <div class="layout-flow">
+                    @foreach ($suggested_tools as $tool)
+                        <a class="card card--link" href="{{ route('app.tools.show', $tool['key']) }}">
+                            <p class="eyebrow">{{ $tool['category'] }}</p>
+                            <h3>{{ $tool['title'] }}</h3>
+                            <p class="muted">{{ $tool['promise'] ?: $tool['description'] }}</p>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        </aside>
+    </div>
 @endsection

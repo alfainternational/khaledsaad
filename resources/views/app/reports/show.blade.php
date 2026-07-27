@@ -23,7 +23,7 @@
         </div>
     </header>
 
-    <section class="report-head">
+    <section id="report-summary" class="report-head">
         <article class="card card--score">
             <p class="eyebrow">الدرجة</p>
             <p class="score-big">{{ $report['score'] }}<small>/100</small></p>
@@ -58,6 +58,8 @@
         </article>
     </section>
 
+    <div class="layout-report">
+    <div class="layout-flow">
     @include('app.reports.partials.charts')
 
     {{-- جسر محرك النمو: التقرير الساكن يتحول بضغطة إلى مراقبة مستمرة --}}
@@ -105,13 +107,6 @@
             </form>
         @endif
     </section>
-
-    {{-- اسم النموذج شأن داخلي يخص لوحة الإدارة، لا العميل.
-         ما يهم العميل هو على ماذا بُنيت النتيجة. --}}
-    <p class="provenance">
-        {{ $report['counts']['evidence_backed'] }} نتيجة مبنية على ما كتبته،
-        و{{ $report['counts']['assumptions'] }} معلومة تحتاج إلى تأكيد منك.
-    </p>
 
     {{-- حلقة التعلّم: تقييم واحد بسيط يعلّم المنصة ما ينفع فعلًا --}}
     <div class="feedback-row">
@@ -333,4 +328,24 @@
     @if ($report['is_manually_reviewed'])
         <p class="report-sign">راجعه وكتبه بنفسه: {{ $report['reviewer_name'] }}@if ($report['reviewed_at']) · {{ $report['reviewed_at'] }}@endif</p>
     @endif
+    </div>
+
+    <aside class="layout-aside layout-flow" aria-label="فهرس التقرير ومصادره">
+        <nav class="card report-index" aria-labelledby="report-index-heading">
+            <h2 id="report-index-heading" class="section-title">في هذا التقرير</h2>
+            <a href="#report-summary">الدرجة والخلاصة</a>
+            <a href="#findings-heading">أهم ما وجدناه</a>
+            <a href="#sections-heading">تفاصيل التحليل</a>
+        </nav>
+
+        {{-- اسم النموذج شأن داخلي؛ نعرض للعميل فقط أساس النتيجة. --}}
+        <section class="card" aria-labelledby="report-sources-heading">
+            <h2 id="report-sources-heading" class="section-title">أساس النتيجة</h2>
+            <p class="provenance">
+                {{ $report['counts']['evidence_backed'] }} نتيجة مبنية على ما كتبته،
+                و{{ $report['counts']['assumptions'] }} معلومة تحتاج إلى تأكيد منك.
+            </p>
+        </section>
+    </aside>
+    </div>
 @endsection
