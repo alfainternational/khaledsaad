@@ -15,6 +15,7 @@ use App\Services\Consultations\Engine\AnswerValidator;
 use App\Services\Consultations\Engine\ConflictDetector;
 use App\Services\Consultations\Engine\ModuleScopeResolver;
 use App\Services\Consultations\Engine\NextQuestionSelector;
+use App\Services\Projects\ProjectKnowledgeService;
 use App\Services\Tools\FullDiagnosisRunner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -28,6 +29,7 @@ class ConsultationService
         private readonly ConflictDetector $conflicts,
         private readonly ConsultationEventRecorder $events,
         private readonly AnswerValidator $answerValidator,
+        private readonly ProjectKnowledgeService $knowledge,
     ) {}
 
     public function confirm(ConsultationSession $session, User $user): ConsultationSession
@@ -137,9 +139,14 @@ class ConsultationService
                     ['type' => 'missing_information', 'statement' => 'لا تتوفر معلومة مؤكدة عن '.$question->user_text, 'confidence' => 0, 'status' => 'open'],
                 );
             } elseif (! $skipped) {
-                ProjectAnswer::updateOrCreate(
-                    ['project_id' => $session->project_id, 'field_key' => $question->definition->internal_variable],
-                    ['value_json' => ['value' => $value], 'source_tool_key' => 'consultation'],
+                $this->knowledge->record(
+                    $session->project,
+                    $question->definition->internal_variable,
+                    $value,
+                    'consultation',
+                    $session->uuid,
+                    $session->id,
+                    $unknown ? 'low' : 'medium',
                 );
             }
 
@@ -188,15 +195,27 @@ class ConsultationService
             ])->save();
             $variable = $question->definition->internal_variable;
             if ($unknown || $skipped) {
-                ProjectAnswer::where('project_id', $session->project_id)->where('field_key', $variable)->delete();
+                $this->knowledge->retract(
+                    $session->project,
+                    $variable,
+                    'consultation',
+                    $session->uuid,
+                    $session->id,
+                    ['reason' => $unknown ? 'unknown' : 'skipped'],
+                );
                 ConsultationInference::updateOrCreate(
                     ['consultation_session_id' => $session->id, 'key' => 'missing.'.$variable],
                     ['type' => 'missing_information', 'statement' => 'لا تتوفر معلومة مؤكدة عن '.$question->user_text, 'confidence' => 0, 'status' => 'open'],
                 );
             } else {
-                ProjectAnswer::updateOrCreate(
-                    ['project_id' => $session->project_id, 'field_key' => $variable],
-                    ['value_json' => ['value' => $value], 'source_tool_key' => 'consultation'],
+                $this->knowledge->record(
+                    $session->project,
+                    $variable,
+                    $value,
+                    'consultation',
+                    $session->uuid,
+                    $session->id,
+                    'medium',
                 );
                 $session->inferences()->where('key', 'missing.'.$variable)->delete();
             }

@@ -66,6 +66,11 @@ class Project extends Model
         return $this->hasMany(ProjectAnswer::class);
     }
 
+    public function knowledgeSources(): HasMany
+    {
+        return $this->hasMany(ProjectKnowledgeSource::class);
+    }
+
     public function consultationSessions(): HasMany
     {
         return $this->hasMany(ConsultationSession::class);

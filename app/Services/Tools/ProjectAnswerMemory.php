@@ -8,6 +8,7 @@ use App\Models\ProjectProfile;
 use App\Models\ToolField;
 use App\Models\ToolRun;
 use App\Models\ToolRunAnswer;
+use App\Services\Projects\ProjectKnowledgeService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ProjectAnswerMemory
 {
+    public function __construct(private readonly ProjectKnowledgeService $knowledge) {}
+
     /**
      * حفظ إجابات خطوة داخل ذاكرة المشروع وملفه.
      *
@@ -47,13 +50,13 @@ class ProjectAnswerMemory
                     continue;
                 }
 
-                ProjectAnswer::updateOrCreate(
-                    ['project_id' => $project->id, 'field_key' => $key],
-                    [
-                        'value_json' => ['value' => $value],
-                        'source_tool_key' => $toolKey,
-                        'source_run_id' => $run->id,
-                    ],
+                $this->knowledge->record(
+                    $project,
+                    $key,
+                    $value,
+                    'tool',
+                    $toolKey,
+                    $run->id,
                 );
 
                 // الحقول التي لها مكان في ملف المشروع تُكتب فيه أيضًا،
@@ -116,10 +119,7 @@ class ProjectAnswerMemory
                 continue;
             }
 
-            ProjectAnswer::updateOrCreate(
-                ['project_id' => $project->id, 'field_key' => $key],
-                ['value_json' => ['value' => $value], 'source_tool_key' => null, 'source_run_id' => null],
-            );
+            $this->knowledge->record($project, $key, $value, 'profile');
         }
     }
 
