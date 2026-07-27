@@ -75,13 +75,16 @@ class ReportFreshnessService
             return null;
         }
 
+        // حالة الجلسة نفسها مؤشر تشغيل (queued/completed)، وليست مادة في التقرير.
+        // احتساب updated_at للجلسة كان يجعل التقرير قديمًا لحظة تحويلها إلى completed
+        // بعد إنشائه، بينما التغييرات الفعلية محفوظة في الجداول أدناه.
         return $this->latest(collect([
-            'consultation_sessions', 'consultation_answers', 'consultation_evidence',
+            'consultation_answers', 'consultation_evidence',
             'consultation_inferences', 'consultation_conflicts', 'consultation_module_states',
         ])->map(function (string $table) use ($sessionIds): ?Carbon {
-            $key = $table === 'consultation_sessions' ? 'id' : 'consultation_session_id';
-
-            return $this->asCarbon(DB::table($table)->whereIn($key, $sessionIds)->max('updated_at'));
+            return $this->asCarbon(DB::table($table)
+                ->whereIn('consultation_session_id', $sessionIds)
+                ->max('updated_at'));
         })->all());
     }
 

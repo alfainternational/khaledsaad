@@ -2,15 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Models\ConsultationSession;
 use App\Models\Finding;
 use App\Models\Report;
 use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Models\User;
+use App\Services\Consultations\ConsultationService;
 use App\Services\Projects\ProjectKnowledgeService;
 use App\Services\Projects\ProjectService;
 use App\Services\Reports\AgencyReportService;
 use App\Services\Reports\ReportFreshnessService;
+use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -20,6 +23,30 @@ use Tests\TestCase;
 class AgencyReportFreshnessTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    public function completing_the_source_consultation_after_generation_does_not_immediately_stale_the_report(): void
+    {
+        $this->seed([ToolCatalogSeeder::class, ConsultationCatalogSeeder::class]);
+        $user = User::factory()->create();
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروع تقرير مكتمل']);
+        foreach (['marketing-score', 'brand-clarity', 'audience-map'] as $tool) {
+            $this->report($project, $user, $tool);
+        }
+        $session = app(ConsultationService::class)->start($project, $user, 'quick');
+
+        $agencyReport = app(AgencyReportService::class)->generate($project, $user, [], $session);
+        $this->travel(2)->seconds();
+        $session->forceFill([
+            'status' => ConsultationSession::STATUS_COMPLETED,
+            'completed_at' => now(),
+        ])->save();
+
+        $freshness = app(ReportFreshnessService::class)->status($agencyReport->fresh());
+
+        $this->assertFalse($freshness['is_stale']);
+        $this->assertSame('fresh', $freshness['state']);
+    }
 
     #[Test]
     public function knowledge_changes_mark_old_reports_stale_in_service_api_and_web_without_mutating_the_snapshot(): void
