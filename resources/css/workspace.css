@@ -1559,7 +1559,6 @@
 
     [data-table="entity"] td::before {
         content: attr(data-label);
-        color: var(--muted);
         font-weight: 600;
     }
 
