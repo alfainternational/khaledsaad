@@ -101,7 +101,7 @@ class AdaptiveInterfaceLayoutTest extends TestCase
         $auth = file_get_contents(resource_path('views/layouts/auth.blade.php'));
 
         $this->assertStringContainsString('layout-page--{{', $app);
-        $this->assertStringContainsString('layout-page--reading', $auth);
+        $this->assertStringContainsString('layout-page--auth', $auth);
     }
 
     #[Test]
@@ -172,5 +172,37 @@ class AdaptiveInterfaceLayoutTest extends TestCase
         foreach (['[data-table="entity"]', '[data-table="matrix"]', '.form-layout', '.dialog--confirm', '.dialog--edit', '.drawer--detail'] as $hook) {
             $this->assertStringContainsString($hook, $css, $hook);
         }
+    }
+
+    #[Test]
+    public function public_auth_legal_and_status_pages_use_the_approved_widths_and_grids(): void
+    {
+        $expectations = [
+            'home' => ['layout-hero'],
+            'site/tools/index' => ['public-card-grid'],
+            'site/tools/show' => ['public-tool-hero', 'public-step-grid'],
+            'site/try/step' => ['layout-page--form'],
+            'site/try/result' => ['layout-page--form'],
+            'site/legal' => ['layout-page--reading'],
+            'layouts/auth' => ['layout-page--auth'],
+            'errors/404' => ['status-layout'],
+        ];
+
+        foreach ($expectations as $view => $hooks) {
+            $contents = file_get_contents(resource_path("views/{$view}.blade.php"));
+
+            foreach ($hooks as $hook) {
+                $this->assertStringContainsString($hook, $contents, "{$view}: {$hook}");
+            }
+        }
+
+        $siteCss = file_get_contents(resource_path('css/site-pages.css'));
+        $workspaceCss = file_get_contents(resource_path('css/workspace.css'));
+
+        foreach (['.public-card-grid', '.public-tool-hero', '.public-step-grid', '.status-layout'] as $hook) {
+            $this->assertStringContainsString($hook, $siteCss, $hook);
+        }
+
+        $this->assertStringContainsString('.layout-page--auth', $workspaceCss);
     }
 }

@@ -18,7 +18,7 @@
                     <b>{{ $tool['title'] }}</b>
                 </nav>
 
-                <div class="tool-hero">
+                <div class="tool-hero public-tool-hero">
                     <div class="tool-hero__copy">
                         <div class="tool-hero__tags">
                             <span class="catalog-card__category">{{ $tool['category'] }}</span>
@@ -106,7 +106,7 @@
                         title="المعلومات التي ستحتاج إليها"
                         description="راجعها قبل أن تبدأ. سترى بجانب كل سؤال سبب طلبه وكيف يؤثر في دقة النتيجة."
                     />
-                    <div class="steps-grid">
+                    <div class="steps-grid public-step-grid">
                         @foreach ($tool['steps'] as $step)
                             <article class="step-card">
                                 <span class="step-card__number">الخطوة {{ $step['step'] }}</span>
@@ -138,7 +138,7 @@
                         <x-section-heading eyebrow="تكمل بعضها" title="مشاكل قريبة منها" align="start" />
                         <a class="text-link" href="{{ route('tools.index') }}">كل الحالات <span aria-hidden="true">←</span></a>
                     </div>
-                    <div class="catalog-grid catalog-grid--three">
+                    <div class="catalog-grid catalog-grid--three public-card-grid">
                         @foreach ($related as $card)
                             <a href="{{ route('tools.show', $card['key']) }}" @class(['catalog-card', 'catalog-card--soon' => ! $card['is_runnable']])>
                                 <div class="catalog-card__head">

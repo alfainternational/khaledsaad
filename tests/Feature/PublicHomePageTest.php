@@ -26,6 +26,8 @@ class PublicHomePageTest extends TestCase
         $this->get(route('home'))
             ->assertOk()
             ->assertSee('dir="rtl"', false)
+            ->assertSee('data-layout="marketing"', false)
+            ->assertSee('layout-hero', false)
             ->assertSee('تجاوز إلى المحتوى')
             ->assertSee('خالد سعد | شخّص تسويق مشروعك وحدد أولوياتك')
             ->assertSee('ابدأ تشخيص مشروعك')

@@ -14,7 +14,7 @@
     <body class="auth-page" data-layout="{{ $layoutFamily }}">
         <a class="skip-link" href="#main-content">تجاوز إلى المحتوى</a>
 
-        <main id="main-content" class="auth-card layout-page layout-page--reading">
+        <main id="main-content" class="auth-card layout-page layout-page--auth">
             <a href="{{ route('home') }}" class="auth-card__brand"><x-brand-logo /></a>
 
             <h1>@yield('heading')</h1>

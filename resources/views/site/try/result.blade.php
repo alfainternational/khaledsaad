@@ -7,7 +7,7 @@
     @include('partials.site-header')
 
     <main id="main-content" class="try-shell">
-        <div class="container try-layout">
+        <div class="container try-layout layout-page layout-page--form">
             <header class="try-head">
                 <p class="eyebrow">{{ $run['tool']['title'] }}</p>
                 <h1>اكتملت إجاباتك، وأصبحت جاهزة للتحليل.</h1>

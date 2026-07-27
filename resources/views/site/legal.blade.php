@@ -18,7 +18,7 @@
         </section>
 
         <section class="section legal-section">
-            <div class="container legal-body">
+            <div class="container legal-body layout-page layout-page--reading">
                 @foreach ($page['sections'] as $section)
                     <article class="legal-block">
                         <h2>{{ $section['title'] }}</h2>

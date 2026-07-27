@@ -30,7 +30,7 @@
 
         <section class="section catalog-section" id="الحالات">
             <div class="container">
-                <div class="catalog-grid">
+                <div class="catalog-grid public-card-grid">
                     @foreach ($tools as $tool)
                         <a href="{{ route('tools.show', $tool['key']) }}" @class(['catalog-card', 'catalog-card--soon' => ! $tool['is_runnable']])>
                             <div class="catalog-card__head">

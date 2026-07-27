@@ -352,6 +352,10 @@
     max-inline-size: var(--layout-form-max);
 }
 
+.layout-page--auth {
+    max-inline-size: 30rem;
+}
+
 .layout-page--operational {
     max-inline-size: var(--layout-operational-max);
 }

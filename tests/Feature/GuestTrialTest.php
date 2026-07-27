@@ -68,6 +68,8 @@ class GuestTrialTest extends TestCase
 
         $this->get(route('try.step', [$run, 1]))
             ->assertOk()
+            ->assertSee('data-layout="wizard"', false)
+            ->assertSee('layout-page--form', false)
             ->assertSee('يمكنك المتابعة الآن من دون حساب');
 
         $this->post(route('try.step.save', [$run, 1]), [

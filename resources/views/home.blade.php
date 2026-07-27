@@ -20,7 +20,7 @@
             <div class="hero-orb hero-orb--blue" aria-hidden="true"></div>
             <div class="hero-orb hero-orb--orange" aria-hidden="true"></div>
 
-            <div class="container hero-grid">
+            <div class="container hero-grid layout-hero">
                 <div class="hero-copy">
                     <p class="eyebrow reveal">قبل أن تزيد الإنفاق · اعرف ما يحتاجه مشروعك أولًا</p>
                     <h1 class="reveal">

@@ -9,7 +9,7 @@
 
     <main id="main-content">
         <section class="page-hero">
-            <div class="container page-hero__inner">
+            <div class="container page-hero__inner status-layout">
                 <p class="eyebrow">الرابط غير موجود</p>
                 <h1>هذه الصفحة غير موجودة.</h1>
                 <p class="page-hero__lead">
@@ -17,11 +17,10 @@
                 </p>
 
                 <div class="page-hero__actions">
-                    <a class="button button--primary button--large" href="{{ route('tools.index') }}">استكشف التشخيصات <span aria-hidden="true">←</span></a>
                     @auth
-                        <a class="button button--ghost button--large" href="{{ route('app.dashboard') }}">افتح لوحة مشروعك</a>
+                        <a class="button button--primary button--large" href="{{ route('app.dashboard') }}">افتح لوحة مشروعك <span aria-hidden="true">←</span></a>
                     @else
-                        <a class="button button--ghost button--large" href="{{ route('home') }}">الصفحة الرئيسية</a>
+                        <a class="button button--primary button--large" href="{{ route('tools.index') }}">استكشف التشخيصات <span aria-hidden="true">←</span></a>
                     @endauth
                 </div>
             </div>

@@ -47,6 +47,8 @@ class PublicToolJourneyTest extends TestCase
         $response = $this->get(route('tools.index'))->assertOk();
 
         $this->assertSame(11, Tool::count());
+        $response->assertSee('data-layout="marketing"', false);
+        $response->assertSee('public-card-grid', false);
         $response->assertSee('ما الذي تريد فهمه أو تحسينه الآن؟');
         $response->assertSee('قريبًا');
         $response->assertSee(route('tools.show', 'funnel-audit'), false);
@@ -57,6 +59,9 @@ class PublicToolJourneyTest extends TestCase
     {
         $response = $this->get(route('tools.show', 'marketing-score'))->assertOk();
 
+        $response->assertSee('data-layout="marketing"', false);
+        $response->assertSee('public-tool-hero', false);
+        $response->assertSee('public-step-grid', false);
         $response->assertSee('المعلومات التي ستحتاج إليها');
         $response->assertSee(route('register', ['tool' => 'marketing-score']), false);
         $response->assertSee(route('login', ['tool' => 'marketing-score']), false);
@@ -131,7 +136,10 @@ class PublicToolJourneyTest extends TestCase
             'password' => 'password-1234',
         ]);
 
-        $this->get(route('login', ['tool' => 'content-engine']))->assertOk();
+        $this->get(route('login', ['tool' => 'content-engine']))
+            ->assertOk()
+            ->assertSee('data-layout="auth"', false)
+            ->assertSee('layout-page--auth', false);
 
         $this->post(route('login'), [
             'email' => 'back@example.test',
