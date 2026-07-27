@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
+export 'adaptive_layout.dart';
+
 /// مكونات مشتركة تقابل أصناف CSS في الويب:
 /// .card / .score-chip / .badge / .empty / .alert
 class BrandCard extends StatelessWidget {
