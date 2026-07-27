@@ -52,10 +52,11 @@ class FinishFullDiagnosis implements ShouldQueue
         }
 
         try {
-            $report = $reports->generate($project, $user);
+            $session = $this->consultationSessionId === null
+                ? null
+                : ConsultationSession::find($this->consultationSessionId);
+            $report = $reports->generate($project, $user, [], $session);
             if ($this->consultationSessionId !== null) {
-                $report->forceFill(['consultation_session_id' => $this->consultationSessionId])->save();
-                $session = ConsultationSession::find($this->consultationSessionId);
                 if ($session !== null) {
                     $session->forceFill(['status' => ConsultationSession::STATUS_COMPLETED, 'completed_at' => now()])->save();
                     $events->record($session, 'analysis_completed', ['status' => ConsultationSession::STATUS_COMPLETED, 'report_uuid' => $report->uuid]);

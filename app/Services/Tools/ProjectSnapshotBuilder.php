@@ -4,6 +4,7 @@ namespace App\Services\Tools;
 
 use App\Models\ToolRun;
 use App\Services\Consultations\ConsultationContextBuilder;
+use App\Services\Reports\CrossToolSynthesis;
 
 /**
  * BR-005 / BR-006: التقرير يُبنى على لقطة مجمدة، فتعديل ملف المشروع لاحقًا
@@ -11,7 +12,10 @@ use App\Services\Consultations\ConsultationContextBuilder;
  */
 class ProjectSnapshotBuilder
 {
-    public function __construct(private readonly ConsultationContextBuilder $consultations) {}
+    public function __construct(
+        private readonly ConsultationContextBuilder $consultations,
+        private readonly CrossToolSynthesis $crossTool,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -53,6 +57,7 @@ class ProjectSnapshotBuilder
                 ])
                 ->values()
                 ->all(),
+            'prior_diagnostic_results' => $this->crossTool->priorResults($run),
         ];
 
         if ($run->consultation_session_id !== null) {

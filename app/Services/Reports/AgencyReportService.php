@@ -3,10 +3,12 @@
 namespace App\Services\Reports;
 
 use App\Models\AgencyReport;
+use App\Models\ConsultationSession;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
 use App\Services\Consultations\ConsultationReportGate;
+use App\Services\Consultations\ConsultationContextBuilder;
 use App\Services\Marketing\BudgetPlanner;
 use App\Support\Marketing\BriefQuestions;
 use Illuminate\Support\Collection;
@@ -33,6 +35,8 @@ class AgencyReportService
         private readonly BudgetPlanner $budget,
         private readonly AgencyOperationalFile $operational,
         private readonly ConsultationReportGate $reportGate,
+        private readonly ConsultationContextBuilder $consultations,
+        private readonly CrossToolSynthesis $crossTool,
     ) {}
 
     /**
@@ -144,7 +148,7 @@ class AgencyReportService
     /**
      * @param  array<string, string>  $visibility
      */
-    public function generate(Project $project, User $user, array $visibility = []): AgencyReport
+    public function generate(Project $project, User $user, array $visibility = [], ?ConsultationSession $consultation = null): AgencyReport
     {
         $readiness = $this->readiness($project);
 
@@ -156,14 +160,18 @@ class AgencyReportService
 
         $visibility = $this->visibility($visibility);
         $reports = $this->latestReports($project);
-        $snapshot = $this->snapshot($project, $reports, $visibility);
+        $consultation ??= $project->consultationSessions()
+            ->where('status', ConsultationSession::STATUS_COMPLETED)
+            ->latest('completed_at')->first();
+        $snapshot = $this->snapshot($project, $reports, $visibility, $consultation);
         $this->reportGate->validate($snapshot);
 
-        return DB::transaction(function () use ($project, $user, $reports, $visibility, $snapshot): AgencyReport {
+        return DB::transaction(function () use ($project, $user, $reports, $visibility, $snapshot, $consultation): AgencyReport {
             $version = ((int) $project->agencyReports()->lockForUpdate()->max('version')) + 1;
 
             return AgencyReport::create([
                 'project_id' => $project->id,
+                'consultation_session_id' => $consultation?->id,
                 'created_by' => $user->id,
                 'version' => $version,
                 'title' => "موجز الوكالة — {$project->name} — الإصدار {$version}",
@@ -221,7 +229,7 @@ class AgencyReportService
      * @param  array<string, string>  $visibility
      * @return array<string, mixed>
      */
-    private function snapshot(Project $project, Collection $reports, array $visibility): array
+    private function snapshot(Project $project, Collection $reports, array $visibility, ?ConsultationSession $consultation): array
     {
         // التقرير لقطة للحالة الحالية؛ لا نعتمد علاقة قديمة محمّلة قبل آخر تعديل.
         $project->load(['profile', 'competitors', 'kpis.entries', 'audiences']);
@@ -292,6 +300,8 @@ class AgencyReportService
             'assets' => $assets,
             'behaviour' => $behaviour,
             'appendix' => $this->operational->appendix($project, $visibility['evidence']),
+            'consultation' => $this->consultationSnapshot($consultation, $visibility['evidence']),
+            'cross_tool_synthesis' => $this->crossTool->build($reports),
             'ledger' => $ledger,
             'audiences' => $project->audiences->map(fn ($audience) => [
                 'name' => $audience->name,
@@ -349,6 +359,31 @@ class AgencyReportService
             'data_gaps' => $dataGaps,
             'methodology' => $this->methodology($reports, $ledger, $visibility),
         ];
+    }
+
+    /** @return array<string,mixed>|null */
+    private function consultationSnapshot(?ConsultationSession $consultation, string $visibility): ?array
+    {
+        if ($consultation === null) {
+            return null;
+        }
+
+        $context = $this->consultations->build($consultation);
+        if ($visibility === 'private') {
+            $context['evidence'] = [
+                'hidden' => true,
+                'count' => count($context['evidence']),
+                'message' => 'الأدلة داخلية ولم تُدرج في النسخة المشتركة.',
+            ];
+        } elseif ($visibility === 'summary') {
+            $context['evidence'] = collect($context['evidence'])->map(function (array $item): array {
+                unset($item['text']);
+
+                return $item;
+            })->values()->all();
+        }
+
+        return $context;
     }
 
     /**

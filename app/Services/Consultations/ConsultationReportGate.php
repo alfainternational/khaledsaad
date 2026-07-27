@@ -24,6 +24,14 @@ class ConsultationReportGate
             }
         }
 
+        foreach (($snapshot['cross_tool_synthesis']['findings'] ?? []) as $index => $finding) {
+            foreach (['source_report_id', 'source_tool_key', 'title', 'claim_type'] as $field) {
+                if (blank($finding[$field] ?? null)) {
+                    $errors["cross_tool_synthesis.findings.{$index}.{$field}"] = 'كل نتيجة مجمعة يجب أن تحتفظ بمصدرها ونوعها.';
+                }
+            }
+        }
+
         if ($errors !== []) {
             throw ValidationException::withMessages($errors);
         }
