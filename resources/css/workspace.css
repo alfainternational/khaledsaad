@@ -324,6 +324,121 @@
     min-inline-size: 0;
 }
 
+/* ==========================================================================
+   نظام التخطيط التكيفي: قوالب دلالية بدل شبكة عامة تختار الأعمدة تلقائياً.
+   لا يغيّر هذا العقد ألوان العناصر أو ظلالها؛ يحدد العرض والتدفق فقط.
+   ========================================================================== */
+
+:root {
+    --layout-reading-max: 46rem;
+    --layout-form-max: 56rem;
+    --layout-operational-max: 87.5rem;
+    --layout-page-gap: 2rem;
+    --layout-section-gap: 1.5rem;
+    --layout-item-gap: 1rem;
+}
+
+.layout-page {
+    inline-size: 100%;
+    min-inline-size: 0;
+    margin-inline: auto;
+}
+
+.layout-page--reading {
+    max-inline-size: var(--layout-reading-max);
+}
+
+.layout-page--form {
+    max-inline-size: var(--layout-form-max);
+}
+
+.layout-page--operational {
+    max-inline-size: var(--layout-operational-max);
+}
+
+.layout-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--layout-section-gap);
+    align-items: start;
+}
+
+.layout-span-12 { grid-column: span 12; }
+.layout-span-9 { grid-column: span 9; }
+.layout-span-8 { grid-column: span 8; }
+.layout-span-6 { grid-column: span 6; }
+.layout-span-4 { grid-column: span 4; }
+.layout-span-3 { grid-column: span 3; }
+
+.layout-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--layout-item-gap);
+}
+
+.layout-main-aside,
+.layout-form-aside {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    gap: var(--layout-section-gap);
+    align-items: start;
+}
+
+.layout-report {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(14rem, 1fr);
+    gap: var(--layout-section-gap);
+    align-items: start;
+}
+
+@media (max-width: 64rem) {
+    .layout-grid {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+    }
+
+    .layout-span-12,
+    .layout-span-9,
+    .layout-span-8 {
+        grid-column: span 8;
+    }
+
+    .layout-span-6,
+    .layout-span-4 {
+        grid-column: span 4;
+    }
+
+    .layout-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .layout-main-aside,
+    .layout-form-aside,
+    .layout-report {
+        grid-template-columns: minmax(0, 5fr) minmax(14rem, 3fr);
+    }
+}
+
+@media (max-width: 48rem) {
+    .layout-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .layout-span-12,
+    .layout-span-9,
+    .layout-span-8,
+    .layout-span-6,
+    .layout-span-4,
+    .layout-span-3 {
+        grid-column: 1 / -1;
+    }
+
+    .layout-main-aside,
+    .layout-form-aside,
+    .layout-report {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* --- خلفية الجوال عند فتح السايدبار --- */
 
 .panel__backdrop {
