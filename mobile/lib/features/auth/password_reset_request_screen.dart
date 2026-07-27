@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 
 class PasswordResetRequestScreen extends StatefulWidget {
@@ -50,10 +51,11 @@ class _PasswordResetRequestScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.form,
       appBar: AppBar(title: const Text('استعادة كلمة المرور')),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.zero,
         children: [
           BrandCard(
             child: Form(

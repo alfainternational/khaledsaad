@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import 'models.dart';
 
@@ -30,7 +31,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.operational,
       appBar: AppBar(title: const Text('الإشعارات')),
       body: FutureBuilder<NotificationList>(
         future: _future,
@@ -51,7 +53,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             return RefreshIndicator(
               onRefresh: () async => _reload(),
               child: ListView.separated(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.zero,
                 itemCount: list.items.length,
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: 10),

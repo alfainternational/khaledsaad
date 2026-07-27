@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import 'attachments.dart';
 import 'models.dart';
@@ -259,10 +260,11 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
 
     final progress = (_stepIndex + 1) / _run.steps.length;
 
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.form,
       appBar: AppBar(title: Text(_run.toolTitle)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
           Text(
             '${_run.projectName} · ${_step.title}',
@@ -503,10 +505,11 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
   Widget _buildReview() {
     final preflight = _preflight;
 
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.form,
       appBar: AppBar(title: const Text('مراجعة قبل التحليل')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
           Text(
             '${_run.toolTitle} · ${_run.projectName}',

@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../tools/run_wizard_screen.dart';
 import 'competitors_card.dart';
@@ -160,7 +161,8 @@ class _ReportScreenState extends State<ReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.reading,
       appBar: AppBar(title: const Text('التقرير')),
       body: FutureBuilder<ReportDetail>(
         future: _future,
@@ -168,7 +170,7 @@ class _ReportScreenState extends State<ReportScreen> {
           snapshot: snapshot,
           onRetry: _reload,
           builder: (report) => ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.zero,
             children: [
               Text(
                 '${report.toolTitle} · ${report.projectName}',
@@ -184,80 +186,82 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
               const SizedBox(height: 16),
 
-              BrandCard(
-                child: Column(
-                  children: [
-                    BigScore(score: report.score, band: report.scoreBand),
-                    if (report.comparison != null) ...[
+              AdaptiveSplit(
+                main: BrandCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (report.isManuallyReviewed) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: BrandColors.surfaceSoft,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '✓ مراجَعة وتدقيق يدوي كامل'
+                            '${report.reviewedAt == null ? '' : ' · ${report.reviewedAt}'}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                      const Eyebrow('الخلاصة'),
                       const SizedBox(height: 8),
-                      Text(
-                        report.comparison!.label,
-                        style: TextStyle(
-                          color: report.comparison!.direction == 'down'
-                              ? BrandColors.red
-                              : BrandColors.cyan,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              BrandCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (report.isManuallyReviewed) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: BrandColors.surfaceSoft,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '✓ مراجَعة وتدقيق يدوي كامل'
-                          '${report.reviewedAt == null ? '' : ' · ${report.reviewedAt}'}',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                    ],
-                    const Eyebrow('الخلاصة'),
-                    const SizedBox(height: 8),
-                    Text(report.summary),
-                    if (report.nextStepTitle != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: BrandColors.surfaceSoft,
-                          borderRadius: BorderRadius.circular(13),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Eyebrow('الخطوة التالية'),
-                            const SizedBox(height: 4),
-                            Text(
-                              report.nextStepTitle!,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                      Text(report.summary),
+                      if (report.nextStepTitle != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: BrandColors.surfaceSoft,
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Eyebrow('الخطوة التالية'),
+                              const SizedBox(height: 4),
+                              Text(
+                                report.nextStepTitle!,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              report.nextStepDescription ?? '',
-                              style: const TextStyle(color: BrandColors.muted),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                report.nextStepDescription ?? '',
+                                style: const TextStyle(
+                                  color: BrandColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
+                ),
+                aside: BrandCard(
+                  child: Column(
+                    children: [
+                      BigScore(score: report.score, band: report.scoreBand),
+                      if (report.comparison != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          report.comparison!.label,
+                          style: TextStyle(
+                            color: report.comparison!.direction == 'down'
+                                ? BrandColors.red
+                                : BrandColors.cyan,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -280,22 +284,25 @@ class _ReportScreenState extends State<ReportScreen> {
               _buildFeedback(report),
               const SizedBox(height: 16),
 
-              FilledButton.icon(
-                onPressed: _converting ? null : () => _convert(),
-                icon: const Icon(Icons.checklist),
-                label: const Text('حوّل أهم 3 توصيات إلى مهام'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: _downloadingPdf ? null : _downloadPdf,
-                icon: _downloadingPdf
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('حمّل PDF'),
+              AdaptiveActionBar(
+                children: [
+                  FilledButton.icon(
+                    onPressed: _converting ? null : () => _convert(),
+                    icon: const Icon(Icons.checklist),
+                    label: const Text('حوّل أهم 3 توصيات إلى مهام'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _downloadingPdf ? null : _downloadPdf,
+                    icon: _downloadingPdf
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.picture_as_pdf_outlined),
+                    label: const Text('حمّل PDF'),
+                  ),
+                ],
               ),
 
               if (report.assumptions.isNotEmpty) ...[

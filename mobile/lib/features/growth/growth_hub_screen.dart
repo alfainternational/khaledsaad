@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../projects/models.dart';
 
@@ -188,12 +189,13 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.operational,
       appBar: AppBar(title: const Text('متابعة التحسين')),
       body: RefreshIndicator(
         onRefresh: () async => setState(_reload),
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.zero,
           children: [
             Text(
               widget.projectName,

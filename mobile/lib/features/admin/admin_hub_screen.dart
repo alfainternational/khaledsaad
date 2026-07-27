@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 
 class AdminHubScreen extends StatefulWidget {
@@ -762,7 +763,8 @@ class _AdminHubScreenState extends State<AdminHubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.operational,
       appBar: AppBar(
         title: const Text('لوحة الإدارة'),
         actions: [
@@ -791,7 +793,7 @@ class _AdminHubScreenState extends State<AdminHubScreen> {
             return RefreshIndicator(
               onRefresh: () async => setState(_reload),
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.zero,
                 children: [
                   const Text(
                     'ملخص المنصة',

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import 'models.dart';
 
@@ -148,17 +149,16 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.reading,
       appBar: AppBar(title: const Text('مستند حالة المشروع')),
       body: FutureBuilder<AgencyReportDetail>(
         future: _future,
         builder: (context, snapshot) => AsyncView(
           snapshot: snapshot,
           onRetry: _reload,
-          builder: (report) => ListView(
-            padding: const EdgeInsets.all(16),
-            children: _document(report),
-          ),
+          builder: (report) =>
+              ListView(padding: EdgeInsets.zero, children: _document(report)),
         ),
       ),
     );

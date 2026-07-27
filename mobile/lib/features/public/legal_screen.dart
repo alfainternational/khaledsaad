@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/platform_repository.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 
 class LegalScreen extends StatefulWidget {
@@ -26,7 +27,8 @@ class _LegalScreenState extends State<LegalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.reading,
       appBar: AppBar(title: Text(widget.fallbackTitle)),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _future,
@@ -42,7 +44,7 @@ class _LegalScreenState extends State<LegalScreen> {
                 .toList();
 
             return ListView(
-              padding: const EdgeInsets.all(18),
+              padding: EdgeInsets.zero,
               children: [
                 Text(
                   data['title']?.toString() ?? widget.fallbackTitle,

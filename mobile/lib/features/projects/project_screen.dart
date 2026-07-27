@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../agency_reports/agency_reports_screen.dart';
 import '../consultations/consultation_screen.dart';
@@ -70,7 +71,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.operational,
       appBar: AppBar(title: const Text('المشروع')),
       body: FutureBuilder<(ProjectOverview, List<ToolCard>)>(
         future: _future,
@@ -83,7 +85,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             return RefreshIndicator(
               onRefresh: () async => _reload(),
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.zero,
                 children: [
                   FilledButton.icon(
                     onPressed: () => Navigator.of(context).push(
@@ -111,46 +113,46 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  BrandCard(
-                    child: project.card.latestScore == null
-                        ? const Column(
-                            children: [
-                              Eyebrow('درجة الجاهزية'),
-                              SizedBox(height: 8),
-                              Text(
-                                'لم تُحتسب بعد. ابدأ تشخيص الجاهزية لعرض الدرجة والأولويات هنا.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: BrandColors.muted),
-                              ),
-                            ],
-                          )
-                        : BigScore(
-                            score: project.card.latestScore!,
-                            band: project.card.scoreBand ?? '',
-                            delta: project.comparison?.label,
+                  AdaptiveSplit(
+                    main: BrandCard(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => TasksScreen(
+                            repository: widget.repository,
+                            slug: widget.slug,
+                            projectName: project.card.name,
                           ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  BrandCard(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => TasksScreen(
-                          repository: widget.repository,
-                          slug: widget.slug,
-                          projectName: project.card.name,
                         ),
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Eyebrow('التنفيذ'),
+                          const SizedBox(height: 8),
+                          _row('مهام مفتوحة', '${project.openTasks}'),
+                          _row('مهام متأخرة', '${project.overdueTasks}'),
+                          _row('مهام منجزة', '${project.doneTasks}'),
+                        ],
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Eyebrow('التنفيذ'),
-                        const SizedBox(height: 8),
-                        _row('مهام مفتوحة', '${project.openTasks}'),
-                        _row('مهام متأخرة', '${project.overdueTasks}'),
-                        _row('مهام منجزة', '${project.doneTasks}'),
-                      ],
+                    aside: BrandCard(
+                      child: project.card.latestScore == null
+                          ? const Column(
+                              children: [
+                                Eyebrow('درجة الجاهزية'),
+                                SizedBox(height: 8),
+                                Text(
+                                  'لم تُحتسب بعد. ابدأ تشخيص الجاهزية لعرض الدرجة والأولويات هنا.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: BrandColors.muted),
+                                ),
+                              ],
+                            )
+                          : BigScore(
+                              score: project.card.latestScore!,
+                              band: project.card.scoreBand ?? '',
+                              delta: project.comparison?.label,
+                            ),
                     ),
                   ),
                   const SizedBox(height: 20),

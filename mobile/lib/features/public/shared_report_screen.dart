@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 
 class SharedReportScreen extends StatefulWidget {
@@ -46,7 +47,8 @@ class _SharedReportScreenState extends State<SharedReportScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => AdaptiveScaffold(
+    family: AdaptivePageFamily.reading,
     appBar: AppBar(title: const Text('تقرير مشترك')),
     body: FutureBuilder<Map<String, dynamic>>(
       future: _future,
@@ -63,7 +65,7 @@ class _SharedReportScreenState extends State<SharedReportScreen> {
             (entry) => entry.value != null,
           );
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.zero,
             children: [
               Text(
                 document['title']?.toString() ?? 'التقرير',

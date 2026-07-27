@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../tools/models.dart';
 import '../tools/run_wizard_screen.dart';
@@ -88,7 +89,8 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.operational,
       appBar: AppBar(
         title: const Text('خالد سعد'),
         actions: [
@@ -121,7 +123,7 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
               await next;
             },
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
+              padding: EdgeInsets.zero,
               children: [
                 Center(
                   child: Image.asset(

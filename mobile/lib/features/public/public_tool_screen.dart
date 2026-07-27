@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../tools/models.dart';
 
@@ -27,7 +28,8 @@ class _PublicToolScreenState extends State<PublicToolScreen> {
   late Future<ToolDetail> _future = widget.repository.tool(widget.toolKey);
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => AdaptiveScaffold(
+    family: AdaptivePageFamily.operational,
     appBar: AppBar(title: const Text('تفاصيل التشخيص')),
     body: FutureBuilder<ToolDetail>(
       future: _future,
@@ -36,7 +38,7 @@ class _PublicToolScreenState extends State<PublicToolScreen> {
         onRetry: () =>
             setState(() => _future = widget.repository.tool(widget.toolKey)),
         builder: (tool) => ListView(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.zero,
           children: [
             Eyebrow(tool.card.category),
             const SizedBox(height: 6),

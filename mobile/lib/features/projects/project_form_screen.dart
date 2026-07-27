@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 
 /// يقابل resources/views/app/projects/create.blade.php
@@ -74,12 +75,13 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.form,
       appBar: AppBar(title: const Text('إضافة مشروع')),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.zero,
           children: [
             const Text(
               'أدخل المعلومات الأساسية مرة واحدة لتخصيص الأسئلة والتقارير، ويمكنك تعديلها لاحقًا.',

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:khaledsaad_app/core/widgets/adaptive_layout.dart';
@@ -89,5 +91,99 @@ void main() {
       tester.getTopLeft(find.text('secondary')).dy,
       greaterThan(tester.getTopLeft(find.text('primary')).dy),
     );
+  });
+
+  testWidgets('AdaptiveScaffold supplies the shared outer page padding', (
+    tester,
+  ) async {
+    setScreenSize(tester, const Size(390, 844));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AdaptiveScaffold(
+          family: AdaptivePageFamily.operational,
+          body: Align(alignment: Alignment.topLeft, child: Text('content')),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getTopLeft(find.text('content')).dx,
+      greaterThanOrEqualTo(16),
+    );
+    expect(
+      tester.getTopLeft(find.text('content')).dy,
+      greaterThanOrEqualTo(24),
+    );
+  });
+
+  test('every feature screen uses the shared adaptive layout contract', () {
+    const expectedFamilies = {
+      'account/billing_screen.dart': AdaptivePageFamily.operational,
+      'account/notifications_screen.dart': AdaptivePageFamily.operational,
+      'admin/admin_hub_screen.dart': AdaptivePageFamily.operational,
+      'agency_reports/agency_report_screen.dart': AdaptivePageFamily.reading,
+      'agency_reports/agency_reports_screen.dart':
+          AdaptivePageFamily.operational,
+      'auth/auth_screen.dart': AdaptivePageFamily.form,
+      'auth/password_reset_request_screen.dart': AdaptivePageFamily.form,
+      'auth/password_reset_screen.dart': AdaptivePageFamily.form,
+      'consultations/consultation_screen.dart': AdaptivePageFamily.form,
+      'growth/growth_hub_screen.dart': AdaptivePageFamily.operational,
+      'projects/dashboard_screen.dart': AdaptivePageFamily.operational,
+      'projects/project_form_screen.dart': AdaptivePageFamily.form,
+      'projects/project_screen.dart': AdaptivePageFamily.operational,
+      'projects/tasks_screen.dart': AdaptivePageFamily.operational,
+      'public/legal_screen.dart': AdaptivePageFamily.reading,
+      'public/public_home_screen.dart': AdaptivePageFamily.operational,
+      'public/public_tool_screen.dart': AdaptivePageFamily.operational,
+      'public/shared_report_screen.dart': AdaptivePageFamily.reading,
+      'reports/report_screen.dart': AdaptivePageFamily.reading,
+      'tools/run_status_screen.dart': AdaptivePageFamily.form,
+      'tools/run_wizard_screen.dart': AdaptivePageFamily.form,
+      'tools/tool_catalog_screen.dart': AdaptivePageFamily.operational,
+    };
+    final screens =
+        Directory('lib/features')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => file.path.endsWith('_screen.dart'))
+            .toList()
+          ..sort((left, right) => left.path.compareTo(right.path));
+
+    expect(screens, hasLength(22));
+
+    for (final screen in screens) {
+      final relativePath = screen.path
+          .replaceAll('\\', '/')
+          .split('lib/features/')
+          .last;
+      final family = expectedFamilies[relativePath];
+
+      expect(family, isNotNull, reason: relativePath);
+
+      expect(
+        screen.readAsStringSync(),
+        contains('core/widgets/adaptive_layout.dart'),
+        reason: screen.path,
+      );
+      expect(
+        screen.readAsStringSync(),
+        contains('AdaptivePageFamily.${family!.name}'),
+        reason: screen.path,
+      );
+    }
+  });
+
+  test('detail and report screens use main and contextual regions', () {
+    final project = File(
+      'lib/features/projects/project_screen.dart',
+    ).readAsStringSync();
+    final report = File(
+      'lib/features/reports/report_screen.dart',
+    ).readAsStringSync();
+
+    expect(project, contains('AdaptiveSplit('));
+    expect(report, contains('AdaptiveSplit('));
+    expect(report, contains('AdaptiveActionBar('));
   });
 }

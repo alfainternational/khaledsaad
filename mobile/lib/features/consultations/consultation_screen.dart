@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../agency_reports/agency_report_screen.dart';
 import 'models.dart';
@@ -427,10 +428,14 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   @override
   Widget build(BuildContext context) {
     if (_busy && _session == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const AdaptiveScaffold(
+        family: AdaptivePageFamily.form,
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
     if (_session == null) {
-      return Scaffold(
+      return AdaptiveScaffold(
+        family: AdaptivePageFamily.form,
         appBar: AppBar(title: const Text('تشخيص مشروعك')),
         body: Center(
           child: Padding(
@@ -444,7 +449,8 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
       );
     }
     final session = _session!;
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.form,
       appBar: AppBar(
         title: const Text('تشخيص مشروعك'),
         actions: [
@@ -459,7 +465,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
         onRefresh: () =>
             _run(() => widget.repository.consultation(session.uuid)),
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.zero,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
             Semantics(

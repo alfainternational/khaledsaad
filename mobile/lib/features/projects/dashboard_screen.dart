@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/firebase/firebase_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../account/billing_screen.dart';
 import '../account/notifications_screen.dart';
@@ -65,7 +66,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.operational,
       appBar: AppBar(
         title: const Text('لوحة التحكم'),
         actions: [
@@ -133,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             return RefreshIndicator(
               onRefresh: () async => _reload(),
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                padding: const EdgeInsets.only(bottom: 72),
                 children: [
                   if (isAdmin) ...[
                     BrandCard(

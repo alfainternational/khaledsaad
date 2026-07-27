@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import 'models.dart';
 
@@ -133,7 +134,8 @@ class _BillingScreenState extends State<BillingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.operational,
       appBar: AppBar(
         title: const Text('الأرصدة والخطط'),
         actions: [
@@ -146,7 +148,7 @@ class _BillingScreenState extends State<BillingScreen> {
           snapshot: snapshot,
           onRetry: _reload,
           builder: (billing) => ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.zero,
             children: [
               BrandCard(
                 child: Column(

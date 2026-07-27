@@ -7,6 +7,30 @@ const expandedBreakpoint = 1024.0;
 
 enum AdaptivePageFamily { reading, form, operational }
 
+class AdaptiveScaffold extends StatelessWidget {
+  const AdaptiveScaffold({
+    super.key,
+    required this.family,
+    this.appBar,
+    this.body,
+    this.floatingActionButton,
+  });
+
+  final AdaptivePageFamily family;
+  final PreferredSizeWidget? appBar;
+  final Widget? body;
+  final Widget? floatingActionButton;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: appBar,
+      floatingActionButton: floatingActionButton,
+      body: body == null ? null : AdaptivePage(family: family, child: body!),
+    );
+  }
+}
+
 class AdaptivePage extends StatelessWidget {
   const AdaptivePage({
     super.key,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import 'models.dart';
 
@@ -22,7 +23,8 @@ class _ToolCatalogScreenState extends State<ToolCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.operational,
       appBar: AppBar(title: const Text('التشخيصات')),
       body: FutureBuilder<List<ToolCard>>(
         future: _future,
@@ -30,7 +32,7 @@ class _ToolCatalogScreenState extends State<ToolCatalogScreen> {
           snapshot: snapshot,
           onRetry: _reload,
           builder: (tools) => ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.zero,
             children: [
               const Text(
                 'اختر ما تريد تشخيصه الآن',

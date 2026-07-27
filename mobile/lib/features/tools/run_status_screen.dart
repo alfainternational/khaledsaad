@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/config/app_environment.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../reports/report_screen.dart';
 import 'models.dart';
@@ -103,10 +104,11 @@ class _RunStatusScreenState extends State<RunStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      family: AdaptivePageFamily.form,
       appBar: AppBar(title: Text(_run.statusLabel)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         children: [
           Text(
             '${_run.toolTitle} · ${_run.projectName}',
