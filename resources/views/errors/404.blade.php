@@ -1,4 +1,5 @@
 @extends('layouts.public')
+@section('layout', 'status')
 
 @section('title', 'الصفحة غير موجودة | خالد سعد')
 @section('description', 'الرابط الذي فتحته غير موجود. اختر من أين تكمل.')

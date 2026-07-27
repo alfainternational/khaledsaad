@@ -1,4 +1,5 @@
 @extends('layouts.auth')
+@section('layout', 'auth')
 
 @section('title', 'نسيت كلمة المرور')
 @section('heading', 'نسيت كلمة المرور؟')

@@ -10,10 +10,11 @@
         @include('partials.font')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="auth-page">
+    @php($layoutFamily = trim($__env->yieldContent('layout', 'auth')))
+    <body class="auth-page" data-layout="{{ $layoutFamily }}">
         <a class="skip-link" href="#main-content">تجاوز إلى المحتوى</a>
 
-        <main id="main-content" class="auth-card">
+        <main id="main-content" class="auth-card layout-page layout-page--reading">
             <a href="{{ route('home') }}" class="auth-card__brand"><x-brand-logo /></a>
 
             <h1>@yield('heading')</h1>

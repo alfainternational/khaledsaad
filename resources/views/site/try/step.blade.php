@@ -1,4 +1,5 @@
 @extends('layouts.public')
+@section('layout', 'wizard')
 
 @section('title', $run['tool']['title'].' | تجربة من دون حساب')
 

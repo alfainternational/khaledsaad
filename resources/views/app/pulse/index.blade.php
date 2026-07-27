@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'dashboard')
 
 @section('title', 'النبض الأسبوعي')
 

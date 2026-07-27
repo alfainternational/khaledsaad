@@ -1,4 +1,5 @@
 @extends('layouts.public')
+@section('layout', 'reading')
 
 @section('title', $page['title'].' | خالد سعد')
 @section('description', $page['intro'])

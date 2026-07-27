@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'form')
 
 @section('title', $plan->exists ? 'تعديل خطة' : 'خطة جديدة')
 

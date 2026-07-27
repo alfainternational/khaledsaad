@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'wizard')
 
 @section('title', $run['tool']['title'])
 

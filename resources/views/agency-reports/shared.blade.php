@@ -14,7 +14,7 @@
         @include('partials.font')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="panel">
+    <body class="panel" data-layout="reading">
         <main class="panel__main panel__main--shared">
             <header class="page-head">
                 <div>

@@ -1,4 +1,5 @@
 @extends('layouts.public')
+@section('layout', 'marketing')
 
 @section('title', 'اختر ما تريد تحسينه في مشروعك | خالد سعد')
 @section('description', 'اختر التحدي الأقرب إلى مشروعك، واحصل على تشخيص يوضح الفجوات والأولويات والخطوة التالية.')

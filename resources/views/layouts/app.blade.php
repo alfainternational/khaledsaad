@@ -20,6 +20,7 @@
 
         @php($user = auth()->user())
         @php($panelUnread = $user->unreadNotifications()->count())
+        @php($layoutFamily = trim($__env->yieldContent('layout', 'index')))
 
         {{-- السايدبار: العمود الثابت للتنقل في اللوحتين --}}
         <aside id="panel-sidebar" class="panel__side">
@@ -91,7 +92,9 @@
                 </div>
             </header>
 
-            <main id="main-content" class="panel__main">
+            <main id="main-content"
+                class="panel__main layout-page layout-page--{{ in_array($layoutFamily, ['reading', 'auth'], true) ? 'reading' : (in_array($layoutFamily, ['form', 'wizard'], true) ? 'form' : 'operational') }}"
+                data-layout="{{ $layoutFamily }}">
                 @if (session('status'))
                     <p class="alert alert--success" role="status">{{ session('status') }}</p>
                 @endif

@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'form')
 
 @section('title', $gateway->exists ? 'تعديل بوابة' : 'بوابة جديدة')
 

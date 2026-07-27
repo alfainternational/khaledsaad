@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'index')
 
 @section('title', 'موجز الوكالة')
 

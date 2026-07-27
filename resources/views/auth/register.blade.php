@@ -1,4 +1,5 @@
 @extends('layouts.auth')
+@section('layout', 'auth')
 
 @section('title', 'إنشاء حساب')
 @section('heading', $startTool !== null ? 'احفظ تقدمك في «'.$startTool['title'].'»' : 'أنشئ حسابك وابدأ تشخيص مشروعك')

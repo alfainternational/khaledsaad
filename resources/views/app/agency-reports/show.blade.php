@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'report')
 
 @section('title', $agencyReport->title)
 

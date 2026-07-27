@@ -56,7 +56,8 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('head')
     </head>
-    <body>
+    @php($layoutFamily = trim($__env->yieldContent('layout', 'marketing')))
+    <body data-layout="{{ $layoutFamily }}">
         <a class="skip-link" href="#main-content">تجاوز إلى المحتوى</a>
         @yield('content')
     </body>

@@ -1,4 +1,5 @@
 @extends('layouts.public')
+@section('layout', 'marketing')
 
 @section('title', $tool['title'].' | خالد سعد')
 @section('description', $tool['promise'] ?: $tool['description'])

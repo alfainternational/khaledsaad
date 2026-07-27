@@ -1,4 +1,5 @@
 @extends('layouts.public')
+@section('layout', 'report')
 
 @section('title', 'نتيجتك الأولية | خالد سعد')
 

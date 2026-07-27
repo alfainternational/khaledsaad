@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'form')
 
 @section('title', $pack->exists ? 'تعديل حزمة' : 'حزمة جديدة')
 

@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'form')
 
 @section('title', $feature->exists ? 'تعديل عنصر ميزة' : 'عنصر ميزة جديد')
 

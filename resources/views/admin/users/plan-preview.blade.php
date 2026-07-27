@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'form')
 
 @section('title', 'معاينة تغيير الخطط')
 

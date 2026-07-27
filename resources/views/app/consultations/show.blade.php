@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'wizard')
 
 @section('content')
 <section class="consultation-shell" aria-labelledby="consultation-title">

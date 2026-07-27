@@ -38,4 +38,69 @@ class AdaptiveInterfaceLayoutTest extends TestCase
             $this->assertStringContainsString($contract, $css, $contract);
         }
     }
+
+    #[Test]
+    public function every_page_view_declares_an_approved_layout_family(): void
+    {
+        $allowed = [
+            'dashboard',
+            'index',
+            'detail',
+            'form',
+            'wizard',
+            'report',
+            'board',
+            'reading',
+            'auth',
+            'status',
+            'marketing',
+        ];
+        $views = [
+            resource_path('views/home.blade.php'),
+            resource_path('views/agency-reports/shared.blade.php'),
+        ];
+
+        foreach (['app', 'admin', 'site', 'auth', 'errors'] as $root) {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator(resource_path("views/{$root}")),
+            );
+
+            foreach ($iterator as $view) {
+                $path = $view->getPathname();
+
+                if (! str_ends_with($path, '.blade.php')
+                    || str_contains($path, DIRECTORY_SEPARATOR.'partials'.DIRECTORY_SEPARATOR)
+                    || str_starts_with(basename($path), '_')) {
+                    continue;
+                }
+
+                $views[] = $path;
+            }
+        }
+
+        foreach ($views as $view) {
+            $this->assertMatchesRegularExpression(
+                '/(?:@section\([\'\"]layout[\'\"],\s*[\'\"]|data-layout=[\'\"])(?:'.implode('|', $allowed).')[\'\"]\)?/',
+                file_get_contents($view),
+                $view,
+            );
+        }
+    }
+
+    #[Test]
+    public function shared_layouts_expose_the_declared_family_to_the_rendered_page(): void
+    {
+        foreach (['app', 'public', 'auth'] as $layout) {
+            $contents = file_get_contents(resource_path("views/layouts/{$layout}.blade.php"));
+
+            $this->assertStringContainsString("yieldContent('layout'", $contents, $layout);
+            $this->assertStringContainsString('data-layout="{{ $layoutFamily }}"', $contents, $layout);
+        }
+
+        $app = file_get_contents(resource_path('views/layouts/app.blade.php'));
+        $auth = file_get_contents(resource_path('views/layouts/auth.blade.php'));
+
+        $this->assertStringContainsString('layout-page--{{', $app);
+        $this->assertStringContainsString('layout-page--reading', $auth);
+    }
 }

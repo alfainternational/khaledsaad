@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'index')
 @section('content')
 <section class="page-head"><p class="eyebrow">حوكمة التشخيص</p><h1>الاستشارة التسويقية الذكية</h1><p>الإصدارات المنشورة مقفلة؛ كل تعديل يبدأ من مسودة مستقلة.</p></section>
 @foreach($blueprints as $blueprint)

@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('layout', 'detail')
 
 @section('title', 'الظهور في محركات الذكاء — '.$project->name)
 
