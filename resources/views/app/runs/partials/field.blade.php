@@ -28,13 +28,13 @@
 
     @switch ($field['type'])
         @case('textarea')
-            <textarea name="{{ $field['key'] }}" rows="4"
+            <textarea class="question-control" name="{{ $field['key'] }}" rows="4"
                 aria-labelledby="label-{{ $field['key'] }}"
                 @required($field['required'])>{{ $value }}</textarea>
             @break
 
         @case('select')
-            <select name="{{ $field['key'] }}" aria-labelledby="label-{{ $field['key'] }}" @required($field['required'])>
+            <select class="question-control" name="{{ $field['key'] }}" aria-labelledby="label-{{ $field['key'] }}" @required($field['required'])>
                 <option value="">اختر…</option>
                 @foreach ($field['options'] as $option)
                     <option value="{{ $option['value'] }}" @selected((string) $value === (string) $option['value'])>
@@ -45,7 +45,7 @@
             @break
 
         @case('multiselect')
-            <fieldset class="checkbox-grid">
+            <fieldset class="checkbox-grid question-control question-control--choices">
                 <legend class="sr-only">{{ $field['label'] }}</legend>
                 @foreach ($field['options'] as $option)
                     <label class="checkbox">
@@ -58,26 +58,22 @@
             @break
 
         @case('number')
-            <input type="number" name="{{ $field['key'] }}" value="{{ $value }}"
+            <input class="question-control" type="number" name="{{ $field['key'] }}" value="{{ $value }}"
                 aria-labelledby="label-{{ $field['key'] }}" @required($field['required'])>
             @break
 
         @case('url')
-            <input type="url" name="{{ $field['key'] }}" value="{{ $value }}"
+            <input class="question-control" type="url" name="{{ $field['key'] }}" value="{{ $value }}"
                 aria-labelledby="label-{{ $field['key'] }}" @required($field['required'])>
             @break
 
         @default
-            <input type="text" name="{{ $field['key'] }}" value="{{ $value }}"
+            <input class="question-control" type="text" name="{{ $field['key'] }}" value="{{ $value }}"
                 aria-labelledby="label-{{ $field['key'] }}" @required($field['required'])>
     @endswitch
 
     @if (! empty($field['why']))
-        {{-- لماذا نسأل: حق المستخدم أن يعرف قبل أن يجيب. --}}
-        <details class="field__why">
-            <summary>لماذا نسأل؟</summary>
-            <p>{{ $field['why'] }}</p>
-        </details>
+        <p class="question-reason" aria-label="سبب طرح السؤال">{{ $field['why'] }}</p>
     @endif
 
     @if (! empty($field['benchmark']))

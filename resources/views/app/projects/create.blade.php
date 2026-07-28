@@ -18,7 +18,7 @@
         </p>
     @endif
 
-    <form method="POST" action="{{ route('app.projects.store') }}" class="form form--wide form-layout">
+    <form method="POST" action="{{ route('app.projects.store') }}" class="form form--wide form-layout question-form">
         @csrf
 
         @if (($startTool ?? null) !== null)
@@ -29,7 +29,7 @@
             <span class="field__label">ما اسم مشروعك؟</span>
             <span class="field__help">اكتب الاسم الذي يعرف به العملاء مشروعك، أو اسمًا مؤقتًا إذا كان المشروع ما زال فكرة.</span>
             <input type="text" name="name" value="{{ old('name') }}" required autofocus maxlength="120">
-            <details class="field__why"><summary>لماذا نسأل؟</summary><p>لأن الاسم يميز مشروعك داخل المنصة، ويظهر في التقارير والملفات التي تنشئها.</p></details>
+            <span class="question-reason" aria-label="سبب طرح السؤال">لأن الاسم يميز مشروعك داخل المنصة، ويظهر في التقارير والملفات التي تنشئها.</span>
         </label>
 
         <div class="field-row">
@@ -37,7 +37,7 @@
                 <span class="field__label">في أي مجال يعمل مشروعك؟</span>
                 <span class="field__help">اكتب المجال بكلمة أو كلمتين، مثل: تعليم، تجزئة، أو خدمات منزلية.</span>
                 <input type="text" name="industry" value="{{ old('industry') }}" maxlength="120" placeholder="تعليم، تجزئة، خدمات…">
-                <details class="field__why"><summary>لماذا نسأل؟</summary><p>لأن طبيعة السوق والعملاء والمنافسة تختلف من مجال إلى آخر، وهذا يساعدنا على جعل الأسئلة والتقرير أقرب إلى واقعك.</p></details>
+                <span class="question-reason" aria-label="سبب طرح السؤال">لأن طبيعة السوق والعملاء والمنافسة تختلف من مجال إلى آخر، وهذا يساعدنا على جعل الأسئلة والتقرير أقرب إلى واقعك.</span>
             </label>
 
             <label class="field">
@@ -48,7 +48,7 @@
                         <option value="{{ $value }}" @selected(old('stage', 'growth') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                <details class="field__why"><summary>لماذا نسأل؟</summary><p>لأن المشروع في مرحلة الفكرة يحتاج أسئلة مختلفة عن مشروع يبيع أو يستعد للتوسع.</p></details>
+                <span class="question-reason" aria-label="سبب طرح السؤال">لأن المشروع في مرحلة الفكرة يحتاج أسئلة مختلفة عن مشروع يبيع أو يستعد للتوسع.</span>
             </label>
         </div>
 
@@ -56,7 +56,7 @@
             <span class="field__label">ماذا تبيع بالضبط؟</span>
             <span class="field__help">اكتب وصفًا مباشرًا يفهمه شخص يتعرف إلى مشروعك للمرة الأولى. مثال: نبيع عسلًا طبيعيًا ونوصله داخل المدينة خلال يوم.</span>
             <textarea name="description" rows="3" maxlength="2000">{{ old('description') }}</textarea>
-            <details class="field__why"><summary>لماذا نسأل؟</summary><p>لأن وصف ما تبيعه يحدد أي أسئلة تناسب عرضك، ويمنع بناء التقرير على افتراض غير صحيح.</p></details>
+            <span class="question-reason" aria-label="سبب طرح السؤال">لأن وصف ما تبيعه يحدد أي أسئلة تناسب عرضك، ويمنع بناء التقرير على افتراض غير صحيح.</span>
         </label>
 
         <div class="field-row">
@@ -64,14 +64,14 @@
                 <span class="field__label">أين يوجد عملاؤك؟</span>
                 <span class="field__help">اكتب المدينة أو الدولة أو المنطقة التي تستهدفها الآن.</span>
                 <input type="text" name="geography" value="{{ old('geography') }}" maxlength="120">
-                <details class="field__why"><summary>لماذا نسأل؟</summary><p>لأن السوق المحلي يغيّر المنافسين والقنوات واللغة التي تصل إلى العميل.</p></details>
+                <span class="question-reason" aria-label="سبب طرح السؤال">لأن السوق المحلي يغيّر المنافسين والقنوات واللغة التي تصل إلى العميل.</span>
             </label>
 
             <label class="field">
                 <span class="field__label">ما رابط موقعك أو حسابك الرئيسي؟</span>
                 <span class="field__help">الصق الرابط كاملًا، ويمكنك تركه فارغًا إذا لم يكن لديك رابط بعد.</span>
                 <input type="url" name="website" value="{{ old('website') }}" maxlength="255" placeholder="https://">
-                <details class="field__why"><summary>لماذا نسأل؟</summary><p>لأن الرابط يساعدنا على فهم ما يراه العميل فعليًا، ويقلل الأسئلة التي يمكن الإجابة عنها من صفحتك.</p></details>
+                <span class="question-reason" aria-label="سبب طرح السؤال">لأن الرابط يساعدنا على فهم ما يراه العميل فعليًا، ويقلل الأسئلة التي يمكن الإجابة عنها من صفحتك.</span>
             </label>
         </div>
 

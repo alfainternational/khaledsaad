@@ -48,6 +48,39 @@ class Eyebrow extends StatelessWidget {
   );
 }
 
+class QuestionReason extends StatelessWidget {
+  const QuestionReason(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'سبب طرح السؤال',
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF5FF),
+        border: Border.all(color: const Color(0xFFCFE0FF)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, color: BrandColors.blue, size: 20),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(color: BrandColors.muted, height: 1.55),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class ScoreChip extends StatelessWidget {
   const ScoreChip({super.key, required this.label});
 

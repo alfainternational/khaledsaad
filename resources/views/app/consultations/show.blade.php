@@ -16,7 +16,7 @@
             <h2>{{ $consultation['question']['text'] }}</h2>
             @if ($consultation['question']['help']) <p class="muted">{{ $consultation['question']['help'] }}</p> @endif
 
-            <form method="POST" action="{{ route('app.consultations.answer', $consultation['uuid']) }}">
+            <form method="POST" action="{{ route('app.consultations.answer', $consultation['uuid']) }}" class="question-form">
                 @csrf
                 @include('app.consultations._answer-field', ['question' => $consultation['question'], 'current' => null])
                 <div class="actions">
@@ -26,7 +26,9 @@
                     @endif
                 </div>
             </form>
-            @if ($consultation['question']['why']) <p><strong>لماذا نسأل؟</strong> {{ $consultation['question']['why'] }}</p> @endif
+            @if ($consultation['question']['why'])
+                <p class="question-reason" aria-label="سبب طرح السؤال">{{ $consultation['question']['why'] }}</p>
+            @endif
         </article>
     @elseif ($consultation['status'] === 'review')
         <article class="card">
@@ -40,7 +42,7 @@
                         <p><strong>{{ $item['label'] ?? $item['statement'] ?? $item['key'] }}</strong>@isset($item['value']) — {{ is_array($item['value']) ? implode('، ', $item['value']) : $item['value'] }} @endisset</p>
                         @if(isset($item['question_key']))
                             <details class="consultation-revise"><summary>صحّح الإجابة</summary>
-                                <form method="POST" action="{{ route('app.consultations.answers.update', [$consultation['uuid'], $item['question_key']]) }}">@csrf @method('PUT')
+                                <form method="POST" action="{{ route('app.consultations.answers.update', [$consultation['uuid'], $item['question_key']]) }}" class="question-form">@csrf @method('PUT')
                                     @include('app.consultations._answer-field', ['question' => $item, 'current' => $item['value'] ?? null])
                                     <button class="btn btn--secondary">احفظ التصحيح</button>
                                     @if($item['allow_unknown'])<button class="btn btn--ghost" name="unknown" value="1" formnovalidate>لا أعرف</button>@endif
@@ -60,7 +62,7 @@
                         <form method="POST" action="{{ route('app.consultations.conflicts.resolve', [$consultation['uuid'], $conflict['id']]) }}" class="card card--warning">
                             @csrf
                             <p>{{ $conflict['message'] }}</p>
-                            <label>ما التفسير الصحيح؟ <textarea name="resolution" required minlength="5" maxlength="1000"></textarea></label>
+                            <label>ما التفسير الصحيح؟ <textarea class="question-control" name="resolution" required minlength="5" maxlength="1000"></textarea></label>
                             <button class="btn btn--secondary" type="submit">احفظ التوضيح</button>
                         </form>
                     @endforeach

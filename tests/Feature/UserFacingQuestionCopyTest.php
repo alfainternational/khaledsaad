@@ -32,16 +32,28 @@ class UserFacingQuestionCopyTest extends TestCase
         }
     }
 
-    public function test_question_renderers_use_the_approved_reason_heading(): void
+    public function test_question_renderers_make_controls_obvious_and_reasons_visual_without_a_heading(): void
     {
+        $styles = file_get_contents(resource_path('css/workspace.css'));
         $runField = file_get_contents(resource_path('views/app/runs/partials/field.blade.php'));
         $consultation = file_get_contents(resource_path('views/app/consultations/show.blade.php'));
+        $consultationField = file_get_contents(resource_path('views/app/consultations/_answer-field.blade.php'));
 
-        $this->assertStringContainsString('<summary>لماذا نسأل؟</summary>', $runField);
-        $this->assertStringNotContainsString('لماذا نسأل عن هذه؟', $runField);
-        $this->assertStringContainsString('<strong>لماذا نسأل؟</strong>', $consultation);
+        $this->assertTrue(str_contains($styles, '.question-control'), 'The shared question control style is missing.');
+        $this->assertTrue(str_contains($styles, '.question-reason'), 'The shared question reason style is missing.');
+        $this->assertStringContainsString('class="question-control', $runField);
+        $this->assertStringContainsString('class="question-control', $consultationField);
+        $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $runField);
+        $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $consultation);
         $this->assertLessThan(strpos($consultation, '<form method="POST"'), strpos($consultation, "['help']"));
-        $this->assertGreaterThan(strpos($consultation, '</form>'), strpos($consultation, '<strong>لماذا نسأل؟</strong>'));
+        $this->assertGreaterThan(strpos($consultation, '</form>'), strpos($consultation, 'class="question-reason"'));
+
+        foreach ($this->questionRendererPaths() as $path) {
+            $view = file_get_contents($path);
+
+            $this->assertFalse(str_contains($view, '<summary>لماذا نسأل؟</summary>'), $path.' still shows the reason heading.');
+            $this->assertFalse(str_contains($view, '<strong>لماذا نسأل؟</strong>'), $path.' still shows the reason heading.');
+        }
     }
 
     public function test_question_facing_sources_avoid_rejected_dialect_and_legacy_phrases(): void
@@ -50,8 +62,8 @@ class UserFacingQuestionCopyTest extends TestCase
             ->map(fn (string $path): string => file_get_contents($path))
             ->implode("\n");
 
-        foreach ([' جاوب ', ' شغلك ', ' عندك ', 'أي واحدة من هذه تحصل معك', 'لماذا نسأل عن هذه؟'] as $rejected) {
-            $this->assertStringNotContainsString($rejected, $copy, 'Rejected user-facing phrase: '.$rejected);
+        foreach ([' جاوب ', ' شغلك ', ' عندك ', 'أي واحدة من هذه تحصل معك', 'لماذا نسأل عن هذه؟', 'لماذا نسأل؟'] as $rejected) {
+            $this->assertFalse(str_contains($copy, $rejected), 'Rejected user-facing phrase: '.$rejected);
         }
     }
 
@@ -63,7 +75,8 @@ class UserFacingQuestionCopyTest extends TestCase
         foreach ([$create, $edit] as $view) {
             $this->assertStringContainsString('ما اسم مشروعك؟', $view);
             $this->assertStringContainsString('في أي مجال يعمل مشروعك؟', $view);
-            $this->assertStringContainsString('<summary>لماذا نسأل؟</summary>', $view);
+            $this->assertStringContainsString('class="form form--wide form-layout question-form"', $view);
+            $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $view);
         }
     }
 
@@ -72,8 +85,9 @@ class UserFacingQuestionCopyTest extends TestCase
         $brief = file_get_contents(resource_path('views/app/agency-reports/index.blade.php'));
 
         $this->assertStringContainsString("@php(\$guidance = match (\$field['type'])", $brief);
-        $this->assertStringContainsString('<summary>لماذا نسأل؟</summary>', $brief);
-        $this->assertGreaterThan(strpos($brief, '@endif'), strrpos($brief, '<details class="field__why">'));
+        $this->assertStringContainsString('class="form form--wide question-form"', $brief);
+        $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $brief);
+        $this->assertGreaterThan(strpos($brief, '@endif'), strrpos($brief, 'class="question-reason"'));
     }
 
     public function test_public_faqs_and_confirmation_questions_use_clear_customer_language(): void
@@ -110,6 +124,20 @@ class UserFacingQuestionCopyTest extends TestCase
             resource_path('views/app/agency-reports/index.blade.php'),
             base_path('mobile/lib/features/tools/run_wizard_screen.dart'),
             base_path('mobile/lib/features/consultations/consultation_screen.dart'),
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function questionRendererPaths(): array
+    {
+        return [
+            resource_path('views/app/runs/partials/field.blade.php'),
+            resource_path('views/app/consultations/show.blade.php'),
+            resource_path('views/app/projects/create.blade.php'),
+            resource_path('views/app/projects/edit.blade.php'),
+            resource_path('views/app/agency-reports/index.blade.php'),
         ];
     }
 }

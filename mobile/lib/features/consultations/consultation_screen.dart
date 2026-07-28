@@ -527,11 +527,6 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
           question.text,
           style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
         ),
-        if (question.why != null && question.why!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text('لماذا نسأل؟ ${question.why}'),
-          ),
         if (question.help != null && question.help!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -656,6 +651,10 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               helperText: question.sensitive ? 'تُستخدم للتشخيص فقط.' : null,
             ),
           ),
+        if (question.why != null && question.why!.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          QuestionReason(question.why!),
+        ],
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
