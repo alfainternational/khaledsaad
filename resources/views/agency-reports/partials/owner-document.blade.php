@@ -1,6 +1,23 @@
-@php($owner = $snapshot['owner_report'])
-@php($details = $owner['private_details'])
-@php($highlightedProblemTitles = collect($owner['problems'])->pluck('title'))
+@php
+    $owner = $snapshot['owner_report'];
+    $details = $owner['private_details'];
+    $highlightedProblemTitles = collect($owner['problems'])->pluck('title');
+    $humanAnswer = static function (mixed $value): string {
+        if (is_array($value)) {
+            return collect($value)
+                ->flatten()
+                ->map(fn ($item) => is_bool($item) ? ($item ? 'نعم' : 'لا') : trim((string) $item))
+                ->filter(fn (string $item) => $item !== '')
+                ->implode('، ');
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'نعم' : 'لا';
+        }
+
+        return trim((string) ($value ?? ''));
+    };
+@endphp
 
 <section class="card">
     <p class="eyebrow">الصورة المختصرة</p>
@@ -165,7 +182,8 @@
         <h2 class="section-title">ما سجلته في التشخيص الذكي</h2>
         <p class="muted">هذه الإجابات والقراءات جزء من الصورة نفسها، وليست تقريرًا منفصلًا عنها.</p>
         @foreach (($details['consultation']['answers'] ?? []) as $answer)
-            <p><b>{{ $answer['question'] }}</b><br>{{ $answer['is_unknown'] ? 'أجبت بأنك لا تعرفها بعد' : ($answer['value'] ?: 'لم تسجل إجابة') }}</p>
+            @php($answerText = $humanAnswer($answer['value'] ?? null))
+            <p><b>{{ $answer['question'] }}</b><br>{{ $answer['is_unknown'] ? 'أجبت بأنك لا تعرفها بعد' : ($answerText !== '' ? $answerText : 'لم تسجل إجابة') }}</p>
         @endforeach
         @foreach (($details['consultation']['inferences'] ?? []) as $inference)
             <p><b>قراءة مستخلصة من إجاباتك:</b> {{ $inference['statement'] }}</p>
