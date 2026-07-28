@@ -47,13 +47,13 @@ class UnifiedDiagnosticPresentationTest extends TestCase
         ]);
 
         $full = app(AgencyReportService::class)->generate($project, $user, ['evidence' => 'full'], $session);
-        $web = view('agency-reports.partials.document', ['snapshot' => $full->snapshot])->render();
-        $pdf = view('agency-reports.pdf', [
+        $web = view('agency-reports.partials.owner-document', ['snapshot' => $full->snapshot])->render();
+        $pdf = view('agency-reports.owner-pdf', [
             'agencyReport' => $full, 'snapshot' => $full->snapshot, 'brand' => config('brand'),
         ])->render();
 
         foreach ([$web, $pdf] as $html) {
-            $this->assertStringContainsString('سياق الاستشارة الذكية', $html);
+            $this->assertStringContainsString('ما سجلته في التشخيص الذكي', $html);
             $this->assertStringContainsString('افتراض يحتاج تحققًا من المبيعات', $html);
             $this->assertStringContainsString('اعتمدت آخر ثلاثين يومًا', $html);
             $this->assertStringContainsString('دليل المبيعات السري الكامل', $html);
@@ -62,11 +62,18 @@ class UnifiedDiagnosticPresentationTest extends TestCase
         }
 
         $private = app(AgencyReportService::class)->generate($project, $user, ['evidence' => 'private'], $session);
-        $privatePdf = view('agency-reports.pdf', [
+        $privatePdf = view('agency-reports.owner-pdf', [
             'agencyReport' => $private, 'snapshot' => $private->snapshot, 'brand' => config('brand'),
         ])->render();
-        $this->assertStringNotContainsString('دليل المبيعات السري الكامل', $privatePdf);
-        $this->assertStringContainsString('الأدلة داخلية ولم تُدرج', $privatePdf);
+        $this->assertStringContainsString('دليل المبيعات السري الكامل', $privatePdf);
+
+        $agencyPdf = view('agency-reports.pdf', [
+            'agencyReport' => $private,
+            'snapshot' => ['agency_brief' => $private->snapshot['agency_brief']],
+            'brand' => config('brand'),
+        ])->render();
+        $this->assertStringNotContainsString('دليل المبيعات السري الكامل', $agencyPdf);
+        $this->assertStringNotContainsString('ما سجلته في التشخيص الذكي', $agencyPdf);
     }
 
     private function report($project, User $user, string $toolKey, string $severity): void

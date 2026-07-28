@@ -204,25 +204,18 @@ class AgencyOperationalFileTest extends TestCase
     }
 
     #[Test]
-    public function a_withheld_number_is_never_confused_with_an_uncomputed_one(): void
+    public function the_complete_budget_terms_are_explained_consistently_in_the_agency_brief(): void
     {
         [$user, $project] = $this->project();
 
-        // ميزانية معلنة لكن لم يُحسم هل تشمل الأتعاب ⇒ لا يمكن حساب الوسائط.
-        $uncomputed = app(AgencyReportService::class)->generate($project->fresh(), $user);
-        $printed = $this->print($uncomputed);
-
-        $this->assertStringContainsString('لم يُحسم بعد', $printed);
-        $this->assertStringNotContainsString('غير معروض في هذه النسخة بطلب صاحب المشروع', $printed);
-
-        // نفس المشروع بحجب صريح ⇒ السبب يتغير إلى قرار صاحب المشروع.
-        $withheld = app(AgencyReportService::class)
+        $report = app(AgencyReportService::class)
             ->generate($project->fresh(), $user, ['budget' => 'private']);
+        $printed = $this->print($report);
 
-        $this->assertStringContainsString(
-            'غير معروض في هذه النسخة بطلب صاحب المشروع',
-            $this->print($withheld),
-        );
+        // كل تقرير كامل لجمهوره؛ إعدادات الحجب القديمة لا تنقص موجزًا جديدًا.
+        $this->assertStringContainsString('18,000', $printed);
+        $this->assertStringContainsString('المبلغ يشمل الأتعاب والإنفاق معًا', $printed);
+        $this->assertStringNotContainsString('غير معروض في هذه النسخة بطلب صاحب المشروع', $printed);
     }
 
     private function print(AgencyReport $report): string
@@ -274,7 +267,7 @@ class AgencyOperationalFileTest extends TestCase
             ->get(route('app.agency-reports.data', $report))
             ->assertOk()
             ->assertJsonPath('document.version', 1)
-            ->assertJsonStructure(['snapshot' => ['decision_card', 'numbers', 'assets', 'behaviour']]);
+            ->assertJsonStructure(['snapshot' => ['agency_brief']]);
 
         app(AgencyReportSharing::class)->share($report, 30);
         $token = $report->fresh()->share_token;
@@ -312,6 +305,15 @@ class AgencyOperationalFileTest extends TestCase
             'monthly_budget' => 18000,
             'primary_goal' => 'sales',
             'business_model' => 'b2c',
+        ]);
+        app(AgencyReportService::class)->saveBrief($project, [
+            'services' => ['ads'],
+            'primary_goal' => 'sales',
+            'success_metric' => '30 عملية شراء مدفوعة خلال 90 يومًا.',
+            'budget_includes_agency_fee' => 'yes',
+            'budget_currency' => 'SAR',
+            'account_ownership' => 'mine',
+            'proposal_deadline' => '15 أغسطس 2026',
         ]);
 
         foreach (['marketing-score' => 58, 'brand-clarity' => 70, 'audience-map' => 63] as $key => $score) {

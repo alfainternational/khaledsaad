@@ -239,6 +239,19 @@ void main() {
       'generated_at': '2026-07-24T00:00:00Z',
       'visibility': {},
       'source_report_ids': [1, 2, 3],
+      'documents': {
+        'owner': {
+          'label': 'تقريرك الكامل',
+          'pdf_url': '/agency-reports/agency-1/pdf',
+        },
+        'agency_brief': {
+          'label': 'موجز التكليف للوكالة',
+          'is_ready': true,
+          'missing_count': 0,
+          'message': 'موجز التكليف مكتمل.',
+          'pdf_url': '/agency-reports/agency-1/brief/pdf',
+        },
+      },
       'snapshot': {
         'project': {'name': 'مشروعي'},
         'readiness': {'score': 68, 'band': 'مستقر'},
@@ -266,6 +279,13 @@ void main() {
     expect(index.reports.single.version, 1);
     expect(detail.readinessScore, 68);
     expect(detail.priorities.single.title, 'فعّل القياس');
+    expect(detail.ownerDocument.label, 'تقريرك الكامل');
+    expect(detail.agencyBriefDocument.isReady, isTrue);
+    expect(detail.agencyBriefDocument.missingCount, 0);
+    expect(
+      detail.agencyBriefDocument.pdfUrl,
+      '/agency-reports/agency-1/brief/pdf',
+    );
   });
 
   test('الفحص المسبق يمنع التشغيل عند وجود نواقص', () {

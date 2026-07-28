@@ -87,6 +87,8 @@ class AgencySampleRenderTest extends TestCase
             'budget_includes_agency_fee' => 'no',
             'budget_currency' => 'SAR',
             'success_metric' => '80 طلبًا شهريًا بتكلفة استحواذ أقل من 110 ريال',
+            'account_ownership' => 'mine',
+            'proposal_deadline' => '15 أغسطس 2026',
             'timeframe_months' => '6',
         ]);
 

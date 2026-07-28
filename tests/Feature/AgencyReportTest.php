@@ -85,18 +85,17 @@ class AgencyReportTest extends TestCase
         // متطلبات العرض موجَّهة للوكالة؛ وأسئلة المقارنة صارت في دليل المالك وحده.
         $this->assertNotEmpty($snapshot['proposal_requirements']);
         $this->assertNotEmpty($snapshot['owner_guide']['comparison_questions']);
-        $this->assertNull($snapshot['project']['monthly_budget']);
-        $this->assertSame('ميزانية محددة ومتاحة للمناقشة', $snapshot['project']['budget_summary']);
-        // الميزانية المحجوبة لا تُسرَّب عبر البند التجاري.
-        $this->assertNull($snapshot['commercials']['stated_budget']);
-        $this->assertNull($snapshot['commercials']['effective_media']);
-        $this->assertNull($snapshot['priorities'][0]['evidence']);
+        // تقرير المالك كامل دائمًا؛ الحجب يُطبق لاحقًا بقائمة سماح على موجز الوكالة وحده.
+        $this->assertSame(12000, $snapshot['project']['monthly_budget']);
+        $this->assertNull($snapshot['project']['budget_summary']);
+        $this->assertSame(12000, $snapshot['commercials']['stated_budget']);
+        $this->assertNotNull($snapshot['priorities'][0]['evidence']);
         foreach (['root_cause', 'commercial_impact', 'action_steps', 'owner_role', 'resources', 'timeframe', 'dependencies', 'kpi_definition', 'kpi_source', 'success_condition', 'stop_condition', 'risks', 'confidence', 'source_report_id'] as $field) {
             $this->assertArrayHasKey($field, $snapshot['priorities'][0]);
         }
         $this->assertNotEmpty($snapshot['priorities'][0]['action_steps']);
         $this->assertNotEmpty($snapshot['priorities'][0]['missing_baseline_reason']);
-        $this->assertStringNotContainsString(
+        $this->assertStringContainsString(
             'دليل تفصيلي سري',
             json_encode($snapshot, JSON_UNESCAPED_UNICODE),
         );

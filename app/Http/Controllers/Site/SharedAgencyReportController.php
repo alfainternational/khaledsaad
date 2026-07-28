@@ -29,17 +29,9 @@ class SharedAgencyReportController extends Controller
         $report = $this->sharing->resolve($token) ?? throw new NotFoundHttpException;
         $this->sharing->record($report, $request);
 
-        /*
-         * دليل المالك يُنزع هنا لا في القالب: القالب الحالي لا يعرضه، لكن
-         * تمريره أصلًا يجعل تسريبه مسألة سطر يضيفه أحد لاحقًا بحسن نية.
-         * ما لا يُرسل لا يُسرَّب.
-         */
-        $snapshot = $report->snapshot;
-        unset($snapshot['owner_guide']);
-
         return view('agency-reports.shared', [
             'agencyReport' => $report,
-            'snapshot' => $snapshot,
+            'snapshot' => $this->sharing->agencySnapshot($report),
             'shareToken' => $token,
         ]);
     }

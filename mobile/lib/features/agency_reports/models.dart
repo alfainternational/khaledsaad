@@ -792,6 +792,34 @@ class AgencyCrossToolSynthesis {
   final List<AgencyCrossToolGroup> divergences;
 }
 
+class AgencyReportDocument {
+  const AgencyReportDocument({
+    required this.label,
+    this.pdfUrl,
+    this.isReady = true,
+    this.missingCount = 0,
+    this.message,
+  });
+
+  factory AgencyReportDocument.fromJson(
+    Map<String, dynamic> json, {
+    required String fallbackLabel,
+    bool readyByDefault = true,
+  }) => AgencyReportDocument(
+    label: json['label'] as String? ?? fallbackLabel,
+    pdfUrl: json['pdf_url'] as String?,
+    isReady: json['is_ready'] as bool? ?? readyByDefault,
+    missingCount: json['missing_count'] as int? ?? 0,
+    message: json['message'] as String?,
+  );
+
+  final String label;
+  final String? pdfUrl;
+  final bool isReady;
+  final int missingCount;
+  final String? message;
+}
+
 class AgencyReportDetail extends AgencyReportCard {
   const AgencyReportDetail({
     required super.uuid,
@@ -801,6 +829,7 @@ class AgencyReportDetail extends AgencyReportCard {
     required this.snapshot,
     required this.share,
     required this.visibility,
+    required this.documents,
     super.freshness,
     super.generatedAt,
   });
@@ -825,12 +854,31 @@ class AgencyReportDetail extends AgencyReportCard {
         ? AgencyShare.none
         : AgencyShare.fromJson(Map<String, dynamic>.from(json['share'] as Map)),
     snapshot: Map<String, dynamic>.from(json['snapshot'] as Map? ?? const {}),
+    documents: Map<String, dynamic>.from(json['documents'] as Map? ?? const {}),
   );
 
   final String projectSlug;
   final AgencyShare share;
   final Map<String, String> visibility;
   final Map<String, dynamic> snapshot;
+  final Map<String, dynamic> documents;
+
+  AgencyReportDocument get ownerDocument => AgencyReportDocument.fromJson(
+    Map<String, dynamic>.from(documents['owner'] as Map? ?? const {}),
+    fallbackLabel: 'تقريرك الكامل',
+  );
+
+  AgencyReportDocument get agencyBriefDocument => AgencyReportDocument.fromJson(
+    Map<String, dynamic>.from(documents['agency_brief'] as Map? ?? const {}),
+    fallbackLabel: 'موجز التكليف للوكالة',
+    readyByDefault: false,
+  );
+
+  Map<String, dynamic> get ownerReport =>
+      Map<String, dynamic>.from(snapshot['owner_report'] as Map? ?? const {});
+
+  Map<String, dynamic> get agencyBrief =>
+      Map<String, dynamic>.from(snapshot['agency_brief'] as Map? ?? const {});
 
   Map<String, dynamic> get project =>
       Map<String, dynamic>.from(snapshot['project'] as Map? ?? const {});

@@ -63,11 +63,14 @@ class AgencyReportService
             default => null,
         };
 
-        unset($brief['services']);
+        $primaryGoal = $brief['primary_goal'] ?? null;
+
+        unset($brief['services'], $brief['primary_goal']);
 
         $profile->forceFill([
             'agency_services' => $services,
             'budget_includes_agency_fee' => $inclusive,
+            'primary_goal' => filled($primaryGoal) ? $primaryGoal : $profile->primary_goal,
             'brief' => array_filter(
                 $brief,
                 fn ($value) => $value !== null && $value !== '' && $value !== [],
@@ -84,30 +87,72 @@ class AgencyReportService
      */
     public function briefCompleteness(Project $project): array
     {
-        $profile = $project->profile;
+        $profile = $project->profile()->first();
         $brief = $profile?->brief ?? [];
         $fields = BriefQuestions::fields();
 
         $answered = collect($fields)->filter(function (array $field) use ($brief, $profile) {
             return match ($field['key']) {
                 'services' => ! empty($profile?->agency_services),
+                'primary_goal' => filled($profile?->primary_goal),
                 'budget_includes_agency_fee' => $profile?->budget_includes_agency_fee !== null,
                 default => filled($brief[$field['key']] ?? null),
             };
         });
 
-        $missingCritical = collect(BriefQuestions::criticalKeys())
-            ->reject(fn (string $key) => $answered->contains(fn (array $field) => $field['key'] === $key))
-            ->map(fn (string $key) => collect($fields)->firstWhere('key', $key)['label'] ?? $key)
+        $requirements = collect([
+            [
+                'key' => 'success_metric',
+                'label' => 'تعريف النجاح برقم ومدة واضحين',
+                'complete' => filled($brief['success_metric'] ?? null),
+            ],
+            [
+                'key' => 'primary_goal',
+                'label' => 'هدف واحد يقود العمل',
+                'complete' => filled($profile?->primary_goal),
+            ],
+            [
+                'key' => 'budget_terms',
+                'label' => 'عملة الميزانية وهل تشمل أتعاب الوكالة',
+                'complete' => filled($brief['budget_currency'] ?? null)
+                    && $profile?->budget_includes_agency_fee !== null,
+            ],
+            [
+                'key' => 'services',
+                'label' => 'الخدمات المطلوبة وحدود النطاق',
+                'complete' => ! empty($profile?->agency_services),
+            ],
+            [
+                'key' => 'account_ownership',
+                'label' => 'ملكية الحسابات والصلاحيات',
+                'complete' => filled($brief['account_ownership'] ?? null),
+            ],
+            [
+                'key' => 'proposal_deadline',
+                'label' => 'آخر موعد لاستقبال العروض',
+                'complete' => filled($brief['proposal_deadline'] ?? null),
+            ],
+        ])->values();
+
+        $missingCritical = $requirements
+            ->where('complete', false)
+            ->pluck('label')
             ->values()
             ->all();
+        $missingCount = count($missingCritical);
 
         return [
             'answered' => $answered->count(),
             'total' => count($fields),
             'percent' => count($fields) > 0 ? (int) round($answered->count() * 100 / count($fields)) : 0,
+            'requirements' => $requirements->all(),
+            'missing_count' => $missingCount,
             'missing_critical' => $missingCritical,
+            'is_ready' => $missingCount === 0,
             'is_quotable' => $missingCritical === [],
+            'message' => $missingCount === 0
+                ? 'موجز التكليف مكتمل ويمكن للوكالة تسعيره على أساس واضح.'
+                : "موجزك ناقص {$missingCount} ".($missingCount === 1 ? 'بند' : 'بنود').' — الوكالة لا تستطيع التسعير بدونها.',
         ];
     }
 
@@ -174,7 +219,7 @@ class AgencyReportService
                 'consultation_session_id' => $consultation?->id,
                 'created_by' => $user->id,
                 'version' => $version,
-                'title' => "موجز الوكالة — {$project->name} — الإصدار {$version}",
+                'title' => "أين يقف مشروعك — {$project->name} — الإصدار {$version}",
                 'status' => 'published',
                 'source_report_ids' => $reports->pluck('id')->values()->all(),
                 'visibility' => $visibility,
@@ -236,16 +281,82 @@ class AgencyReportService
         $marketing = $reports->first(
             fn (Report $report) => $report->toolRun->toolVersion->tool->key === 'marketing-score'
         );
-        $priorities = $this->priorities($reports, $visibility['evidence']);
+        // تقرير المالك خاص به، لذلك يحتفظ دائمًا بكل معرفته. الخصوصية
+        // تُطبَّق بقائمة سماح عند بناء موجز الوكالة، لا بحذف معرفة المالك.
+        $ownerVisibility = ['budget' => 'full', 'competitors' => 'full', 'evidence' => 'full'];
+        $priorities = $this->priorities($reports, $ownerVisibility['evidence']);
         $budget = $project->profile?->monthly_budget;
         $ledger = $this->ledger->build($project);
         $dataGaps = $this->dataGaps($project);
         $executive = $this->executive($project, $reports, $marketing, $priorities, $ledger);
         $mandate = $this->mandate($project);
-        $commercials = $this->commercials($project, $visibility['budget']);
+        $commercials = $this->commercials($project, $ownerVisibility['budget']);
         $numbers = $this->operational->numbers($project);
         $assets = $this->operational->assets($project);
         $behaviour = $this->operational->behaviour($project, $reports);
+        $plan = $this->plan($priorities, $dataGaps, $project);
+        $ownerGuide = $this->ownerGuide($project);
+        $briefReadiness = $this->briefCompleteness($project);
+        $consultationSnapshot = $this->consultationSnapshot($consultation, $ownerVisibility['evidence']);
+        $crossToolSnapshot = $this->crossTool->build($reports, $ownerVisibility['evidence']);
+        $methodology = $this->methodology($reports, $ledger, $ownerVisibility);
+        $audiences = $project->audiences->map(fn ($audience) => [
+            'name' => $audience->name,
+            'pains' => $audience->pains,
+            'gains' => $audience->gains,
+            'behaviors' => $audience->behaviors,
+        ])->values()->all();
+        $tools = $reports->map(fn (Report $report) => $this->toolSnapshot(
+            $report,
+            $ownerVisibility['evidence'],
+            $ownerVisibility['competitors'],
+        ))->all();
+        $competitors = $this->competitors($project, $ownerVisibility['competitors']);
+        $evidence = $this->evidence($reports, $ownerVisibility['evidence']);
+        $assumptions = $reports->flatMap(fn (Report $report) => $report->assumptions ?? [])
+            ->filter()->unique()->values()->all();
+        $kpis = $project->kpis->map(fn ($kpi) => [
+            'name' => $kpi->name,
+            'unit' => $kpi->unit,
+            'baseline' => $kpi->baseline,
+            'target' => $kpi->target,
+            'latest' => $kpi->latestValue(),
+        ])->values()->all();
+        $appendix = $this->operational->appendix($project, $ownerVisibility['evidence']);
+        $agencyBrief = $this->agencyBrief(
+            $project,
+            $mandate,
+            $commercials,
+            $numbers,
+            $assets,
+            $briefReadiness,
+            $ledger,
+            $competitors,
+            $kpis,
+        );
+        $ownerReport = $this->ownerReport(
+            $project,
+            $executive,
+            $numbers,
+            $priorities,
+            $dataGaps,
+            $consultationSnapshot,
+            $crossToolSnapshot,
+            $ownerGuide,
+            $briefReadiness,
+            $behaviour,
+            $plan,
+            $methodology,
+            $assets,
+            $audiences,
+            $tools,
+            $competitors,
+            $evidence,
+            $kpis,
+            $consultationSnapshot,
+            $assumptions,
+            $appendix,
+        );
 
         return [
             'meta' => [
@@ -267,12 +378,8 @@ class AgencyReportService
                 'primary_goal_label' => $this->ledger->optionLabel('primary_goal', $project->profile?->primary_goal),
                 'business_model_label' => $this->ledger->optionLabel('business_model', $project->profile?->business_model),
                 'value_proposition' => $project->profile?->value_proposition,
-                'monthly_budget' => $visibility['budget'] === 'full' ? $budget : null,
-                'budget_summary' => match ($visibility['budget']) {
-                    'summary' => $budget !== null ? 'ميزانية محددة ومتاحة للمناقشة' : 'لم تُحدد الميزانية بعد',
-                    'private' => 'تفاصيل الميزانية داخلية',
-                    default => null,
-                },
+                'monthly_budget' => $budget,
+                'budget_summary' => null,
             ],
             'readiness' => [
                 'score' => $marketing?->score,
@@ -299,34 +406,18 @@ class AgencyReportService
             'numbers' => $numbers,
             'assets' => $assets,
             'behaviour' => $behaviour,
-            'appendix' => $this->operational->appendix($project, $visibility['evidence']),
-            'consultation' => $this->consultationSnapshot($consultation, $visibility['evidence']),
-            'cross_tool_synthesis' => $this->crossTool->build($reports, $visibility['evidence']),
+            'appendix' => $appendix,
+            'consultation' => $consultationSnapshot,
+            'cross_tool_synthesis' => $crossToolSnapshot,
             'ledger' => $ledger,
-            'audiences' => $project->audiences->map(fn ($audience) => [
-                'name' => $audience->name,
-                'pains' => $audience->pains,
-                'gains' => $audience->gains,
-                'behaviors' => $audience->behaviors,
-            ])->values()->all(),
-            'tools' => $reports->map(fn (Report $report) => $this->toolSnapshot(
-                $report,
-                $visibility['evidence'],
-                $visibility['competitors'],
-            ))->all(),
-            'competitors' => $this->competitors($project, $visibility['competitors']),
-            'evidence' => $this->evidence($reports, $visibility['evidence']),
-            'assumptions' => $reports->flatMap(fn (Report $report) => $report->assumptions ?? [])
-                ->filter()->unique()->values()->all(),
+            'audiences' => $audiences,
+            'tools' => $tools,
+            'competitors' => $competitors,
+            'evidence' => $evidence,
+            'assumptions' => $assumptions,
             'priorities' => $priorities,
-            'plan' => $this->plan($priorities, $dataGaps, $project),
-            'kpis' => $project->kpis->map(fn ($kpi) => [
-                'name' => $kpi->name,
-                'unit' => $kpi->unit,
-                'baseline' => $kpi->baseline,
-                'target' => $kpi->target,
-                'latest' => $kpi->latestValue(),
-            ])->values()->all(),
+            'plan' => $plan,
+            'kpis' => $kpis,
             'scope' => [
                 'in_scope' => $reports->map(
                     fn (Report $report) => $report->toolRun->toolVersion->tool->title
@@ -355,9 +446,287 @@ class AgencyReportService
                 'شروط الإيقاف أو تعديل الخطة إذا لم تتحقق المؤشرات المبكرة.',
             ],
             // خاص بصاحب المشروع: لا يظهر في النسخة المشتركة ولا في PDF الوكالة.
-            'owner_guide' => $this->ownerGuide($project),
+            'owner_guide' => $ownerGuide,
+            'owner_report' => $ownerReport,
+            'agency_brief' => $agencyBrief,
             'data_gaps' => $dataGaps,
-            'methodology' => $this->methodology($reports, $ledger, $visibility),
+            'methodology' => $methodology,
+        ];
+    }
+
+    /**
+     * تقرير صاحب المشروع: يشرح الحالة قبل أن يطلب منه اتخاذ قرار.
+     *
+     * @param  array<string, mixed>  $executive
+     * @param  array<string, mixed>  $numbers
+     * @param  array<int, array<string, mixed>>  $priorities
+     * @param  array<int, string>  $dataGaps
+     * @param  array<string, mixed>|null  $consultation
+     * @param  array<string, mixed>  $crossTool
+     * @param  array<string, mixed>  $ownerGuide
+     * @param  array<string, mixed>  $readiness
+     * @param  array<string, mixed>  $behaviour
+     * @param  array<string, mixed>  $plan
+     * @param  array<string, mixed>  $methodology
+     * @param  array<string, mixed>  $assets
+     * @param  array<int, array<string, mixed>>  $audiences
+     * @param  array<int, array<string, mixed>>  $tools
+     * @param  array<string, mixed>  $competitors
+     * @param  array<string, mixed>  $evidence
+     * @param  array<int, array<string, mixed>>  $kpis
+     * @param  array<string, mixed>|null  $consultationDetails
+     * @param  array<int, string>  $assumptions
+     * @param  array<string, mixed>  $appendix
+     * @return array<string, mixed>
+     */
+    private function ownerReport(
+        Project $project,
+        array $executive,
+        array $numbers,
+        array $priorities,
+        array $dataGaps,
+        ?array $consultation,
+        array $crossTool,
+        array $ownerGuide,
+        array $readiness,
+        array $behaviour,
+        array $plan,
+        array $methodology,
+        array $assets,
+        array $audiences,
+        array $tools,
+        array $competitors,
+        array $evidence,
+        array $kpis,
+        ?array $consultationDetails,
+        array $assumptions,
+        array $appendix,
+    ): array {
+        $problems = collect($executive['problems'] ?? [])
+            ->unique(fn (array $item) => mb_strtolower(trim((string) ($item['title'] ?? ''))))
+            ->take(3)
+            ->values()
+            ->all();
+
+        $conflicts = collect($consultation['conflicts'] ?? [])
+            ->map(fn (array $item) => [
+                'question' => $item['question'] ?? $item['statement'] ?? $item['message'] ?? $item['explanation'] ?? 'توجد إجابتان تحتاجان إلى حسم.',
+                'why' => data_get($item, 'resolution.statement')
+                    ?? $item['explanation']
+                    ?? $item['reason']
+                    ?? 'حسم هذه النقطة يمنع بناء قرارين متعارضين.',
+            ])
+            ->concat(collect($crossTool['divergences'] ?? [])->map(fn (array $item) => [
+                'question' => 'أي قراءة تصف وضعك بصورة أدق في جانب '.($item['category'] ?? 'هذا الموضوع').'؟',
+                'why' => 'نتائجك السابقة قرأت هذا الجانب بأكثر من طريقة، وإجابتك تحسم ما نعتمد عليه.',
+            ]))
+            ->unique('question')
+            ->values()
+            ->all();
+
+        $unknowns = collect($dataGaps)->take(7)->map(function (string $item): array {
+            $resolution = str_contains($item, 'رقم') || str_contains($item, 'قياس') || str_contains($item, 'تتب')
+                ? 'يُحسم بقياس بسيط'
+                : (str_contains($item, 'مدة') || str_contains($item, 'وقت')
+                    ? 'يُحسم بعد فترة متابعة'
+                    : 'يُحسم بإجابة واضحة');
+
+            return ['text' => $item, 'resolution' => $resolution];
+        })->values()->all();
+
+        $thisWeek = collect($priorities)->take(5)->map(function (array $item): array {
+            $item['estimated_time'] = match ($item['effort'] ?? null) {
+                'low' => 'من 30 إلى 60 دقيقة',
+                'medium' => 'من ساعتين إلى أربع ساعات',
+                'high' => 'يوم عمل أو أكثر',
+                default => 'حدّد له موعدًا قصيرًا هذا الأسبوع',
+            };
+
+            return $item;
+        })->values()->all();
+        $thisWeekTitles = collect($thisWeek)->pluck('title')->filter();
+        $laterPlan = collect($plan)->map(
+            fn (array $items) => collect($items)
+                ->reject(fn (array $item) => $thisWeekTitles->contains($item['title'] ?? null))
+                ->values()
+                ->all()
+        )->all();
+
+        return [
+            'overview' => [
+                'title' => 'أين يقف مشروعك الآن؟',
+                'description' => $executive['position'] ?? $project->profile?->description ?? 'هذه صورة مشروعك كما تظهر من إجاباتك ونتائج تشخيصاتك.',
+                'main_issue' => $problems[0]['title'] ?? 'لا توجد مشكلة واحدة مؤكدة تتقدم على بقية النقاط بعد.',
+            ],
+            'numbers' => $numbers,
+            'journey' => [
+                'title' => 'أين يتوقف الناس؟',
+                'description' => 'نتتبع الطريق من أول اهتمام إلى النتيجة التي تريدها، ونوضح أين نملك رقمًا وأين نحتاج القياس أولًا.',
+                'stages' => $numbers['rows'] ?? [],
+            ],
+            'problems' => $problems,
+            'conflicts' => $conflicts,
+            'unknowns' => $unknowns,
+            'this_week' => $thisWeek,
+            'before_agency' => $ownerGuide,
+            'readiness' => $readiness,
+            'private_details' => [
+                'project' => [
+                    'name' => $project->name,
+                    'description' => $project->profile?->description,
+                    'industry' => $project->industry,
+                    'stage' => $this->stageLabel($project->stage),
+                    'geography' => $project->profile?->geography,
+                    'website' => $project->profile?->website,
+                    'business_model' => $this->ledger->optionLabel('business_model', $project->profile?->business_model),
+                    'primary_goal' => $this->ledger->optionLabel('primary_goal', $project->profile?->primary_goal),
+                    'value_proposition' => $project->profile?->value_proposition,
+                ],
+                'audiences' => $audiences,
+                'assets' => $assets,
+                'tools' => $tools,
+                'competitors' => $competitors,
+                'evidence' => $evidence,
+                'kpis' => $kpis,
+                'consultation' => $consultationDetails,
+                'assumptions' => $assumptions,
+                'appendix' => $appendix,
+                'behaviour' => $behaviour,
+                'plan' => $laterPlan,
+                'methodology' => $methodology,
+                'different_readings' => $crossTool['divergences'] ?? [],
+            ],
+        ];
+    }
+
+    /**
+     * موجز الوكالة: حقائق وقرارات محسومة فقط، بلا حيرة المالك الداخلية.
+     *
+     * @param  array<string, mixed>  $mandate
+     * @param  array<string, mixed>  $commercials
+     * @param  array<string, mixed>  $numbers
+     * @param  array<string, mixed>  $assets
+     * @param  array<string, mixed>  $readiness
+     * @param  array<string, mixed>  $ledger
+     * @param  array<string, mixed>  $competitors
+     * @param  array<int, array<string, mixed>>  $kpis
+     * @return array<string, mixed>
+     */
+    private function agencyBrief(
+        Project $project,
+        array $mandate,
+        array $commercials,
+        array $numbers,
+        array $assets,
+        array $readiness,
+        array $ledger,
+        array $competitors,
+        array $kpis,
+    ): array {
+        $answers = collect($mandate['answered'] ?? [])->keyBy('key');
+        $answer = fn (string $key): ?string => $answers->get($key)['value'] ?? null;
+
+        $baseline = collect($numbers['rows'] ?? [])->map(fn (array $row) => [
+            'label' => $row['label'] ?? '',
+            'value' => $row['value'] === null
+                ? 'غير معروف حتى الآن'
+                : trim($row['value'].' '.($row['unit'] ?? '')),
+            'known' => ($row['confidence'] ?? 'unknown') !== 'unknown',
+        ])->values()->all();
+
+        return [
+            'project' => [
+                'name' => $project->name,
+                'description' => $project->profile?->description,
+                'industry' => $project->industry,
+                'business_model' => $this->ledger->optionLabel('business_model', $project->profile?->business_model),
+                'geography' => $project->profile?->geography,
+                'stage' => $this->stageLabel($project->stage),
+                'value_proposition' => $project->profile?->value_proposition,
+                'website' => $project->profile?->website,
+                'audiences' => $project->audiences->pluck('name')->filter()->values()->all(),
+                'audience_details' => $project->audiences->map(fn ($audience) => [
+                    'name' => $audience->name,
+                    'needs' => $audience->pains,
+                    'desired_result' => $audience->gains,
+                    'behaviour' => $audience->behaviors,
+                ])->values()->all(),
+                'competitors' => $competitors['items'] ?? [],
+                'known_context' => collect($ledger['themes'] ?? [])
+                    ->flatMap(fn (array $theme) => $theme['answered'] ?? [])
+                    ->map(fn (array $item) => [
+                        'label' => $item['label'] ?? '',
+                        'value' => $item['value'] ?? '',
+                    ])
+                    ->filter(fn (array $item) => $item['label'] !== '' && $item['value'] !== '')
+                    ->unique(fn (array $item) => $item['label'].'|'.$item['value'])
+                    ->values()
+                    ->all(),
+            ],
+            'baseline' => [
+                'rows' => $baseline,
+                'tracking' => $numbers['tracking_label'] ?? 'حالة القياس غير معروفة حتى الآن',
+                'previous_attempts' => $answer('previous_attempts'),
+                'previous_provider' => $answer('previous_agency'),
+                'current_customer_source' => $answer('what_works_now'),
+                'kpis' => $kpis,
+            ],
+            'goal' => [
+                'primary' => $this->ledger->optionLabel('primary_goal', $project->profile?->primary_goal),
+                'success_metric' => $mandate['success_metric'] ?? null,
+                'period' => $answer('ninety_day_outcome'),
+            ],
+            'scope' => [
+                'services' => $mandate['services'] ?? [],
+                'start_window' => $answer('start_window'),
+                'constraints' => $answer('constraints'),
+                'out_of_scope' => [
+                    'أي خدمة أو إنتاج أو شراء لم يرد صراحة في العرض المقبول.',
+                    'نقل ملكية الحسابات أو البيانات إلى الوكالة.',
+                    'ضمان رقم لا يرتبط بخط أساس ومدة وميزانية مكتوبة.',
+                ],
+            ],
+            'assets' => $assets,
+            'workflow' => [
+                'decision_maker' => $answer('decision_maker'),
+                'approval_time' => $answer('approval_time'),
+                'lead_response_owner' => $answer('lead_response_owner'),
+                'internal_capacity' => $answer('internal_capacity'),
+                'payment_constraints' => $answer('payment_constraints'),
+                'review_cadence' => 'مراجعة تشغيلية أسبوعية، وملخص شهري يربط الإنفاق بالنتيجة والخطوة التالية.',
+            ],
+            'terms' => [
+                'account_ownership' => 'الحسابات والبيانات والملفات المصدرية باسم المشروع، وتُمنح الوكالة صلاحيات قابلة للإلغاء.',
+                'declared_ownership' => $answer('account_ownership'),
+                'engagement_model' => $answer('engagement_model'),
+                'contract_duration' => $answer('contract_duration'),
+                'budget_flexibility' => $answer('budget_flexibility'),
+                'exit_condition' => 'عند انتهاء التعاقد تُسلّم الملفات والصلاحيات والبيانات الحديثة دون تعطيل الوصول.',
+            ],
+            'proposal' => [
+                'requirements' => [
+                    'النتائج التي ستُسلَّم خلال أول 30 و60 و90 يومًا، وكيف سنعرف أن الاتجاه صحيح.',
+                    'خط الأساس الذي سيبدأ منه القياس ومصدر كل رقم.',
+                    'ما يدخل السعر وما يُحاسب منفصلًا، وحدود المراجعات.',
+                    'من يعمل يوميًا، ومن يراجع الجودة، وأي عمل يُسند لطرف آخر.',
+                    'طريقة فصل أثر الإعلان عن أثر العرض والصفحة وسرعة الرد على العملاء.',
+                    'وتيرة التقارير وطريقة وصول المشروع إلى بياناته الخام.',
+                    'شروط الإيقاف أو تعديل الخطة إذا لم تظهر المؤشرات المبكرة.',
+                ],
+                'pricing_rows' => [
+                    ['key' => 'management', 'label' => 'أتعاب الإدارة الشهرية'],
+                    ['key' => 'media', 'label' => 'ميزانية الإعلان المدفوعة للمنصات'],
+                    ['key' => 'production', 'label' => 'الإنتاج والتصوير والتصميم'],
+                    ['key' => 'tools', 'label' => 'الأدوات والاشتراكات والرسوم الأخرى'],
+                ],
+                'budget' => $commercials,
+                'evaluation_criteria' => $answer('evaluation_criteria'),
+            ],
+            'submission' => [
+                'deadline' => $answer('proposal_deadline'),
+                'method' => $answer('proposal_submission'),
+            ],
+            'readiness' => $readiness,
         ];
     }
 

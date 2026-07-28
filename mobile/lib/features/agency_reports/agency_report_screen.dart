@@ -31,10 +31,11 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
   late Future<AgencyReportDetail> _future = widget.initial == null
       ? widget.repository.agencyReport(widget.uuid)
       : Future.value(widget.initial);
+  late String _activeUuid = widget.uuid;
+  bool _showAgencyBrief = false;
   bool _downloading = false;
   bool _sharing = false;
   bool _regenerating = false;
-  late String _activeUuid = widget.uuid;
   AgencyShare? _share;
 
   void _reload() {
@@ -44,13 +45,16 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
     });
   }
 
-  Future<void> _download() async {
+  Future<void> _download({required bool agencyBrief}) async {
     setState(() => _downloading = true);
 
     try {
-      final bytes = await widget.repository.agencyReportPdf(_activeUuid);
+      final bytes = agencyBrief
+          ? await widget.repository.agencyBriefPdf(_activeUuid)
+          : await widget.repository.agencyReportPdf(_activeUuid);
       final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/agency-report-$_activeUuid.pdf');
+      final name = agencyBrief ? 'agency-brief' : 'owner-report';
+      final file = File('${dir.path}/$name-$_activeUuid.pdf');
       await file.writeAsBytes(bytes, flush: true);
       await OpenFilex.open(file.path);
     } catch (error) {
@@ -70,7 +74,7 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
             const Padding(
               padding: EdgeInsets.all(16),
               child: Text(
-                'مدة صلاحية الرابط',
+                'كم يومًا تريد أن يبقى الرابط متاحًا؟',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
               ),
             ),
@@ -83,18 +87,16 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
         ),
       ),
     );
-
     if (days == null) return;
 
     setState(() => _sharing = true);
-
     try {
       final share = await widget.repository.shareAgencyReport(
         _activeUuid,
         days,
       );
       if (mounted) setState(() => _share = share);
-      _notify('أُنشئ رابط مشاركة صالح $days يومًا.');
+      _notify('أصبح رابط موجز الوكالة جاهزًا لمدة $days يومًا.');
     } catch (error) {
       _notify(error.toString());
     } finally {
@@ -104,17 +106,38 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
 
   Future<void> _revokeShare() async {
     setState(() => _sharing = true);
-
     try {
       final share = await widget.repository.revokeAgencyReportShare(
         _activeUuid,
       );
       if (mounted) setState(() => _share = share);
-      _notify('أُلغي الرابط ولم يعد يفتح لدى أحد.');
+      _notify('أُلغي الرابط، ولم يعد موجز الوكالة متاحًا من خلاله.');
     } catch (error) {
       _notify(error.toString());
     } finally {
       if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  Future<void> _regenerate(AgencyReportDetail report) async {
+    setState(() => _regenerating = true);
+    try {
+      final updated = await widget.repository.generateAgencyReport(
+        report.projectSlug,
+        report.visibility,
+      );
+      if (!mounted) return;
+      setState(() {
+        _activeUuid = updated.uuid;
+        _share = updated.share;
+        _showAgencyBrief = false;
+        _future = Future.value(updated);
+      });
+      _notify('أُنشئ تقرير جديد بالمعلومات الحالية.');
+    } catch (error) {
+      _notify(error.toString());
+    } finally {
+      if (mounted) setState(() => _regenerating = false);
     }
   }
 
@@ -125,33 +148,11 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _regenerate(AgencyReportDetail report) async {
-    setState(() => _regenerating = true);
-
-    try {
-      final updated = await widget.repository.generateAgencyReport(
-        report.projectSlug,
-        report.visibility,
-      );
-      if (!mounted) return;
-      setState(() {
-        _activeUuid = updated.uuid;
-        _share = updated.share;
-        _future = Future.value(updated);
-      });
-      _notify('أُنشئ إصدار محدث مع الاحتفاظ بإعدادات الخصوصية.');
-    } catch (error) {
-      _notify(error.toString());
-    } finally {
-      if (mounted) setState(() => _regenerating = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       family: AdaptivePageFamily.reading,
-      appBar: AppBar(title: const Text('مستند حالة المشروع')),
+      appBar: AppBar(title: const Text('تقارير مشروعك')),
       body: FutureBuilder<AgencyReportDetail>(
         future: _future,
         builder: (context, snapshot) => AsyncView(
@@ -165,19 +166,56 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
   }
 
   List<Widget> _document(AgencyReportDetail report) {
-    final executive = report.executive;
+    final agencyDocument = report.agencyBriefDocument;
     final share = _share ?? report.share;
 
     return [
       const Text(
-        'نسخة ثابتة · يبني عليها فريق الوكالة مباشرة',
+        'مستندان من نفس معلومات مشروعك، وكل واحد مكتوب للقارئ الذي سيستخدمه.',
         style: TextStyle(color: BrandColors.muted),
       ),
-      const SizedBox(height: 4),
-      Text(
-        report.title,
-        style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
+      const SizedBox(height: 12),
+      Row(
+        children: [
+          Expanded(
+            child: _showAgencyBrief
+                ? OutlinedButton(
+                    onPressed: () => setState(() => _showAgencyBrief = false),
+                    child: const Text('تقريري'),
+                  )
+                : FilledButton(onPressed: null, child: const Text('تقريري')),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _showAgencyBrief
+                ? FilledButton(
+                    onPressed: null,
+                    child: const Text('موجز الوكالة'),
+                  )
+                : OutlinedButton(
+                    onPressed: agencyDocument.isReady
+                        ? () => setState(() => _showAgencyBrief = true)
+                        : null,
+                    child: const Text('موجز الوكالة'),
+                  ),
+          ),
+        ],
       ),
+      const SizedBox(height: 12),
+      if (!agencyDocument.isReady)
+        BrandCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Eyebrow('يحتاج إكمالًا'),
+              const SizedBox(height: 6),
+              Text(
+                agencyDocument.message ??
+                    'أكمل المعلومات المطلوبة قبل تسليم موجز للوكالة.',
+              ),
+            ],
+          ),
+        ),
       if (report.freshness.isStale) ...[
         const SizedBox(height: 12),
         BrandCard(
@@ -185,7 +223,7 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'هذا الإصدار يحتاج تحديثًا',
+                'لديك معلومات أحدث من هذا التقرير',
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
@@ -200,27 +238,17 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.refresh),
-                label: const Text('أنشئ إصدارًا محدثًا'),
+                label: const Text('أنشئ تقريرًا محدثًا'),
               ),
             ],
           ),
         ),
       ],
-      const SizedBox(height: 14),
-      BrandCard(
-        child: report.readinessScore == null
-            ? const Text(
-                'لم تُسجَّل درجة جاهزية رقمية بعد؛ المستند يصف الحالة دون تقييم رقمي.',
-                style: TextStyle(color: BrandColors.muted),
-              )
-            : BigScore(
-                score: report.readinessScore!,
-                band: report.readinessBand,
-              ),
-      ),
       const SizedBox(height: 12),
       FilledButton.icon(
-        onPressed: _downloading ? null : _download,
+        onPressed: _downloading
+            ? null
+            : () => _download(agencyBrief: _showAgencyBrief),
         icon: _downloading
             ? const SizedBox(
                 width: 18,
@@ -228,669 +256,605 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Icon(Icons.picture_as_pdf_outlined),
-        label: const Text('حمّل PDF للتسليم'),
-      ),
-      const SizedBox(height: 12),
-      _shareCard(share),
-      if (report.decisionCard != null) ...[
-        const SizedBox(height: 20),
-        _heading('بطاقة القرار'),
-        _decisionCard(report.decisionCard!),
-      ],
-      if (report.numbers.isNotEmpty) ...[
-        const SizedBox(height: 20),
-        _heading('الوضع الحالي بالأرقام'),
-        if (report.trackingLabel != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              'نضج التتبع: ${report.trackingLabel}',
-              style: const TextStyle(color: BrandColors.muted),
-            ),
-          ),
-        BrandCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final row in report.numbers)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        row.label,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      Text(row.display),
-                      Text(
-                        row.benchmark == null
-                            ? row.confidenceLabel
-                            : '${row.confidenceLabel} · مرجع السوق: ${row.benchmark}',
-                        style: const TextStyle(
-                          color: BrandColors.muted,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-      if (report.assets.isNotEmpty) ...[
-        const SizedBox(height: 20),
-        _heading('الأصول والوصول'),
-        BrandCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final asset in report.assets)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        asset.label,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      Text(
-                        asset.display,
-                        style: TextStyle(
-                          color: asset.isDeclared ? null : BrandColors.muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-      if (report.behaviourSummary != null) ...[
-        const SizedBox(height: 20),
-        _heading('سجل التنفيذ'),
-        BrandCard(child: Text(report.behaviourSummary!)),
-      ],
-      if (executive != null) ...[
-        const SizedBox(height: 20),
-        _heading('الملخص التنفيذي'),
-        BrandCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(executive.position),
-              if (executive.context.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  executive.context,
-                  style: const TextStyle(color: BrandColors.muted),
-                ),
-              ],
-              const SizedBox(height: 6),
-              Text(
-                'تغطية المعرفة الموثقة: ${executive.coveragePercent}٪',
-                style: const TextStyle(color: BrandColors.muted),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _heading('أبرز ما يحتاج معالجة'),
-        if (executive.problems.isEmpty)
-          const Text(
-            'لم تُسجَّل مشكلات ذات خطورة.',
-            style: TextStyle(color: BrandColors.muted),
-          ),
-        for (final problem in executive.problems) _itemCard(problem),
-        const SizedBox(height: 16),
-        _heading('أسرع ما يمكن البدء به'),
-        if (executive.opportunities.isEmpty)
-          const Text(
-            'لا توجد مكاسب سريعة مسجّلة بعد.',
-            style: TextStyle(color: BrandColors.muted),
-          ),
-        for (final item in executive.opportunities) _itemCard(item),
-      ],
-      if (report.consultation != null) ...[
-        const SizedBox(height: 20),
-        _heading('سياق الاستشارة الذكية'),
-        _consultationCard(report.consultation!),
-      ],
-      if (report.crossTool.findings.isNotEmpty) ...[
-        const SizedBox(height: 20),
-        _heading('مقارنة نتائج التشخيصات'),
-        ..._crossToolCards(report.crossTool),
-      ],
-      if (report.ledgerThemes.isNotEmpty) ...[
-        const SizedBox(height: 20),
-        _heading('حالة المشروع كما وثّقها صاحبه'),
-        const Text(
-          'يغني الوكالة عن إعادة جلسة الاستكشاف من الصفر.',
-          style: TextStyle(color: BrandColors.muted),
-        ),
-        const SizedBox(height: 10),
-        for (final theme in report.ledgerThemes) _themeCard(theme),
-      ],
-      const SizedBox(height: 20),
-      _heading('التشخيصات المضمّنة ونتائجها'),
-      for (final tool in report.tools) ...[
-        BrandCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Eyebrow(tool.scoreLabel),
-              const SizedBox(height: 5),
-              Text(
-                tool.title,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                tool.summary,
-                style: const TextStyle(color: BrandColors.muted),
-              ),
-              if (tool.review != null) ...[
-                const SizedBox(height: 5),
-                Text(
-                  '${tool.review} · ${tool.producedAt ?? ''}',
-                  style: const TextStyle(
-                    color: BrandColors.muted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-      ],
-      const SizedBox(height: 12),
-      _heading('الأولويات التنفيذية'),
-      for (final priority in report.priorities) ...[
-        BrandCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Eyebrow(priority.sourceTool),
-              const SizedBox(height: 4),
-              Text(
-                priority.title,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 5),
-              Text(priority.description),
-              if (priority.evidence != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'الدليل: ${priority.evidence}',
-                  style: const TextStyle(
-                    color: BrandColors.muted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-      ],
-      const SizedBox(height: 12),
-      _heading('خطة 30 / 60 / 90 يومًا'),
-      for (final entry in const [
-        ('30_days', 'أول 30 يومًا'),
-        ('60_days', 'حتى 60 يومًا'),
-        ('90_days', 'حتى 90 يومًا'),
-      ]) ...[
-        BrandCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                entry.$2,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 6),
-              for (final item in report.plan(entry.$1))
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text('• ${item.title}'),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-      ],
-      const SizedBox(height: 12),
-      _heading('مؤشرات الأداء وخط الأساس'),
-      BrandCard(
-        child: report.kpis.isEmpty
-            ? const Text(
-                'لم يُسجَّل أي مؤشر بخط أساس بعد. تثبيت مؤشر واحد مُدرج في خطة الأفق الأول.',
-                style: TextStyle(color: BrandColors.muted),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final kpi in report.kpis)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${kpi.name} ${kpi.unit ?? ''}'.trim(),
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            'خط الأساس: ${kpi.baseline ?? '—'} · الهدف: ${kpi.target ?? '—'} · آخر قراءة: ${kpi.latest ?? 'لم تُسجَّل'}',
-                            style: const TextStyle(
-                              color: BrandColors.muted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-      ),
-      const SizedBox(height: 12),
-      _heading('المنافسون'),
-      BrandCard(
-        child: _disclosure(
-          report.competitors,
-          (item) => item['name']?.toString() ?? '',
+        label: Text(
+          _showAgencyBrief ? 'حمّل موجز الوكالة PDF' : 'حمّل تقريرك PDF',
         ),
       ),
-      const SizedBox(height: 12),
-      _heading('سجل الأدلة'),
-      BrandCard(child: _disclosure(report.evidence, (item) => item.toString())),
-      const SizedBox(height: 12),
-      BrandCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'النطاق والملكية',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(report.scope['account_ownership']?.toString() ?? ''),
-            const SizedBox(height: 6),
-            Text(
-              report.scope['review_cadence']?.toString() ?? '',
-              style: const TextStyle(color: BrandColors.muted),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 12),
-      BrandCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'ما تحتاج الوكالة توضيحه قبل البدء',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            for (final question in report.agencyQuestions) Text('• $question'),
-          ],
-        ),
-      ),
-      if (report.assumptions.isNotEmpty || report.dataGaps.isNotEmpty) ...[
+      if (_showAgencyBrief) ...[
         const SizedBox(height: 12),
-        BrandCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'حدود المعرفة',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              for (final item in report.assumptions) Text('• $item'),
-              for (final item in report.dataGaps) Text('• بيان ناقص: $item'),
-            ],
-          ),
-        ),
-      ],
-      if (report.methodologyLimits.isNotEmpty) ...[
-        const SizedBox(height: 12),
-        BrandCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'ملحق المنهجية',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              for (final limit in report.methodologyLimits)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '• $limit',
-                    style: const TextStyle(
-                      color: BrandColors.muted,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-      const SizedBox(height: 24),
+        _shareCard(share),
+        ..._agencyBrief(report.agencyBrief),
+      ] else
+        ..._ownerReport(report.ownerReport),
     ];
   }
 
-  Widget _decisionCard(AgencyDecisionCard card) {
-    return BrandCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Eyebrow('تُقرأ في تسعين ثانية'),
-          const SizedBox(height: 4),
-          Text(
-            card.project,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-          ),
-          if (card.context.isNotEmpty)
+  List<Widget> _ownerReport(Map<String, dynamic> owner) {
+    final overview = _map(owner['overview']);
+    final numbers = _map(owner['numbers']);
+    final journey = _map(owner['journey']);
+    final readiness = _map(owner['readiness']);
+    final beforeAgency = _map(owner['before_agency']);
+    final details = _map(owner['private_details']);
+    final project = _map(details['project']);
+    final audiences = _maps(details['audiences']);
+    final assets = _map(details['assets']);
+    final tools = _maps(details['tools']);
+    final competitors = _map(details['competitors']);
+    final evidence = _map(details['evidence']);
+    final kpis = _maps(details['kpis']);
+    final consultation = _map(details['consultation']);
+    final assumptions = _strings(details['assumptions']);
+    final differentReadings = _maps(details['different_readings']);
+    final plan = _map(details['plan']);
+    final behaviour = _map(details['behaviour']);
+    final tasks = _map(behaviour['tasks']);
+    final highlightedTitles = _maps(
+      owner['problems'],
+    ).map((item) => item['title']?.toString()).toSet();
+
+    return [
+      const SizedBox(height: 20),
+      _heading(overview['title']?.toString() ?? 'أين يقف مشروعك الآن؟'),
+      BrandCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(
-              card.context,
-              style: const TextStyle(color: BrandColors.muted, fontSize: 12),
+              overview['description']?.toString() ?? 'هذه صورة مشروعك الحالية.',
             ),
-          const SizedBox(height: 8),
-          Text(card.readiness),
-          Text(
-            card.trend ?? 'قياس واحد فقط حتى الآن — لا يمكن الحكم على الاتجاه.',
-            style: const TextStyle(color: BrandColors.muted, fontSize: 12),
-          ),
-          const SizedBox(height: 8),
-          Text('ما يصل إلى الإعلان: ${card.money ?? 'غير محسوب'}'),
-          Text('تعريف النجاح: ${card.successMetric ?? 'لم يُكتب بعد'}'),
-          Text(
-            'معرفة ${card.knowledgePercent}٪ · أرقام ${card.numbersKnown}/${card.numbersTotal}'
-            ' · أصول ${card.assetsPercent}٪',
-            style: const TextStyle(color: BrandColors.muted, fontSize: 12),
-          ),
+            const SizedBox(height: 8),
+            Text(
+              'أكبر نقطة تحتاج انتباهك الآن: ${overview['main_issue'] ?? 'تثبيت القياس أولًا'}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+      ..._simpleSection('صورة مشروعك الكاملة', [
+        _line('المشروع', project['name']),
+        _line('المجال', project['industry']),
+        _line('مرحلتك الآن', project['stage']),
+        _line('السوق الذي تعمل فيه', project['geography']),
+        _line('طريقة تحقيق الدخل', project['business_model']),
+        _line('الهدف الذي يقود عملك', project['primary_goal']),
+        _line('لماذا يختارك العميل؟', project['value_proposition']),
+        if (project['website'] != null) _line('الموقع', project['website']),
+      ]),
+      ..._simpleSection(
+        'عملاؤك كما نفهمهم الآن',
+        [
+          for (final audience in audiences) ...[
+            Text(
+              audience['name']?.toString() ?? 'شريحة عميل',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            _line('ما الذي يزعجهم؟', audience['pains']),
+            _line('ما الذي يريدونه؟', audience['gains']),
+            _line('كيف يتصرفون عادة؟', audience['behaviors']),
+            const SizedBox(height: 8),
+          ],
+        ],
+        empty: 'لم تحدد شرائح عملائك بعد. ابدأ بخمس محادثات قصيرة معهم.',
+      ),
+      ..._simpleSection(
+        'أرقامك ببساطة',
+        _maps(numbers['rows']).map((row) {
+          final value = row['value'];
+          return _line(
+            row['label']?.toString() ?? 'رقم',
+            value == null
+                ? 'لا نعرفه حتى الآن'
+                : '${row['value']} ${row['unit'] ?? ''}'.trim(),
+          );
+        }).toList(),
+        empty: 'لا توجد أرقام كافية بعد. ابدأ بالقياس قبل زيادة الإنفاق.',
+      ),
+      ..._simpleSection(
+        'ما لديك جاهز وما يحتاج تجهيزًا',
+        [
+          for (final row in _maps(assets['rows']))
+            _line(
+              row['label']?.toString() ?? 'حساب أو أصل',
+              '${row['status_label'] ?? 'غير معروف'}${(row['detail']?.toString().isNotEmpty ?? false) ? ' — ${row['detail']}' : ''}',
+            ),
+        ],
+        empty: 'لم توثق الأصول والحسابات بعد؛ راجعها قبل بدء أي إنفاق.',
+      ),
+      ..._simpleSection('أين يتوقف الناس؟', [
+        Text(journey['description']?.toString() ?? 'نحتاج معرفة موضع التوقف.'),
+        _line(
+          'وضع القياس الآن',
+          numbers['tracking_label']?.toString() ?? 'غير معروف بعد',
+        ),
+      ]),
+      ..._simpleSection(
+        'ماذا قالت كل التشخيصات؟',
+        [
+          for (final tool in tools) ...[
+            Text(
+              tool['title']?.toString() ?? 'نتيجة تشخيص',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            Text(tool['summary']?.toString() ?? 'لا توجد خلاصة كافية بعد.'),
+            if (tool['score'] != null)
+              _line(
+                'القراءة الحالية',
+                '${tool['score']} من 100 — ${tool['score_band'] ?? ''}',
+              ),
+            for (final finding in _maps(tool['findings']))
+              if (!highlightedTitles.contains(
+                finding['title']?.toString(),
+              )) ...[
+                Text(
+                  finding['title']?.toString() ?? '',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(finding['description']?.toString() ?? ''),
+                if (finding['evidence'] != null)
+                  _line('ما الذي يدعمها؟', finding['evidence']),
+                _line(
+                  'مدى اعتمادنا عليها',
+                  finding['is_assumption'] == true
+                      ? 'تحتاج إلى تحقق إضافي'
+                      : 'تستند إلى معلومة مسجلة',
+                ),
+              ],
+            const SizedBox(height: 10),
+          ],
+        ],
+        empty: 'لا توجد نتائج تشخيص محفوظة في هذا الإصدار.',
+      ),
+      ..._cardsSection(
+        'أهم ثلاث مشكلات',
+        _maps(owner['problems']),
+        titleKey: 'title',
+        bodyKey: 'description',
+        empty: 'لا توجد ثلاث مشكلات مؤكدة بعد؛ نحتاج القياس أولًا.',
+      ),
+      ..._simpleSection(
+        'المؤشرات التي تتابعها',
+        [
+          for (final kpi in kpis)
+            Text(
+              '${kpi['name']}: البداية ${kpi['baseline'] ?? 'غير مسجلة'} ${kpi['unit'] ?? ''}، الهدف ${kpi['target'] ?? 'غير مسجل'} ${kpi['unit'] ?? ''}، آخر قراءة ${kpi['latest'] ?? 'لا توجد بعد'}.',
+            ),
+        ],
+        empty: 'لم تسجل مؤشرًا بعد. اختر مؤشرًا يرتبط بهدفك وثبت رقمه الحالي.',
+      ),
+      ..._simpleSection('المنافسون والمعلومات التي بُني عليها التقرير', [
+        if (_maps(competitors['items']).isEmpty)
+          const Text('لم تسجل منافسين مؤكدين بعد.')
+        else
+          for (final competitor in _maps(competitors['items']))
+            Text(
+              '• ${competitor['name']}${competitor['url'] == null ? '' : ' — ${competitor['url']}'}',
+            ),
+        const SizedBox(height: 8),
+        Text(
+          'حجم المعلومات الداعمة: ${evidence['count'] ?? 0} معلومة. تظهر كل معلومة بجوار النتيجة التي تدعمها حتى لا تتكرر.',
+        ),
+        if (assumptions.isNotEmpty) ...[
           const SizedBox(height: 8),
           const Text(
-            'ثلاث إشارات',
+            'أمور تحتاج إلى تأكيد',
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
-          Text('• أعلى فرصة: ${card.opportunity ?? 'لم تُرشَّح بعد'}'),
-          Text('• أكبر خطر: ${card.risk ?? 'لم تُسجَّل'}'),
-          Text('• أكبر مجهول: ${card.unknown ?? 'لا مجهول جوهري'}'),
+          for (final item in assumptions) Text('• $item'),
         ],
-      ),
-    );
-  }
-
-  Widget _consultationCard(AgencyConsultationContext consultation) {
-    return BrandCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('عمق الاستشارة: ${consultation.depth}'),
-          if (consultation.inferences.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            const Text(
-              'استنتاجات تحتاج انتباهًا',
-              style: TextStyle(fontWeight: FontWeight.w700),
+      ]),
+      if (consultation.isNotEmpty)
+        ..._simpleSection('ما سجلته في التشخيص الذكي', [
+          for (final answer in _maps(consultation['answers'])) ...[
+            Text(
+              answer['question']?.toString() ?? '',
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            for (final item in consultation.inferences)
-              Text('• ${item.statement} · ثقة ${item.confidence}٪'),
-          ],
-          if (consultation.conflicts.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            const Text(
-              'التعارضات وقرارات حسمها',
-              style: TextStyle(fontWeight: FontWeight.w700),
+            Text(
+              answer['is_unknown'] == true
+                  ? 'أجبت بأنك لا تعرفها بعد.'
+                  : answer['value']?.toString() ?? 'لم تسجل إجابة.',
             ),
-            for (final item in consultation.conflicts)
-              Text(
-                '• ${item.message}${item.resolution == null ? '' : ' — ${item.resolution}'}',
-              ),
           ],
-          if (consultation.evidence.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            const Text(
-              'الأدلة المستخدمة',
-              style: TextStyle(fontWeight: FontWeight.w700),
+          for (final inference in _maps(consultation['inferences']))
+            _line('قراءة مستخلصة من إجاباتك', inference['statement']),
+          for (final item in _maps(consultation['evidence'])) ...[
+            Text(
+              'معلومة داعمة: ${item['name'] ?? 'ملف مرفوع'}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            for (final item in consultation.evidence) ...[
-              Text('• ${item.name} · ${item.extractionLabel}'),
-              if (item.text != null && item.text!.isNotEmpty)
-                Text(
-                  item.text!,
-                  style: const TextStyle(
-                    color: BrandColors.muted,
-                    fontSize: 12,
-                  ),
-                ),
-            ],
+            if (item['text'] != null) Text(item['text'].toString()),
           ],
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _crossToolCards(AgencyCrossToolSynthesis synthesis) => [
-    if (synthesis.agreements.isNotEmpty)
-      BrandCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'نتائج متوافقة',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            for (final item in synthesis.agreements)
-              Text('• ${item.category}: ${item.findings.join('، ')}'),
-          ],
-        ),
-      ),
-    if (synthesis.divergences.isNotEmpty) ...[
-      const SizedBox(height: 10),
-      BrandCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
+        ]),
+      if (differentReadings.isNotEmpty)
+        ..._simpleSection('مقارنة نتائج التشخيصات', [
+          for (final reading in differentReadings)
+            _line(
               'اختلاف يحتاج حسمًا',
-              style: TextStyle(fontWeight: FontWeight.w700),
+              reading['resolution'] ?? 'راجع السياق قبل اعتماد قراءة واحدة.',
             ),
-            const SizedBox(height: 6),
-            for (final item in synthesis.divergences) ...[
-              Text('• ${item.category}: ${item.findings.join('، ')}'),
-              if (item.resolution != null)
-                Text(
-                  item.resolution!,
-                  style: const TextStyle(
-                    color: BrandColors.muted,
-                    fontSize: 12,
-                  ),
-                ),
-            ],
-          ],
-        ),
+        ]),
+      ..._cardsSection(
+        'أمور تحتاج أن تحسمها',
+        _maps(owner['conflicts']),
+        titleKey: 'question',
+        bodyKey: 'why',
+        empty: 'لا توجد إجابات متعارضة تحتاج تدخلك الآن.',
       ),
-    ],
-    const SizedBox(height: 10),
+      ..._cardsSection(
+        'ما الذي ما زلنا لا نعرفه؟',
+        _maps(owner['unknowns']),
+        titleKey: 'resolution',
+        bodyKey: 'text',
+        empty: 'المعلومات الأساسية متاحة حاليًا.',
+      ),
+      ..._cardsSection(
+        'ما يمكنك فعله هذا الأسبوع',
+        _maps(owner['this_week']),
+        titleKey: 'title',
+        bodyKey: 'description',
+        trailingKey: 'estimated_time',
+        empty: 'ابدأ بأول معلومة ناقصة وحدد لها موعدًا هذا الأسبوع.',
+      ),
+      ..._beforeAgency(beforeAgency),
+      ..._simpleSection('هل أصبح موجز الوكالة جاهزًا؟', [
+        Text(readiness['message']?.toString() ?? 'راجع البنود المطلوبة.'),
+        for (final item in _maps(readiness['requirements']))
+          Text('${item['complete'] == true ? '✓' : '•'} ${item['label']}'),
+      ]),
+      ..._simpleSection('تفاصيل تساعدك على فهم قدرتك على التنفيذ', [
+        Text(
+          'أنجزت ${tasks['done'] ?? 0} من ${tasks['total'] ?? 0} مهمة مسجلة. هذا الرقم يساعدك على اختيار خطة تستطيع متابعتها فعلًا.',
+        ),
+        const SizedBox(height: 8),
+        for (final bucket in const {
+          '30_days': 'أول 30 يومًا',
+          '60_days': 'حتى 60 يومًا',
+          '90_days': 'حتى 90 يومًا',
+        }.entries) ...[
+          Text(
+            bucket.value,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          if (_maps(plan[bucket.key]).isEmpty)
+            const Text('لا توجد خطوة إضافية في هذه الفترة الآن.')
+          else
+            for (final item in _maps(plan[bucket.key]))
+              Text('• ${item['title']}'),
+          const SizedBox(height: 6),
+        ],
+      ]),
+    ];
+  }
+
+  List<Widget> _beforeAgency(Map<String, dynamic> guide) => [
+    const SizedBox(height: 20),
+    _heading('قبل أن تتحدث مع أي وكالة'),
     BrandCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'النتائج ومصادرها',
+            'هذا الجزء لك وحدك: يساعدك على مقارنة العروض وحماية حساباتك وبياناتك.',
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'أسئلة المقارنة',
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 6),
-          for (final item in synthesis.findings)
-            Text(
-              '• ${item.title} — ${item.sourceToolTitle} (تقرير ${item.sourceReportId})',
-            ),
+          for (final item in _strings(guide['comparison_questions']))
+            Text('• $item'),
+          const SizedBox(height: 10),
+          const Text(
+            'علامات الإنذار',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          for (final item in _strings(guide['red_flags'])) Text('• $item'),
+          const SizedBox(height: 10),
+          const Text(
+            'ما لا تتنازل عنه',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          for (final item in _strings(guide['non_negotiables']))
+            Text('• $item'),
         ],
       ),
     ),
   ];
 
-  Widget _shareCard(AgencyShare share) {
-    return BrandCard(
+  List<Widget> _agencyBrief(Map<String, dynamic> brief) {
+    final project = _map(brief['project']);
+    final baseline = _map(brief['baseline']);
+    final goal = _map(brief['goal']);
+    final scope = _map(brief['scope']);
+    final assets = _map(brief['assets']);
+    final workflow = _map(brief['workflow']);
+    final terms = _map(brief['terms']);
+    final proposal = _map(brief['proposal']);
+    final budget = _map(proposal['budget']);
+    final submission = _map(brief['submission']);
+
+    return [
+      ..._simpleSection('المشروع في سطور واضحة', [
+        _line('المشروع', project['name']),
+        if (project['description'] != null)
+          Text(project['description'].toString()),
+        _line('المجال', project['industry']),
+        _line('السوق', project['geography']),
+        _line('المرحلة', project['stage']),
+        _line('ما يميّز العرض', project['value_proposition']),
+        if (_strings(project['audiences']).isNotEmpty)
+          _line('الجمهور', _strings(project['audiences']).join('، ')),
+        for (final audience in _maps(project['audience_details'])) ...[
+          Text(
+            audience['name']?.toString() ?? 'شريحة عميل',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          _line('الحاجة أو المشكلة', audience['needs']),
+          _line('النتيجة المطلوبة', audience['desired_result']),
+          _line('السلوك المعروف', audience['behaviour']),
+        ],
+        if (_maps(project['competitors']).isNotEmpty) ...[
+          const Text(
+            'المنافسون المعروفون',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          for (final competitor in _maps(project['competitors']))
+            Text(
+              '• ${competitor['name']}${competitor['tier_label'] == null ? '' : ' — ${competitor['tier_label']}'}',
+            ),
+        ],
+        if (_maps(project['known_context']).isNotEmpty) ...[
+          const Text(
+            'حقائق مسجلة عن المشروع',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          for (final item in _maps(project['known_context']))
+            _line(item['label']?.toString() ?? 'معلومة', item['value']),
+        ],
+      ]),
+      ..._simpleSection('خط الأساس', [
+        for (final row in _maps(baseline['rows']))
+          _line(row['label']?.toString() ?? 'المعلومة', row['value']),
+        _line('وضع القياس', baseline['tracking']),
+        _line(
+          'ما جُرّب سابقًا',
+          baseline['previous_attempts'] ?? 'لا توجد تجربة سابقة موثقة',
+        ),
+        if (baseline['previous_provider'] != null)
+          _line('التعامل السابق مع جهة منفذة', baseline['previous_provider']),
+        _line(
+          'مصدر العملاء الحالي',
+          baseline['current_customer_source'] ?? 'غير معروف حتى الآن',
+        ),
+        for (final kpi in _maps(baseline['kpis']))
+          Text(
+            '${kpi['name']}: البداية ${kpi['baseline'] ?? 'غير معروفة'} ${kpi['unit'] ?? ''}، والهدف ${kpi['target'] ?? 'غير محدد'} ${kpi['unit'] ?? ''}.',
+          ),
+      ], empty: 'يبدأ العمل بتثبيت الأرقام الحالية.'),
+      ..._simpleSection('الهدف الذي سنعمل عليه', [
+        _line('الهدف الأساسي', goal['primary']),
+        _line('تعريف النجاح', goal['success_metric']),
+        if (goal['period'] != null) _line('خلال 90 يومًا', goal['period']),
+      ]),
+      ..._simpleSection('النطاق المطلوب', [
+        _line('الخدمات', _strings(scope['services']).join('، ')),
+        _line(
+          'موعد البدء أو الموسم المهم',
+          scope['start_window'] ?? 'يُحدد مع الجدول التنفيذي',
+        ),
+        _line(
+          'القيود التي يجب احترامها',
+          scope['constraints'] ?? 'لا توجد قيود إضافية موثقة',
+        ),
+        const Text(
+          'خارج النطاق',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        for (final item in _strings(scope['out_of_scope'])) Text('• $item'),
+      ]),
+      ..._simpleSection('الأصول والوصول', [
+        for (final row in _maps(assets['rows']))
+          _line(
+            row['label']?.toString() ?? 'أصل',
+            '${row['status_label'] ?? 'غير معروف'}${(row['detail']?.toString().isNotEmpty ?? false) ? ' — ${row['detail']}' : ''}',
+          ),
+      ], empty: 'تُراجع قائمة الأصول قبل تحديد يوم البدء.'),
+      ..._simpleSection('آلية العمل', [
+        _line('صاحب القرار', workflow['decision_maker']),
+        _line('مدة الاعتماد', workflow['approval_time']),
+        _line('من يرد على العملاء', workflow['lead_response_owner']),
+        _line('فريق المشروع', workflow['internal_capacity']),
+        _line(
+          'قيود الدفع للمنصات',
+          workflow['payment_constraints'] ?? 'لا توجد قيود موثقة',
+        ),
+        _line('المراجعة', workflow['review_cadence']),
+      ]),
+      ..._simpleSection('الملكية وشروط الانتهاء', [
+        Text(
+          terms['account_ownership']?.toString() ?? 'الحسابات باسم المشروع.',
+        ),
+        _line('الوضع الحالي', terms['declared_ownership']),
+        _line('شكل التعاقد', terms['engagement_model']),
+        _line('مدة التعاقد', terms['contract_duration']),
+        _line('مرونة الميزانية', terms['budget_flexibility']),
+        _line('عند الانتهاء', terms['exit_condition']),
+      ]),
+      ..._simpleSection('ما يجب أن يتضمنه عرضكم', [
+        const Text(
+          'الميزانية التي سيُبنى عليها العرض',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        _line(
+          'المبلغ الشهري المسجل',
+          budget['stated_budget'] == null
+              ? 'لم يُحدد'
+              : '${budget['stated_budget']} ${budget['budget_currency'] ?? ''}',
+        ),
+        _line(
+          'هل يشمل أتعاب الوكالة؟',
+          budget['includes_agency_fee'] == true
+              ? 'نعم، يشمل الأتعاب والإنفاق معًا'
+              : budget['includes_agency_fee'] == false
+              ? 'لا، الأتعاب تضاف فوقه'
+              : 'لم تُحسم بعد',
+        ),
+        if (budget['effective_media'] != null)
+          _line(
+            'المتاح للإعلان بعد البنود المحسوبة',
+            '${budget['effective_media']} ${budget['budget_currency'] ?? ''}',
+          ),
+        if (_map(budget['verdict'])['headline'] != null)
+          _line('مدى ملاءمة المبلغ', _map(budget['verdict'])['headline']),
+        const SizedBox(height: 8),
+        for (final item in _strings(proposal['requirements'])) Text('• $item'),
+        const SizedBox(height: 8),
+        const Text(
+          'جدول التسعير',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        for (final row in _maps(proposal['pricing_rows']))
+          Text('• ${row['label']}: المبلغ، وما يشمله، وما لا يشمله.'),
+      ]),
+      ..._simpleSection('موعد وطريقة تسليم العرض', [
+        _line('آخر موعد', submission['deadline']),
+        _line('طريقة التسليم', submission['method']),
+      ]),
+    ];
+  }
+
+  List<Widget> _simpleSection(
+    String title,
+    List<Widget> children, {
+    String? empty,
+  }) => [
+    const SizedBox(height: 20),
+    _heading(title),
+    BrandCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'مشاركة المستند مع وكالة',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          if (share.isLive) ...[
-            SelectableText(
-              share.url ?? '',
-              style: const TextStyle(fontSize: 12),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'فُتح ${share.viewsCount} مرة من ${share.uniqueViewers} جهة'
-              '${share.expiresAt == null ? '' : ' · ينتهي ${share.expiresAt!.split('T').first}'}',
-              style: const TextStyle(color: BrandColors.muted, fontSize: 12),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: share.url == null
-                      ? null
-                      : () {
-                          Clipboard.setData(ClipboardData(text: share.url!));
-                          _notify('نُسخ الرابط.');
-                        },
-                  icon: const Icon(Icons.copy_outlined, size: 18),
-                  label: const Text('انسخ'),
+        children: children.isEmpty
+            ? [Text(empty ?? 'لا توجد معلومات بعد.')]
+            : children,
+      ),
+    ),
+  ];
+
+  List<Widget> _cardsSection(
+    String title,
+    List<Map<String, dynamic>> items, {
+    required String titleKey,
+    required String bodyKey,
+    String? trailingKey,
+    required String empty,
+  }) => [
+    const SizedBox(height: 20),
+    _heading(title),
+    if (items.isEmpty)
+      BrandCard(child: Text(empty))
+    else
+      for (final item in items) ...[
+        BrandCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item[titleKey]?.toString() ?? '',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 5),
+              Text(item[bodyKey]?.toString() ?? ''),
+              if (trailingKey != null && item[trailingKey] != null) ...[
+                const SizedBox(height: 5),
+                Text(
+                  'الوقت المتوقع: ${item[trailingKey]}',
+                  style: const TextStyle(color: BrandColors.muted),
                 ),
-                const SizedBox(width: 8),
-                TextButton(
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+  ];
+
+  Widget _line(String label, dynamic value) => Padding(
+    padding: const EdgeInsets.only(bottom: 7),
+    child: Text(
+      '$label: ${value == null || value.toString().isEmpty ? 'غير محدد حتى الآن' : value}',
+    ),
+  );
+
+  Widget _shareCard(AgencyShare share) => BrandCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'مشاركة موجز الوكالة',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'الرابط يعرض موجز التكليف فقط، ولا يعرض تقريرك الخاص.',
+          style: TextStyle(color: BrandColors.muted),
+        ),
+        if (share.isLive && share.url != null) ...[
+          const SizedBox(height: 8),
+          SelectableText(share.url!),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: share.url!));
+                    _notify('نُسخ رابط موجز الوكالة.');
+                  },
+                  icon: const Icon(Icons.copy),
+                  label: const Text('انسخ الرابط'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
                   onPressed: _sharing ? null : _revokeShare,
                   child: const Text('ألغِ الرابط'),
                 ),
-              ],
-            ),
-          ] else ...[
-            const Text(
-              'أنشئ رابطًا محدود المدة بدل إرسال الملف يدويًا. يمكنك إلغاؤه في أي لحظة، وكل فتحة تُسجَّل لك.',
-              style: TextStyle(color: BrandColors.muted),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: _sharing
-                  ? null
-                  : () => _createShare(share.expiryChoices),
-              icon: const Icon(Icons.link_outlined, size: 18),
-              label: const Text('أنشئ رابط مشاركة'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _disclosure(AgencyDisclosure block, String Function(dynamic) label) {
-    if (!block.isFull || block.items.isEmpty) {
-      return Text(
-        block.notice,
-        style: const TextStyle(color: BrandColors.muted),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [for (final item in block.items) Text('• ${label(item)}')],
-    );
-  }
-
-  Widget _themeCard(AgencyLedgerTheme theme) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: BrandCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Eyebrow('${theme.coveragePercent}٪'),
-            const SizedBox(height: 4),
-            Text(
-              theme.title,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            Text(
-              theme.intent,
-              style: const TextStyle(color: BrandColors.muted, fontSize: 12),
-            ),
-            const SizedBox(height: 8),
-            for (final entry in theme.answered)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.label,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    Text(entry.value),
-                  ],
-                ),
-              ),
-            if (theme.unanswered.isNotEmpty)
-              Text(
-                'لم يُجب بعد: ${theme.unanswered.join('، ')}',
-                style: const TextStyle(color: BrandColors.muted, fontSize: 12),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _itemCard(AgencyExecutiveItem item) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: BrandCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Eyebrow(item.sourceTool),
-            const SizedBox(height: 4),
-            Text(
-              item.title,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 5),
-            Text(item.description),
-            if (item.note != null && item.note!.isNotEmpty) ...[
-              const SizedBox(height: 5),
-              Text(
-                item.note!,
-                style: const TextStyle(color: BrandColors.muted, fontSize: 12),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
+          ),
+        ] else ...[
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            onPressed: _sharing
+                ? null
+                : () => _createShare(share.expiryChoices),
+            icon: const Icon(Icons.link),
+            label: const Text('أنشئ رابط مشاركة'),
+          ),
+        ],
+      ],
+    ),
+  );
 
   Widget _heading(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.only(bottom: 8),
     child: Text(
       text,
       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
     ),
   );
+
+  Map<String, dynamic> _map(dynamic value) =>
+      value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
+
+  List<Map<String, dynamic>> _maps(dynamic value) =>
+      (value as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+
+  List<String> _strings(dynamic value) =>
+      (value as List? ?? const []).map((item) => item.toString()).toList();
 }

@@ -100,7 +100,14 @@ final class BriefQuestions
      */
     public static function criticalKeys(): array
     {
-        return ['services', 'success_metric', 'budget_includes_agency_fee', 'previous_attempts', 'decision_maker'];
+        return [
+            'success_metric',
+            'primary_goal',
+            'budget_terms',
+            'services',
+            'account_ownership',
+            'proposal_deadline',
+        ];
     }
 
     /**
@@ -116,6 +123,19 @@ final class BriefQuestions
                 'options' => collect(config('agency_costs.services', []))
                     ->map(fn (array $service) => $service['label'])->all(),
                 'why' => 'كل خدمة إضافية ترفع الأتعاب الشهرية. اختيار ما تحتاجه فعلًا أرخص من «كل شيء».',
+                'critical' => true,
+            ],
+            [
+                'key' => 'primary_goal',
+                'label' => 'ما الهدف الواحد الذي تريد أن يقود العمل الآن؟',
+                'type' => 'select',
+                'options' => [
+                    'leads' => 'وصول عملاء مهتمين يسألون عن الخدمة',
+                    'sales' => 'زيادة المبيعات مباشرة',
+                    'awareness' => 'أن يعرفني السوق ويثق بي',
+                    'retention' => 'أن يعود عملائي الحاليون ويشتروا أكثر',
+                ],
+                'why' => 'اختيار هدف واحد يمنع الوكالة من توزيع الميزانية على اتجاهات متعارضة، ويجعل المقارنة بين العروض عادلة.',
                 'critical' => true,
             ],
             [
@@ -362,6 +382,21 @@ final class BriefQuestions
                 'label' => 'كيف ستختار بين العروض؟',
                 'type' => 'textarea',
                 'why' => 'إعلان معيارك يجعل الوكالات تخاطبه مباشرة بدل أن ترسل عرضًا عامًا.',
+            ],
+            [
+                'key' => 'proposal_deadline',
+                'label' => 'ما آخر موعد لاستقبال العروض؟',
+                'type' => 'text',
+                'placeholder' => 'مثال: 15 أغسطس 2026، الساعة 5 مساءً',
+                'why' => 'الموعد الواضح يجعل كل الوكالات تعمل على نفس الجدول، ويمنع وصول عرض متأخر بعد بدء المقارنة.',
+                'critical' => true,
+            ],
+            [
+                'key' => 'proposal_submission',
+                'label' => 'كيف وأين تريد استلام العرض؟',
+                'type' => 'textarea',
+                'placeholder' => 'مثال: ملف PDF على البريد المسجل في المشروع، مع نسخة من جدول التسعير.',
+                'why' => 'طريقة التسليم الواحدة تمنع ضياع العروض بين الرسائل، وتجعل الملفات التي تستلمها قابلة للمقارنة.',
             ],
         ];
     }

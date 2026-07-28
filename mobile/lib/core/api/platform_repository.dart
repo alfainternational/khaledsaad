@@ -363,6 +363,9 @@ class PlatformRepository {
   Future<List<int>> agencyReportPdf(String uuid) =>
       _api.downloadBytes('/agency-reports/$uuid/pdf');
 
+  Future<List<int>> agencyBriefPdf(String uuid) =>
+      _api.downloadBytes('/agency-reports/$uuid/brief/pdf');
+
   Future<AgencyShare> shareAgencyReport(String uuid, int days) async {
     final response = await _api.post('/agency-reports/$uuid/share', {
       'days': days,

@@ -9,7 +9,7 @@
         <meta name="robots" content="noindex, nofollow, noarchive">
         <meta name="referrer" content="no-referrer">
 
-        <title>{{ $agencyReport->title }}</title>
+        <title>موجز التكليف — {{ $snapshot['agency_brief']['project']['name'] }}</title>
 
         @include('partials.font')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -18,8 +18,8 @@
         <main class="panel__main panel__main--shared">
             <header class="page-head">
                 <div>
-                    <p class="eyebrow">مستند حالة مشترك · الإصدار {{ $agencyReport->version }}</p>
-                    <h1>{{ $agencyReport->title }}</h1>
+                    <p class="eyebrow">موجز تكليف مشترك · الإصدار {{ $agencyReport->version }}</p>
+                    <h1>موجز التكليف — {{ $snapshot['agency_brief']['project']['name'] }}</h1>
                     <p class="muted">
                         لقطة {{ $agencyReport->generated_at?->locale('ar')->translatedFormat('j F Y') }}
                         · شاركه صاحب المشروع، وصلاحية الرابط تنتهي في
@@ -33,9 +33,8 @@
 
             <section class="card">
                 <p>
-                    هذا المستند يصف حالة المشروع كما وثّقها صاحبه داخل منصة {{ config('brand.name') }}.
-                    كل بند منسوب إلى مصدره وتاريخه، وما لم يُجب عنه معلن صراحة — الغرض أن تبنوا عليه مباشرة
-                    دون إعادة جلسة استكشاف كاملة.
+                    يحتوي هذا الموجز على المعلومات التي تحتاجها الوكالة لفهم المطلوب وتسعيره وبدء العمل.
+                    صيغت البنود بصيغة محايدة، وتظهر المعلومات غير المعروفة بوضوح حتى تُقاس قبل اعتماد أي وعد.
                 </p>
             </section>
 

@@ -6,9 +6,11 @@ use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
 use App\Models\AgencyReport;
 use App\Models\Project;
+use App\Services\Reports\AgencyReportDocumentAdapter;
 use App\Services\Reports\AgencyReportPdfGenerator;
 use App\Services\Reports\AgencyReportService;
 use App\Services\Reports\AgencyReportSharing;
+use App\Services\Reports\OwnerReportPdfGenerator;
 use App\Services\Reports\ReportFreshnessService;
 use App\Services\Tools\FullDiagnosisRunner;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +23,9 @@ class AgencyReportController extends Controller
 
     public function __construct(
         private readonly AgencyReportService $service,
-        private readonly AgencyReportPdfGenerator $pdf,
+        private readonly AgencyReportDocumentAdapter $documents,
+        private readonly AgencyReportPdfGenerator $agencyPdf,
+        private readonly OwnerReportPdfGenerator $ownerPdf,
         private readonly AgencyReportSharing $sharing,
         private readonly ReportFreshnessService $freshness,
     ) {}
@@ -81,7 +85,14 @@ class AgencyReportController extends Controller
     {
         $this->authorizeAgencyReport($request, $agencyReport);
 
-        return $this->pdf->download($agencyReport);
+        return $this->ownerPdf->download($agencyReport);
+    }
+
+    public function briefPdf(Request $request, AgencyReport $agencyReport): StreamedResponse
+    {
+        $this->authorizeAgencyReport($request, $agencyReport);
+
+        return $this->agencyPdf->download($agencyReport);
     }
 
     public function data(Request $request, AgencyReport $agencyReport): JsonResponse
@@ -116,6 +127,12 @@ class AgencyReportController extends Controller
      */
     private function payload(AgencyReport $report, bool $withSnapshot = true): array
     {
+        $briefReadiness = $report->snapshot['agency_brief']['readiness'] ?? [
+            'is_ready' => false,
+            'missing_count' => 6,
+            'message' => 'أنشئ إصدارًا جديدًا بعد إكمال بيانات موجز الوكالة.',
+        ];
+
         return [
             'uuid' => $report->uuid,
             'project_slug' => $report->project->slug,
@@ -127,7 +144,22 @@ class AgencyReportController extends Controller
             'source_report_ids' => $report->source_report_ids,
             'freshness' => $this->freshness->status($report),
             'share' => $this->sharing->status($report),
-            'snapshot' => $withSnapshot ? $report->snapshot : null,
+            'documents' => [
+                'owner' => [
+                    'label' => 'تقريرك الكامل',
+                    'pdf_url' => route('api.v1.agency-reports.pdf', $report),
+                ],
+                'agency_brief' => [
+                    'label' => 'موجز التكليف للوكالة',
+                    'is_ready' => (bool) ($briefReadiness['is_ready'] ?? false),
+                    'missing_count' => (int) ($briefReadiness['missing_count'] ?? 0),
+                    'message' => $briefReadiness['message'] ?? null,
+                    'pdf_url' => ($briefReadiness['is_ready'] ?? false)
+                        ? route('api.v1.agency-reports.brief.pdf', $report)
+                        : null,
+                ],
+            ],
+            'snapshot' => $withSnapshot ? $this->documents->ownerSnapshot($report) : null,
         ];
     }
 }

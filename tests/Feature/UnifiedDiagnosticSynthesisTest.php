@@ -87,8 +87,11 @@ class UnifiedDiagnosticSynthesisTest extends TestCase
             $session,
         );
         $privateJson = json_encode($private->snapshot, JSON_UNESCAPED_UNICODE);
-        $this->assertStringNotContainsString('سجل مبيعات موثق', $privateJson);
-        $this->assertStringNotContainsString('إجابة المستخدم', $privateJson);
+        $this->assertStringContainsString('سجل مبيعات موثق', $privateJson);
+        $this->assertStringContainsString('إجابة المستخدم', $privateJson);
+        $agencyJson = json_encode($private->snapshot['agency_brief'], JSON_UNESCAPED_UNICODE);
+        $this->assertStringNotContainsString('سجل مبيعات موثق', $agencyJson);
+        $this->assertStringNotContainsString('إجابة المستخدم', $agencyJson);
     }
 
     #[Test]

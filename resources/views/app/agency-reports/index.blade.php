@@ -83,19 +83,25 @@
     </section>
 
     <section class="card">
-        <h2 class="section-title">موجز التكليف</h2>
+        <h2 class="section-title">جهّز المعلومات التي تحتاجها الوكالة</h2>
         <p class="muted">
-            التشخيصات تصف حالة مشروعك، وهذه الأسئلة تحدد ما تطلبه من الوكالة.
+            تقريرك يشرح لك وضع مشروعك. هذه الأسئلة تحوّل قراراتك المحسومة إلى موجز تستطيع الوكالة فهمه وتسعيره.
             أُجيب {{ $briefCompleteness['answered'] }} من {{ $briefCompleteness['total'] }}
             ({{ $briefCompleteness['percent'] }}٪).
         </p>
 
         @unless ($briefCompleteness['is_quotable'])
             <p class="evidence">
-                <b>ينقص ما لا تستطيع وكالة التسعير بدونه:</b>
+                <b>{{ $briefCompleteness['message'] }}</b><br>
                 {{ implode('، ', $briefCompleteness['missing_critical']) }}.
             </p>
         @endunless
+
+        <ul class="bullets">
+            @foreach ($briefCompleteness['requirements'] as $requirement)
+                <li>{{ $requirement['complete'] ? 'مكتمل:' : 'ينقصك:' }} {{ $requirement['label'] }}</li>
+            @endforeach
+        </ul>
 
         <form method="POST" action="{{ route('app.projects.agency-reports.brief', $project) }}" class="form form--wide">
             @csrf
@@ -106,7 +112,11 @@
                     <p class="field__help">{{ $group['intent'] }}</p>
 
                     @foreach ($group['fields'] as $field)
-                        @php($current = $field['key'] === 'services' ? $services : ($brief[$field['key']] ?? null))
+                        @php($current = match ($field['key']) {
+                            'services' => $services,
+                            'primary_goal' => $project->profile?->primary_goal,
+                            default => $brief[$field['key']] ?? null,
+                        })
 
                         <label class="field">
                             <span class="field__label">
@@ -147,14 +157,14 @@
                 </fieldset>
             @endforeach
 
-            <button type="submit" class="btn btn--primary">احفظ موجز التكليف</button>
+            <button type="submit" class="btn btn--primary">احفظ إجاباتك</button>
         </form>
     </section>
 
     <section class="card">
         @if ($readiness['can_generate'])
-            <h2 class="section-title">جاهز لإنشاء موجز الوكالة</h2>
-            <p class="muted">سيُضمّن {{ $readiness['included_count'] }} تقارير، بأحدث نتيجة صالحة من كل تشخيص:</p>
+            <h2 class="section-title">جاهز لإنشاء تقريرك الكامل</h2>
+            <p class="muted">سنقرأ {{ $readiness['included_count'] }} تشخيصات معًا، ثم نشرح لك الصورة والخطوة التالية بلا تكرار:</p>
             <ul class="bullets">
                 @foreach ($readiness['included_tools'] as $tool)
                     <li>
@@ -172,23 +182,10 @@
 
             <form method="POST" action="{{ route('app.projects.agency-reports.store', $project) }}" class="form form--wide">
                 @csrf
-                <div class="field-row">
-                    @foreach ([
-                        'budget' => 'الميزانية',
-                        'competitors' => 'المنافسون',
-                        'evidence' => 'الأدلة التفصيلية',
-                    ] as $key => $label)
-                        <label class="field">
-                            <span class="field__label">{{ $label }}</span>
-                            <select name="visibility[{{ $key }}]">
-                                <option value="full">تظهر كاملة للوكالة</option>
-                                <option value="summary">تظهر كملخص</option>
-                                <option value="private">داخلية لا تدخل النسخة</option>
-                            </select>
-                        </label>
-                    @endforeach
-                </div>
-                <button type="submit" class="btn btn--primary">أنشئ إصدارًا جديدًا ثابتًا</button>
+                <p class="muted">
+                    تقريرك الخاص يحتفظ بكل التفاصيل المفيدة لك. موجز الوكالة يأخذ تلقائيًا المعلومات التي تحتاجها للتسعير فقط.
+                </p>
+                <button type="submit" class="btn btn--primary">أنشئ تقريرًا جديدًا</button>
             </form>
         @else
             <h2 class="section-title">أكمل الأساس أولًا</h2>
