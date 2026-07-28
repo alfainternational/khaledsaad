@@ -50,7 +50,7 @@
                                 </form>
                             @endif
                             <a href="{{ route('admin.gateways.edit', $gateway) }}" class="btn btn--ghost btn--sm">تعديل</a>
-                            <form method="POST" action="{{ route('admin.gateways.destroy', $gateway) }}" data-confirm="حذف هذه البوابة؟">
+                            <form method="POST" action="{{ route('admin.gateways.destroy', $gateway) }}" data-confirm="هل تريد حذف بوابة الدفع هذه؟ لن تظهر للعملاء بعد الحذف.">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn--ghost btn--sm">حذف</button>
                             </form>
