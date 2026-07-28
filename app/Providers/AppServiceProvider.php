@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Contracts\CompetitorProvider;
+use App\Modules\AiReadiness\Contracts\PageFetcher;
+use App\Modules\AiReadiness\HttpPageFetcher;
 use App\Modules\Competitors\LiveCompetitorProvider;
 use App\Services\Billing\Entitlements;
 use App\Services\Settings\MailConfigurator;
@@ -20,6 +22,13 @@ class AppServiceProvider extends ServiceProvider
     {
         // مصدر اكتشاف المنافسين المرشّحين. الحيّ افتراضًا، ويُستبدل بمزيّف في الاختبار.
         $this->app->bind(CompetitorProvider::class, LiveCompetitorProvider::class);
+
+        /*
+         * جالب صفحات التدقيق. خلف عقد ليُختبر بلا شبكة: قواعد المحور ٧ تُقاس
+         * على HTML ثابت، فتبقى الدرجة قابلة لإعادة الإنتاج ولا تتعلق بحال
+         * موقع خارجي لحظة تشغيل الاختبار.
+         */
+        $this->app->bind(PageFetcher::class, HttpPageFetcher::class);
     }
 
     /**

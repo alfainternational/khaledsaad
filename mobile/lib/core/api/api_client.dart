@@ -32,6 +32,8 @@ class ApiClient {
     return {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      // يعرّف الخادم بنسخة التطبيق ليردّ رسالة تحديث مفهومة بدل عقد مكسور.
+      'X-App-Build': '${AppEnvironment.appBuild}',
       if (token != null) 'Authorization': 'Bearer $token',
       ...extra,
     };
