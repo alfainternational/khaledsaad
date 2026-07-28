@@ -35,7 +35,7 @@
                                     {{ $tool['status'] === 'published' ? 'إخفاء' : 'نشر' }}
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('admin.tools.destroy', $tool['key']) }}" data-confirm="حذف هذه الأداة؟">
+                            <form method="POST" action="{{ route('admin.tools.destroy', $tool['key']) }}" data-confirm="هل تريد حذف هذا التشخيص؟ لن يعود متاحًا للمستخدمين بعد الحذف.">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn--ghost btn--sm">حذف</button>
                             </form>

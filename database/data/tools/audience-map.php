@@ -78,7 +78,7 @@ return [
     ],
 
     'fields' => [
-        ['key' => 'best_customer', 'label' => 'صف لنا أفضل عميل تعامل معك', 'type' => 'textarea', 'step' => 1,
+        ['key' => 'best_customer', 'label' => 'كيف تصف أفضل عميل تعامل معك؟', 'type' => 'textarea', 'step' => 1,
             'visible_when' => ['project.maturity' => 'operating'],
             'step_title' => 'من يشتري منك اليوم', 'validation' => 'min:20',
             'help' => 'شخص حقيقي إن أمكن: من هو، وماذا يعمل، ولماذا اشترى.',

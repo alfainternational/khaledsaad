@@ -58,6 +58,22 @@ class PrefilledValueTest extends TestCase
         $this->assertTrue($result['is_known']);
     }
 
+    #[Test]
+    public function a_question_without_custom_help_receives_guidance_that_matches_its_answer_type(): void
+    {
+        $text = app(ToolPresenter::class)->field($this->field('message', 'textarea', []), [], []);
+        $single = app(ToolPresenter::class)->field($this->field('priority', 'select', [
+            ['value' => 'one', 'label' => 'الأول'],
+        ]), [], []);
+        $multiple = app(ToolPresenter::class)->field($this->field('channels', 'multiselect', [
+            ['value' => 'search', 'label' => 'البحث'],
+        ]), [], []);
+
+        $this->assertSame('اكتب إجابتك بطريقتك، ويمكنك استخدام مثال من واقع مشروعك.', $text['help']);
+        $this->assertSame('اختر الإجابة الأقرب إلى وضع مشروعك الآن.', $single['help']);
+        $this->assertSame('اختر كل ما ينطبق على وضع مشروعك الآن.', $multiple['help']);
+    }
+
     /**
      * @param  array<int, array<string, string>>  $options
      */

@@ -127,7 +127,7 @@ class ToolPresenter
         return [
             'key' => $field->key,
             'label' => $field->label,
-            'help' => $field->help,
+            'help' => $field->help ?: $this->answerGuidance($field->type),
             // لماذا نسأل: يظهر بجانب كل سؤال حتى لا يشعر المستخدم أنه يملأ استمارة.
             'why' => $field->why,
             'example' => $field->example,
@@ -199,6 +199,17 @@ class ToolPresenter
     private function isBlank(mixed $value): bool
     {
         return $value === null || $value === '' || $value === [];
+    }
+
+    private function answerGuidance(string $type): string
+    {
+        return match ($type) {
+            'select' => 'اختر الإجابة الأقرب إلى وضع مشروعك الآن.',
+            'multiselect' => 'اختر كل ما ينطبق على وضع مشروعك الآن.',
+            'number' => 'اكتب الرقم التقريبي إذا لم يكن لديك رقم دقيق.',
+            'url' => 'الصق الرابط كاملًا، مثل: https://example.com',
+            default => 'اكتب إجابتك بطريقتك، ويمكنك استخدام مثال من واقع مشروعك.',
+        };
     }
 
     /**

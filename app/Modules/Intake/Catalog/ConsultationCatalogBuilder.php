@@ -50,7 +50,17 @@ class ConsultationCatalogBuilder
             }
 
             foreach ($config['gateway_questions'] as $index => $item) {
-                $question = $this->question($item['key'], $item['variable'], null, $item['text'], $item['type'] ?? 'select', $item['options'], true);
+                $question = $this->question(
+                    $item['key'],
+                    $item['variable'],
+                    null,
+                    $item['text'],
+                    $item['type'] ?? 'select',
+                    $item['options'],
+                    true,
+                    $item['help'] ?? null,
+                    $item['why'] ?? null,
+                );
                 $this->bind($bindings['scope'], $question, $index, true, 5);
             }
 
