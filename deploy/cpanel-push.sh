@@ -83,11 +83,21 @@ for f in "${FILES[@]}"; do
 done
 
 if [ "$NEEDS_DUMP" = "1" ] && [ "${SKIP_DUMP:-0}" != "1" ]; then
-  echo "==> إعادة توليد خريطة الأصناف (composer dump-autoload)"
+  echo "==> تحديث خريطة الأصناف"
+
+  # يُرفع المنظّف أولًا كي يتوفر البديل حتى لو غاب Composer عن الاستضافة.
+  ssh $SSHO "$HOST" "mkdir -p $RP/deploy"
+  scp $SCPO deploy/prune-classmap.php "$HOST:$RP/deploy/" >/dev/null
+
+  # الترتيب مقصود: composer يعيد بناء الخريطة كاملة، والمنظّف يزيل الإدخالات
+  # القديمة فقط فتُحلّ أصنافها بـPSR-4. الأول أشمل، والثاني لا يحتاج إلا PHP.
+  # الفشل هنا يُلغي النشر: خريطة قديمة لا تُسقط الموقع بل تُسقط بعض مساراته،
+  # فيمرّ العطل بلا أن يلاحظه أحد.
   ssh $SSHO "$HOST" "cd $RP && \
     if command -v composer >/dev/null 2>&1; then composer dump-autoload -o --no-interaction; \
     elif [ -f composer.phar ]; then php composer.phar dump-autoload -o --no-interaction; \
-    else echo 'تحذير: لا composer على الخادم — خريطة الأصناف لم تُحدَّث'; exit 1; fi"
+    else echo 'لا composer — التنظيف بالبديل'; php deploy/prune-classmap.php; fi" \
+    || { echo "أُلغي النشر: تعذّر تحديث خريطة الأصناف. الملفات مرفوعة والنسخة الاحتياطية في $BK"; exit 1; }
 fi
 
 echo "==> تنظيف كاش الـ views والمسارات + إعادة تشغيل opcache"
