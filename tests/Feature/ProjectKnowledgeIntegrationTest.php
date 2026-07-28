@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\ProjectKnowledgeSource;
 use App\Models\Tool;
 use App\Models\User;
+use App\Modules\Brain\Models\BrainEvent;
+use App\Modules\Brain\Models\BrainFact;
 use App\Modules\Intake\ConsultationService;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ToolRunService;
@@ -47,33 +48,53 @@ class ProjectKnowledgeIntegrationTest extends TestCase
             'قيمة أدق من أداة التشخيص',
             $project->answers()->where('field_key', 'value_proposition')->firstOrFail()->value(),
         );
-        $this->assertDatabaseHas('project_knowledge_sources', [
+        // كل مصدر يترك أثره في الدماغ باسم وحدته، لا في جدول معرفة ثانٍ.
+        $this->assertDatabaseHas('brain_facts', [
             'project_id' => $project->id,
-            'field_key' => 'value_proposition',
-            'source_type' => 'profile',
-            'event_type' => 'asserted',
+            'key' => 'value_proposition',
+            'source_module' => 'Profile',
         ]);
-        $this->assertDatabaseHas('project_knowledge_sources', [
+        $this->assertDatabaseHas('brain_facts', [
             'project_id' => $project->id,
-            'field_key' => 'value_proposition',
-            'source_type' => 'tool',
-            'source_id' => $run->id,
-            'event_type' => 'asserted',
+            'key' => 'value_proposition',
+            'source_module' => 'PlatformBridge',
+            'source_reference' => "tool:marketing-score:{$run->id}",
         ]);
-        $this->assertDatabaseHas('project_knowledge_sources', [
+        $this->assertDatabaseHas('brain_facts', [
             'project_id' => $project->id,
-            'field_key' => $question->definition->internal_variable,
-            'source_type' => 'consultation',
-            'source_id' => $session->id,
-            'event_type' => 'asserted',
+            'key' => $question->definition->internal_variable,
+            'source_module' => 'Intake',
         ]);
 
-        $history = ProjectKnowledgeSource::where('project_id', $project->id)
-            ->where('field_key', 'value_proposition')
+        $history = BrainFact::where('project_id', $project->id)
+            ->where('key', 'value_proposition')
             ->oldest('id')->get();
         $this->assertCount(2, $history);
-        $this->assertSame('قيمة من ملف المشروع', $history[0]->value());
-        $this->assertSame('قيمة أدق من أداة التشخيص', $history[1]->value());
+        $this->assertSame('قيمة من ملف المشروع', $history[0]->value_json['value']);
+        $this->assertSame('قيمة أدق من أداة التشخيص', $history[1]->value_json['value']);
+
+        /*
+         * مصدران مختلفان قالا شيئين مختلفين، فبقيت الروايتان ونشأ حدث تعارض.
+         * لا استبدال هنا: الاستبدال لمن يصحّح نفسه، والتعارض لمن يخالف غيره —
+         * وأن يصف صاحب النشاط قيمته بشكل وتقول أداة التشخيص بشكل آخر معلومة
+         * تستحق المراجعة لا حسمًا صامتًا (§٩).
+         */
+        $this->assertNull($history[0]->superseded_by);
+        $this->assertNull($history[1]->superseded_by);
+
+        $conflicts = BrainEvent::where('project_id', $project->id)
+            ->where('type', BrainEvent::TYPE_FACT_CONFLICT)
+            ->whereNull('outcome')->get();
+        $this->assertTrue(
+            $conflicts->contains(fn (BrainEvent $event) => ($event->body['key'] ?? null) === 'value_proposition'),
+            'التعارض بين الملف والأداة يجب أن يُعلَّم للمراجعة.',
+        );
+
+        // ومع ذلك يبقى للشاشة قيمة واحدة: الإسقاط يعرض الأحدث.
+        $this->assertSame(
+            'قيمة أدق من أداة التشخيص',
+            $project->answers()->where('field_key', 'value_proposition')->firstOrFail()->value(),
+        );
     }
 
     #[Test]
@@ -93,11 +114,23 @@ class ProjectKnowledgeIntegrationTest extends TestCase
             'project_id' => $project->id,
             'field_key' => $question->definition->internal_variable,
         ]);
+        $key = $question->definition->internal_variable;
+
+        // الحقيقة تبقى بقيمتها وتخرج من السريان وحده.
+        $fact = BrainFact::where('project_id', $project->id)->where('key', $key)->firstOrFail();
+        $this->assertNotNull($fact->retracted_at);
+        $this->assertSame('Intake', $fact->retracted_by_module);
+        $this->assertSame('مشروع قائم', $fact->value_json['value']);
+
         $this->assertSame(
-            ['asserted', 'retracted'],
-            ProjectKnowledgeSource::where('project_id', $project->id)
-                ->where('field_key', $question->definition->internal_variable)
-                ->oldest('id')->pluck('event_type')->all(),
+            0,
+            BrainFact::where('project_id', $project->id)->where('key', $key)->active()->count(),
+            'المسحوبة لا تُعدّ سارية.',
         );
+
+        $this->assertDatabaseHas('brain_events', [
+            'project_id' => $project->id,
+            'type' => BrainEvent::TYPE_FACT_RETRACTED,
+        ]);
     }
 }

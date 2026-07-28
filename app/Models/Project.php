@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Brain\Models\BrainFact;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,9 +67,16 @@ class Project extends Model
         return $this->hasMany(ProjectAnswer::class);
     }
 
-    public function knowledgeSources(): HasMany
+    /**
+     * حقائق الدماغ عن هذا النشاط — السجل التراكمي الذي حلّ محل
+     * `project_knowledge_sources`.
+     *
+     * للقراءة المُهيكلة استخدم `App\Modules\Brain\BrainReader`: هو من يعرف
+     * قواعد السريان (المستبدَل والمسحوب لا يُعدّان ساريين).
+     */
+    public function brainFacts(): HasMany
     {
-        return $this->hasMany(ProjectKnowledgeSource::class);
+        return $this->hasMany(BrainFact::class);
     }
 
     public function consultationSessions(): HasMany

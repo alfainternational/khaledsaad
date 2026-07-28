@@ -109,6 +109,52 @@ class BrainWriter
     }
 
     /**
+     * سحب حقيقة: تراجَع المستخدم أو زال مصدرها.
+     *
+     * الصف يبقى بقيمته ويخرج من السريان وحده (§٩: لا تُحذف حقيقة). أن يجيب
+     * أحدهم ثم يقول «لا أعرف» معلومة عن نضج نشاطه، لا فراغ يُمحى.
+     *
+     * يعيد الحقيقة المسحوبة، أو null إن لم تكن هناك حقيقة سارية أصلًا.
+     */
+    public function retract(
+        Project $project,
+        string $key,
+        string $sourceModule,
+        ?array $metadata = null,
+        ?Carbon $retractedAt = null,
+    ): ?BrainFact {
+        $retractedAt ??= now();
+
+        return DB::transaction(function () use ($project, $key, $sourceModule, $metadata, $retractedAt): ?BrainFact {
+            $current = BrainFact::query()
+                ->where('project_id', $project->id)
+                ->where('key', $key)
+                ->active()
+                ->lockForUpdate()
+                ->orderByDesc('observed_at')
+                ->first();
+
+            if ($current === null) {
+                return null;
+            }
+
+            $current->update([
+                'retracted_at' => $retractedAt,
+                'retracted_by_module' => $sourceModule,
+            ]);
+
+            $this->event($project, BrainEvent::TYPE_FACT_RETRACTED, [
+                'key' => $key,
+                'fact_id' => $current->id,
+                'source' => $sourceModule,
+                'metadata' => $metadata,
+            ], $retractedAt);
+
+            return $current;
+        });
+    }
+
+    /**
      * تسجيل حدث. النتيجة تُملأ لاحقًا عبر resolve().
      *
      * @param  array<string, mixed>|null  $body

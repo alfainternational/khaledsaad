@@ -24,7 +24,7 @@ class BrainFact extends Model
     protected $fillable = [
         'project_id', 'key', 'value_json', 'value_hash', 'evidence_level',
         'source_module', 'source_reference', 'period', 'metadata',
-        'observed_at', 'superseded_by',
+        'observed_at', 'superseded_by', 'retracted_at', 'retracted_by_module',
     ];
 
     protected function casts(): array
@@ -34,6 +34,7 @@ class BrainFact extends Model
             'metadata' => 'array',
             'evidence_level' => EvidenceLevel::class,
             'observed_at' => 'datetime',
+            'retracted_at' => 'datetime',
         ];
     }
 
@@ -48,11 +49,19 @@ class BrainFact extends Model
     }
 
     /**
-     * الحقائق السارية: ما لم يُستبدل بعد.
+     * الحقائق السارية: ما لم يُستبدل ولم يُسحب.
+     *
+     * السحب ليس حذفًا: الصف يبقى بقيمته، ويخرج من السريان وحده. الفرق بين
+     * «لم يُسأل قط» و«أجاب ثم تراجع» يظل مقروءًا في التاريخ.
      */
     public function scopeActive(Builder $query): Builder
     {
-        return $query->whereNull('superseded_by');
+        return $query->whereNull('superseded_by')->whereNull('retracted_at');
+    }
+
+    public function isRetracted(): bool
+    {
+        return $this->retracted_at !== null;
     }
 
     /**

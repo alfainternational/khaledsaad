@@ -4,12 +4,37 @@ namespace App\Modules\Brain;
 
 use App\Models\Project;
 use App\Models\ProjectAnswer;
-use App\Models\ProjectKnowledgeSource;
+use App\Modules\Shared\Evidence\EvidenceLevel;
+use App\Modules\Shared\Evidence\EvidenceMapper;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * بوابة المعرفة عن المشروع: تكتب السجل في الدماغ وتُحدِّث إسقاط الحالة.
+ *
+ * طبقتان لكل معلومة:
+ *   - `brain_facts`   السجل التاريخي: يتراكم ولا يُحذف منه شيء (§٩).
+ *   - `project_answers` إسقاط الحالة الراهنة: صف واحد لكل حقل، يقرأه عشرات
+ *                       المواضع فيبقى سريعًا ومباشرًا.
+ *
+ * قبل هذا التحويل كان السجل في `project_knowledge_sources`، فصار مصدر حقيقة
+ * ثانيًا بجانب الدماغ. الجدول أُسقط ووظيفته انتقلت هنا كاملة.
+ *
+ * فرق سلوكي مقصود بين الطبقتين: عند تعارض مصدرين يحفظ الدماغ الروايتين
+ * ويُعلّم التعارض للمراجعة، بينما يعرض الإسقاط الأحدث. هذا ليس تناقضًا — الشاشة
+ * تحتاج قيمة واحدة، والمراجعة تحتاج القصة كاملة.
+ */
 class ProjectKnowledgeService
 {
-    /** @param array<string,mixed> $metadata */
+    public function __construct(
+        private readonly BrainWriter $brain,
+        private readonly EvidenceMapper $evidence,
+    ) {}
+
+    /**
+     * تسجيل معلومة.
+     *
+     * @param  array<string,mixed>  $metadata
+     */
     public function record(
         Project $project,
         string $fieldKey,
@@ -35,27 +60,26 @@ class ProjectKnowledgeService
                 ],
             );
 
-            $encoded = json_encode(['value' => $value], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            ProjectKnowledgeSource::create([
-                'project_id' => $project->id,
-                'field_key' => $fieldKey,
-                'value_json' => ['value' => $value],
-                'value_hash' => hash('sha256', (string) $encoded),
-                'event_type' => 'asserted',
-                'source_type' => $sourceType,
-                'source_key' => $sourceKey,
-                'source_id' => $sourceId,
-                'confidence' => $confidence,
-                'period' => $period,
-                'metadata' => $metadata,
-                'recorded_at' => now(),
-            ]);
+            $this->brain->record(
+                project: $project,
+                key: $fieldKey,
+                value: $value,
+                level: $this->levelFor($confidence),
+                sourceModule: $this->moduleFor($sourceType),
+                sourceReference: $this->referenceFor($sourceType, $sourceKey, $sourceId),
+                period: $period,
+                metadata: $metadata === [] ? null : $metadata,
+            );
 
             return $answer;
         });
     }
 
-    /** @param array<string,mixed> $metadata */
+    /**
+     * سحب معلومة: يُحذف الإسقاط ويبقى السجل.
+     *
+     * @param  array<string,mixed>  $metadata
+     */
     public function retract(
         Project $project,
         string $fieldKey,
@@ -65,20 +89,48 @@ class ProjectKnowledgeService
         array $metadata = [],
     ): void {
         DB::transaction(function () use ($project, $fieldKey, $sourceType, $sourceKey, $sourceId, $metadata): void {
-            ProjectAnswer::where('project_id', $project->id)->where('field_key', $fieldKey)->delete();
-            ProjectKnowledgeSource::create([
-                'project_id' => $project->id,
-                'field_key' => $fieldKey,
-                'value_json' => null,
-                'value_hash' => null,
-                'event_type' => 'retracted',
-                'source_type' => $sourceType,
-                'source_key' => $sourceKey,
-                'source_id' => $sourceId,
-                'confidence' => 'high',
-                'metadata' => $metadata,
-                'recorded_at' => now(),
-            ]);
+            ProjectAnswer::where('project_id', $project->id)
+                ->where('field_key', $fieldKey)
+                ->delete();
+
+            $this->brain->retract(
+                project: $project,
+                key: $fieldKey,
+                sourceModule: $this->moduleFor($sourceType),
+                metadata: [
+                    'source_type' => $sourceType,
+                    'source_reference' => $this->referenceFor($sourceType, $sourceKey, $sourceId),
+                ] + $metadata,
+            );
         });
+    }
+
+    /**
+     * مستوى الدليل من مفردة الثقة القديمة.
+     *
+     * لا يعتمد على نوع المصدر عمدًا: كل ما يمرّ من هنا أصله المستخدم أو أداة
+     * تعمل على كلامه، فلا يبلغ `measured` أبدًا (§١٥). القياس يأتي من الجامعات
+     * التي ترى مصدرًا مستقلًا عنه — التدقيق التقني وسجلات الزحف — وتلك تكتب في
+     * الدماغ مباشرة بلا وساطة هذه الطبقة.
+     */
+    private function levelFor(string $confidence): EvidenceLevel
+    {
+        return $this->evidence->map($confidence);
+    }
+
+    private function moduleFor(string $sourceType): string
+    {
+        return match ($sourceType) {
+            'consultation' => 'Intake',
+            'tool' => 'PlatformBridge',
+            default => 'Profile',
+        };
+    }
+
+    private function referenceFor(string $sourceType, ?string $sourceKey, ?int $sourceId): ?string
+    {
+        $parts = array_filter([$sourceType, $sourceKey, $sourceId === null ? null : (string) $sourceId]);
+
+        return $parts === [] ? null : implode(':', $parts);
     }
 }

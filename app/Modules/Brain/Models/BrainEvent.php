@@ -21,6 +21,9 @@ class BrainEvent extends Model
     /** حقيقة استُبدلت بأحدث منها. */
     public const TYPE_FACT_SUPERSEDED = 'fact_superseded';
 
+    /** حقيقة سُحبت: تراجَع المستخدم أو زال مصدرها. */
+    public const TYPE_FACT_RETRACTED = 'fact_retracted';
+
     protected $fillable = ['project_id', 'type', 'body', 'outcome', 'occurred_at'];
 
     protected function casts(): array

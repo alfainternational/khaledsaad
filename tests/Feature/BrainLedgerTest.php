@@ -47,7 +47,8 @@ class BrainLedgerTest extends TestCase
         // إعادة تأكيد ليست تغييرًا: لو أنشأنا صفًا لكل تكرار لامتلأ التاريخ
         // بضجيج يخفي التغيّرات الحقيقية التي يقوم عليها التنبيه.
         $this->assertSame($first->id, $again->id);
-        $this->assertSame(1, BrainFact::where('project_id', $project->id)->count());
+        $this->assertSame(1, BrainFact::where('project_id', $project->id)
+            ->where('key', 'monthly_budget')->count());
     }
 
     #[Test]
@@ -62,7 +63,8 @@ class BrainLedgerTest extends TestCase
         $this->assertSame($new->id, $old->fresh()->superseded_by);
 
         // السارية واحدة، والتاريخ محفوظ كاملًا.
-        $this->assertSame(1, BrainFact::where('project_id', $project->id)->active()->count());
+        $this->assertSame(1, BrainFact::where('project_id', $project->id)
+            ->where('key', 'monthly_budget')->active()->count());
         $this->assertCount(2, $this->reader->history($project, 'monthly_budget'));
         $this->assertSame(25000, $this->reader->value($project, 'monthly_budget'));
     }
@@ -79,7 +81,10 @@ class BrainLedgerTest extends TestCase
         // معلومة بحد ذاتها، وحسمها صامتًا يمحوها.
         $this->assertNull($stated->fresh()->superseded_by);
         $this->assertNull($measured->fresh()->superseded_by);
-        $this->assertSame(2, BrainFact::where('project_id', $project->id)->active()->count());
+
+        // العدّ على المفتاح لا على المشروع: إنشاء المشروع نفسه يكتب حقائق ملفه.
+        $this->assertSame(2, BrainFact::where('project_id', $project->id)
+            ->where('key', 'monthly_traffic')->active()->count());
 
         $conflicts = $this->reader->openConflicts($project);
         $this->assertCount(1, $conflicts);

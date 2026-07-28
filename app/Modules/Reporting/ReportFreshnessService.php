@@ -20,7 +20,8 @@ class ReportFreshnessService
                 $this->max('projects', 'updated_at', ['id' => $projectId]),
                 $this->max('project_profiles', 'updated_at', ['project_id' => $projectId]),
                 $this->max('project_answers', 'updated_at', ['project_id' => $projectId]),
-                $this->max('project_knowledge_sources', 'recorded_at', ['project_id' => $projectId]),
+                // سجل الدماغ حلّ محل project_knowledge_sources كمصدر الحقيقة.
+                $this->max('brain_facts', 'observed_at', ['project_id' => $projectId]),
             ]),
             'diagnostics' => $this->latestDiagnosticChange($projectId),
             'consultation' => $this->latestConsultationChange($projectId),
