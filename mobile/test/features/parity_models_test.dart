@@ -77,7 +77,9 @@ void main() {
             {
               'key': 'business_model',
               'label': 'نموذج العمل',
-              'help': null,
+              'help': 'اختر الإجابة الأقرب إلى وضع مشروعك الآن.',
+              'why': 'لأن نموذج العمل يغيّر طريقة تقييم العرض والبيع.',
+              'example': 'مثال: بيع مباشر للأفراد.',
               'type': 'select',
               'required': true,
               'options': [
@@ -93,6 +95,15 @@ void main() {
 
     expect(run.uuid, 'abc-123');
     expect(run.steps.single.fields.single.options.single.label, 'بيع مباشر');
+    expect(
+      run.steps.single.fields.single.help,
+      'اختر الإجابة الأقرب إلى وضع مشروعك الآن.',
+    );
+    expect(
+      run.steps.single.fields.single.why,
+      'لأن نموذج العمل يغيّر طريقة تقييم العرض والبيع.',
+    );
+    expect(run.steps.single.fields.single.example, 'مثال: بيع مباشر للأفراد.');
     expect(run.completenessPercent, 40);
     expect(run.isTerminal, isFalse);
     expect(run.insights!.summary.agencyReadinessPercent, 64);

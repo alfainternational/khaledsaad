@@ -341,16 +341,16 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
   Widget _buildField(ToolFieldModel field) {
     final label = field.required ? field.label : '${field.label} (اختياري)';
 
-    return switch (field.type) {
+    final control = switch (field.type) {
       'textarea' => TextFormField(
         initialValue: _draft[field.key]?.toString(),
-        decoration: InputDecoration(labelText: label, helperText: field.help),
+        decoration: const InputDecoration(),
         maxLines: 4,
         onChanged: (value) => _draftChanged(field.key, value),
       ),
       'number' => TextFormField(
         initialValue: _draft[field.key]?.toString(),
-        decoration: InputDecoration(labelText: label, helperText: field.help),
+        decoration: const InputDecoration(),
         keyboardType: TextInputType.number,
         onChanged: (value) => _draftChanged(field.key, value),
       ),
@@ -359,7 +359,7 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
             field.options.any((o) => o.value == _draft[field.key]?.toString())
             ? _draft[field.key].toString()
             : null,
-        decoration: InputDecoration(labelText: label, helperText: field.help),
+        decoration: const InputDecoration(),
         items: field.options
             .map(
               (option) => DropdownMenuItem(
@@ -370,17 +370,13 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
             .toList(),
         onChanged: (value) => setState(() => _draftChanged(field.key, value)),
       ),
-      'multiselect' => _buildMultiSelect(field, label),
+      'multiselect' => _buildMultiSelect(field),
       _ => TextFormField(
         initialValue: _draft[field.key]?.toString(),
-        decoration: InputDecoration(labelText: label, helperText: field.help),
+        decoration: const InputDecoration(),
         onChanged: (value) => _draftChanged(field.key, value),
       ),
     };
-  }
-
-  Widget _buildMultiSelect(ToolFieldModel field, String label) {
-    final selected = List<String>.from(_draft[field.key] as List? ?? const []);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,19 +384,52 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
         Text(
           label,
           style: const TextStyle(
-            fontWeight: FontWeight.w600,
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
             color: BrandColors.navy,
           ),
         ),
-        if (field.help != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              field.help!,
-              style: const TextStyle(color: BrandColors.muted, fontSize: 12),
-            ),
+        if (field.help != null && field.help!.isNotEmpty) ...[
+          const SizedBox(height: 5),
+          Text(field.help!, style: const TextStyle(color: BrandColors.muted)),
+        ],
+        if (field.example != null && field.example!.isNotEmpty) ...[
+          const SizedBox(height: 5),
+          Text(
+            field.example!,
+            style: const TextStyle(color: BrandColors.muted, fontSize: 12),
           ),
-        const SizedBox(height: 8),
+        ],
+        const SizedBox(height: 10),
+        control,
+        if (field.why != null && field.why!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(bottom: 8),
+            shape: const Border(),
+            title: const Text(
+              'لماذا نسأل؟',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            children: [
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(field.why!),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMultiSelect(ToolFieldModel field) {
+    final selected = List<String>.from(_draft[field.key] as List? ?? const []);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         Wrap(
           spacing: 8,
           runSpacing: 8,

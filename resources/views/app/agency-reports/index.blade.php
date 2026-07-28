@@ -117,15 +117,20 @@
                             'primary_goal' => $project->profile?->primary_goal,
                             default => $brief[$field['key']] ?? null,
                         })
+                        @php($guidance = match ($field['type']) {
+                            'multiselect' => 'اختر كل ما ينطبق على ما تريد إسناده للوكالة.',
+                            'bool', 'select' => 'اختر الإجابة الأقرب إلى وضع مشروعك الآن.',
+                            default => 'اكتب إجابتك بطريقتك، ويمكنك استخدام مثال من واقع مشروعك.',
+                        })
 
                         <label class="field">
                             <span class="field__label">
                                 {{ $field['label'] }}
                                 @if (! empty($field['critical']))<span class="badge">أساسي</span>@endif
                             </span>
+                            <span class="field__help">{{ $guidance }}</span>
 
                             @if ($field['type'] === 'multiselect')
-                                <span class="field__help">{{ $field['why'] }}</span>
                                 <span class="choice-grid">
                                     @foreach ($field['options'] as $value => $label)
                                         <label class="field field--inline">
@@ -142,16 +147,17 @@
                                         <option value="{{ $value }}" @selected($current === $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>
-                                <span class="field__help">{{ $field['why'] }}</span>
                             @elseif ($field['type'] === 'textarea')
                                 <textarea name="brief[{{ $field['key'] }}]" rows="3"
                                     placeholder="{{ $field['placeholder'] ?? '' }}">{{ $current }}</textarea>
-                                <span class="field__help">{{ $field['why'] }}</span>
                             @else
                                 <input type="text" name="brief[{{ $field['key'] }}]" value="{{ $current }}"
                                     placeholder="{{ $field['placeholder'] ?? '' }}">
-                                <span class="field__help">{{ $field['why'] }}</span>
                             @endif
+                            <details class="field__why">
+                                <summary>لماذا نسأل؟</summary>
+                                <p>{{ $field['why'] }}</p>
+                            </details>
                         </label>
                     @endforeach
                 </fieldset>

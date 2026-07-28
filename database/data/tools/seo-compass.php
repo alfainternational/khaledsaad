@@ -84,7 +84,7 @@ return [
                 ['value' => 'full', 'label' => 'موقع كامل بصفحات متعددة'],
             ]],
 
-        ['key' => 'website_url', 'label' => 'رابط موقعك', 'type' => 'url', 'step' => 1,
+        ['key' => 'website_url', 'label' => 'ما رابط الموقع الذي تريد تحسين ظهوره؟', 'type' => 'url', 'step' => 1,
             'required' => false, 'profile_key' => 'website',
             'visible_when' => ['has_website' => ['basic', 'full']],
             'why' => 'حتى تكون التوصيات عن موقعك أنت لا عن حالة عامة.'],

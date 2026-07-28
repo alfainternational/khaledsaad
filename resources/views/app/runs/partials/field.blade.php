@@ -18,6 +18,14 @@
         @endunless
     </span>
 
+    @if ($field['help'])
+        <span class="field__help">{{ $field['help'] }}</span>
+    @endif
+
+    @if (! empty($field['example']))
+        <span class="field__example">{{ $field['example'] }}</span>
+    @endif
+
     @switch ($field['type'])
         @case('textarea')
             <textarea name="{{ $field['key'] }}" rows="4"
@@ -64,18 +72,10 @@
                 aria-labelledby="label-{{ $field['key'] }}" @required($field['required'])>
     @endswitch
 
-    @if ($field['help'])
-        <span class="field__help">{{ $field['help'] }}</span>
-    @endif
-
-    @if (! empty($field['example']))
-        <span class="field__example">{{ $field['example'] }}</span>
-    @endif
-
     @if (! empty($field['why']))
         {{-- لماذا نسأل: حق المستخدم أن يعرف قبل أن يجيب. --}}
         <details class="field__why">
-            <summary>لماذا نسأل عن هذه؟</summary>
+            <summary>لماذا نسأل؟</summary>
             <p>{{ $field['why'] }}</p>
         </details>
     @endif

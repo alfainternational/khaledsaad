@@ -14,7 +14,6 @@
     @if ($consultation['status'] === 'active' && $consultation['question'])
         <article class="card consultation-question">
             <h2>{{ $consultation['question']['text'] }}</h2>
-            @if ($consultation['question']['why']) <p><strong>لماذا نسأل؟</strong> {{ $consultation['question']['why'] }}</p> @endif
             @if ($consultation['question']['help']) <p class="muted">{{ $consultation['question']['help'] }}</p> @endif
 
             <form method="POST" action="{{ route('app.consultations.answer', $consultation['uuid']) }}">
@@ -27,6 +26,7 @@
                     @endif
                 </div>
             </form>
+            @if ($consultation['question']['why']) <p><strong>لماذا نسأل؟</strong> {{ $consultation['question']['why'] }}</p> @endif
         </article>
     @elseif ($consultation['status'] === 'review')
         <article class="card">

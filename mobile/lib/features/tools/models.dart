@@ -91,6 +91,8 @@ class ToolFieldModel {
     required this.required,
     required this.options,
     this.help,
+    this.why,
+    this.example,
     this.value,
   });
 
@@ -100,6 +102,8 @@ class ToolFieldModel {
     type: json['type'] as String,
     required: json['required'] as bool? ?? true,
     help: json['help'] as String?,
+    why: json['why'] as String?,
+    example: json['example'] as String?,
     options: (json['options'] as List? ?? const [])
         .map((e) => FieldOption.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList(),
@@ -111,6 +115,8 @@ class ToolFieldModel {
   final String type;
   final bool required;
   final String? help;
+  final String? why;
+  final String? example;
   final List<FieldOption> options;
   final dynamic value;
 
