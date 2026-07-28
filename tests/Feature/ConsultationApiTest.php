@@ -39,7 +39,7 @@ class ConsultationApiTest extends TestCase
 
         $this->actingAs($user)->get(route('app.consultations.show', $uuid))
             ->assertOk()
-            ->assertSee('ما طبيعة ما تقدمه؟');
+            ->assertSee('ما الذي يقدمه مشروعك للعميل؟');
     }
 
     #[Test]
