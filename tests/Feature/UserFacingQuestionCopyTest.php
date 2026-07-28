@@ -76,6 +76,24 @@ class UserFacingQuestionCopyTest extends TestCase
         $this->assertGreaterThan(strpos($brief, '@endif'), strrpos($brief, '<details class="field__why">'));
     }
 
+    public function test_public_faqs_and_confirmation_questions_use_clear_customer_language(): void
+    {
+        $questions = collect(config('brand.faqs'))->pluck('question')->all();
+
+        $this->assertContains('هل تناسبني المنصة إذا لم أكن خبيرًا في التسويق؟', $questions);
+        $this->assertContains('كم يستغرق إكمال التشخيص؟', $questions);
+        $this->assertContains('ما الفرق بين التشخيص في المنصة والاستشارة المباشرة مع خالد سعد؟', $questions);
+
+        $this->assertStringContainsString(
+            'هل تريد حذف هذه الخطة؟ لن يتمكن العملاء من الاشتراك بها بعد الحذف.',
+            file_get_contents(resource_path('views/admin/plans/index.blade.php')),
+        );
+        $this->assertStringContainsString(
+            'هل تريد حذف بوابة الدفع هذه؟ لن تظهر للعملاء بعد الحذف.',
+            file_get_contents(resource_path('views/admin/gateways/index.blade.php')),
+        );
+    }
+
     /**
      * @return array<int, string>
      */

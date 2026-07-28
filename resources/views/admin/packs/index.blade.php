@@ -27,7 +27,7 @@
                         <td>{{ $pack->is_active ? 'نعم' : 'لا' }}</td>
                         <td class="table__actions">
                             <a href="{{ route('admin.packs.edit', $pack) }}" class="btn btn--ghost btn--sm">تعديل</a>
-                            <form method="POST" action="{{ route('admin.packs.destroy', $pack) }}" data-confirm="حذف هذه الحزمة؟">
+                            <form method="POST" action="{{ route('admin.packs.destroy', $pack) }}" data-confirm="هل تريد حذف حزمة الرصيد هذه؟ لن يتمكن العملاء من شرائها بعد الحذف.">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn--ghost btn--sm">حذف</button>
                             </form>

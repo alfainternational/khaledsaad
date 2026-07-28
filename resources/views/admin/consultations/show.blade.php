@@ -2,7 +2,7 @@
 @section('layout', 'detail')
 @section('content')
 <section class="page-head"><p class="eyebrow">{{ $version->status === 'draft' ? 'مسودة قابلة للتحرير' : 'إصدار منشور مقفل' }}</p><h1>{{ $version->blueprint->name }} — {{ $version->version }}</h1></section>
-<div class="actions"><a class="btn btn--secondary" href="{{ route('admin.consultations.simulate', $version) }}">حاكِ النطاق</a>@if($version->status === 'draft')<form method="POST" action="{{ route('admin.consultations.publish', $version) }}" data-confirm="نشر هذا الإصدار وقفله؟">@csrf<button class="btn btn--primary">تحقق وانشر</button></form>@endif</div>
+<div class="actions"><a class="btn btn--secondary" href="{{ route('admin.consultations.simulate', $version) }}">حاكِ النطاق</a>@if($version->status === 'draft')<form method="POST" action="{{ route('admin.consultations.publish', $version) }}" data-confirm="هل تريد نشر هذا الإصدار وقفله؟ لن تتمكن من تعديل الأسئلة المنشورة بعد ذلك.">@csrf<button class="btn btn--primary">تحقق وانشر</button></form>@endif</div>
 @foreach($version->modules as $module)
 <details class="card" @if($loop->first) open @endif>
     <summary><strong>{{ $module->module->name }}</strong> · {{ $module->importance }} · {{ $module->questions->count() }} سؤال</summary>
