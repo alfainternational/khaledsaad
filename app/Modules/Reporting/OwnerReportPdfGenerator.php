@@ -15,7 +15,10 @@ class OwnerReportPdfGenerator
 
     private const TEMPLATE_VERSION = 2;
 
-    public function __construct(private readonly AgencyReportDocumentAdapter $documents) {}
+    public function __construct(
+        private readonly AgencyReportDocumentAdapter $documents,
+        private readonly ArabicPdfEngine $engine,
+    ) {}
 
     public function ensure(AgencyReport $report): string
     {
@@ -31,7 +34,7 @@ class OwnerReportPdfGenerator
             'brand' => config('brand'),
         ])->render();
 
-        $mpdf = $this->engine();
+        $mpdf = $this->engine->make('تقريرك الخاص');
         $mpdf->WriteHTML($html);
         Storage::disk(self::DISK)->put($path, $mpdf->Output('', 'S'));
 
@@ -44,39 +47,5 @@ class OwnerReportPdfGenerator
             $this->ensure($report),
             "تقرير-مشروعي-{$report->project->slug}-v{$report->version}.pdf",
         );
-    }
-
-    private function engine(): Mpdf
-    {
-        $fontDirs = (new ConfigVariables)->getDefaults()['fontDir'];
-        $fontData = (new FontVariables)->getDefaults()['fontdata'];
-        $tempDir = storage_path('app/mpdf');
-
-        if (! is_dir($tempDir)) {
-            mkdir($tempDir, 0775, true);
-        }
-
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'directionality' => 'rtl',
-            'autoScriptToLang' => false,
-            'autoLangToFont' => false,
-            'tempDir' => $tempDir,
-            'fontDir' => [...$fontDirs, public_path('assets/fonts')],
-            'fontdata' => $fontData + [
-                'hacentunisia' => ['R' => 'Hacen-Tunisia.ttf', 'useOTL' => 0xFF],
-            ],
-            'default_font' => 'hacentunisia',
-            'margin_top' => 15,
-            'margin_bottom' => 18,
-            'margin_left' => 13,
-            'margin_right' => 13,
-        ]);
-
-        $mpdf->SetDirectionality('rtl');
-        $mpdf->SetHTMLFooter('<div style="border-top:1px solid #dfe8f5;padding-top:6px;font-size:8pt;color:#5d6b82;text-align:center;">'.e(config('brand.name', 'خالد سعد')).' · تقريرك الخاص · صفحة {PAGENO} من {nbpg}</div>');
-
-        return $mpdf;
     }
 }

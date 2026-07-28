@@ -15,7 +15,10 @@ class AgencyReportPdfGenerator
 
     private const TEMPLATE_VERSION = 3;
 
-    public function __construct(private readonly AgencyReportSharing $sharing) {}
+    public function __construct(
+        private readonly AgencyReportSharing $sharing,
+        private readonly ArabicPdfEngine $engine,
+    ) {}
 
     public function ensure(AgencyReport $report): string
     {
@@ -33,7 +36,7 @@ class AgencyReportPdfGenerator
             'brand' => config('brand'),
         ])->render();
 
-        $mpdf = $this->engine();
+        $mpdf = $this->engine->make('موجز وكالة');
         $mpdf->WriteHTML($html);
         Storage::disk(self::DISK)->put($path, $mpdf->Output('', 'S'));
 
@@ -68,39 +71,5 @@ class AgencyReportPdfGenerator
     private function path(AgencyReport $report): string
     {
         return "agency-reports/agency-report-{$report->id}-v".self::TEMPLATE_VERSION.'.pdf';
-    }
-
-    private function engine(): Mpdf
-    {
-        $fontDirs = (new ConfigVariables)->getDefaults()['fontDir'];
-        $fontData = (new FontVariables)->getDefaults()['fontdata'];
-        $tempDir = storage_path('app/mpdf');
-
-        if (! is_dir($tempDir)) {
-            mkdir($tempDir, 0775, true);
-        }
-
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'directionality' => 'rtl',
-            'autoScriptToLang' => false,
-            'autoLangToFont' => false,
-            'tempDir' => $tempDir,
-            'fontDir' => [...$fontDirs, public_path('assets/fonts')],
-            'fontdata' => $fontData + [
-                'hacentunisia' => ['R' => 'Hacen-Tunisia.ttf', 'useOTL' => 0xFF],
-            ],
-            'default_font' => 'hacentunisia',
-            'margin_top' => 15,
-            'margin_bottom' => 18,
-            'margin_left' => 13,
-            'margin_right' => 13,
-        ]);
-
-        $mpdf->SetDirectionality('rtl');
-        $mpdf->SetHTMLFooter('<div style="border-top:1px solid #dfe8f5;padding-top:6px;font-size:8pt;color:#5d6b82;text-align:center;">'.e(config('brand.name', 'خالد سعد')).' · موجز وكالة · صفحة {PAGENO} من {nbpg}</div>');
-
-        return $mpdf;
     }
 }

@@ -106,11 +106,25 @@ class ReportPdfParityTest extends TestCase
 
         $this->assertFileExists(public_path('assets/fonts/Hacen-Tunisia.ttf'));
 
-        // المولّد يسجّل الملف نفسه بلا تبديل تلقائي إلى خط mPDF المدمج.
-        $generator = file_get_contents(app_path('Modules/Reporting/ReportPdfGenerator.php'));
-        $this->assertStringContainsString("'R' => 'Hacen-Tunisia.ttf'", $generator);
-        $this->assertStringContainsString("'autoLangToFont' => false", $generator);
-        $this->assertStringContainsString("'default_font' => 'hacentunisia'", $generator);
+        /*
+         * الإعداد في محرك واحد مشترك لا في كل مولّد.
+         *
+         * كان منسوخًا في ثلاثة مولّدات، فإصلاح خط في أحدها لا يصل البقية
+         * ويخرج ملفان من المنصة نفسها بخطّين مختلفين. الاختبار يحرس المحرك
+         * ويتحقق أن أحدًا لم يعد يبني نسخته الخاصة.
+         */
+        $engine = file_get_contents(app_path('Modules/Reporting/ArabicPdfEngine.php'));
+        $this->assertStringContainsString("'R' => 'Hacen-Tunisia.ttf'", $engine);
+        $this->assertStringContainsString("'autoLangToFont' => false", $engine);
+        $this->assertStringContainsString("'default_font' => 'hacentunisia'", $engine);
+
+        foreach (glob(app_path('Modules/Reporting/*PdfGenerator.php')) ?: [] as $generator) {
+            $this->assertStringNotContainsString(
+                'new Mpdf(',
+                (string) file_get_contents($generator),
+                basename($generator).' يبني محرّكه الخاص بدل المحرك المشترك.',
+            );
+        }
     }
 
     private function report(): Report
