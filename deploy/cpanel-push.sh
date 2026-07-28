@@ -18,9 +18,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ENV_FILE=deploy/cpanel.env
-KEY=deploy/cpanel_deploy.key
+
+# ed25519 هو المفتاح العامل. مفتاح RSA القديم بقي مصرَّحًا له في الخادم لكن
+# توقيعه يُرفض («Server accepts key» ثم Permission denied) — عطل في المفتاح
+# نفسه لا في الخوارزمية ولا في الصدفة، ولذلك استُبدل لا أُصلح.
+KEY=deploy/cpanel_deploy_ed25519
+[ -f "$KEY" ] || KEY=deploy/cpanel_deploy.key
+
 [ -f "$ENV_FILE" ] || { echo "missing $ENV_FILE"; exit 1; }
-[ -f "$KEY" ]      || { echo "missing $KEY (passphrase-less deploy key)"; exit 1; }
+[ -f "$KEY" ]      || { echo "missing deploy key"; exit 1; }
 
 get(){ grep -E "^$1=" "$ENV_FILE" | head -1 | cut -d= -f2-; }
 HOST_ADDR=$(get CPANEL_HOST); PORT=$(get CPANEL_PORT); USER_NAME=$(get CPANEL_USER)

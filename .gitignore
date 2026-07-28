@@ -21,6 +21,9 @@
 /deploy/backups/
 /deploy/cpanel.env
 /deploy/cpanel_deploy.key
+# كل مفاتيح النشر الخاصة، أيًّا كان نوعها أو اسمها.
+/deploy/cpanel_deploy_*
+!/deploy/cpanel_deploy_*.pub
 /khaledsaad.zip
 /mobile/release/
 /mobile/android/app/google-services.json
