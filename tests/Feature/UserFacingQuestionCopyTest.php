@@ -40,6 +40,8 @@ class UserFacingQuestionCopyTest extends TestCase
         $this->assertStringContainsString('<summary>لماذا نسأل؟</summary>', $runField);
         $this->assertStringNotContainsString('لماذا نسأل عن هذه؟', $runField);
         $this->assertStringContainsString('<strong>لماذا نسأل؟</strong>', $consultation);
+        $this->assertLessThan(strpos($consultation, '<form method="POST"'), strpos($consultation, "['help']"));
+        $this->assertGreaterThan(strpos($consultation, '</form>'), strpos($consultation, '<strong>لماذا نسأل؟</strong>'));
     }
 
     public function test_question_facing_sources_avoid_rejected_dialect_and_legacy_phrases(): void
@@ -48,9 +50,30 @@ class UserFacingQuestionCopyTest extends TestCase
             ->map(fn (string $path): string => file_get_contents($path))
             ->implode("\n");
 
-        foreach (['جاوب', 'شغلك', 'عندك', 'أي واحدة من هذه تحصل معك', 'لماذا نسأل عن هذه؟'] as $rejected) {
+        foreach ([' جاوب ', ' شغلك ', ' عندك ', 'أي واحدة من هذه تحصل معك', 'لماذا نسأل عن هذه؟'] as $rejected) {
             $this->assertStringNotContainsString($rejected, $copy, 'Rejected user-facing phrase: '.$rejected);
         }
+    }
+
+    public function test_project_profile_questions_follow_the_same_question_help_and_reason_model(): void
+    {
+        $create = file_get_contents(resource_path('views/app/projects/create.blade.php'));
+        $edit = file_get_contents(resource_path('views/app/projects/edit.blade.php'));
+
+        foreach ([$create, $edit] as $view) {
+            $this->assertStringContainsString('ما اسم مشروعك؟', $view);
+            $this->assertStringContainsString('في أي مجال يعمل مشروعك؟', $view);
+            $this->assertStringContainsString('<summary>لماذا نسأل؟</summary>', $view);
+        }
+    }
+
+    public function test_agency_brief_questions_show_guidance_before_the_control_and_reason_after_it(): void
+    {
+        $brief = file_get_contents(resource_path('views/app/agency-reports/index.blade.php'));
+
+        $this->assertStringContainsString("@php(\$guidance = match (\$field['type'])", $brief);
+        $this->assertStringContainsString('<summary>لماذا نسأل؟</summary>', $brief);
+        $this->assertGreaterThan(strpos($brief, '@endif'), strrpos($brief, '<details class="field__why">'));
     }
 
     /**

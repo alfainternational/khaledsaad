@@ -111,7 +111,7 @@ return [
                 ['value' => 'range', 'label' => 'لدي نطاق واضح'],
             ]],
 
-        ['key' => 'monthly_budget', 'label' => 'الميزانية الشهرية المتاحة (ريال)', 'type' => 'number', 'step' => 2,
+        ['key' => 'monthly_budget', 'label' => 'كم تبلغ الميزانية الشهرية المتاحة لهذا العمل؟', 'type' => 'number', 'step' => 2,
             'required' => false, 'profile_key' => 'monthly_budget', 'validation' => 'min:0',
             'visible_when' => ['budget_range' => ['ceiling', 'range']],
             'why' => 'حتى نميّز بين ما يُدفع للمنصات الإعلانية وما يُدفع أتعابًا — والخلط بينهما أكثر سوء فهم شائع.'],

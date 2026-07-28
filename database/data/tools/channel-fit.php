@@ -110,7 +110,7 @@ return [
             'required' => false, 'visible_when' => ['best_channel_today' => ['feeling', 'measured']],
             'why' => 'حتى تُبنى الخطة على ما ينجح في مشروعك بالفعل بدل البدء من الصفر.'],
 
-        ['key' => 'monthly_budget', 'label' => 'كم تستطيع أن تصرف شهريًا؟ (ريال)', 'type' => 'number', 'step' => 2,
+        ['key' => 'monthly_budget', 'label' => 'كم تستطيع أن تنفق على التسويق كل شهر؟', 'type' => 'number', 'step' => 2,
             'profile_key' => 'monthly_budget', 'validation' => 'min:0',
             'help' => 'اكتب صفرًا إن كنت تعتمد على الجهد فقط.',
             'why' => 'الميزانية تحدد الفرق بين خطة مدفوعة سريعة وخطة عضوية بطيئة. الخطة التي تتجاوز ميزانيتك تبقى حبرًا على ورق.'],

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ConsultationBlueprint;
 use App\Models\DiagnosticModule;
 use App\Models\QuestionDefinition;
+use App\Models\QuestionVersion;
 use App\Models\ToolField;
 use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
@@ -33,5 +34,15 @@ class ConsultationCatalogTest extends TestCase
         );
         $this->assertDatabaseHas('question_definitions', ['key' => 'START-05']);
         $this->assertDatabaseHas('question_definitions', ['key' => 'MARKETING-SCORE.VALUE_PROPOSITION']);
+
+        $this->assertSame(3, $blueprint->currentVersion->version);
+
+        $gateway = QuestionVersion::query()
+            ->whereHas('definition', fn ($query) => $query->where('key', 'START-01'))
+            ->where('version', 3)
+            ->firstOrFail();
+
+        $this->assertNotEmpty($gateway->help_text);
+        $this->assertNotEmpty($gateway->why_text);
     }
 }
