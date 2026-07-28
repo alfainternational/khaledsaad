@@ -133,6 +133,24 @@ class AdaptiveInterfaceLayoutTest extends TestCase
     }
 
     #[Test]
+    public function the_customer_dashboard_keeps_metrics_first_and_recommendations_full_width(): void
+    {
+        $dashboard = file_get_contents(resource_path('views/app/dashboard.blade.php'));
+        $css = file_get_contents(resource_path('css/workspace.css'));
+
+        $this->assertLessThan(
+            strpos($dashboard, 'class="layout-main-aside"'),
+            strpos($dashboard, 'class="layout-metrics"'),
+        );
+        $this->assertStringContainsString(
+            "</aside>\n    </div>\n\n    <section aria-labelledby=\"tools-heading\">",
+            $dashboard,
+        );
+        $this->assertStringContainsString("id=\"tools-heading\" class=\"section-title\">تشخيصات مقترحة للبدء</h2>\n        <div class=\"card-grid\">", $dashboard);
+        $this->assertStringNotContainsString('[data-layout="dashboard"] > .layout-metrics', $css);
+    }
+
+    #[Test]
     public function tables_forms_and_windows_declare_their_responsive_intent(): void
     {
         foreach (['admin/users/index', 'admin/payments/index', 'app/billing/index'] as $view) {

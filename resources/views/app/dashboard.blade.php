@@ -89,19 +89,19 @@
                 <p>ابدأ باستشارة واحدة تفهم مشروعك، تسمح بأكثر من اختيار عندما ينطبق، ثم تحدد التحليلات والأولويات المناسبة.</p>
                 <a href="{{ route('app.consultations.index') }}" class="btn btn--primary">ابدأ التشخيص الذكي الشامل</a>
             </section>
-
-            <section aria-labelledby="tools-heading">
-                <h2 id="tools-heading" class="section-title">تشخيصات مقترحة للبدء</h2>
-                <div class="layout-flow">
-                    @foreach ($suggested_tools as $tool)
-                        <a class="card card--link" href="{{ route('app.tools.show', $tool['key']) }}">
-                            <p class="eyebrow">{{ $tool['category'] }}</p>
-                            <h3>{{ $tool['title'] }}</h3>
-                            <p class="muted">{{ $tool['promise'] ?: $tool['description'] }}</p>
-                        </a>
-                    @endforeach
-                </div>
-            </section>
         </aside>
     </div>
+
+    <section aria-labelledby="tools-heading">
+        <h2 id="tools-heading" class="section-title">تشخيصات مقترحة للبدء</h2>
+        <div class="card-grid">
+            @foreach ($suggested_tools as $tool)
+                <a class="card card--link" href="{{ route('app.tools.show', $tool['key']) }}">
+                    <p class="eyebrow">{{ $tool['category'] }}</p>
+                    <h3>{{ $tool['title'] }}</h3>
+                    <p class="muted">{{ $tool['promise'] ?: $tool['description'] }}</p>
+                </a>
+            @endforeach
+        </div>
+    </section>
 @endsection
