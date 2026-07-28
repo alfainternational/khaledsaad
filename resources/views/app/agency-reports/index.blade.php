@@ -103,7 +103,7 @@
             @endforeach
         </ul>
 
-        <form method="POST" action="{{ route('app.projects.agency-reports.brief', $project) }}" class="form form--wide">
+        <form method="POST" action="{{ route('app.projects.agency-reports.brief', $project) }}" class="form form--wide question-form">
             @csrf
 
             @foreach ($briefGroups as $group)
@@ -131,7 +131,7 @@
                             <span class="field__help">{{ $guidance }}</span>
 
                             @if ($field['type'] === 'multiselect')
-                                <span class="choice-grid">
+                                <span class="choice-grid question-control--choices">
                                     @foreach ($field['options'] as $value => $label)
                                         <label class="field field--inline">
                                             <input type="checkbox" name="brief[{{ $field['key'] }}][]" value="{{ $value }}"
@@ -154,10 +154,7 @@
                                 <input type="text" name="brief[{{ $field['key'] }}]" value="{{ $current }}"
                                     placeholder="{{ $field['placeholder'] ?? '' }}">
                             @endif
-                            <details class="field__why">
-                                <summary>لماذا نسأل؟</summary>
-                                <p>{{ $field['why'] }}</p>
-                            </details>
+                            <span class="question-reason" aria-label="سبب طرح السؤال">{{ $field['why'] }}</span>
                         </label>
                     @endforeach
                 </fieldset>

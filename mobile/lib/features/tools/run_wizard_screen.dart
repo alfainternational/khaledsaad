@@ -404,21 +404,7 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
         control,
         if (field.why != null && field.why!.isNotEmpty) ...[
           const SizedBox(height: 8),
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            childrenPadding: const EdgeInsets.only(bottom: 8),
-            shape: const Border(),
-            title: const Text(
-              'لماذا نسأل؟',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            children: [
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(field.why!),
-              ),
-            ],
-          ),
+          QuestionReason(field.why!),
         ],
       ],
     );
