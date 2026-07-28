@@ -4,9 +4,6 @@ namespace App\Modules\Reporting;
 
 use App\Models\AgencyReport;
 use Illuminate\Support\Facades\Storage;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
-use Mpdf\Mpdf;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AgencyReportPdfGenerator

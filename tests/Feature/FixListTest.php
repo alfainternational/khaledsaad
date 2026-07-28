@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Modules\AiReadiness\Contracts\PageFetcher;
 use App\Modules\AiReadiness\SiteAudit;
+use App\Modules\AiReadiness\SiteAuditResult;
 use App\Modules\Brain\BrainWriter;
 use App\Modules\Diagnosis\Axis;
 use App\Modules\Diagnosis\FixList;
@@ -127,7 +128,7 @@ class FixListTest extends TestCase
         }
     }
 
-    private function audit(): \App\Modules\AiReadiness\SiteAuditResult
+    private function audit(): SiteAuditResult
     {
         $fetcher = new class implements PageFetcher
         {

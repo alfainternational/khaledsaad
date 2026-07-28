@@ -25,6 +25,7 @@ use App\Http\Controllers\App\KpiController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\ProjectController;
 use App\Http\Controllers\App\PulseController;
+use App\Http\Controllers\App\ReadinessController;
 use App\Http\Controllers\App\ReportController;
 use App\Http\Controllers\App\ReportWatchController;
 use App\Http\Controllers\App\TaskController;
@@ -100,6 +101,17 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
     Route::get('projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::post('projects/{project}/consultations', [ConsultationController::class, 'start'])->name('consultations.start');
+
+    /*
+     * بطاقة الجاهزية: المحور السابع. متاحة بلا بوابة ميزة في المرحلة ١ —
+     * هي الإسفين الذي يثبت القيمة قبل أن يُطلب اشتراك.
+     */
+    Route::get('projects/{project}/readiness', [ReadinessController::class, 'show'])->name('readiness.show');
+    Route::post('projects/{project}/readiness/audit', [ReadinessController::class, 'audit'])
+        ->middleware('throttle:10,60')->name('readiness.audit');
+    Route::post('projects/{project}/readiness/log', [ReadinessController::class, 'uploadLog'])
+        ->middleware('throttle:20,60')->name('readiness.log');
+    Route::get('projects/{project}/readiness/pdf', [ReadinessController::class, 'download'])->name('readiness.download');
     Route::get('consultations', [ConsultationController::class, 'index'])->name('consultations.index');
     Route::get('consultations/{consultation}', [ConsultationController::class, 'show'])->name('consultations.show');
     Route::post('consultations/{consultation}/answer', [ConsultationController::class, 'answer'])->name('consultations.answer');
