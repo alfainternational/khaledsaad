@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ConsultationSession;
 use App\Models\User;
-use App\Services\Consultations\ConsultationService;
+use App\Modules\Intake\ConsultationService;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\FullDiagnosisRunner;
 use Database\Seeders\ConsultationCatalogSeeder;

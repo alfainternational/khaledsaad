@@ -6,7 +6,7 @@ use App\Contracts\CompetitorProvider;
 use App\Models\Project;
 use App\Models\ProjectCompetitor;
 use App\Models\User;
-use App\Services\Competitors\CompetitorDiscovery;
+use App\Modules\Competitors\CompetitorDiscovery;
 use App\Services\Projects\ProjectService;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

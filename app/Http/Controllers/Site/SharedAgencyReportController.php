@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
-use App\Services\Reports\AgencyReportPdfGenerator;
-use App\Services\Reports\AgencyReportSharing;
+use App\Modules\Reporting\AgencyReportPdfGenerator;
+use App\Modules\Reporting\AgencyReportSharing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

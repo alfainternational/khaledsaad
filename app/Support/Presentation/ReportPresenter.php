@@ -3,8 +3,8 @@
 namespace App\Support\Presentation;
 
 use App\Models\Report;
-use App\Services\Competitors\CompetitorRegistry;
-use App\Services\Reports\ReportCharts;
+use App\Modules\Competitors\CompetitorRegistry;
+use App\Modules\Reporting\ReportCharts;
 
 class ReportPresenter
 {

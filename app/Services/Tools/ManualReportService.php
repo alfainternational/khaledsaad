@@ -5,6 +5,7 @@ namespace App\Services\Tools;
 use App\Models\Report;
 use App\Models\ToolRun;
 use App\Models\User;
+use App\Modules\Diagnosis\DeterministicScorer;
 use App\Support\AI\JsonSchemaValidator;
 use Illuminate\Validation\ValidationException;
 

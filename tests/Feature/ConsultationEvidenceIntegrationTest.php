@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\ProjectAnswer;
 use App\Models\User;
-use App\Services\Consultations\ConsultationEvidenceService;
-use App\Services\Consultations\ConsultationPresenter;
-use App\Services\Consultations\ConsultationService;
+use App\Modules\Intake\ConsultationEvidenceService;
+use App\Modules\Intake\ConsultationPresenter;
+use App\Modules\Intake\ConsultationService;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\FullDiagnosisRunner;
 use App\Services\Tools\ProjectSnapshotBuilder;

@@ -6,7 +6,7 @@ use App\Models\Finding;
 use App\Models\Recommendation;
 use App\Models\Report;
 use App\Models\ToolRun;
-use App\Services\Competitors\CompetitorRegistry;
+use App\Modules\Competitors\CompetitorRegistry;
 use Illuminate\Support\Facades\DB;
 
 /**

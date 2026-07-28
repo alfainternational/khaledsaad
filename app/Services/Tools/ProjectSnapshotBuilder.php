@@ -3,8 +3,8 @@
 namespace App\Services\Tools;
 
 use App\Models\ToolRun;
-use App\Services\Consultations\ConsultationContextBuilder;
-use App\Services\Reports\CrossToolSynthesis;
+use App\Modules\Intake\ConsultationContextBuilder;
+use App\Modules\Reporting\CrossToolSynthesis;
 
 /**
  * BR-005 / BR-006: التقرير يُبنى على لقطة مجمدة، فتعديل ملف المشروع لاحقًا

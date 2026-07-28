@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Project;
-use App\Services\Competitors\CompetitorDiscovery;
+use App\Modules\Competitors\CompetitorDiscovery;
 use Illuminate\Console\Command;
 
 /**

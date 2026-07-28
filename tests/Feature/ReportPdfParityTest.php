@@ -9,8 +9,8 @@ use App\Models\ReportWatcher;
 use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Models\User;
+use App\Modules\Reporting\ReportCharts;
 use App\Services\Projects\ProjectService;
-use App\Services\Reports\ReportCharts;
 use App\Services\Tools\ToolRunService;
 use App\Support\Presentation\ReportPresenter;
 use Database\Seeders\DatabaseSeeder;
@@ -107,7 +107,7 @@ class ReportPdfParityTest extends TestCase
         $this->assertFileExists(public_path('assets/fonts/Hacen-Tunisia.ttf'));
 
         // المولّد يسجّل الملف نفسه بلا تبديل تلقائي إلى خط mPDF المدمج.
-        $generator = file_get_contents(app_path('Services/Reports/ReportPdfGenerator.php'));
+        $generator = file_get_contents(app_path('Modules/Reporting/ReportPdfGenerator.php'));
         $this->assertStringContainsString("'R' => 'Hacen-Tunisia.ttf'", $generator);
         $this->assertStringContainsString("'autoLangToFont' => false", $generator);
         $this->assertStringContainsString("'default_font' => 'hacentunisia'", $generator);

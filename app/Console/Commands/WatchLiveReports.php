@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\ReportWatcher;
+use App\Modules\Alerts\LiveReportChecker;
 use App\Notifications\LiveReportChangedNotification;
-use App\Services\Growth\LiveReportChecker;
 use Illuminate\Console\Command;
 
 /**

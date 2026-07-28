@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ProjectCompetitor;
 use App\Models\User;
-use App\Services\Competitors\CompetitorRegistry;
+use App\Modules\Competitors\CompetitorRegistry;
 use App\Services\Projects\ProjectService;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Modules\Shared\Metrics;
+
+/**
+ * أسماء المقاييس الرسمية — المرجع الوحيد لما ورد في CLAUDE.md §١٢.
+ *
+ * السبب: المقياس الذي يُسمّى باسمين يصير مقياسين. قبل هذا الملف كان
+ * الموجود base_score وحده، وهو اسم داخلي لا يقابل شيئًا في المواصفة ولا
+ * يعني شيئًا للمستخدم. أي اسم خارج هذا الملف يفشل الاختبار المعماري.
+ *
+ * الأسماء لا تُترجم ولا تُختصر ولا يُشتق منها مرادف في عمود أو استجابة API
+ * أو مفتاح Blade.
+ */
+final class MetricKey
+{
+    /** المتوسط الموزون لدرجات المحاور المفعّلة (0–100). */
+    public const MATURITY_SCORE = 'maturity_score';
+
+    /** درجة محور واحد (0–100). */
+    public const AXIS_SCORE = 'axis_score';
+
+    /** نسبة المدخلات المتوفرة لحساب المحور. */
+    public const AXIS_COVERAGE = 'axis_coverage';
+
+    /** المحاولات التي ذُكرت فيها العلامة ÷ (الأسئلة × المحاولات لكل سؤال). */
+    public const MENTION_RATE = 'mention_rate';
+
+    /** ذكر العلامة ÷ مجموع ذكر كل العلامات. */
+    public const SHARE_OF_VOICE = 'share_of_voice';
+
+    /** ظهور السؤال الواحد ÷ محاولاته. */
+    public const CONSISTENCY = 'consistency';
+
+    /** مرات ربط الموقع كمصدر ÷ مرات الذكر. */
+    public const CITATION_RATE = 'citation_rate';
+
+    /** جهات الاتصال المملوكة ÷ إجمالي الجمهور المتاح. */
+    public const OWNED_RATIO = 'owned_ratio';
+
+    /** درجة التدقيق التقني (0–100). */
+    public const READINESS_SCORE = 'readiness_score';
+
+    /**
+     * مقاييس لا يجوز عرضها في شاشة واحدة بلا تسميتين ظاهرتين.
+     *
+     * mention_rate وshare_of_voice يُقرآن كنسبتين متشابهتين ومقاماهما
+     * مختلفان تمامًا: الأول من محاولاتك أنت، والثاني من ذكر السوق كله.
+     * خلطهما يعطي صاحب النشاط قراءة معكوسة عن موقعه.
+     *
+     * @var array<int, array<int, string>>
+     */
+    public const AMBIGUOUS_PAIRS = [
+        [self::MENTION_RATE, self::SHARE_OF_VOICE],
+    ];
+
+    /**
+     * @return array<int, string>
+     */
+    public static function all(): array
+    {
+        return [
+            self::MATURITY_SCORE,
+            self::AXIS_SCORE,
+            self::AXIS_COVERAGE,
+            self::MENTION_RATE,
+            self::SHARE_OF_VOICE,
+            self::CONSISTENCY,
+            self::CITATION_RATE,
+            self::OWNED_RATIO,
+            self::READINESS_SCORE,
+        ];
+    }
+
+    public static function isKnown(string $key): bool
+    {
+        return in_array($key, self::all(), true);
+    }
+}

@@ -3,8 +3,8 @@
 namespace App\Providers;
 
 use App\Contracts\CompetitorProvider;
+use App\Modules\Competitors\LiveCompetitorProvider;
 use App\Services\Billing\Entitlements;
-use App\Services\Competitors\LiveCompetitorProvider;
 use App\Services\Settings\MailConfigurator;
 use App\Support\Settings\SettingsConfig;
 use Illuminate\Support\Facades\Blade;

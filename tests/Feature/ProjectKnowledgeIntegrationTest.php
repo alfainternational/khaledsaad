@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\ProjectKnowledgeSource;
 use App\Models\Tool;
 use App\Models\User;
-use App\Services\Consultations\ConsultationService;
+use App\Modules\Intake\ConsultationService;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ToolRunService;
 use Database\Seeders\ConsultationCatalogSeeder;

@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Services\Consultations\ConsultationPresenter;
-use App\Services\Consultations\ConsultationService;
+use App\Modules\Intake\ConsultationPresenter;
+use App\Modules\Intake\ConsultationService;
 use App\Services\Projects\ProjectService;
 use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;

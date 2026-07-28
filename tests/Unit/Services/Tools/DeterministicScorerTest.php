@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services\Tools;
 
 use App\Models\ToolVersion;
-use App\Services\Tools\DeterministicScorer;
+use App\Modules\Diagnosis\DeterministicScorer;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 

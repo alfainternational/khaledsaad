@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Workspace;
+use App\Modules\Alerts\PulseComposer;
 use App\Notifications\WeeklyPulseNotification;
-use App\Services\Growth\PulseComposer;
 use Illuminate\Console\Command;
 
 /**

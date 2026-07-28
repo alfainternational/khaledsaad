@@ -8,7 +8,7 @@ use App\Models\ProjectProfile;
 use App\Models\ToolField;
 use App\Models\ToolRun;
 use App\Models\ToolRunAnswer;
-use App\Services\Projects\ProjectKnowledgeService;
+use App\Modules\Brain\ProjectKnowledgeService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 

@@ -4,6 +4,7 @@ namespace App\Services\Tools;
 
 use App\Models\ProjectAnswer;
 use App\Models\ToolRun;
+use App\Modules\Diagnosis\DeterministicScorer;
 use App\Services\Marketing\BudgetPlanner;
 use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;

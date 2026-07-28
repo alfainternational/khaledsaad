@@ -66,6 +66,30 @@ if [ "$MIGRATE" = "1" ]; then
   ssh $SSHO "$HOST" "cd $RP && php artisan migrate --force"
 fi
 
+# ---------------------------------------------------------------------------
+# إعادة توليد خريطة الأصناف عند لمس app/.
+#
+# vendor/composer/autoload_classmap.php خريطة ثابتة تُولَّد وقت التثبيت. تعديل
+# ملف في مكانه لا يبطلها، لكن أي إضافة أو نقل أو حذف يجعلها تشير إلى مسار غير
+# موجود — فتنكسر الأصناف التي تُحمَّل عبر الحاوية وقت الطلب، لا كل الأصناف،
+# فيبدو الموقع سليمًا حتى يزور أحدهم المسار المتأثر.
+#
+# حدث هذا محليًا عند نقل الخدمات إلى app/Modules: ٥٩ خطأ لم يظهر منها شيء في
+# الاختبارات المصفّاة. تخطٍّ اختياري: SKIP_DUMP=1
+# ---------------------------------------------------------------------------
+NEEDS_DUMP=0
+for f in "${FILES[@]}"; do
+  case "$f" in app/*|database/*) NEEDS_DUMP=1 ;; esac
+done
+
+if [ "$NEEDS_DUMP" = "1" ] && [ "${SKIP_DUMP:-0}" != "1" ]; then
+  echo "==> إعادة توليد خريطة الأصناف (composer dump-autoload)"
+  ssh $SSHO "$HOST" "cd $RP && \
+    if command -v composer >/dev/null 2>&1; then composer dump-autoload -o --no-interaction; \
+    elif [ -f composer.phar ]; then php composer.phar dump-autoload -o --no-interaction; \
+    else echo 'تحذير: لا composer على الخادم — خريطة الأصناف لم تُحدَّث'; exit 1; fi"
+fi
+
 echo "==> تنظيف كاش الـ views والمسارات + إعادة تشغيل opcache"
 ssh $SSHO "$HOST" "cd $RP && php artisan view:clear >/dev/null 2>&1 || true; php artisan route:clear >/dev/null 2>&1 || true; touch ../.lsphp_restart.txt .lsphp_restart.txt public/.lsphp_restart.txt 2>/dev/null || true; echo cleared"
 echo "نشر مكتمل إلى https://khaledsaad.net/"

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Services\Consultations\Catalog\ConsultationCatalogBuilder;
+use App\Modules\Intake\Catalog\ConsultationCatalogBuilder;
 use Illuminate\Database\Seeder;
 
 class ConsultationCatalogSeeder extends Seeder

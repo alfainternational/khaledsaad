@@ -6,7 +6,7 @@ use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ProjectCompetitor;
-use App\Services\Competitors\CompetitorRegistry;
+use App\Modules\Competitors\CompetitorRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

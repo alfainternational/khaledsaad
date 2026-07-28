@@ -5,7 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
-use App\Services\Growth\GeoPackGenerator;
+use App\Modules\AiReadiness\GeoPackGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
