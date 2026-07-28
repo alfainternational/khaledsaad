@@ -136,6 +136,32 @@ class AudienceSpecificAgencyReportsTest extends TestCase
     }
 
     #[Test]
+    public function the_owner_page_renders_multi_choice_consultation_answers_as_human_text(): void
+    {
+        [$user, $project] = $this->project();
+        $this->completeBrief($project);
+        $this->completeCoreReports($project, $user);
+        $report = app(AgencyReportService::class)->generate($project->fresh(), $user);
+
+        $snapshot = $report->snapshot;
+        $snapshot['owner_report']['private_details']['consultation'] = [
+            'answers' => [[
+                'question' => 'ما القنوات التي تستخدمها؟',
+                'value' => ['الإعلانات المدفوعة', 'المحتوى العضوي'],
+                'is_unknown' => false,
+            ]],
+            'inferences' => [],
+            'evidence' => [],
+        ];
+        $report->forceFill(['snapshot' => $snapshot])->save();
+
+        $this->actingAs($user)
+            ->get(route('app.agency-reports.show', $report))
+            ->assertOk()
+            ->assertSee('الإعلانات المدفوعة، المحتوى العضوي');
+    }
+
+    #[Test]
     public function the_agency_brief_page_contains_only_information_the_agency_needs(): void
     {
         [$user, $project] = $this->project();
