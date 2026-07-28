@@ -184,7 +184,7 @@
         <h2 class="section-title">ما سجلته في التشخيص الذكي</h2>
         <p class="muted">هذه الإجابات والقراءات جزء من الصورة نفسها، وليست تقريرًا منفصلًا عنها.</p>
         @foreach (($details['consultation']['answers'] ?? []) as $answer)
-            @php($answerText = $humanAnswer($answer['value'] ?? null))
+            @php($answerText = $humanAnswer($answer['display_value'] ?? $answer['value'] ?? null))
             <p><b>{{ $answer['question'] }}</b><br>{{ $answer['is_unknown'] ? 'أجبت بأنك لا تعرفها بعد' : ($answerText !== '' ? $answerText : 'لم تسجل إجابة') }}</p>
         @endforeach
         @foreach (($details['consultation']['inferences'] ?? []) as $inference)

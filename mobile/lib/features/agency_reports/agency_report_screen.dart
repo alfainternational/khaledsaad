@@ -453,7 +453,10 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
             Text(
               answer['is_unknown'] == true
                   ? 'أجبت بأنك لا تعرفها بعد.'
-                  : answer['value']?.toString() ?? 'لم تسجل إجابة.',
+                  : _humanValue(
+                      answer['display_value'] ?? answer['value'],
+                      fallback: 'لم تسجل إجابة.',
+                    ),
             ),
           ],
           for (final inference in _maps(consultation['inferences']))
@@ -857,4 +860,20 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
 
   List<String> _strings(dynamic value) =>
       (value as List? ?? const []).map((item) => item.toString()).toList();
+
+  String _humanValue(dynamic value, {String fallback = 'غير محدد حتى الآن'}) {
+    if (value is Iterable) {
+      final items = value
+          .map((item) => _humanValue(item, fallback: ''))
+          .where((item) => item.isNotEmpty)
+          .toList();
+
+      return items.isEmpty ? fallback : items.join('، ');
+    }
+
+    if (value is bool) return value ? 'نعم' : 'لا';
+
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? fallback : text;
+  }
 }

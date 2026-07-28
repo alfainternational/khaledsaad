@@ -13,7 +13,7 @@ class OwnerReportPdfGenerator
 {
     private const DISK = 'local';
 
-    private const TEMPLATE_VERSION = 1;
+    private const TEMPLATE_VERSION = 2;
 
     public function __construct(private readonly AgencyReportDocumentAdapter $documents) {}
 

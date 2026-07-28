@@ -45,6 +45,18 @@ void main() {
             'requirements': [],
           },
           'private_details': {
+            'consultation': {
+              'answers': [
+                {
+                  'question': 'ما القنوات التي تستخدمها؟',
+                  'value': ['paid_ads', 'organic_content'],
+                  'display_value': ['الإعلانات المدفوعة', 'المحتوى العضوي'],
+                  'is_unknown': false,
+                },
+              ],
+              'inferences': [],
+              'evidence': [],
+            },
             'behaviour': {
               'tasks': {'done': 0, 'total': 1},
             },
@@ -93,6 +105,13 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('ما يمكنك فعله هذا الأسبوع'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('ما سجلته في التشخيص الذكي'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('الإعلانات المدفوعة، المحتوى العضوي'), findsOneWidget);
+    expect(find.text('[paid_ads, organic_content]'), findsNothing);
     expect(find.text('المشروع في سطور واضحة'), findsNothing);
 
     await tester.scrollUntilVisible(

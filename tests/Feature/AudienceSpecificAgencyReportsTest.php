@@ -3,13 +3,17 @@
 namespace Tests\Feature;
 
 use App\Models\Project;
+use App\Models\QuestionDefinition;
 use App\Models\Report;
 use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Models\User;
+use App\Services\Consultations\ConsultationService;
 use App\Services\Projects\ProjectService;
+use App\Services\Reports\AgencyReportDocumentAdapter;
 use App\Services\Reports\AgencyReportService;
 use App\Services\Reports\AgencyReportSharing;
+use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -159,6 +163,53 @@ class AudienceSpecificAgencyReportsTest extends TestCase
             ->get(route('app.agency-reports.show', $report))
             ->assertOk()
             ->assertSee('الإعلانات المدفوعة، المحتوى العضوي');
+    }
+
+    #[Test]
+    public function the_owner_page_uses_arabic_labels_instead_of_internal_option_codes(): void
+    {
+        $this->seed(ConsultationCatalogSeeder::class);
+        [$user, $project] = $this->project();
+        $this->completeBrief($project);
+        $this->completeCoreReports($project, $user);
+
+        $session = app(ConsultationService::class)->start($project, $user);
+        $question = QuestionDefinition::query()
+            ->where('internal_variable', 'competitor_research_depth')
+            ->firstOrFail()
+            ->versions()
+            ->firstOrFail();
+        $session->answers()->create([
+            'question_version_id' => $question->id,
+            'value_json' => ['value' => 'browsed'],
+        ]);
+        $report = app(AgencyReportService::class)->generate($project->fresh(), $user, [], $session->fresh());
+
+        $this->assertSame($session->id, $report->consultation_session_id);
+        $this->assertSame(
+            'browsed',
+            data_get($report->snapshot, 'owner_report.private_details.consultation.answers.0.value'),
+        );
+        $presented = app(AgencyReportDocumentAdapter::class)->ownerSnapshot($report);
+
+        $this->assertSame(
+            'تصفّحت مواقعهم وحساباتهم',
+            data_get($presented, 'owner_report.private_details.consultation.answers.0.display_value'),
+        );
+
+        $this->actingAs($user)
+            ->get(route('app.agency-reports.show', $report))
+            ->assertOk()
+            ->assertSee('تصفّحت مواقعهم وحساباتهم')
+            ->assertDontSee('browsed');
+
+        Sanctum::actingAs($user);
+        $this->getJson(route('api.v1.agency-reports.show', $report))
+            ->assertOk()
+            ->assertJsonPath(
+                'data.snapshot.owner_report.private_details.consultation.answers.0.display_value',
+                'تصفّحت مواقعهم وحساباتهم',
+            );
     }
 
     #[Test]

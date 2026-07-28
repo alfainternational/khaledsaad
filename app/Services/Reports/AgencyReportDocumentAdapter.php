@@ -16,7 +16,7 @@ class AgencyReportDocumentAdapter
         $snapshot = $report->snapshot;
 
         if (isset($snapshot['owner_report'])) {
-            return $snapshot;
+            return $this->withHumanConsultationAnswers($snapshot, $report);
         }
 
         $problems = collect($snapshot['executive']['problems'] ?? [])->take(3)->values()->all();
@@ -86,7 +86,62 @@ class AgencyReportDocumentAdapter
             ],
         ];
 
+        return $this->withHumanConsultationAnswers($snapshot, $report);
+    }
+
+    /** @param  array<string, mixed>  $snapshot */
+    private function withHumanConsultationAnswers(array $snapshot, AgencyReport $report): array
+    {
+        $answers = data_get($snapshot, 'owner_report.private_details.consultation.answers');
+        if (! is_array($answers) || $answers === [] || $report->consultation_session_id === null) {
+            return $snapshot;
+        }
+
+        $session = $report->consultationSession()
+            ->with('answers.questionVersion.definition')
+            ->first();
+        if ($session === null) {
+            return $snapshot;
+        }
+
+        $labelsByKey = $session->answers->mapWithKeys(function ($answer): array {
+            $key = $answer->questionVersion?->definition?->internal_variable;
+            if (! is_string($key) || $key === '') {
+                return [];
+            }
+
+            $labels = collect($answer->questionVersion?->options ?? [])
+                ->filter(fn ($option) => is_array($option) && isset($option['value'], $option['label']))
+                ->mapWithKeys(fn (array $option) => [(string) $option['value'] => (string) $option['label']])
+                ->all();
+
+            return [$key => $labels];
+        });
+
+        $snapshot['owner_report']['private_details']['consultation']['answers'] = collect($answers)
+            ->map(function (array $answer) use ($labelsByKey): array {
+                $labels = $labelsByKey->get((string) ($answer['key'] ?? ''), []);
+                $answer['display_value'] = $this->labelAnswerValue($answer['value'] ?? null, $labels);
+
+                return $answer;
+            })
+            ->all();
+
         return $snapshot;
+    }
+
+    /** @param  array<string, string>  $labels */
+    private function labelAnswerValue(mixed $value, array $labels): mixed
+    {
+        if (is_array($value)) {
+            return array_map(fn ($item) => $this->labelAnswerValue($item, $labels), $value);
+        }
+
+        if (is_string($value) || is_int($value) || is_float($value)) {
+            return $labels[(string) $value] ?? $value;
+        }
+
+        return $value;
     }
 
     /** @return array{agency_brief: array<string, mixed>} */
