@@ -30,8 +30,18 @@ class VoiceIntakeController extends Controller
         abort_unless(ProjectOwnership::owns($request->user(), $project), 404);
 
         $validated = $request->validate([
-            // 20MB: خمس دقائق بترميز معقول. الحد يمنع رفعًا يُسقط الطلب.
-            'audio' => ['required', 'file', 'mimetypes:audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg', 'max:20480'],
+            /*
+             * 20MB: خمس دقائق بترميز معقول. الحد يمنع رفعًا يُسقط الطلب.
+             *
+             * القائمة تشمل `x-m4a` و`aac` لأنهما ما يُنتجه مسجّل التطبيق فعلًا
+             * (AAC داخل حاوية m4a)، وPHP يصنّفهما بأسماء مختلفة حسب النظام.
+             * قصرُها على `audio/mp4` كان سيرفض تسجيلات صحيحة برسالة تحقّق
+             * غامضة يستحيل على المستخدم فهمها.
+             */
+            'audio' => [
+                'required', 'file', 'max:20480',
+                'mimetypes:audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/wav,audio/x-wav,audio/webm,audio/ogg',
+            ],
             'seconds' => ['required', 'integer', 'min:1', 'max:'.self::MAX_SECONDS],
         ], [], ['audio' => 'التسجيل', 'seconds' => 'مدة التسجيل']);
 
