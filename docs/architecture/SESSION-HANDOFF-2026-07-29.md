@@ -92,10 +92,21 @@ cd ~/public_html && php artisan platform:reset --backup-verified --force
 
 ### ٢) بناء APK ونشره ورفع الحد
 
-**البناء لم يكتمل.** رُفع الإصدار إلى `1.0.4+5` في `pubspec.yaml` و
-`config/mobile.php`، وشُغِّل `flutter build apk --release` فتوقّف بعد
+**البناء لم يكتمل.** شُغِّل `flutter build apk --release` فتوقّف بعد
 tree-shaking بلا سطر `✓ Built` ولا خطأ — على الأرجح مهلة. الملف في
 `mobile/build/app/outputs/flutter-apk/` ما زال نسخة ١.٠.٣ (٢٨ يوليو).
+
+**تقسيم الإصدار بين ملفين، وسببه:**
+
+| الملف | القيمة | يصف |
+| --- | --- | --- |
+| `mobile/pubspec.yaml` | `1.0.4+5` | البناء **القادم** |
+| `config/mobile.php` | `1.0.3` / `4` | النسخة **المنشورة فعلًا** |
+| `public/downloads/release.json` | `1.0.3` / `4` | المانيفست |
+
+رفعتُ `config/mobile.php` أولًا فسقط `MobileDownloadTest` — وهو يحرس تطابق
+الإعداد مع المانيفست بحق: صفحة التنزيل كانت ستعلن نسخة لا وجود لها. أُعيد
+إلى `1.0.3`. **يُرفع بعد بناء APK ونشره وتحديث المانيفست، لا قبله.**
 
 أعد البناء بمهلة أطول:
 
