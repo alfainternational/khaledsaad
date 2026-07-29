@@ -6,14 +6,14 @@
     "apk": {
         "download_path": "/download/android",
         "filename": "Khaled-Saad-Growth-1.0.4.apk",
-        "size_bytes": 58962179,
-        "sha256": "af51d2322c9963ddeae7bc9abfb43745cbb9fb532ee0946fafcce4db09f0a06e",
+        "size_bytes": 59126075,
+        "sha256": "7823e9ce20c3c5f8891568bd606afa0be172dedde43e4c808c874e85b698dea7",
         "signature_scheme": "v2",
         "signer_certificate_sha256": "45b6a8e35aadb87004a11a6efefd8c21e453ce703763f2e93557c3fa5e5a3aff"
     },
     "aab": {
         "filename": "Khaled-Saad-Growth-1.0.4.aab",
-        "size_bytes": 58054980,
-        "sha256": "9d83fea95c8d9f4a134dcd6adf5c854edd68fb11f9ee534a937f8716111a5e32"
+        "size_bytes": 58108337,
+        "sha256": "3122f946c68e111ed953b0f4e07814f4cc1b3552c17573575dca5e1c2167a006"
     }
 }

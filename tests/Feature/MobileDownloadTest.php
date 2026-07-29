@@ -24,6 +24,40 @@ class MobileDownloadTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $manifest['aab']['sha256']);
     }
 
+    /**
+     * البصمة تصف الملف الموجود فعلًا، لا سلسلة بالشكل الصحيح.
+     *
+     * فحص الشكل وحده يمرّ على بصمة بناءٍ سابق: يُعاد البناء، ويُنسخ الملف،
+     * ويبقى المانيفست يعلن بصمة نسخة لم تعد موجودة. من يتحقّق قبل التثبيت —
+     * وهو الغرض الوحيد من نشر البصمة — يجدها لا تطابق فيظنّ الملف مُلاعَبًا.
+     *
+     * الملف نفسه خارج git (`.gitignore`)، فغيابه تخطٍّ معلن لا فشل صامت.
+     */
+    #[Test]
+    public function the_published_hash_describes_the_published_file(): void
+    {
+        $manifest = json_decode(
+            file_get_contents(public_path('downloads/release.json')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        $apk = config('mobile.apk_path');
+
+        if (! is_string($apk) || ! is_file($apk)) {
+            $this->markTestSkipped('لا نسخة APK محليًّا — الملف خارج git.');
+        }
+
+        $this->assertSame(
+            hash_file('sha256', $apk),
+            $manifest['apk']['sha256'],
+            'بصمة المانيفست لا تطابق الملف المنشور — أُعيد البناء ولم يُحدَّث المانيفست.',
+        );
+
+        $this->assertSame((int) filesize($apk), $manifest['apk']['size_bytes']);
+    }
+
     #[Test]
     public function the_public_manifest_reports_the_signed_android_build(): void
     {
