@@ -1947,9 +1947,9 @@
         "method": "POST"
       },
       "mobile": {
-        "applicable": false,
-        "screen": null,
-        "action": null
+        "applicable": true,
+        "screen": "RunWizardScreen",
+        "action": "transcribe"
       },
       "states": [
         "loading",
@@ -1965,7 +1965,9 @@
         "api": [
           "Tests\\Feature\\VoiceIntakeTest"
         ],
-        "mobile": []
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
       },
       "status": "verified"
     },

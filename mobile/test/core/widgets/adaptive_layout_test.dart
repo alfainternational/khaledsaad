@@ -136,6 +136,8 @@ void main() {
       'public/legal_screen.dart': AdaptivePageFamily.reading,
       // شاشة تشغيلية: درجة ومحاور وقائمة إصلاح، لا نصّ يُقرأ ولا نموذج يُملأ.
       'readiness/readiness_screen.dart': AdaptivePageFamily.operational,
+      // نظيرتها على جانب الاستطلاع: نِسَب وجداول وزرّ تشغيل.
+      'presence/presence_screen.dart': AdaptivePageFamily.operational,
       'public/public_home_screen.dart': AdaptivePageFamily.operational,
       'public/public_tool_screen.dart': AdaptivePageFamily.operational,
       'public/shared_report_screen.dart': AdaptivePageFamily.reading,

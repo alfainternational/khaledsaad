@@ -8,6 +8,7 @@ import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/voice_answer_button.dart';
 import 'attachments.dart';
 import 'models.dart';
 import 'run_status_screen.dart';
@@ -39,6 +40,12 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
   late int _stepIndex = (widget.run.currentStep - 1).clamp(0, _lastIndex);
 
   final Map<String, dynamic> _draft = {};
+
+  /*
+   * متحكّمات الحقول المفتوحة وحدها. `initialValue` يكفي للكتابة اليدوية، لكن
+   * النسخ الصوتي يحتاج أن يُدخل نصًّا في خانة قائمة — وذلك لا يتم إلا بمتحكّم.
+   */
+  final Map<String, TextEditingController> _openFields = {};
   bool _busy = false;
   bool _reviewing = false;
   String? _error;
@@ -103,6 +110,11 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
   @override
   void dispose() {
     _insightTimer?.cancel();
+
+    for (final controller in _openFields.values) {
+      controller.dispose();
+    }
+
     super.dispose();
   }
 
@@ -338,15 +350,50 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
     );
   }
 
+  TextEditingController _openFieldController(String key) {
+    return _openFields.putIfAbsent(
+      key,
+      () => TextEditingController(text: _draft[key]?.toString() ?? ''),
+    );
+  }
+
+  /// النص المنسوخ يُضاف ولا يستبدل، ولا يُرسل النموذج: المراجعة شرط لا تحسين.
+  void _appendToOpenField(String key, String text) {
+    final controller = _openFieldController(key);
+    final merged = controller.text.isEmpty ? text : '${controller.text} $text';
+
+    controller.text = merged;
+    _draftChanged(key, merged);
+  }
+
   Widget _buildField(ToolFieldModel field) {
     final label = field.required ? field.label : '${field.label} (اختياري)';
 
     final control = switch (field.type) {
-      'textarea' => TextFormField(
-        initialValue: _draft[field.key]?.toString(),
-        decoration: const InputDecoration(),
-        maxLines: 4,
-        onChanged: (value) => _draftChanged(field.key, value),
+      'textarea' => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _openFieldController(field.key),
+            decoration: const InputDecoration(),
+            maxLines: 4,
+            onChanged: (value) => _draftChanged(field.key, value),
+          ),
+
+          /*
+           * الصوت على السؤال المفتوح وحده — نظير قاعدة الويب حرفيًّا. الاختيار
+           * والرقم النقر فيهما أسرع من الكلام، ومسجّلٌ عندهما ضجيج.
+           *
+           * الزائر مستثنى: الحجز يقع على مساحة عمل، وتجربة ما قبل الحساب لا
+           * ينبغي أن تستهلك سقف أحد.
+           */
+          if (!widget.guest)
+            VoiceAnswerButton(
+              repository: widget.repository,
+              projectSlug: _run.projectSlug,
+              onTranscribed: (text) => _appendToOpenField(field.key, text),
+            ),
+        ],
       ),
       'number' => TextFormField(
         initialValue: _draft[field.key]?.toString(),

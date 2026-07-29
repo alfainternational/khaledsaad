@@ -131,6 +131,25 @@ class ApiClient {
     return _send(() async => http.Response.fromStream(await request.send()));
   }
 
+  /// رفع تسجيل صوتي للنسخ.
+  ///
+  /// حقل منفصل عن [upload]: عقد الصوت يتوقّع `audio` و`seconds` لا `file`،
+  /// والمدة ليست تزيينًا — الخادم يحجز بها من سقف التكلفة **قبل** الاستدعاء،
+  /// فإرسالها ناقصةً يعني حجزًا لا يطابق ما استُهلك.
+  Future<dynamic> uploadAudio(String path, String filePath, int seconds) async {
+    final token = await _tokenStore.read();
+    final request = http.MultipartRequest('POST', _uri(path))
+      ..headers['Accept'] = 'application/json'
+      ..fields['seconds'] = '$seconds'
+      ..files.add(await http.MultipartFile.fromPath('audio', filePath));
+
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+
+    return _send(() async => http.Response.fromStream(await request.send()));
+  }
+
   Future<dynamic> patch(String path, [Map<String, dynamic>? body]) => _send(
     () async => _client.patch(
       _uri(path),

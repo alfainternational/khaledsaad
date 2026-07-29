@@ -740,6 +740,25 @@ class PlatformRepository {
         .toList();
   }
 
+  /// نسخ تسجيل صوتي إلى نص لسؤال مفتوح.
+  ///
+  /// يعيد النص فقط ولا يحفظ إجابة: المراجعة شرط لا تحسين — النسخ العربي يخطئ
+  /// في الأسماء والأرقام، وما يدخل الدماغ بلا مراجعة يصير حقيقةً مصدرها خطأ.
+  /// نفس قاعدة الويب حرفيًّا.
+  Future<String> transcribeVoice(
+    String projectSlug,
+    String filePath,
+    int seconds,
+  ) async {
+    final response = await _api.uploadAudio(
+      '/projects/$projectSlug/voice',
+      filePath,
+      seconds,
+    );
+
+    return Map<String, dynamic>.from(response['data'] as Map)['text'] as String;
+  }
+
   /// التشخيص الكامل: درجة النضج والمحاور الثمانية وقائمة الإصلاح.
   ///
   /// نفس عقد الويب حرفيًّا — الخادم يحسب والتطبيق يعرض. أي اشتقاق هنا يجعل

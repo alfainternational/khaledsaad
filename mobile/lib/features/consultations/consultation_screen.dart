@@ -651,6 +651,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               helperText: question.sensitive ? 'تُستخدم للتشخيص فقط.' : null,
             ),
           ),
+
         if (question.why != null && question.why!.isNotEmpty) ...[
           const SizedBox(height: 10),
           QuestionReason(question.why!),

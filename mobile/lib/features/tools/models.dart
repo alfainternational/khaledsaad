@@ -294,6 +294,7 @@ class ToolRunModel {
     required this.completenessPercent,
     required this.toolTitle,
     required this.projectName,
+    required this.projectSlug,
     required this.steps,
     required this.stages,
     this.baseScore,
@@ -320,6 +321,7 @@ class ToolRunModel {
         : null,
     toolTitle: (json['tool'] as Map?)?['title']?.toString() ?? '',
     projectName: (json['project'] as Map?)?['name']?.toString() ?? '',
+    projectSlug: (json['project'] as Map?)?['slug']?.toString() ?? '',
     steps: (json['steps'] as List? ?? const [])
         .map((e) => WizardStep.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList(),
@@ -341,6 +343,9 @@ class ToolRunModel {
   final HybridInsights? insights;
   final String toolTitle;
   final String projectName;
+
+  /// معرّف النشاط في المسارات — يحتاجه رفع الصوت وأي نداء يخصّ النشاط لا التشغيل.
+  final String projectSlug;
   final List<WizardStep> steps;
   final List<RunStage> stages;
 }
