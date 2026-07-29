@@ -1,1722 +1,2006 @@
 {
-    "schema_version":  1,
-    "description":  "سجل المطابقة الوظيفية بين الويب وواجهة API وتطبيق Flutter. صيغة JSON صحيحة ومتوافقة مع YAML.",
-    "layout_contract":  {
-                            "web":  {
-                                        "status":  "verified",
-                                        "columns":  [4, 8, 12],
-                                        "families":  ["reading", "form", "operational", "dashboard", "detail", "report", "board"],
-                                        "implementation":  ["resources/css/workspace.css"],
-                                        "tests":  ["Tests\\Feature\\PageLayoutContractTest", "Tests\\Feature\\WorkspaceLayoutTest"]
-                                    },
-                            "mobile":  {
-                                           "status":  "verified",
-                                           "breakpoints":  [600, 1024],
-                                           "families":  ["reading", "form", "operational"],
-                                           "implementation":  ["mobile/lib/core/widgets/adaptive_layout.dart"],
-                                           "tests":  ["mobile/test/core/widgets/adaptive_layout_test.dart"]
-                                       },
-                            "print":  {
-                                          "status":  "verified",
-                                          "families":  ["report", "agency_report"],
-                                          "implementation":  ["resources/views/reports/pdf.blade.php", "resources/views/agency-reports/pdf.blade.php"],
-                                          "tests":  ["Tests\\Feature\\ReportPdfParityTest", "Tests\\Feature\\AgencyReportDeliveryTest"]
-                                      },
-                            "constraints":  ["no_page_horizontal_scroll_320", "colors_unchanged", "shadows_unchanged"]
-                        },
-    "capabilities":  [
-                         {
-                             "id":  "customer.consultation.evidence_integrated",
-                             "role":  "customer",
-                             "web":  {"applicable": true, "route": "app.consultations.show", "method": "GET|POST|DELETE"},
-                             "api":  {"applicable": true, "route": "api.v1.consultations.show", "method": "GET|POST|DELETE"},
-                             "mobile":  {"applicable": true, "screen": "ConsultationScreen", "action": "upload_and_view_extraction_state"},
-                             "states":  ["pending", "completed", "unsupported", "failed", "review"],
-                             "tests":  {
-                                           "web":  ["Tests\\Feature\\ConsultationEvidenceIntegrationTest"],
-                                           "api":  ["Tests\\Feature\\ConsultationEvidenceIntegrationTest"],
-                                           "mobile":  ["mobile/test/features/consultation_unified_context_test.dart"]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.agency_reports.unified_context",
-                             "role":  "customer",
-                             "web":  {"applicable": true, "route": "app.agency-reports.show", "method": "GET|POST"},
-                             "api":  {"applicable": true, "route": "api.v1.agency-reports.show", "method": "GET|POST"},
-                             "mobile":  {"applicable": true, "screen": "AgencyReportScreen", "action": "view_consultation_and_cross_tool_sources"},
-                             "states":  ["loading", "empty", "agreement", "divergence", "private", "success"],
-                             "tests":  {
-                                           "web":  ["Tests\\Feature\\UnifiedDiagnosticPresentationTest", "Tests\\Feature\\UnifiedDiagnosticSynthesisTest"],
-                                           "api":  ["Tests\\Feature\\UnifiedDiagnosticSynthesisTest"],
-                                           "mobile":  ["mobile/test/features/agency_report_freshness_test.dart"]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.agency_reports.freshness",
-                             "role":  "customer",
-                             "web":  {"applicable": true, "route": "app.agency-reports.show", "method": "GET|POST"},
-                             "api":  {"applicable": true, "route": "api.v1.agency-reports.show", "method": "GET|POST"},
-                             "mobile":  {"applicable": true, "screen": "AgencyReportScreen", "action": "detect_and_regenerate_stale_version"},
-                             "states":  ["fresh", "stale", "regenerating", "error", "success"],
-                             "tests":  {
-                                           "web":  ["Tests\\Feature\\AgencyReportFreshnessTest"],
-                                           "api":  ["Tests\\Feature\\AgencyReportFreshnessTest"],
-                                           "mobile":  ["mobile/test/features/agency_report_freshness_test.dart"]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.consultation.complete",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.consultations.show",
-                                         "method":  "GET|POST|PUT|DELETE"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.consultations.show",
-                                         "method":  "GET|POST|PUT|DELETE"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "ConsultationScreen",
-                                            "action":  "start_answer_review_confirm_status_report"
-                                        },
-                             "states":  [
-                                            "loading", "validation", "conflict", "review", "queued",
-                                            "failed", "completed", "offline", "success"
-                                        ],
-                             "tests":  {
-                                           "web":  ["Tests\\Feature\\ConsultationLifecycleTest"],
-                                           "api":  ["Tests\\Feature\\ConsultationApiTest", "Tests\\Feature\\ConsultationLifecycleTest"],
-                                           "mobile":  ["mobile/test/features/consultation_journey_test.dart"]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.consultation.govern",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.consultations.index",
-                                         "method":  "GET|POST|PUT"
-                                     },
-                             "api":  {"applicable": false},
-                             "mobile":  {"applicable": false},
-                             "states":  ["empty", "draft", "validation", "published", "locked", "forbidden"],
-                             "tests":  {
-                                           "web":  ["Tests\\Feature\\AdminConsultationTest"],
-                                           "api":  [],
-                                           "mobile":  []
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.home.view",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "home",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.public.bootstrap",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "PublicHomeScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\PublicHomePageTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\PublicApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.tools.browse",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "tools.index",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.tools.index",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "PublicHomeScreen",
-                                            "action":  "browse"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\PublicToolJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.tools.view",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "tools.show",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.tools.show",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "PublicHomeScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\PublicToolJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.trial.complete",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "try.start",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.public.runs.start",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "RunWizardScreen",
-                                            "action":  "complete"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\GuestTrialTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\PublicApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.shared_report.view",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "shared.agency-report",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.public.shared-reports.show",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "SharedReportScreen",
-                                            "action":  "open_deep_link"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "expired",
-                                            "revoked",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AgencyReportSharingTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AgencyReportSharingTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.legal.view",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "privacy",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.public.legal",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "LegalScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\WebAppJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\PublicApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.auth.register",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "register",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.auth.register",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AuthScreen",
-                                            "action":  "register"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\WebAppJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.auth.login",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "login",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.auth.login",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AuthScreen",
-                                            "action":  "login"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\WebAppJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.auth.reset_password",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "password.email",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.auth.forgot-password",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "PasswordResetRequestScreen + PasswordResetScreen",
-                                            "action":  "request_and_reset"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\WebAppJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\PublicApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "visitor.app.download",
-                             "role":  "visitor",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "mobile.download",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.public.mobile-app",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  false,
-                                            "screen":  null,
-                                            "action":  null
-                                        },
-                             "states":  [
-                                            "missing_artifact",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\MobileDownloadTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\MobileDownloadTest"
-                                                   ],
-                                           "mobile":  [
-
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.dashboard.view",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.dashboard",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.projects.index",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "DashboardScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\WebAppJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.projects.manage",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.projects.index",
-                                         "method":  "GET|POST|PUT"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.projects.index",
-                                         "method":  "GET|POST|PUT"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "ProjectFormScreen",
-                                            "action":  "create_update_view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\WebAppJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.tools.browse",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.tools.index",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.tools.index",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "ToolCatalogScreen",
-                                            "action":  "browse"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "entitlement_denied",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\WebAppJourneyTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.runs.complete",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.runs.start",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.runs.store",
-                                         "method":  "POST|PUT"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "RunWizardScreen",
-                                            "action":  "start_save_review"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "preflight_blocked",
-                                            "entitlement_denied",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\ToolRunPipelineTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.runs.files",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.runs.files.store",
-                                         "method":  "POST|DELETE"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.runs.files.store",
-                                         "method":  "POST|DELETE"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "RunWizardScreen",
-                                            "action":  "upload_delete"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AttachmentTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\MobileParityGapsTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.runs.hybrid_insights",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.runs.insights",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.runs.insights",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "RunWizardScreen",
-                                            "action":  "request_insights"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "insufficient_data",
-                                            "provider_failure",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\HybridInsightsTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\HybridInsightsTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.runs.queue_retry_manual",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.runs.queue",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.runs.queue",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "RunStatusScreen",
-                                            "action":  "queue_retry_manual"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "queued",
-                                            "processing",
-                                            "failed",
-                                            "completed"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\ManualReportTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ManualReportTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.competitors.manage",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.competitors.store",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.competitors.index",
-                                         "method":  "GET|POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "CompetitorsCard",
-                                            "action":  "add_confirm_dismiss"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\CompetitorManagementTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\MobileParityGapsTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.reports.view",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.reports.show",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.reports.show",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "ReportScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\ReportChartsTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\MobileParityGapsTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.reports.pdf",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.reports.pdf",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.reports.pdf",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "ReportScreen",
-                                            "action":  "download_pdf"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "forbidden",
-                                            "generation_error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\ReportPdfTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.reports.growth_controls",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.reports.watch",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.reports.watch",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "ReportScreen",
-                                            "action":  "watch_feedback_compare"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\GrowthEngineTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\MobileParityGapsTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.tasks.manage",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.projects.tasks",
-                                         "method":  "GET|PATCH"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.tasks.index",
-                                         "method":  "GET|PATCH"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "TasksScreen",
-                                            "action":  "view_update"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\GrowthEngineTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.kpis.manage",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.kpis.store",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.kpis.store",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "GrowthHubScreen",
-                                            "action":  "create_record"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "entitlement_denied",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\KpiTemplatesTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.pulse.view",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.pulse.index",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.pulse.index",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "GrowthHubScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "entitlement_denied",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\GrowthEngineTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\GrowthEngineTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.geo.manage",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.geo.show",
-                                         "method":  "GET|POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.geo.show",
-                                         "method":  "GET|POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "GrowthHubScreen",
-                                            "action":  "view_generate"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "entitlement_denied",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\GrowthEngineTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\GrowthEngineTest",
-                                                       "Tests\\Feature\\CustomerApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.audience_lab.manage",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.audience.show",
-                                         "method":  "GET|POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.personas.index",
-                                         "method":  "GET|POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "GrowthHubScreen",
-                                            "action":  "panel_and_tests"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "entitlement_denied",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\GrowthEngineTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\GrowthEngineTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.agency_reports.manage",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.projects.agency-reports.index",
-                                         "method":  "GET|POST|DELETE"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.projects.agency-reports.index",
-                                         "method":  "GET|POST|DELETE"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AgencyReportsScreen",
-                                            "action":  "generate_view_share_pdf"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "entitlement_denied",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AgencyReportTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AgencyReportDeliveryTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.notifications.manage",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.notifications.index",
-                                         "method":  "GET|POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.notifications.index",
-                                         "method":  "GET|POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "NotificationsScreen",
-                                            "action":  "view_mark_read"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\NotificationsTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest",
-                                                       "Tests\\Feature\\CustomerApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.billing.view",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.billing",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.billing",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "BillingScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "provider_disabled",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\CheckoutTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\ApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "customer.checkout.complete",
-                             "role":  "customer",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "app.checkout.plan",
-                                         "method":  "POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.checkout.plan",
-                                         "method":  "POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "BillingScreen",
-                                            "action":  "checkout_plan_or_pack"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "provider_disabled",
-                                            "cancelled",
-                                            "failed",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\CheckoutTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\CheckoutTest",
-                                                       "Tests\\Feature\\CustomerApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/features/parity_models_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.dashboard.view",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.dashboard",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.dashboard",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AdminPanelTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.usage.view",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.usage",
-                                         "method":  "GET"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.usage",
-                                         "method":  "GET"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "view"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AdminPanelTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.tools.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.tools.index",
-                                         "method":  "GET|POST|PUT|DELETE|PATCH"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.tools.index",
-                                         "method":  "GET|POST|PUT|DELETE|PATCH"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "manage"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "confirmation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AdminCrudTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.prompts.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.tools.prompts.update",
-                                         "method":  "PUT"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.tools.prompts.update",
-                                         "method":  "PUT"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "update"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "locked_version",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AdminCrudTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.features.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.features.index",
-                                         "method":  "GET|POST|PUT|DELETE"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.catalog",
-                                         "method":  "GET|POST|PUT|DELETE"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "manage"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "confirmation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\PlanFeatureEntitlementTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.plans.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.plans.index",
-                                         "method":  "GET|POST|PUT|DELETE"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.catalog",
-                                         "method":  "GET|POST|PUT|DELETE"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "manage"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "confirmation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AdminCrudTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.credit_packs.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.packs.index",
-                                         "method":  "GET|POST|PUT|DELETE"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.catalog",
-                                         "method":  "GET|POST|PUT|DELETE"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "manage"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "confirmation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AdminCrudTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.gateways.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.gateways.index",
-                                         "method":  "GET|POST|PUT|DELETE|PATCH"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.catalog",
-                                         "method":  "GET|POST|PUT|DELETE|PATCH"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "manage"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "confirmation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\PaymentGatewayTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.users.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.users.index",
-                                         "method":  "GET|PUT|POST|PATCH"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.users.index",
-                                         "method":  "GET|PUT|POST|PATCH"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "manage_roles_and_credits"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "confirmation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AdminPanelTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.payments.review",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.payments.index",
-                                         "method":  "GET|POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.payments.index",
-                                         "method":  "GET|POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "approve_or_reject"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "confirmation",
-                                            "already_processed",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\PaymentGatewayTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.manual_reports.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.manual.index",
-                                         "method":  "GET|POST"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.manual-reports.index",
-                                         "method":  "GET|POST"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "view_export_complete"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "empty",
-                                            "validation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\ManualReportTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         },
-                         {
-                             "id":  "admin.settings.manage",
-                             "role":  "admin",
-                             "web":  {
-                                         "applicable":  true,
-                                         "route":  "admin.settings",
-                                         "method":  "GET|PUT"
-                                     },
-                             "api":  {
-                                         "applicable":  true,
-                                         "route":  "api.v1.admin.settings.index",
-                                         "method":  "GET|PUT"
-                                     },
-                             "mobile":  {
-                                            "applicable":  true,
-                                            "screen":  "AdminHubScreen",
-                                            "action":  "manage"
-                                        },
-                             "states":  [
-                                            "loading",
-                                            "validation",
-                                            "forbidden",
-                                            "error",
-                                            "success"
-                                        ],
-                             "tests":  {
-                                           "web":  [
-                                                       "Tests\\Feature\\AdminSettingsTest"
-                                                   ],
-                                           "api":  [
-                                                       "Tests\\Feature\\AdminApiParityTest"
-                                                   ],
-                                           "mobile":  [
-                                                          "mobile/test/widget_test.dart"
-                                                      ]
-                                       },
-                             "status":  "verified"
-                         }
-                     ]
+  "schema_version": 1,
+  "description": "سجل المطابقة الوظيفية بين الويب وواجهة API وتطبيق Flutter. صيغة JSON صحيحة ومتوافقة مع YAML.",
+  "layout_contract": {
+    "web": {
+      "status": "verified",
+      "columns": [
+        4,
+        8,
+        12
+      ],
+      "families": [
+        "reading",
+        "form",
+        "operational",
+        "dashboard",
+        "detail",
+        "report",
+        "board"
+      ],
+      "implementation": [
+        "resources/css/workspace.css"
+      ],
+      "tests": [
+        "Tests\\Feature\\PageLayoutContractTest",
+        "Tests\\Feature\\WorkspaceLayoutTest"
+      ]
+    },
+    "mobile": {
+      "status": "verified",
+      "breakpoints": [
+        600,
+        1024
+      ],
+      "families": [
+        "reading",
+        "form",
+        "operational"
+      ],
+      "implementation": [
+        "mobile/lib/core/widgets/adaptive_layout.dart"
+      ],
+      "tests": [
+        "mobile/test/core/widgets/adaptive_layout_test.dart"
+      ]
+    },
+    "print": {
+      "status": "verified",
+      "families": [
+        "report",
+        "agency_report"
+      ],
+      "implementation": [
+        "resources/views/reports/pdf.blade.php",
+        "resources/views/agency-reports/pdf.blade.php"
+      ],
+      "tests": [
+        "Tests\\Feature\\ReportPdfParityTest",
+        "Tests\\Feature\\AgencyReportDeliveryTest"
+      ]
+    },
+    "constraints": [
+      "no_page_horizontal_scroll_320",
+      "colors_unchanged",
+      "shadows_unchanged"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "customer.consultation.evidence_integrated",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.consultations.show",
+        "method": "GET|POST|DELETE"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.consultations.show",
+        "method": "GET|POST|DELETE"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ConsultationScreen",
+        "action": "upload_and_view_extraction_state"
+      },
+      "states": [
+        "pending",
+        "completed",
+        "unsupported",
+        "failed",
+        "review"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ConsultationEvidenceIntegrationTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ConsultationEvidenceIntegrationTest"
+        ],
+        "mobile": [
+          "mobile/test/features/consultation_unified_context_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.agency_reports.unified_context",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.agency-reports.show",
+        "method": "GET|POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.agency-reports.show",
+        "method": "GET|POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AgencyReportScreen",
+        "action": "view_consultation_and_cross_tool_sources"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "agreement",
+        "divergence",
+        "private",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\UnifiedDiagnosticPresentationTest",
+          "Tests\\Feature\\UnifiedDiagnosticSynthesisTest"
+        ],
+        "api": [
+          "Tests\\Feature\\UnifiedDiagnosticSynthesisTest"
+        ],
+        "mobile": [
+          "mobile/test/features/agency_report_freshness_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.agency_reports.freshness",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.agency-reports.show",
+        "method": "GET|POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.agency-reports.show",
+        "method": "GET|POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AgencyReportScreen",
+        "action": "detect_and_regenerate_stale_version"
+      },
+      "states": [
+        "fresh",
+        "stale",
+        "regenerating",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AgencyReportFreshnessTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AgencyReportFreshnessTest"
+        ],
+        "mobile": [
+          "mobile/test/features/agency_report_freshness_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.consultation.complete",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.consultations.show",
+        "method": "GET|POST|PUT|DELETE"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.consultations.show",
+        "method": "GET|POST|PUT|DELETE"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ConsultationScreen",
+        "action": "start_answer_review_confirm_status_report"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "conflict",
+        "review",
+        "queued",
+        "failed",
+        "completed",
+        "offline",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ConsultationLifecycleTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ConsultationApiTest",
+          "Tests\\Feature\\ConsultationLifecycleTest"
+        ],
+        "mobile": [
+          "mobile/test/features/consultation_journey_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.consultation.govern",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.consultations.index",
+        "method": "GET|POST|PUT"
+      },
+      "api": {
+        "applicable": false
+      },
+      "mobile": {
+        "applicable": false
+      },
+      "states": [
+        "empty",
+        "draft",
+        "validation",
+        "published",
+        "locked",
+        "forbidden"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminConsultationTest"
+        ],
+        "api": [],
+        "mobile": []
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.home.view",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "home",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.public.bootstrap",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "PublicHomeScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\PublicHomePageTest"
+        ],
+        "api": [
+          "Tests\\Feature\\PublicApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.tools.browse",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "tools.index",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.tools.index",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "PublicHomeScreen",
+        "action": "browse"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\PublicToolJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.tools.view",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "tools.show",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.tools.show",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "PublicHomeScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\PublicToolJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.trial.complete",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "try.start",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.public.runs.start",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "RunWizardScreen",
+        "action": "complete"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\GuestTrialTest"
+        ],
+        "api": [
+          "Tests\\Feature\\PublicApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.shared_report.view",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "shared.agency-report",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.public.shared-reports.show",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "SharedReportScreen",
+        "action": "open_deep_link"
+      },
+      "states": [
+        "loading",
+        "expired",
+        "revoked",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AgencyReportSharingTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AgencyReportSharingTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.legal.view",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "privacy",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.public.legal",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "LegalScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\WebAppJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\PublicApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.auth.register",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "register",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.auth.register",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AuthScreen",
+        "action": "register"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\WebAppJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.auth.login",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "login",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.auth.login",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AuthScreen",
+        "action": "login"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\WebAppJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.auth.reset_password",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "password.email",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.auth.forgot-password",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "PasswordResetRequestScreen + PasswordResetScreen",
+        "action": "request_and_reset"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\WebAppJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\PublicApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "visitor.app.download",
+      "role": "visitor",
+      "web": {
+        "applicable": true,
+        "route": "mobile.download",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.public.mobile-app",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": false,
+        "screen": null,
+        "action": null
+      },
+      "states": [
+        "missing_artifact",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\MobileDownloadTest"
+        ],
+        "api": [
+          "Tests\\Feature\\MobileDownloadTest"
+        ],
+        "mobile": []
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.dashboard.view",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.dashboard",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.projects.index",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "DashboardScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\WebAppJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.projects.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.projects.index",
+        "method": "GET|POST|PUT"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.projects.index",
+        "method": "GET|POST|PUT"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ProjectFormScreen",
+        "action": "create_update_view"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\WebAppJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.tools.browse",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.tools.index",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.tools.index",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ToolCatalogScreen",
+        "action": "browse"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "entitlement_denied",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\WebAppJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.runs.complete",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.runs.start",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.runs.store",
+        "method": "POST|PUT"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "RunWizardScreen",
+        "action": "start_save_review"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "preflight_blocked",
+        "entitlement_denied",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ToolRunPipelineTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.runs.files",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.runs.files.store",
+        "method": "POST|DELETE"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.runs.files.store",
+        "method": "POST|DELETE"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "RunWizardScreen",
+        "action": "upload_delete"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AttachmentTest"
+        ],
+        "api": [
+          "Tests\\Feature\\MobileParityGapsTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.runs.hybrid_insights",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.runs.insights",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.runs.insights",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "RunWizardScreen",
+        "action": "request_insights"
+      },
+      "states": [
+        "loading",
+        "insufficient_data",
+        "provider_failure",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\HybridInsightsTest"
+        ],
+        "api": [
+          "Tests\\Feature\\HybridInsightsTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.runs.queue_retry_manual",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.runs.queue",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.runs.queue",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "RunStatusScreen",
+        "action": "queue_retry_manual"
+      },
+      "states": [
+        "loading",
+        "queued",
+        "processing",
+        "failed",
+        "completed"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ManualReportTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ManualReportTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.competitors.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.competitors.store",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.competitors.index",
+        "method": "GET|POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "CompetitorsCard",
+        "action": "add_confirm_dismiss"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\CompetitorManagementTest"
+        ],
+        "api": [
+          "Tests\\Feature\\MobileParityGapsTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.reports.view",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.reports.show",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.reports.show",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ReportScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ReportChartsTest"
+        ],
+        "api": [
+          "Tests\\Feature\\MobileParityGapsTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.reports.pdf",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.reports.pdf",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.reports.pdf",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ReportScreen",
+        "action": "download_pdf"
+      },
+      "states": [
+        "loading",
+        "forbidden",
+        "generation_error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ReportPdfTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.reports.growth_controls",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.reports.watch",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.reports.watch",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ReportScreen",
+        "action": "watch_feedback_compare"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\GrowthEngineTest"
+        ],
+        "api": [
+          "Tests\\Feature\\MobileParityGapsTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.tasks.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.projects.tasks",
+        "method": "GET|PATCH"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.tasks.index",
+        "method": "GET|PATCH"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "TasksScreen",
+        "action": "view_update"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\GrowthEngineTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.kpis.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.kpis.store",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.kpis.store",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "GrowthHubScreen",
+        "action": "create_record"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "entitlement_denied",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\KpiTemplatesTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.pulse.view",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.pulse.index",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.pulse.index",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "GrowthHubScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "entitlement_denied",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\GrowthEngineTest"
+        ],
+        "api": [
+          "Tests\\Feature\\GrowthEngineTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.geo.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.geo.show",
+        "method": "GET|POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.geo.show",
+        "method": "GET|POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "GrowthHubScreen",
+        "action": "view_generate"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "entitlement_denied",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\GrowthEngineTest"
+        ],
+        "api": [
+          "Tests\\Feature\\GrowthEngineTest",
+          "Tests\\Feature\\CustomerApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.audience_lab.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.audience.show",
+        "method": "GET|POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.personas.index",
+        "method": "GET|POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "GrowthHubScreen",
+        "action": "panel_and_tests"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "entitlement_denied",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\GrowthEngineTest"
+        ],
+        "api": [
+          "Tests\\Feature\\GrowthEngineTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.agency_reports.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.projects.agency-reports.index",
+        "method": "GET|POST|DELETE"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.projects.agency-reports.index",
+        "method": "GET|POST|DELETE"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AgencyReportsScreen",
+        "action": "generate_view_share_pdf"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "entitlement_denied",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AgencyReportTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AgencyReportDeliveryTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.notifications.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.notifications.index",
+        "method": "GET|POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.notifications.index",
+        "method": "GET|POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "NotificationsScreen",
+        "action": "view_mark_read"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\NotificationsTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest",
+          "Tests\\Feature\\CustomerApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.billing.view",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.billing",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.billing",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "BillingScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "provider_disabled",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\CheckoutTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.checkout.complete",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.checkout.plan",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.checkout.plan",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "BillingScreen",
+        "action": "checkout_plan_or_pack"
+      },
+      "states": [
+        "loading",
+        "provider_disabled",
+        "cancelled",
+        "failed",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\CheckoutTest"
+        ],
+        "api": [
+          "Tests\\Feature\\CheckoutTest",
+          "Tests\\Feature\\CustomerApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.dashboard.view",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.dashboard",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.dashboard",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminPanelTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.usage.view",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.usage",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.usage",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminPanelTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.tools.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.tools.index",
+        "method": "GET|POST|PUT|DELETE|PATCH"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.tools.index",
+        "method": "GET|POST|PUT|DELETE|PATCH"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "manage"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "confirmation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminCrudTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.prompts.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.tools.prompts.update",
+        "method": "PUT"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.tools.prompts.update",
+        "method": "PUT"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "update"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "locked_version",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminCrudTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.features.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.features.index",
+        "method": "GET|POST|PUT|DELETE"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.catalog",
+        "method": "GET|POST|PUT|DELETE"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "manage"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "confirmation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\PlanFeatureEntitlementTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.plans.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.plans.index",
+        "method": "GET|POST|PUT|DELETE"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.catalog",
+        "method": "GET|POST|PUT|DELETE"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "manage"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "confirmation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminCrudTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.credit_packs.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.packs.index",
+        "method": "GET|POST|PUT|DELETE"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.catalog",
+        "method": "GET|POST|PUT|DELETE"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "manage"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "confirmation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminCrudTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.gateways.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.gateways.index",
+        "method": "GET|POST|PUT|DELETE|PATCH"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.catalog",
+        "method": "GET|POST|PUT|DELETE|PATCH"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "manage"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "confirmation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\PaymentGatewayTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.users.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.users.index",
+        "method": "GET|PUT|POST|PATCH"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.users.index",
+        "method": "GET|PUT|POST|PATCH"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "manage_roles_and_credits"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "confirmation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminPanelTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.payments.review",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.payments.index",
+        "method": "GET|POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.payments.index",
+        "method": "GET|POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "approve_or_reject"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "confirmation",
+        "already_processed",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\PaymentGatewayTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.manual_reports.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.manual.index",
+        "method": "GET|POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.manual-reports.index",
+        "method": "GET|POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "view_export_complete"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ManualReportTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "admin.settings.manage",
+      "role": "admin",
+      "web": {
+        "applicable": true,
+        "route": "admin.settings",
+        "method": "GET|PUT"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.admin.settings.index",
+        "method": "GET|PUT"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "AdminHubScreen",
+        "action": "manage"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AdminSettingsTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AdminApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.presence.report",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.presence.show",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.presence.show",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "PresenceScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\PresenceJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\PresenceJourneyTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.presence.probe",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.presence.probe",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.presence.probe",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "PresenceScreen",
+        "action": "probe"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\PresenceJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\AnswerPresenceTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.voice.transcribe",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.voice.store",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.voice.store",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": false,
+        "screen": null,
+        "action": null
+      },
+      "states": [
+        "loading",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\VoiceIntakeTest"
+        ],
+        "api": [
+          "Tests\\Feature\\VoiceIntakeTest"
+        ],
+        "mobile": []
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.portfolio.board",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.portfolio",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": false,
+        "route": null,
+        "method": null
+      },
+      "mobile": {
+        "applicable": false,
+        "screen": null,
+        "action": null
+      },
+      "states": [
+        "loading",
+        "empty",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\AgencyPortfolioTest"
+        ],
+        "api": [],
+        "mobile": []
+      },
+      "status": "verified"
+    }
+  ]
 }

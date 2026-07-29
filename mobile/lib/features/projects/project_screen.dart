@@ -7,6 +7,7 @@ import '../../core/widgets/common.dart';
 import '../agency_reports/agency_reports_screen.dart';
 import '../consultations/consultation_screen.dart';
 import '../growth/growth_hub_screen.dart';
+import '../presence/presence_screen.dart';
 import '../readiness/readiness_screen.dart';
 import '../reports/report_screen.dart';
 import '../tools/models.dart';
@@ -154,6 +155,37 @@ class _ProjectScreenState extends State<ProjectScreen> {
                               band: project.card.scoreBand ?? '',
                               delta: project.comparison?.label,
                             ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // الحضور في إجابات النماذج: يقيس ما يراه المشتري حين يسأل
+                  // عن سوقك، لا ما يقرؤه البوت في موقعك.
+                  BrandCard(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PresenceScreen(
+                          repository: widget.repository,
+                          projectSlug: widget.slug,
+                          projectName: project.card.name,
+                        ),
+                      ),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Eyebrow('مقيس من إجابات النماذج'),
+                        SizedBox(height: 5),
+                        Text(
+                          'حضورك في إجابات الذكاء',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'نسأل النماذج أسئلة يكتبها مشترٍ حقيقي، ونقرأ من تذكره.',
+                          style: TextStyle(color: BrandColors.muted),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),

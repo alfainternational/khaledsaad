@@ -757,6 +757,22 @@ class PlatformRepository {
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
+  /// تقرير الحضور في إجابات النماذج وخريطة المصادر.
+  ///
+  /// `metrics` تعود null حين لا دورة استطلاع بعد — لا أصفار: «لم يُقَس»
+  /// و«قِيس فكان صفرًا» حالتان مختلفتان، وعرض الثانية مكان الأولى حكمٌ على
+  /// نشاط لم يُفحص.
+  Future<Map<String, dynamic>> presence(String projectSlug) async {
+    final response = await _api.get('/projects/$projectSlug/presence');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  /// بدء دورة استطلاع. ترفع ApiException برسالة السقف حين تنفد الميزانية.
+  Future<void> probePresence(String projectSlug) async {
+    await _api.post('/projects/$projectSlug/presence/probe');
+  }
+
   Future<Map<String, dynamic>> geo(String projectSlug) async {
     final response = await _api.get('/projects/$projectSlug/geo');
 
