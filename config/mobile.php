@@ -8,10 +8,10 @@ return [
      * لا تُرفع هذه القيم إلا بعد بناء APK ونشره وتحديث المانيفست. رفعها
      * قبلها يجعل صفحة التنزيل تعلن نسخة لا وجود لها.
      *
-     * نسخة البناء القادم مكانها `mobile/pubspec.yaml` (الآن 1.0.4+5).
+     * نسخة البناء القادم مكانها `mobile/pubspec.yaml`.
      */
-    'version' => env('MOBILE_APP_VERSION', '1.0.3'),
-    'build' => (int) env('MOBILE_APP_BUILD', 4),
+    'version' => env('MOBILE_APP_VERSION', '1.0.4'),
+    'build' => (int) env('MOBILE_APP_BUILD', 5),
 
     /*
      * أقل بناء مسموح له باستهلاك api/v1.
