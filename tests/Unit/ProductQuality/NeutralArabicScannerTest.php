@@ -48,6 +48,35 @@ class NeutralArabicScannerTest extends TestCase
     }
 
     #[Test]
+    public function a_wrapped_template_comment_is_not_read_as_copy(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'neutral-arabic-');
+        $this->assertNotFalse($path);
+
+        try {
+            /*
+             * السطر الأوسط لا يحمل بادئة تعليق، فبادئةُ السطر وحدها تقرؤه
+             * خطابًا للمستخدم — وهو تعليق لا يصل إليه. والسطر الأخير يثبت أن
+             * النزع لم يبتلع نصًّا ظاهرًا معه.
+             */
+            file_put_contents($path, implode("\n", [
+                '{{--',
+                'شرح تقني: وين تُحسب الدرجة.',
+                '--}}',
+                "<p>{{ 'وين وصل مشروعك؟' }}</p>",
+            ])."\n");
+
+            $issues = (new NeutralArabicScanner)->scan([$path]);
+
+            $this->assertCount(1, $issues);
+            $this->assertSame(4, $issues[0]['line']);
+            $this->assertSame('وين', $issues[0]['term']);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    #[Test]
     public function repository_user_facing_copy_uses_neutral_arabic(): void
     {
         $issues = (new NeutralArabicScanner)->scanDefaultPaths();

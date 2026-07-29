@@ -76,13 +76,18 @@ final class NeutralArabicScanner
                 continue;
             }
 
+            // حالة التعليق تُحمَل بين الأسطر، وتبدأ نظيفة مع كل ملف.
+            $awaiting = null;
+
             foreach ($lines as $index => $line) {
-                if ($this->isCommentOnly($line)) {
+                $visible = $this->withoutBlockComments($line, $awaiting);
+
+                if ($this->isCommentOnly($visible)) {
                     continue;
                 }
 
                 foreach (self::REPLACEMENTS as $term => $replacement) {
-                    if (! $this->containsTerm($line, $term)) {
+                    if (! $this->containsTerm($visible, $term)) {
                         continue;
                     }
 
@@ -153,6 +158,69 @@ final class NeutralArabicScanner
         $pattern = '/(?<![\p{Arabic}\p{L}\p{M}])'.$quoted.'(?![\p{Arabic}\p{L}\p{M}])/u';
 
         return preg_match($pattern, $line) === 1;
+    }
+
+    /** تعليقات القوالب: الفاتح ومغلقه. */
+    private const array BLOCK_COMMENTS = [
+        '{{--' => '--}}',
+        '<!--' => '-->',
+    ];
+
+    /**
+     * نزع تعليقات القوالب من السطر قبل فحصه.
+     *
+     * `isCommentOnly` يفحص بادئة السطر وحدها، فيتعرّف على `{{--` ويعمى عمّا
+     * بعده: تعليق عربي ملفوف على ثلاثة أسطر تُقرأ أسطره الوسطى **خطابًا
+     * موجّهًا للمستخدم** وهي لا تصل إليه أصلًا. والمعيار يحكم ما تقوله المنصة
+     * لا ما يكتبه المطوّر لنفسه — تمامًا كاستثناء بنك الأسئلة أعلاه.
+     *
+     * النزع لا التخطّي: سطر فيه نصّ ظاهر ثم تعليق يبقى نصّه مفحوصًا.
+     *
+     * @param  string|null  $awaiting  المغلق المنتظَر، يُحمَل بين الأسطر
+     */
+    private function withoutBlockComments(string $line, ?string &$awaiting): string
+    {
+        $visible = '';
+        $cursor = 0;
+        $length = strlen($line);
+
+        while ($cursor < $length) {
+            if ($awaiting !== null) {
+                $close = strpos($line, $awaiting, $cursor);
+
+                if ($close === false) {
+                    // التعليق يمتدّ إلى ما بعد هذا السطر.
+                    return $visible;
+                }
+
+                $cursor = $close + strlen($awaiting);
+                $awaiting = null;
+
+                continue;
+            }
+
+            $openAt = null;
+            $opener = null;
+
+            foreach (self::BLOCK_COMMENTS as $open => $close) {
+                $position = strpos($line, $open, $cursor);
+
+                if ($position !== false && ($openAt === null || $position < $openAt)) {
+                    $openAt = $position;
+                    $opener = [$open, $close];
+                }
+            }
+
+            if ($opener === null) {
+                return $visible.substr($line, $cursor);
+            }
+
+            $visible .= substr($line, $cursor, $openAt - $cursor);
+            $awaiting = $opener[1];
+            $cursor = $openAt + strlen($opener[0]);
+        }
+
+        return $visible;
     }
 
     private function isCommentOnly(string $line): bool
