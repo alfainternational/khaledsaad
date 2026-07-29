@@ -66,6 +66,7 @@ class SiteAudit
             llmsTxt: $this->fetcher->get($base.'/llms.txt') !== null,
             aiBotsAllowed: $this->botsAllowed($robots),
             notes: $robots === null ? ['لا يوجد robots.txt — البوتات غير محجوبة ضمنًا.'] : [],
+            homepageHtml: $html,
         );
     }
 

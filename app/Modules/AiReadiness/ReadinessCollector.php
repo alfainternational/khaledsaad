@@ -4,6 +4,7 @@ namespace App\Modules\AiReadiness;
 
 use App\Models\Project;
 use App\Modules\Brain\BrainWriter;
+use App\Modules\OwnedAssets\OwnedAssetsCollector;
 use App\Modules\Shared\Evidence\EvidenceLevel;
 
 /**
@@ -22,6 +23,7 @@ class ReadinessCollector
         private readonly SiteAudit $audit,
         private readonly CrawlLogAnalyzer $crawl,
         private readonly BrainWriter $brain,
+        private readonly OwnedAssetsCollector $ownedAssets,
     ) {}
 
     /**
@@ -46,6 +48,16 @@ class ReadinessCollector
                 sourceReference: 'site_audit:'.$result->url,
             );
         }
+
+        /*
+         * المحور ٨ يُغذَّى من الصفحة نفسها: وسيلة الجمع المباشرة تُرصد من
+         * HTML الذي جُلب لتوّه، فلا نداء شبكي ثانٍ على موقع العميل.
+         *
+         * قبل هذا الوصل كان `OwnedAssetsCollector` مبنيًّا بصفر مستدعين، أي
+         * أن المحور الثامن لم يكن يُقاس إطلاقًا — لا لأن `owned_ratio` مؤجَّل
+         * (وهو قرار معلن)، بل لأن جامعه لم يكن يُستدعى.
+         */
+        $this->ownedAssets->collectFromSite($project, $result->homepageHtml);
 
         return $result;
     }

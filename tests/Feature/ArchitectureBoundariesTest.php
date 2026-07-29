@@ -168,6 +168,72 @@ class ArchitectureBoundariesTest extends TestCase
     }
 
     /**
+     * كل جامع أو خدمة وحدة له مستدعٍ في كود الإنتاج.
+     *
+     * ثلاث مرات في جلسة واحدة بُنيت قدرة صحيحة وخضراء الاختبار ولم يستدعها
+     * شيء: `LegacyCapabilities` (فظلّت الخطط تُولَّد من وصف المستخدم لنفسه)،
+     * والاستقبال الصوتي (مسار بلا زر)، و`OwnedAssetsCollector` (فلم يُقَس
+     * المحور الثامن إطلاقًا).
+     *
+     * العطل صامت لأن اختبار الوحدة يستدعيها مباشرة فيمرّ أخضر، بينما لا
+     * يبلغها مستخدم أبدًا. **القدرة التي لا يستدعيها كود إنتاج غير موجودة.**
+     *
+     * الفحص على الأصناف القابلة للاستدعاء وحدها: النماذج والعقود والقيم
+     * تُستعمل بأسمائها في مواضع أخرى، والـenum يُقرأ ولا «يُستدعى».
+     */
+    public function test_every_module_service_has_a_production_caller(): void
+    {
+        /*
+         * البذر جذرٌ ثالث: `db:seed` كود إنتاج يُشغَّل على الخادم، وبانٍ
+         * يستدعيه البذر وحده موصولٌ فعلًا لا يتيم.
+         */
+        $roots = [base_path('app'), base_path('routes'), base_path('database/seeders')];
+        $orphans = [];
+
+        foreach ($this->phpFilesIn(base_path(self::MODULES_PATH)) as $file) {
+            $class = basename($file, '.php');
+
+            // النماذج والعقود والقيم والمهام خارج الفحص: لا تُستدعى بالاسم
+            // من خدمة، بل تُنشأ أو تُنفَّذ أو تُوسَّع.
+            if (preg_match('#[\\\\/](Models|Contracts|Exceptions|Jobs)[\\\\/]#', $file)) {
+                continue;
+            }
+
+            $code = $this->codeOf($file);
+
+            if (! str_contains($code, 'class '.$class)) {
+                continue;
+            }
+
+            $callers = 0;
+
+            foreach ($roots as $root) {
+                foreach ($this->phpFilesIn($root) as $candidate) {
+                    if (realpath($candidate) === realpath($file)) {
+                        continue;
+                    }
+
+                    if (preg_match('/\b'.preg_quote($class, '/').'\b/', $this->codeOf($candidate))) {
+                        $callers++;
+                        break 2;
+                    }
+                }
+            }
+
+            if ($callers === 0) {
+                $orphans[] = $this->relative($file);
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $orphans,
+            'قدرات بلا مستدعٍ في كود الإنتاج — مبنية ولا يبلغها مستخدم: '
+            .implode(' · ', $orphans),
+        );
+    }
+
+    /**
      * @return array<int, string>
      */
     private function phpFilesIn(string $path): array

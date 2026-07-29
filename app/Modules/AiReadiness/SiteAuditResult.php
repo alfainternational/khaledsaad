@@ -25,6 +25,14 @@ final class SiteAuditResult
         public readonly bool $llmsTxt,
         public readonly bool $aiBotsAllowed,
         public readonly array $notes = [],
+
+        /*
+         * صفحة البداية كما جُلبت، لجامعي المحاور وحدهم.
+         *
+         * تُمرَّر ولا تُعرض ولا تُسلسَل: جلبها مرة واحدة يخدم المحورين ٧ و٨
+         * معًا، وإعادة جلبها لكل جامع نداءٌ شبكي مكرر على موقع العميل.
+         */
+        public readonly ?string $homepageHtml = null,
     ) {}
 
     /**
