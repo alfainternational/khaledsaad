@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\AiReadiness\Models\PresenceRun;
 use App\Modules\Brain\Models\BrainFact;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -74,6 +75,14 @@ class Project extends Model
      * للقراءة المُهيكلة استخدم `App\Modules\Brain\BrainReader`: هو من يعرف
      * قواعد السريان (المستبدَل والمسحوب لا يُعدّان ساريين).
      */
+    /**
+     * دورات استطلاع الحضور في إجابات النماذج (المرحلة ٣).
+     */
+    public function presenceRuns(): HasMany
+    {
+        return $this->hasMany(PresenceRun::class);
+    }
+
     public function brainFacts(): HasMany
     {
         return $this->hasMany(BrainFact::class);

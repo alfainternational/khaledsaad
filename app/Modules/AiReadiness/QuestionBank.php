@@ -1,0 +1,127 @@
+<?php
+
+namespace App\Modules\AiReadiness;
+
+use App\Models\Project;
+
+/**
+ * بنك الأسئلة القطاعي — أحد أصول الخندق الأربعة (CLAUDE.md §٣).
+ *
+ * القاعدة الحاكمة: **لا ترجمة من الإنجليزية.** «أفضل شركة تسويق» ترجمةٌ
+ * لسؤال إنجليزي ولا يكتبها مشترٍ خليجي. ما يُكتب فعلًا: «مين أفضل شركة تسويق
+ * في الرياض؟» و«كم تكلف إدارة سوشيال ميديا في السعودية؟» — بلهجة بيضاء
+ * بلمسة خليجية، وبصيغة السؤال المكتوب في مربّع البحث لا في تقرير.
+ *
+ * لماذا يهم؟ لأن النموذج يجيب على ما يُسأل. سؤال بصيغة أكاديمية يُنتج جوابًا
+ * أكاديميًّا لا يذكر أسماء متاجر، فيخرج القياس بصفر ذكر لعلامة قد تكون
+ * ظاهرة تمامًا في السؤال الحقيقي — وهو خطأ قياس يُقرأ حكمًا على النشاط.
+ *
+ * الأسئلة تنمو بكل عميل في القطاع، وهذا ما يجعل البنك أصلًا لا ملفّ إعداد.
+ */
+class QuestionBank
+{
+    /**
+     * أسئلة مشترٍ حقيقي لكل نية شراء.
+     *
+     * `{category}` تُستبدل بمجال النشاط، و`{city}` بمدينته. الاستبدال في
+     * النصّ لا في المنطق: السؤال يُخزَّن كما سُئل، فيمكن مراجعته لاحقًا بلغة
+     * من سأله.
+     *
+     * @var array<string, array<string, string>>
+     */
+    private const TEMPLATES = [
+        'best_provider' => [
+            'intent' => 'يبحث عن الأفضل',
+            'text' => 'مين أفضل {category} في {city}؟',
+        ],
+        'recommendation' => [
+            'intent' => 'يطلب ترشيحًا',
+            'text' => 'أبغى {category} كويس في {city}، وش تنصحني؟',
+        ],
+        'pricing' => [
+            'intent' => 'يقارن السعر',
+            'text' => 'كم تكلف {category} في {city}؟',
+        ],
+        'shortlist' => [
+            'intent' => 'يبني قائمة مختصرة',
+            'text' => 'وش أشهر {category} في {city}؟',
+        ],
+        'trust' => [
+            'intent' => 'يتحقق قبل الشراء',
+            'text' => 'كيف أعرف {category} موثوق في {city}؟',
+        ],
+        'comparison' => [
+            'intent' => 'يوازن بين خيارين',
+            'text' => 'إيش الفرق بين {category} المحلي والعالمي في {city}؟',
+        ],
+    ];
+
+    /** الحدّ الأدنى لعدد الأسئلة في دورة قابلة للنشر. */
+    public const MIN_QUESTIONS = 3;
+
+    /**
+     * أسئلة هذا النشاط.
+     *
+     * @return array<int, array<string, string>>
+     */
+    public function for(Project $project, int $limit = 5): array
+    {
+        $category = $this->categoryOf($project);
+        $city = $this->cityOf($project);
+
+        $questions = [];
+
+        foreach (self::TEMPLATES as $key => $template) {
+            $questions[] = [
+                'key' => $key,
+                'intent' => $template['intent'],
+                'text' => str_replace(
+                    ['{category}', '{city}'],
+                    [$category, $city],
+                    $template['text'],
+                ),
+            ];
+
+            if (count($questions) >= $limit) {
+                break;
+            }
+        }
+
+        return $questions;
+    }
+
+    /**
+     * مجال النشاط بلسان مشترٍ لا بمصطلح داخلي.
+     *
+     * `industry` قد يكون «تجارة إلكترونية»، ولا أحد يسأل «مين أفضل تجارة
+     * إلكترونية». الوصف أقرب لكلام الناس، ولذلك يسبق.
+     */
+    private function categoryOf(Project $project): string
+    {
+        $candidates = [
+            $project->profile?->brief('category_label'),
+            $project->industry,
+            $project->name,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (filled($candidate)) {
+                return trim((string) $candidate);
+            }
+        }
+
+        return 'مزوّد خدمة';
+    }
+
+    private function cityOf(Project $project): string
+    {
+        $geography = $project->profile?->geography;
+
+        // «الرياض، السعودية» → «الرياض». السؤال الحقيقي يذكر مدينة واحدة.
+        if (filled($geography)) {
+            return trim(explode('،', explode(',', (string) $geography)[0])[0]);
+        }
+
+        return 'السعودية';
+    }
+}

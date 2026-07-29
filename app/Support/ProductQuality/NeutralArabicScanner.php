@@ -66,7 +66,7 @@ final class NeutralArabicScanner
         $issues = [];
 
         foreach ($this->files($paths) as $file) {
-            if (realpath($file) === __FILE__) {
+            if (realpath($file) === __FILE__ || $this->isQuotedSpeech($file)) {
                 continue;
             }
 
@@ -98,6 +98,29 @@ final class NeutralArabicScanner
         }
 
         return $issues;
+    }
+
+    /**
+     * ملفات تنقل كلام غيرنا لا خطابنا.
+     *
+     * المعيار يحكم **ما تقوله المنصة للمستخدم**: لهجة بيضاء بلمسة خليجية، لا
+     * عامية ثقيلة. لكن بنك الأسئلة ليس خطابًا — هو محاكاة لما يكتبه مشترٍ
+     * حقيقي في مربّع البحث، وCLAUDE.md §١٥ يوجب كتابته «بلسان مشترٍ حقيقي»
+     * ويحذّر من الترجمة.
+     *
+     * إخضاعه للمعيار يفسد القياس نفسه: «ما أفضل مزوّد» سؤال لا يكتبه أحد،
+     * والنموذج يجيب عليه بجواب أكاديمي بلا أسماء — فيخرج معدّل الذكر صفرًا
+     * لعلامة قد تكون ظاهرة تمامًا في السؤال الحقيقي.
+     *
+     * الاستثناء بالمسار لا بتعليق داخلي: تعليق `@neutral-arabic-ignore` كان
+     * سيصير بابًا يُفتح في أي ملف يزعج كاتبَه المدقّقُ.
+     */
+    private function isQuotedSpeech(string $file): bool
+    {
+        return str_ends_with(
+            str_replace('\\', '/', (string) realpath($file)),
+            'app/Modules/AiReadiness/QuestionBank.php',
+        );
     }
 
     /**

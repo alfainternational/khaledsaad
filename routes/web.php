@@ -23,6 +23,7 @@ use App\Http\Controllers\App\FeedbackController;
 use App\Http\Controllers\App\GeoPackController;
 use App\Http\Controllers\App\KpiController;
 use App\Http\Controllers\App\NotificationController;
+use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\ProjectController;
 use App\Http\Controllers\App\PulseController;
 use App\Http\Controllers\App\ReadinessController;
@@ -117,6 +118,16 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
         ->middleware('throttle:20,60')->name('readiness.log');
     Route::get('projects/{project}/readiness/pdf', [ReadinessController::class, 'download'])
         ->middleware('feature:'.FeatureKey::DIAGNOSIS_FULL)->name('readiness.download');
+
+    /*
+     * تقرير الحضور في إجابات النماذج (المرحلة ٣): أول قدرة بتكلفة متغيرة،
+     * ولذلك خلف `diagnosis.full` — والسقف التشغيلي يحرسها فوق ذلك.
+     */
+    Route::middleware('feature:'.FeatureKey::DIAGNOSIS_FULL)->group(function (): void {
+        Route::get('projects/{project}/presence', [PresenceController::class, 'show'])->name('presence.show');
+        Route::post('projects/{project}/presence/probe', [PresenceController::class, 'probe'])
+            ->middleware('throttle:5,60')->name('presence.probe');
+    });
     Route::get('consultations', [ConsultationController::class, 'index'])->name('consultations.index');
     Route::get('consultations/{consultation}', [ConsultationController::class, 'show'])->name('consultations.show');
     Route::post('consultations/{consultation}/answer', [ConsultationController::class, 'answer'])->name('consultations.answer');
