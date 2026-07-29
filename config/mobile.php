@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'version' => env('MOBILE_APP_VERSION', '1.0.3'),
-    'build' => (int) env('MOBILE_APP_BUILD', 4),
+    'version' => env('MOBILE_APP_VERSION', '1.0.4'),
+    'build' => (int) env('MOBILE_APP_BUILD', 5),
 
     /*
      * أقل بناء مسموح له باستهلاك api/v1.
