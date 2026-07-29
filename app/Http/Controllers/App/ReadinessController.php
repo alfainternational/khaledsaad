@@ -10,7 +10,10 @@ use App\Modules\AiReadiness\SiteAudit;
 use App\Modules\Diagnosis\Axis;
 use App\Modules\Diagnosis\AxisScorer;
 use App\Modules\Diagnosis\FixList;
+use App\Modules\Diagnosis\IndustryBenchmark;
 use App\Modules\Diagnosis\MaturityAggregator;
+use App\Modules\Diagnosis\ScoreHistory;
+use App\Modules\Intake\IntakeCollector;
 use App\Modules\Reporting\ReadinessCardPdfGenerator;
 use App\Policies\ProjectOwnership;
 use Illuminate\Http\RedirectResponse;
@@ -35,11 +38,21 @@ class ReadinessController extends Controller
         private readonly FixList $fixes,
         private readonly ReadinessCardPdfGenerator $pdf,
         private readonly MaturityAggregator $maturity,
+        private readonly IntakeCollector $intake,
+        private readonly ScoreHistory $history,
+        private readonly IndustryBenchmark $benchmark,
     ) {}
 
     public function show(Request $request, Project $project): View
     {
         $this->authorizeProject($request, $project);
+
+        /*
+         * الجمع قبل العرض: ما أجاب عنه صاحب النشاط في أي أداة يجب أن يظهر في
+         * محاوره فورًا لا بعد تشغيل تالٍ. الجمع حتمي وبلا شبكة، وتكراره بلا
+         * تغيير لا يكتب شيئًا — فلا ثمن لاستدعائه هنا.
+         */
+        $this->intake->collect($project);
 
         $url = $project->profile?->website;
         $score = $this->scorer->score($project, Axis::AiReadiness);
@@ -52,6 +65,16 @@ class ReadinessController extends Controller
             'crawl' => session('readiness.crawl'),
             // الصورة الكاملة: المحاور الثمانية ودرجة النضج فوقها.
             'maturity' => $this->maturity->compute($project),
+
+            /*
+             * التاريخ يُمرَّر مع حكمه على نفسه: `plottable` تُحسب هنا لا في
+             * القالب، فلا تستطيع شاشة أن ترسم ثلاث نقاط بحجة أنها «كافية» (§١٣).
+             */
+            'history' => $this->history->points($project),
+            'plottable' => $this->history->isPlottable($project),
+
+            // موقعه من قطاعه، أو سبب غياب المقارنة. لا متوسط تقريبي.
+            'benchmark' => $this->benchmark->for($project),
         ]);
     }
 

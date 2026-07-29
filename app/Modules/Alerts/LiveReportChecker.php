@@ -7,6 +7,9 @@ use App\Models\Report;
 use App\Models\ReportWatcher;
 use App\Models\User;
 use App\Modules\Diagnosis\DeterministicScorer;
+use App\Modules\Diagnosis\MaturityAggregator;
+use App\Modules\Diagnosis\ScoreHistory;
+use App\Modules\Shared\Metrics\MetricKey;
 use App\Services\Tools\ProjectContextResolver;
 
 /**
@@ -40,6 +43,8 @@ class LiveReportChecker
     public function __construct(
         private readonly DeterministicScorer $scorer,
         private readonly ProjectContextResolver $context,
+        private readonly MaturityAggregator $maturity,
+        private readonly ScoreHistory $history,
     ) {}
 
     public function activate(Report $report, User $user): ReportWatcher
@@ -126,7 +131,69 @@ class LiveReportChecker
             $changes[] = $drift;
         }
 
+        // 5) درجة النضج: المؤشر الذي يُشترى الاشتراك من أجله.
+        $maturity = $this->maturityDrift($project);
+
+        if ($maturity !== null) {
+            $changes[] = $maturity;
+        }
+
         return $changes;
+    }
+
+    /**
+     * تقييد نقطة دورية إن حان وقتها.
+     *
+     * منفصلة عن `check()` عمدًا: الفحص يقرأ، والتقييد يكتب. خلطهما يجعل كل
+     * استعراض شاشةٍ يضيف نقطة إلى السلسلة الزمنية، فيصير «التاريخ» سجلَّ
+     * زيارات لا سجلَّ قياسات.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function recordPeriodicPoint(Project $project): ?array
+    {
+        if (! $this->history->isDueForPoint($project)) {
+            return null;
+        }
+
+        return $this->maturity->computeAndSnapshot($project);
+    }
+
+    /**
+     * تغيّر `maturity_score` بين آخر قياسين مقيَّدين.
+     *
+     * لا يُعاد الحساب هنا: المقارنة بين ما قُيِّد وقته وما قُيِّد قبله. إعادة
+     * حساب الماضي بقواعد الحاضر تجعل كل تغيير في المحرّك يظهر لصاحب النشاط
+     * تغيّرًا في نشاطه.
+     *
+     * @return array{type: string, text: string}|null
+     */
+    private function maturityDrift(Project $project): ?array
+    {
+        $delta = $this->history->latestDelta($project);
+
+        if ($delta === null) {
+            return null;
+        }
+
+        /*
+         * محور جديد دخل الحساب: الرقم تحرّك لأن ما نقيسه اتّسع، لا لأن النشاط
+         * تغيّر. تنبيهٌ هنا يكذب على صاحبه بأصدق البيانات (§١٥).
+         */
+        if ($delta['coverage_changed']) {
+            return null;
+        }
+
+        if (abs($delta['delta']) < (int) config('growth.score_drift_threshold', 5)) {
+            return null;
+        }
+
+        return [
+            'type' => MetricKey::MATURITY_SCORE,
+            'text' => $delta['delta'] > 0
+                ? "درجة نضجك التسويقي ارتفعت من {$delta['from']} إلى {$delta['to']} على نفس المحاور المقيسة."
+                : "درجة نضجك التسويقي نزلت من {$delta['from']} إلى {$delta['to']} على نفس المحاور المقيسة.",
+        ];
     }
 
     /**

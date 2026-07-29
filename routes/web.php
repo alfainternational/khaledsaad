@@ -103,15 +103,20 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
     Route::post('projects/{project}/consultations', [ConsultationController::class, 'start'])->name('consultations.start');
 
     /*
-     * بطاقة الجاهزية: المحور السابع. متاحة بلا بوابة ميزة في المرحلة ١ —
-     * هي الإسفين الذي يثبت القيمة قبل أن يُطلب اشتراك.
+     * بطاقة الجاهزية: المحور السابع. الشاشة والفحص مفتوحان — هما الإسفين الذي
+     * يثبت القيمة قبل أن يُطلب اشتراك، وهما حدّ المستوى ٠: يعرف صاحب النشاط
+     * **أين** فجواته.
+     *
+     * أما التصدير فخلف `diagnosis.full`: المستند هو ما يُشارَك ويُبنى عليه
+     * عمل، وهو حدّ المستوى ١ (§٨).
      */
     Route::get('projects/{project}/readiness', [ReadinessController::class, 'show'])->name('readiness.show');
     Route::post('projects/{project}/readiness/audit', [ReadinessController::class, 'audit'])
         ->middleware('throttle:10,60')->name('readiness.audit');
     Route::post('projects/{project}/readiness/log', [ReadinessController::class, 'uploadLog'])
         ->middleware('throttle:20,60')->name('readiness.log');
-    Route::get('projects/{project}/readiness/pdf', [ReadinessController::class, 'download'])->name('readiness.download');
+    Route::get('projects/{project}/readiness/pdf', [ReadinessController::class, 'download'])
+        ->middleware('feature:'.FeatureKey::DIAGNOSIS_FULL)->name('readiness.download');
     Route::get('consultations', [ConsultationController::class, 'index'])->name('consultations.index');
     Route::get('consultations/{consultation}', [ConsultationController::class, 'show'])->name('consultations.show');
     Route::post('consultations/{consultation}/answer', [ConsultationController::class, 'answer'])->name('consultations.answer');

@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\GuestSession;
 use App\Models\Tool;
 use App\Models\ToolRun;
+use App\Modules\Diagnosis\GuestPreview;
 use App\Services\Guests\GuestSessionManager;
+use App\Services\Tools\AnswerCompleteness;
 use App\Services\Tools\ToolRunService;
 use App\Support\Presentation\RunPresenter;
 use Illuminate\Http\RedirectResponse;
@@ -28,6 +30,7 @@ class GuestRunController extends Controller
         private readonly GuestSessionManager $guests,
         private readonly ToolRunService $service,
         private readonly RunPresenter $presenter,
+        private readonly GuestPreview $preview,
     ) {}
 
     /**
@@ -108,7 +111,42 @@ class GuestRunController extends Controller
             'run' => $this->presenter->wizard($run),
             'preflight' => $preflight,
             'tool' => $run->toolVersion->tool,
+
+            /*
+             * المستوى ٠ يعرض الدرجة والفجوات بالاسم فقط. قبل هذا كان الزائر
+             * يخرج بمراجعة لما كتبه هو — وهذا لا يخلق فجوة معرفية ولا يبررها،
+             * فيصير طلب التسجيل بلا مقابل معروف (§٦).
+             */
+            'preview' => $preflight['missing'] === []
+                ? $this->preview->build($run->toolVersion, $this->answersOf($run), $this->activeKeysOf($run))
+                : null,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function answersOf(ToolRun $run): array
+    {
+        return collect($run->answerMap())
+            ->map(fn ($value) => is_array($value) && array_key_exists('value', $value) ? $value['value'] : $value)
+            ->all();
+    }
+
+    /**
+     * الأسئلة المنطبقة على هذا المشروع وحدها — عدالة التكيف نفسها التي يطبّقها
+     * خط الأنابيب. مشروع فكرة لا يُعاقَب في درجته على سؤال قنوات لم يُعرض له.
+     *
+     * @return array<int, string>
+     */
+    private function activeKeysOf(ToolRun $run): array
+    {
+        $completeness = app(AnswerCompleteness::class);
+
+        return $completeness
+            ->visibleFields($run->toolVersion, $completeness->contextualAnswers($run))
+            ->pluck('key')
+            ->all();
     }
 
     /**

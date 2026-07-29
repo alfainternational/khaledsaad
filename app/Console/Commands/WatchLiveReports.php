@@ -33,6 +33,16 @@ class WatchLiveReports extends Command
             ->chunkById(50, function ($watchers) use ($checker, &$notified, &$checked): void {
                 foreach ($watchers as $watcher) {
                     $checked++;
+
+                    /*
+                     * التقييد قبل الفحص: النقطة الأسبوعية هي ما يُقارَن به،
+                     * وبلا تقييد دوري تبقى السلسلة نقطةً واحدة فلا يظهر تغيّر
+                     * الدرجة أبدًا — وهو المخرج المتكرر الوحيد (§٨).
+                     */
+                    if ($watcher->project !== null) {
+                        $checker->recordPeriodicPoint($watcher->project);
+                    }
+
                     $changes = $checker->check($watcher);
                     $fingerprint = $watcher->project !== null
                         ? $checker->fingerprint($watcher->project)

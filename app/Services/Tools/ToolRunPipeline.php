@@ -9,6 +9,7 @@ use App\Models\ToolRunStage;
 use App\Modules\Alerts\RunNotifier;
 use App\Modules\Competitors\CompetitorRegistry;
 use App\Modules\Diagnosis\DeterministicScorer;
+use App\Modules\Intake\IntakeCollector;
 use App\Services\Billing\CreditManager;
 use App\Services\Tools\V2\ReportSemanticGuard;
 use App\Support\AI\AIRequest;
@@ -51,6 +52,7 @@ class ToolRunPipeline
         private readonly RunNotifier $notifier,
         private readonly CompetitorRegistry $competitors,
         private readonly ReportSemanticGuard $semanticGuard,
+        private readonly IntakeCollector $intake,
     ) {}
 
     public static function seedStages(ToolRun $run): void
@@ -86,6 +88,16 @@ class ToolRunPipeline
             // نلتقط المنافسين المسمّين مبكرًا حتى يراهم تحليل الذكاء الاصطناعي
             // ويقارن العميل بهم بالاسم، لا بكلام عام عن المنافسة.
             $this->captureNamedCompetitors($run);
+
+            /*
+             * الدماغ يتغذّى هنا لا بعد النجاح: الإجابات مثبَّتة عند هذه النقطة،
+             * وما بعدها استدعاءات نموذج قد تفشل. ربط التغذية بالنجاح الكامل
+             * يعني أن عطل مزوّد يمحو تعلّم النظام من إجابات صحيحة أدخلها
+             * صاحب النشاط فعلًا.
+             */
+            if ($run->project !== null) {
+                $this->intake->collect($run->project);
+            }
         } catch (Throwable $exception) {
             $this->fail($run, $exception);
 

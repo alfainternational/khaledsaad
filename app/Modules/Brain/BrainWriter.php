@@ -23,12 +23,17 @@ class BrainWriter
      * تسجيل حقيقة.
      *
      * السلوك على ثلاث حالات:
-     *   - القيمة نفسها من المصدر نفسه  → لا شيء. إعادة تأكيد لا تغيير.
+     *   - القيمة نفسها أيًّا كان مصدرها → لا شيء. إعادة تأكيد لا تغيير.
      *   - قيمة مختلفة من المصدر نفسه   → استبدال: يصير القديم مسبوقًا بالجديد.
      *   - قيمة مختلفة من مصدر آخر      → تعارض: تُحفظ الحقيقتان ويُسجَّل حدث.
      *
      * الحالة الثالثة هي جوهر §٩: لا نحسم أي المصدرين أصدق، لأن الحسم الصامت
      * يخفي معلومة حقيقية — أن النشاط يقول شيئًا وبياناته تقول غيره.
+     *
+     * أما الحالة الأولى فتشمل اختلاف المصدر عمدًا: **التعارض اختلافُ قول لا
+     * اختلافُ قائل**. مصدران يقولان الشيء نفسه تأكيدٌ مستقل، ولو عُدّ تعارضًا
+     * لغرِق سجل المراجعة في تنبيهات عن اتفاق — وأول ما يُفقد حينها هو
+     * التعارض الحقيقي وسط الضجيج.
      */
     public function record(
         Project $project,
@@ -56,9 +61,7 @@ class BrainWriter
                 ->orderByDesc('observed_at')
                 ->first();
 
-            if ($current !== null
-                && $current->value_hash === $hash
-                && $current->source_module === $sourceModule) {
+            if ($current !== null && $current->value_hash === $hash) {
                 return $current;
             }
 
@@ -114,7 +117,11 @@ class BrainWriter
      * الصف يبقى بقيمته ويخرج من السريان وحده (§٩: لا تُحذف حقيقة). أن يجيب
      * أحدهم ثم يقول «لا أعرف» معلومة عن نضج نشاطه، لا فراغ يُمحى.
      *
-     * يعيد الحقيقة المسحوبة، أو null إن لم تكن هناك حقيقة سارية أصلًا.
+     * `$onlyIfOwned` يقصر السحب على ما كتبه المصدر نفسه. الجامع الذي يمرّ على
+     * كل مفاتيحه دوريًّا يسحب ما لم يعد يجده — ولو سحب حقيقة كتبها جامع آخر
+     * لمحا قياسًا مستقلًّا لأن **مصدرًا ثالثًا** صمت. من لم يكتب لا يسحب.
+     *
+     * يعيد الحقيقة المسحوبة، أو null إن لم تكن هناك حقيقة سارية يملكها.
      */
     public function retract(
         Project $project,
@@ -122,10 +129,11 @@ class BrainWriter
         string $sourceModule,
         ?array $metadata = null,
         ?Carbon $retractedAt = null,
+        bool $onlyIfOwned = false,
     ): ?BrainFact {
         $retractedAt ??= now();
 
-        return DB::transaction(function () use ($project, $key, $sourceModule, $metadata, $retractedAt): ?BrainFact {
+        return DB::transaction(function () use ($project, $key, $sourceModule, $metadata, $retractedAt, $onlyIfOwned): ?BrainFact {
             $current = BrainFact::query()
                 ->where('project_id', $project->id)
                 ->where('key', $key)
@@ -135,6 +143,10 @@ class BrainWriter
                 ->first();
 
             if ($current === null) {
+                return null;
+            }
+
+            if ($onlyIfOwned && $current->source_module !== $sourceModule) {
                 return null;
             }
 

@@ -45,6 +45,15 @@ final class FeatureKey
     public const KPI_TRACKING = 'kpi.tracking';
 
     /**
+     * التشخيص الكامل: تاريخ الدرجة وتصدير بطاقة الجاهزية.
+     *
+     * الحدّ بين المستويين ٠ و١ (§٨). ما يبقى مفتوحًا هو الدرجة والفجوات
+     * بالاسم — أي **أين** المشكلة. وما يُحرَس هنا هو ما يجعلها قابلة للمتابعة
+     * والمشاركة: التاريخ والمستند. المستوى ٠ يخلق الفجوة المعرفية ولا يقفلها.
+     */
+    public const DIAGNOSIS_FULL = 'diagnosis.full';
+
+    /**
      * كل مفاتيح البوابات.
      *
      * @return array<int, string>
@@ -63,6 +72,7 @@ final class FeatureKey
             self::AUDIENCE_LAB,
             self::COMPETITORS_LIMIT,
             self::KPI_TRACKING,
+            self::DIAGNOSIS_FULL,
         ];
     }
 }

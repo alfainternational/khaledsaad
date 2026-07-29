@@ -24,6 +24,15 @@ class BrainEvent extends Model
     /** حقيقة سُحبت: تراجَع المستخدم أو زال مصدرها. */
     public const TYPE_FACT_RETRACTED = 'fact_retracted';
 
+    /**
+     * درجة نضج حُسبت، مربوطة باللقطة التي حُسبت منها.
+     *
+     * هنا يسكن تاريخ `maturity_score`. لا جدول ثالث له: السلسلة الزمنية
+     * أحداثٌ وقعت للنشاط، وربطها بلقطتها هو ما يجعل «كانت ٦٢» قابلة للإثبات
+     * لا مجرد رقم محفوظ.
+     */
+    public const TYPE_DIAGNOSIS_SCORED = 'diagnosis_scored';
+
     protected $fillable = ['project_id', 'type', 'body', 'outcome', 'occurred_at'];
 
     protected function casts(): array

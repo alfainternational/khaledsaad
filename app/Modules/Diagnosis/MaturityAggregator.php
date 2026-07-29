@@ -4,6 +4,8 @@ namespace App\Modules\Diagnosis;
 
 use App\Models\Project;
 use App\Modules\Brain\BrainReader;
+use App\Modules\Brain\BrainWriter;
+use App\Modules\Brain\Models\BrainEvent;
 use App\Modules\Shared\Evidence\EvidenceLevel;
 use App\Modules\Shared\Metrics\MetricKey;
 
@@ -19,6 +21,7 @@ class MaturityAggregator
     public function __construct(
         private readonly AxisScorer $scorer,
         private readonly BrainReader $brain,
+        private readonly BrainWriter $ledger,
     ) {}
 
     /**
@@ -70,6 +73,22 @@ class MaturityAggregator
     {
         $result = $this->compute($project);
         $snapshot = $this->brain->takeSnapshot($project);
+
+        /*
+         * الدرجة تُقيَّد كحدث لا كعمود: العمود يحفظ آخر قيمة، والحدث يحفظ
+         * السلسلة — وعلى السلسلة يقوم التنبيه، وهو المخرج المتكرر الوحيد (§٨).
+         *
+         * التغطية تُقيَّد معها لأن انتقال الدرجة من ٤٠ إلى ٧٠ يعني شيئًا
+         * مختلفًا تمامًا إن كان معه انتقال التغطية من محورين إلى ستة: الأول
+         * تحسّن، والثاني اتساع قياس. الخلط بينهما يُنتج تنبيهًا كاذبًا.
+         */
+        $this->ledger->event($project, BrainEvent::TYPE_DIAGNOSIS_SCORED, [
+            MetricKey::MATURITY_SCORE => $result[MetricKey::MATURITY_SCORE],
+            'score_coverage' => $result['score_coverage'],
+            'axes_active' => $result['axes_active'],
+            'evidence_level' => $result['evidence_level'],
+            'brain_snapshot_id' => $snapshot->id,
+        ]);
 
         return $result + ['brain_snapshot_id' => $snapshot->id];
     }

@@ -74,7 +74,42 @@
             <p class="muted">
                 درجة النضج {{ $maturity['maturity_score'] }}/100،
                 محسوبة من {{ $maturity['axes_active'] }} محاور مقيسة من {{ $maturity['axes_total'] }}.
+                <span class="muted">آخر حساب: {{ \Illuminate\Support\Carbon::parse($maturity['computed_at'])->diffForHumans() }}</span>
             </p>
+
+            {{--
+                الاتجاه لا يُرسم قبل أربع نقاط (§١٣). قبلها تُعرض النقاط كما هي
+                مع سببٍ صريح، لأن خطًّا من نقطتين يُقرأ اتجاهًا ويُتَّخذ عليه قرار.
+            --}}
+            @if ($plottable)
+                <ol class="score-trend">
+                    @foreach ($history as $point)
+                        <li>
+                            <span>{{ \Illuminate\Support\Carbon::parse($point['occurred_at'])->translatedFormat('j M') }}</span>
+                            <strong>{{ $point['maturity_score'] }}</strong>
+                        </li>
+                    @endforeach
+                </ol>
+            @elseif ($history->count() > 1)
+                <p class="muted">
+                    عندك {{ $history->count() }} قياسات. الاتجاه يُرسم عند أربعة قياسات
+                    فأكثر — أقل من ذلك لا يفرّق بين تحسّن حقيقي وتذبذب عادي.
+                </p>
+            @endif
+
+            {{-- موقعه من قطاعه، أو سبب غياب المقارنة صراحةً — لا متوسط تقريبي. --}}
+            @if ($benchmark['available'])
+                <p class="muted">
+                    متوسط «{{ $benchmark['industry'] }}» {{ $benchmark['industry_average'] }}/100
+                    من {{ $benchmark['sample_size'] }} نشاطًا مقيسًا.
+                    @if ($benchmark['delta'] !== null)
+                        أنت {{ $benchmark['delta'] >= 0 ? 'أعلى بـ'.$benchmark['delta'] : 'أدنى بـ'.abs($benchmark['delta']) }}
+                        نقطة، فوق {{ $benchmark['percentile'] }}٪ من أنشطة قطاعك.
+                    @endif
+                </p>
+            @else
+                <p class="muted">{{ $benchmark['reason'] }}</p>
+            @endif
         @else
             <p class="muted">لم يُقَس أي محور بعد. ابدأ بفحص موقعك أعلاه.</p>
         @endif

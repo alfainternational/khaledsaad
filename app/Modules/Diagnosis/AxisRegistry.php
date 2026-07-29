@@ -34,8 +34,13 @@ class AxisRegistry
 
             Axis::AudienceUnderstanding => [
                 ['key' => 'target_audience', 'label' => 'الجمهور المستهدف', 'weight' => 3, 'rule' => 'present'],
+                /*
+                 * القيم هي قيم أسئلة الأدوات المنشورة حرفيًّا، لا مرادفات
+                 * أنيقة لها. مفتاح لا يطابق ما يُخزَّن فعلًا يعطي صفرًا صامتًا
+                 * لمن أجاب — والترجمة مكانها `IntakeFactMap` قبل الكتابة.
+                 */
                 ['key' => 'audience_clarity', 'label' => 'وضوح الشريحة', 'weight' => 2, 'rule' => 'map',
-                    'map' => ['clear' => 1.0, 'rough' => 0.5, 'unclear' => 0.0]],
+                    'map' => ['documented' => 1.0, 'rough' => 0.5, 'none' => 0.0]],
                 ['key' => 'customer_pains', 'label' => 'أوجاع العميل', 'weight' => 2, 'rule' => 'count', 'target' => 3],
             ],
 
@@ -53,13 +58,16 @@ class AxisRegistry
 
             Axis::MeasurementData => [
                 ['key' => 'analytics_connected', 'label' => 'أداة تحليلات مربوطة', 'weight' => 3, 'rule' => 'present'],
-                ['key' => 'conversion_tracking', 'label' => 'تتبّع التحويلات', 'weight' => 3, 'rule' => 'present'],
-                ['key' => 'reporting_rhythm', 'label' => 'إيقاع المراجعة', 'weight' => 1, 'rule' => 'present'],
+                ['key' => 'conversion_tracking', 'label' => 'تتبّع التحويلات', 'weight' => 3, 'rule' => 'map',
+                    'map' => ['full' => 1.0, 'basic' => 0.5, 'none' => 0.0]],
+                ['key' => 'reporting_rhythm', 'label' => 'إيقاع المراجعة', 'weight' => 1, 'rule' => 'map',
+                    'map' => ['biweekly' => 1.0, 'monthly' => 0.7, 'none' => 0.0]],
             ],
 
             Axis::ExecutionCapacity => [
                 ['key' => 'team_size', 'label' => 'حجم الفريق', 'weight' => 2, 'rule' => 'present'],
-                ['key' => 'content_cadence', 'label' => 'إيقاع النشر', 'weight' => 2, 'rule' => 'present'],
+                ['key' => 'content_cadence', 'label' => 'إيقاع النشر', 'weight' => 2, 'rule' => 'map',
+                    'map' => ['daily' => 1.0, 'weekly' => 0.8, 'irregular' => 0.35, 'none' => 0.0]],
                 ['key' => 'execution_owner', 'label' => 'مسؤول التنفيذ', 'weight' => 2, 'rule' => 'present'],
             ],
 

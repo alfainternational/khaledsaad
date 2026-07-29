@@ -4,6 +4,7 @@ namespace App\Services\Tools;
 
 use App\Models\ToolRun;
 use App\Modules\Intake\ConsultationContextBuilder;
+use App\Modules\PlatformBridge\LegacyCapabilities;
 use App\Modules\Reporting\CrossToolSynthesis;
 
 /**
@@ -15,6 +16,7 @@ class ProjectSnapshotBuilder
     public function __construct(
         private readonly ConsultationContextBuilder $consultations,
         private readonly CrossToolSynthesis $crossTool,
+        private readonly LegacyCapabilities $bridge,
     ) {}
 
     /**
@@ -59,6 +61,18 @@ class ProjectSnapshotBuilder
                 ->all(),
             'prior_diagnostic_results' => $this->crossTool->priorResults($run),
         ];
+
+        /*
+         * لقطة التشخيص تدخل هنا لا في قالب الخطة: هذا ما يجعل ما يُولَّد مبنيًّا
+         * على **قياس** النشاط لا على وصف كتبه صاحبه عن نفسه — وهي القيمة
+         * الوحيدة للتوليد، لأن التوليد نفسه متاح مجانًا (§٢ و§٨).
+         *
+         * تمرّ من `PlatformBridge` وحده. الحدّ هنا يحرس قاعدة منتج لا حدًّا
+         * شبكيًّا: أن تبقى الخطة نتيجة تابعة للتشخيص، لا مقترح قيمة مستقلًّا.
+         */
+        if ($this->bridge->hasDiagnosisFor($project)) {
+            $snapshot['diagnosis'] = $this->bridge->diagnosisSnapshotFor($project);
+        }
 
         if ($run->consultation_session_id !== null) {
             $snapshot['consultation'] = $this->consultations->build(

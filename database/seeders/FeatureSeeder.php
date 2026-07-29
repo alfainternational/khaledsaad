@@ -67,6 +67,14 @@ class FeatureSeeder extends Seeder
                 'default_enabled' => false,
             ],
             [
+                'key' => FeatureKey::DIAGNOSIS_FULL,
+                'name' => 'التشخيص الكامل',
+                'description' => 'تاريخ درجة النضج وتصدير بطاقة الجاهزية وتقرير الزحف.',
+                'group' => 'core', 'type' => Feature::TYPE_BOOLEAN,
+                'enforcement' => Feature::ENFORCEMENT_GATE,
+                'default_enabled' => false,
+            ],
+            [
                 'key' => FeatureKey::REPORTS_PDF,
                 'name' => 'تصدير PDF',
                 'description' => 'تنزيل التقرير ملفًا جاهزًا للمشاركة.',
@@ -160,6 +168,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::REPORTS_PDF => true,
                 FeatureKey::KPI_TRACKING => true,
                 FeatureKey::WATCHERS_LIMIT => 2,
+                FeatureKey::DIAGNOSIS_FULL => true,
             ],
             'professional' => [
                 FeatureKey::PROJECTS_LIMIT => 10,
@@ -169,6 +178,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::REPORTS_AGENCY => true,
                 FeatureKey::KPI_TRACKING => true,
                 FeatureKey::WATCHERS_LIMIT => 10,
+                FeatureKey::DIAGNOSIS_FULL => true,
                 FeatureKey::GROWTH_PULSE => true,
                 FeatureKey::GROWTH_GEO => true,
                 'support.priority' => true,
@@ -182,6 +192,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::MANUAL_REVIEW => true,
                 FeatureKey::KPI_TRACKING => true,
                 FeatureKey::WATCHERS_LIMIT => null,
+                FeatureKey::DIAGNOSIS_FULL => true,
                 FeatureKey::GROWTH_PULSE => true,
                 FeatureKey::GROWTH_GEO => true,
                 FeatureKey::AUDIENCE_LAB => true,

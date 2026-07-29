@@ -8,7 +8,10 @@ use App\Modules\AiReadiness\ReadinessCollector;
 use App\Modules\Diagnosis\Axis;
 use App\Modules\Diagnosis\AxisScorer;
 use App\Modules\Diagnosis\FixList;
+use App\Modules\Diagnosis\IndustryBenchmark;
 use App\Modules\Diagnosis\MaturityAggregator;
+use App\Modules\Diagnosis\ScoreHistory;
+use App\Modules\Intake\IntakeCollector;
 use App\Policies\ProjectOwnership;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,6 +39,9 @@ class ReadinessController extends Controller
         private readonly MaturityAggregator $maturity,
         private readonly FixList $fixes,
         private readonly ReadinessCollector $collector,
+        private readonly IntakeCollector $intake,
+        private readonly ScoreHistory $history,
+        private readonly IndustryBenchmark $benchmark,
     ) {}
 
     /**
@@ -45,6 +51,10 @@ class ReadinessController extends Controller
     {
         $this->authorizeProject($request, $project);
 
+        // العقد نفسه للويب والتطبيق: الجمع يسبق العرض في الاثنين، وإلا رأى
+        // مستخدم التطبيق محاور أقل من مستخدم الويب بنفس الإجابات (§١٥ بند ٨).
+        $this->intake->collect($project);
+
         return response()->json([
             'data' => [
                 'project' => ['slug' => $project->slug, 'name' => $project->name],
@@ -52,6 +62,11 @@ class ReadinessController extends Controller
                 'readiness' => $this->scorer->score($project, Axis::AiReadiness)->toArray(),
                 'fixes' => $this->fixes->build($project, [Axis::AiReadiness]),
                 'website' => $project->profile?->website,
+                'history' => [
+                    'points' => $this->history->points($project),
+                    'plottable' => $this->history->isPlottable($project),
+                ],
+                'benchmark' => $this->benchmark->for($project),
             ],
         ], options: self::JSON);
     }
