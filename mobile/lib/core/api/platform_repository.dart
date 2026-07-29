@@ -740,6 +740,23 @@ class PlatformRepository {
         .toList();
   }
 
+  /// التشخيص الكامل: درجة النضج والمحاور الثمانية وقائمة الإصلاح.
+  ///
+  /// نفس عقد الويب حرفيًّا — الخادم يحسب والتطبيق يعرض. أي اشتقاق هنا يجعل
+  /// التطبيق يقول رقمًا يخالف الموقع بلا سبب ظاهر.
+  Future<Map<String, dynamic>> readiness(String projectSlug) async {
+    final response = await _api.get('/projects/$projectSlug/readiness');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  /// تشغيل التدقيق التقني للموقع.
+  Future<Map<String, dynamic>> runReadinessAudit(String projectSlug) async {
+    final response = await _api.post('/projects/$projectSlug/readiness/audit');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
   Future<Map<String, dynamic>> geo(String projectSlug) async {
     final response = await _api.get('/projects/$projectSlug/geo');
 

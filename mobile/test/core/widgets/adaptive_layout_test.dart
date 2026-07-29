@@ -134,6 +134,8 @@ void main() {
       'projects/project_screen.dart': AdaptivePageFamily.operational,
       'projects/tasks_screen.dart': AdaptivePageFamily.operational,
       'public/legal_screen.dart': AdaptivePageFamily.reading,
+      // شاشة تشغيلية: درجة ومحاور وقائمة إصلاح، لا نصّ يُقرأ ولا نموذج يُملأ.
+      'readiness/readiness_screen.dart': AdaptivePageFamily.operational,
       'public/public_home_screen.dart': AdaptivePageFamily.operational,
       'public/public_tool_screen.dart': AdaptivePageFamily.operational,
       'public/shared_report_screen.dart': AdaptivePageFamily.reading,
@@ -150,7 +152,9 @@ void main() {
             .toList()
           ..sort((left, right) => left.path.compareTo(right.path));
 
-    expect(screens, hasLength(22));
+    // العدد يُشتقّ من السجل لا يُكتب مرتين: رقم ثابت هنا يعني أن كل شاشة
+    // جديدة تُسقط الاختبار برسالة عن طول قائمة، لا عن الشاشة التي لم تُسجَّل.
+    expect(screens, hasLength(expectedFamilies.length));
 
     for (final screen in screens) {
       final relativePath = screen.path

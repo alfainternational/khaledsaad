@@ -7,6 +7,7 @@ import '../../core/widgets/common.dart';
 import '../agency_reports/agency_reports_screen.dart';
 import '../consultations/consultation_screen.dart';
 import '../growth/growth_hub_screen.dart';
+import '../readiness/readiness_screen.dart';
 import '../reports/report_screen.dart';
 import '../tools/models.dart';
 import '../tools/run_wizard_screen.dart';
@@ -182,6 +183,37 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         SizedBox(height: 5),
                         Text(
                           'اجمع أحدث نتائج أدواتك في نسخة ثابتة وPDF جاهز للوكالات.',
+                          style: TextStyle(color: BrandColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // القياس يسبق الإصلاح: البطاقة تفحص الموقع وتكشف الخلل،
+                  // ومركز التحسين أدناه يعالج ما تكشفه.
+                  BrandCard(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ReadinessScreen(
+                          repository: widget.repository,
+                          projectSlug: widget.slug,
+                          projectName: project.card.name,
+                        ),
+                      ),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Eyebrow('مقيس من موقعك'),
+                        SizedBox(height: 5),
+                        Text(
+                          'الجاهزية للذكاء الاصطناعي',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'نفحص موقعك كما تقرأه النماذج، ونقيس نضجك على ثمانية محاور.',
                           style: TextStyle(color: BrandColors.muted),
                         ),
                       ],
