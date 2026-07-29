@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\GuestRunController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\PublicContentController;
+use App\Http\Controllers\Api\V1\ReadinessController as ApiReadinessController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\RunController;
 use App\Http\Controllers\Api\V1\SharedAgencyReportController as PublicSharedAgencyReportController;
@@ -127,6 +128,16 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('reports/{report}/feedback', [GrowthController::class, 'feedback'])->name('reports.feedback');
         Route::get('pulse', [GrowthController::class, 'pulse'])
             ->middleware('feature:'.FeatureKey::GROWTH_PULSE)->name('pulse.index');
+        /*
+         * الجاهزية والتشخيص: نفس خدمات الويب ونفس مفاتيح §١٢. بلا بوابة ميزة
+         * في المرحلة ١ — هي الإسفين الذي يثبت القيمة قبل أن يُطلب اشتراك.
+         */
+        Route::get('projects/{project}/readiness', [ApiReadinessController::class, 'show'])->name('readiness.show');
+        Route::post('projects/{project}/readiness/audit', [ApiReadinessController::class, 'audit'])
+            ->middleware('throttle:10,60')->name('readiness.audit');
+        Route::post('projects/{project}/readiness/log', [ApiReadinessController::class, 'uploadLog'])
+            ->middleware('throttle:20,60')->name('readiness.log');
+
         Route::middleware('feature:'.FeatureKey::GROWTH_GEO)->group(function (): void {
             Route::get('projects/{project}/geo', [GrowthController::class, 'geoShow'])->name('geo.show');
             Route::post('projects/{project}/geo', [GrowthController::class, 'geoGenerate'])

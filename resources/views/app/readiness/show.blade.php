@@ -68,6 +68,56 @@
     </section>
 
     <section class="card">
+        <h2>محاور التشخيص</h2>
+
+        @if ($maturity['axes_active'] > 0)
+            <p class="muted">
+                درجة النضج {{ $maturity['maturity_score'] }}/100،
+                محسوبة من {{ $maturity['axes_active'] }} محاور مقيسة من {{ $maturity['axes_total'] }}.
+            </p>
+        @else
+            <p class="muted">لم يُقَس أي محور بعد. ابدأ بفحص موقعك أعلاه.</p>
+        @endif
+
+        <table class="table">
+            <thead>
+                <tr><th>المحور</th><th>الدرجة</th><th>التغطية</th><th>المصدر</th></tr>
+            </thead>
+            <tbody>
+            @foreach ($maturity['axes'] as $axis)
+                <tr>
+                    <td>
+                        {{ $axis['label'] }}
+                        <div class="muted">{{ $axis['question'] }}</div>
+                    </td>
+                    <td>
+                        {{-- المحور غير المقيس لا يُعرض بصفر: الصفر حكم، والغياب إقرار (§٤.٣). --}}
+                        @if ($axis['active'])
+                            <strong>{{ $axis['axis_score'] }}</strong>/100
+                        @else
+                            <span class="muted">لم يُقَس</span>
+                        @endif
+                    </td>
+                    <td>{{ (int) round($axis['axis_coverage'] * 100) }}٪</td>
+                    <td>
+                        @if ($axis['is_assumption'])
+                            <span class="tag tag--assumption">فرضية</span>
+                        @else
+                            <span class="tag tag--measured">مقيس</span>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+
+        <p class="muted">
+            المحاور المقيسة مصدرها بيانات مستقلة عنك. وما وُسم «فرضية» مبنيّ على ما كتبته
+            عن نشاطك، فهو رأي منهجي لا عيب مرصود.
+        </p>
+    </section>
+
+    <section class="card">
         <h2>سجل الزحف</h2>
 
         @if ($crawl === null)

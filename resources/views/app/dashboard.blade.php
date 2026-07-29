@@ -69,11 +69,29 @@
                 @foreach ($projects as $project)
                     <a class="card card--link" href="{{ route('app.projects.show', $project['slug']) }}">
                         <h3>{{ $project['name'] }}</h3>
-                        @if ($project['latest_score'] !== null)
+
+                        @if ($project['maturity'])
+                            {{--
+                                درجة النضج تتصدّر لأنها تصف النشاط كله لا أداة
+                                واحدة. ومعها أساسها دائمًا: «٤١ من محورين» غير
+                                «٤١ من ثمانية» (§١٣).
+                            --}}
+                            <p class="score-chip">
+                                {{ $project['maturity']['maturity_score'] }}/100 · نضج تسويقي
+                            </p>
+                            <p class="muted">
+                                من {{ $project['maturity']['axes_active'] }} محاور مقيسة
+                                من {{ $project['maturity']['axes_total'] }}
+                                @if ($project['maturity']['is_assumption'])
+                                    · <span class="tag tag--assumption">فرضية</span>
+                                @endif
+                            </p>
+                        @elseif ($project['latest_score'] !== null)
                             <p class="score-chip">{{ $project['latest_score'] }}/100 · {{ $project['score_band'] }}</p>
                         @else
                             <p class="muted">لم يبدأ التشخيص بعد</p>
                         @endif
+
                         <p class="muted">{{ $project['industry'] ?? 'قطاع غير محدد' }}</p>
                     </a>
                 @endforeach

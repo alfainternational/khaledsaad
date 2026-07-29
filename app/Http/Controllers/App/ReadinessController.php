@@ -10,6 +10,7 @@ use App\Modules\AiReadiness\SiteAudit;
 use App\Modules\Diagnosis\Axis;
 use App\Modules\Diagnosis\AxisScorer;
 use App\Modules\Diagnosis\FixList;
+use App\Modules\Diagnosis\MaturityAggregator;
 use App\Modules\Reporting\ReadinessCardPdfGenerator;
 use App\Policies\ProjectOwnership;
 use Illuminate\Http\RedirectResponse;
@@ -33,6 +34,7 @@ class ReadinessController extends Controller
         private readonly AxisScorer $scorer,
         private readonly FixList $fixes,
         private readonly ReadinessCardPdfGenerator $pdf,
+        private readonly MaturityAggregator $maturity,
     ) {}
 
     public function show(Request $request, Project $project): View
@@ -48,6 +50,8 @@ class ReadinessController extends Controller
             'score' => $score,
             'fixes' => $this->fixes->build($project, [Axis::AiReadiness]),
             'crawl' => session('readiness.crawl'),
+            // الصورة الكاملة: المحاور الثمانية ودرجة النضج فوقها.
+            'maturity' => $this->maturity->compute($project),
         ]);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Modules\Diagnosis;
 
 use App\Modules\Shared\Evidence\EvidenceLevel;
+use App\Modules\Shared\Metrics\MetricKey;
 
 /**
  * نتيجة محور واحد: الدرجة، التغطية، مستوى الدليل، والفجوات.
@@ -46,13 +47,31 @@ final class AxisScore
             'axis' => $this->axis->value,
             'label' => $this->axis->label(),
             'question' => $this->axis->question(),
-            'axis_score' => $this->score,
-            'axis_coverage' => $this->coverage,
+            MetricKey::AXIS_SCORE => $this->score,
+            MetricKey::AXIS_COVERAGE => $this->coverage,
             'evidence_level' => $this->evidenceLevel->value,
             'is_assumption' => $this->evidenceLevel->needsAssumptionBadge(),
             'active' => $this->isActive(),
             'breakdown' => $this->breakdown,
             'gaps' => $this->gaps,
-        ];
+        ] + $this->namedMetric();
+    }
+
+    /**
+     * الاسم الرسمي للمقياس حين يكون للمحور اسم في §١٢ غير `axis_score`.
+     *
+     * المحور السابع يُنتج `readiness_score` — وهو مقياس مستقل في التعريفات
+     * الرسمية ويُعرض في بطاقة الجاهزية وتقارير العميل بهذا الاسم. تركه
+     * `axis_score` وحده يجعل اسمًا في `MetricKey` بلا منتج له، وهي المخالفة
+     * التي يمنعها §١٢: اسم مقياس معرَّف ولا شيء يُصدره.
+     *
+     * @return array<string, int>
+     */
+    private function namedMetric(): array
+    {
+        return match ($this->axis) {
+            Axis::AiReadiness => [MetricKey::READINESS_SCORE => $this->score],
+            default => [],
+        };
     }
 }

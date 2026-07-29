@@ -40,6 +40,18 @@
                 @endfeature
             </article>
 
+            {{--
+                القياس قبل الإصلاح: البطاقة تفحص موقعك فعليًّا وتقول أين الخلل،
+                وحزمة GEO أدناه تُصلح ما تكشفه. عرضها بعدها يجعل المستخدم يبني
+                حزمة لا يعرف إن كان يحتاجها.
+            --}}
+            <article class="card card--link">
+                <p class="eyebrow">مقيس من موقعك</p>
+                <h3>الجاهزية للذكاء الاصطناعي</h3>
+                <p class="muted">نفحص موقعك كما تقرأه النماذج، ونقرأ سجل خادمك لنعرف أي بوت زارك فعلًا.</p>
+                <a href="{{ route('app.readiness.show', $project['slug']) }}" class="btn btn--ghost btn--sm">افحص موقعي</a>
+            </article>
+
             <article class="card card--link">
                 <p class="eyebrow">عملاؤك يسألون ChatGPT</p>
                 <h3>الظهور في محركات الذكاء</h3>

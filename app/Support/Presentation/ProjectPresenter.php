@@ -5,10 +5,16 @@ namespace App\Support\Presentation;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\Task;
+use App\Modules\Diagnosis\MaturityAggregator;
+use App\Modules\Shared\Evidence\EvidenceLevel;
+use App\Modules\Shared\Metrics\MetricKey;
 
 class ProjectPresenter
 {
-    public function __construct(private readonly ReportPresenter $reports) {}
+    public function __construct(
+        private readonly ReportPresenter $reports,
+        private readonly MaturityAggregator $maturity,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -24,6 +30,34 @@ class ProjectPresenter
             'score_band' => $project->latest_score !== null
                 ? Report::bandFor($project->latest_score)
                 : null,
+            'maturity' => $this->maturity($project),
+        ];
+    }
+
+    /**
+     * درجة النضج كما تُعرض: الرقم مع أساسه دائمًا.
+     *
+     * الحساب في `Diagnosis` لا هنا (§١٤) — هذه الطبقة تفوّض وتنسّق العرض.
+     *
+     * تُعاد `null` حين لا يكون أي محور مقيسًا. الفرق ليس تجميليًّا: صفر يُقرأ
+     * حكمًا على النشاط، وغياب الرقم يقول إننا لم نقس بعد (§٤.٣).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function maturity(Project $project): ?array
+    {
+        $result = $this->maturity->compute($project);
+
+        if (($result['axes_active'] ?? 0) === 0) {
+            return null;
+        }
+
+        return [
+            MetricKey::MATURITY_SCORE => $result[MetricKey::MATURITY_SCORE],
+            'axes_active' => $result['axes_active'],
+            'axes_total' => $result['axes_total'],
+            'evidence_level' => $result['evidence_level'],
+            'is_assumption' => $result['evidence_level'] === EvidenceLevel::Inferred->value,
         ];
     }
 
