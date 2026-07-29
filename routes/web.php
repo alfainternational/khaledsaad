@@ -23,6 +23,7 @@ use App\Http\Controllers\App\FeedbackController;
 use App\Http\Controllers\App\GeoPackController;
 use App\Http\Controllers\App\KpiController;
 use App\Http\Controllers\App\NotificationController;
+use App\Http\Controllers\App\PortfolioController;
 use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\ProjectController;
 use App\Http\Controllers\App\PulseController;
@@ -32,6 +33,7 @@ use App\Http\Controllers\App\ReportWatchController;
 use App\Http\Controllers\App\TaskController;
 use App\Http\Controllers\App\ToolCatalogController;
 use App\Http\Controllers\App\ToolRunController;
+use App\Http\Controllers\App\VoiceIntakeController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -111,6 +113,13 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
      * أما التصدير فخلف `diagnosis.full`: المستند هو ما يُشارَك ويُبنى عليه
      * عمل، وهو حدّ المستوى ١ (§٨).
      */
+    /*
+     * الاستقبال الصوتي: يتكلّم صاحب النشاط بدل أن يكتب. يعيد نصًّا للمراجعة
+     * ولا يحفظ حقيقة — خطأ نسخ في الدماغ أسوأ من فجوة معلنة.
+     */
+    Route::post('projects/{project}/voice', [VoiceIntakeController::class, 'store'])
+        ->middleware('throttle:20,60')->name('voice.store');
+
     Route::get('projects/{project}/readiness', [ReadinessController::class, 'show'])->name('readiness.show');
     Route::post('projects/{project}/readiness/audit', [ReadinessController::class, 'audit'])
         ->middleware('throttle:10,60')->name('readiness.audit');
@@ -141,6 +150,14 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
     Route::post('consultations/{consultation}/evidence', [ConsultationController::class, 'uploadEvidence'])->middleware('throttle:20,1')->name('consultations.evidence.store');
     Route::delete('consultations/{consultation}/evidence/{evidence}', [ConsultationController::class, 'deleteEvidence'])->name('consultations.evidence.destroy');
     // تقرير الوكالة عنصر ميزة: البوابة على المسار نفسه، لا في الواجهة فقط.
+    /*
+     * لوحة الوكالة: محفظة الأنشطة كلها في شاشة واحدة. نطاقها مساحة العمل لا
+     * مشروعًا، لأن المساحة هي حاوية الملكية (§٥.٢).
+     */
+    Route::middleware('feature:'.FeatureKey::REPORTS_AGENCY)->group(function (): void {
+        Route::get('portfolio', PortfolioController::class)->name('portfolio');
+    });
+
     Route::middleware('feature:'.FeatureKey::REPORTS_AGENCY)->group(function (): void {
         Route::get('projects/{project}/agency-reports', [AgencyReportController::class, 'index'])->name('projects.agency-reports.index');
         Route::post('projects/{project}/agency-reports', [AgencyReportController::class, 'store'])->name('projects.agency-reports.store');

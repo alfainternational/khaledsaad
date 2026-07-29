@@ -6,6 +6,8 @@ use App\Contracts\CompetitorProvider;
 use App\Modules\AiReadiness\Contracts\PageFetcher;
 use App\Modules\AiReadiness\HttpPageFetcher;
 use App\Modules\Competitors\LiveCompetitorProvider;
+use App\Modules\Intake\Contracts\SpeechToText;
+use App\Modules\Intake\HttpSpeechToText;
 use App\Services\Billing\Entitlements;
 use App\Services\Settings\MailConfigurator;
 use App\Support\Settings\SettingsConfig;
@@ -29,6 +31,12 @@ class AppServiceProvider extends ServiceProvider
          * موقع خارجي لحظة تشغيل الاختبار.
          */
         $this->app->bind(PageFetcher::class, HttpPageFetcher::class);
+
+        /*
+         * النسخ الصوتي: خلف عقد لأن دقّة النسخ العربي تتفاوت بشدّة بين
+         * المزوّدات على اللهجات الخليجية، وتبديلها قرارُ جودة بعد القياس.
+         */
+        $this->app->bind(SpeechToText::class, HttpSpeechToText::class);
     }
 
     /**

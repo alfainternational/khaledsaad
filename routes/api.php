@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\RunController;
 use App\Http\Controllers\Api\V1\SharedAgencyReportController as PublicSharedAgencyReportController;
 use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\ToolController;
+use App\Http\Controllers\App\VoiceIntakeController as ApiVoiceController;
 use App\Support\Billing\FeatureKey;
 use Illuminate\Support\Facades\Route;
 
@@ -133,6 +134,11 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
          * الجاهزية والتشخيص: نفس خدمات الويب ونفس مفاتيح §١٢. بلا بوابة ميزة
          * في المرحلة ١ — هي الإسفين الذي يثبت القيمة قبل أن يُطلب اشتراك.
          */
+        // الاستقبال الصوتي: نفس العقد للتطبيق، وهو الأولى به — الكتابة على
+        // الهاتف أثقل ما في الاستقبال.
+        Route::post('projects/{project}/voice', [ApiVoiceController::class, 'store'])
+            ->middleware('throttle:20,60')->name('voice.store');
+
         Route::get('projects/{project}/readiness', [ApiReadinessController::class, 'show'])->name('readiness.show');
         Route::post('projects/{project}/readiness/audit', [ApiReadinessController::class, 'audit'])
             ->middleware('throttle:10,60')->name('readiness.audit');

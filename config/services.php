@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    /*
+     * النسخ الصوتي للاستقبال (§١١ المرحلة ٣).
+     *
+     * المفاتيح تُضبط من لوحة الآدمن عبر SettingsStore لا من الملف: تبديل
+     * المزوّد قرارُ جودة يُتخذ بعد قياس دقّته على اللهجات الخليجية.
+     */
+    'speech' => [
+        'key' => env('SPEECH_API_KEY'),
+        'base_url' => env('SPEECH_BASE_URL', 'https://api.groq.com/openai/v1'),
+        'model' => env('SPEECH_MODEL', 'whisper-large-v3'),
+        'cost_per_minute' => env('SPEECH_COST_PER_MINUTE', 0.0),
+    ],
+
 ];
