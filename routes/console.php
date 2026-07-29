@@ -14,6 +14,17 @@ Schedule::command('benchmarks:refresh')->weeklyOn(1, '03:00')->withoutOverlappin
 // اكتشاف مرشّحي المنافسين الإقليميين: أسبوعيًا، مؤجَّلًا عن نداء أرقام السوق.
 Schedule::command('competitors:discover')->weeklyOn(1, '03:30')->withoutOverlapping();
 
+/*
+ * السلسلة الزمنية لدرجة النضج: نقطة كل سبعة أيام لكل نشاط مقيس.
+ *
+ * قبل الفحص الحي لا بعده: الفحص يقارن بما قُيِّد، فتقييدٌ متأخر يجعل أول
+ * مقارنة تتم على نقطة الأمس لا على نقطة الأسبوع الماضي.
+ *
+ * يومي رغم أن الفاصل أسبوعي: `isDueForPoint` هو من يقرر، فيلتقط الأنشطة
+ * الجديدة في يومها بدل أن تنتظر موعدًا ثابتًا.
+ */
+Schedule::command('diagnosis:record')->dailyAt('04:00')->withoutOverlapping();
+
 // التقرير الحي: فحص حتمي يومي بلا تكلفة نموذج — بعد تحديثات السوق الليلية.
 Schedule::command('growth:watch')->dailyAt('04:10')->withoutOverlapping();
 

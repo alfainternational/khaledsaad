@@ -7,7 +7,6 @@ use App\Models\Report;
 use App\Models\ReportWatcher;
 use App\Models\User;
 use App\Modules\Diagnosis\DeterministicScorer;
-use App\Modules\Diagnosis\MaturityAggregator;
 use App\Modules\Diagnosis\ScoreHistory;
 use App\Modules\Shared\Metrics\MetricKey;
 use App\Services\Tools\ProjectContextResolver;
@@ -43,7 +42,6 @@ class LiveReportChecker
     public function __construct(
         private readonly DeterministicScorer $scorer,
         private readonly ProjectContextResolver $context,
-        private readonly MaturityAggregator $maturity,
         private readonly ScoreHistory $history,
     ) {}
 
@@ -139,24 +137,6 @@ class LiveReportChecker
         }
 
         return $changes;
-    }
-
-    /**
-     * تقييد نقطة دورية إن حان وقتها.
-     *
-     * منفصلة عن `check()` عمدًا: الفحص يقرأ، والتقييد يكتب. خلطهما يجعل كل
-     * استعراض شاشةٍ يضيف نقطة إلى السلسلة الزمنية، فيصير «التاريخ» سجلَّ
-     * زيارات لا سجلَّ قياسات.
-     *
-     * @return array<string, mixed>|null
-     */
-    public function recordPeriodicPoint(Project $project): ?array
-    {
-        if (! $this->history->isDueForPoint($project)) {
-            return null;
-        }
-
-        return $this->maturity->computeAndSnapshot($project);
     }
 
     /**

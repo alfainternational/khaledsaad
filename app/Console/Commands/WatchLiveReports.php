@@ -35,14 +35,11 @@ class WatchLiveReports extends Command
                     $checked++;
 
                     /*
-                     * التقييد قبل الفحص: النقطة الأسبوعية هي ما يُقارَن به،
-                     * وبلا تقييد دوري تبقى السلسلة نقطةً واحدة فلا يظهر تغيّر
-                     * الدرجة أبدًا — وهو المخرج المتكرر الوحيد (§٨).
+                     * التقييد ليس هنا: `diagnosis:record` يتولّاه لكل نشاط
+                     * مقيس. ربطه بهذه الحلقة كان يعني أن نشاطًا لم يفعّل
+                     * تقريرًا حيًّا لا تُقيَّد له نقطة أبدًا — والسلسلة الزمنية
+                     * خاصيّة النشاط لا خاصيّة اشتراكه في المراقبة.
                      */
-                    if ($watcher->project !== null) {
-                        $checker->recordPeriodicPoint($watcher->project);
-                    }
-
                     $changes = $checker->check($watcher);
                     $fingerprint = $watcher->project !== null
                         ? $checker->fingerprint($watcher->project)

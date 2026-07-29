@@ -39,4 +39,15 @@
     <input class="question-control" type="{{ $type === 'text' ? 'text' : $type }}" name="value" value="{{ $current }}" @required($required)>
 @else
     <textarea class="question-control" name="value" rows="4" @required($required)>{{ $current }}</textarea>
+
+    {{--
+        الصوت للسؤال المفتوح وحده: هو ما يُتعب كتابته على الجوال. أما الاختيار
+        والرقم والتاريخ فالنقر فيها أسرع من الكلام، وإظهار مسجّل عندها ضجيج.
+
+        `$projectSlug` يصل من الشاشة المستدعية؛ غيابه يعني سياقًا بلا مشروع
+        (معاينة أو تصدير) فلا يُعرض المسجّل بدل أن يشير إلى مسار ناقص.
+    --}}
+    @isset($projectSlug)
+        @include('app.partials.voice-recorder', ['projectSlug' => $projectSlug])
+    @endisset
 @endif

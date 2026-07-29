@@ -31,6 +31,14 @@
             <textarea class="question-control" name="{{ $field['key'] }}" rows="4"
                 aria-labelledby="label-{{ $field['key'] }}"
                 @required($field['required'])>{{ $value }}</textarea>
+
+            {{--
+                الصوت على السؤال المفتوح وحده: هو ما يثقل كتابته فيُترك فارغًا،
+                وهو ما يخفض تغطية المحاور ١–٦. سؤال باختيارات لا يحتاج إملاءً.
+            --}}
+            @isset($projectSlug)
+                @include('app.partials.voice-recorder', ['projectSlug' => $projectSlug])
+            @endisset
             @break
 
         @case('select')

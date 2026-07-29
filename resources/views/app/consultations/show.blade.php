@@ -18,7 +18,11 @@
 
             <form method="POST" action="{{ route('app.consultations.answer', $consultation['uuid']) }}" class="question-form">
                 @csrf
-                @include('app.consultations._answer-field', ['question' => $consultation['question'], 'current' => null])
+                @include('app.consultations._answer-field', [
+                    'question' => $consultation['question'],
+                    'current' => null,
+                    'projectSlug' => $consultation['project']['slug'],
+                ])
                 <div class="actions">
                     <button class="btn btn--primary" type="submit">احفظ وتابع</button>
                     @if ($consultation['question']['allow_unknown'])
