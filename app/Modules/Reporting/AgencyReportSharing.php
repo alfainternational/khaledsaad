@@ -122,7 +122,7 @@ class AgencyReportSharing
         return ['agency_brief' => $report->snapshot['agency_brief']];
     }
 
-    public function assertReady(AgencyReport $report): void
+    private function assertReady(AgencyReport $report): void
     {
         $readiness = $report->snapshot['agency_brief']['readiness'] ?? null;
 

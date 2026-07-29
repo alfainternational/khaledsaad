@@ -89,7 +89,7 @@ enum Axis: string
      * ما يُقاس موضوعيًّا يتصدّر التقرير لأنه ما يمكن للمستخدم أن يثق به بلا
      * تحفّظ، وما يُستنتج من كلامه يليه محمولًا بوسمه.
      */
-    public function sortOrder(): int
+    private function sortOrder(): int
     {
         return match ($this) {
             self::AiReadiness => 1,

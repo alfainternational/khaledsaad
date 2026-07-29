@@ -109,24 +109,6 @@ class FixListTest extends TestCase
         }
     }
 
-    #[Test]
-    public function the_free_tier_names_the_gap_without_handing_over_the_fix(): void
-    {
-        $project = $this->project();
-        $teaser = app(FixList::class)->teaser($project, [Axis::AiReadiness]);
-
-        $this->assertCount(3, $teaser, 'ثلاث فجوات بالضبط، لا أكثر.');
-
-        /*
-         * التجريد صريح لا مخفي في الواجهة: أي مسار يقرأ هذا المخرج — ويب أو
-         * تطبيق أو API — لا يستطيع تسريب الحل حتى لو أراد.
-         */
-        foreach ($teaser as $item) {
-            $this->assertArrayNotHasKey('fix', $item);
-            $this->assertArrayNotHasKey('why', $item);
-            $this->assertArrayHasKey('title', $item);
-        }
-    }
 
     private function audit(): SiteAuditResult
     {

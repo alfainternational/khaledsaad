@@ -68,7 +68,7 @@ class ScoreHistory
     /**
      * متى قُيِّدت آخر نقطة، أو null إن لم تُقيَّد نقطة قط.
      */
-    public function lastRecordedAt(Project $project): ?Carbon
+    private function lastRecordedAt(Project $project): ?Carbon
     {
         return BrainEvent::query()
             ->where('project_id', $project->id)

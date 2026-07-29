@@ -109,19 +109,4 @@ class AxisRegistry
     {
         return array_column($this->inputsFor($axis), 'key');
     }
-
-    /**
-     * كل مفاتيح كل المحاور.
-     *
-     * @return array<int, string>
-     */
-    public function allKeys(): array
-    {
-        $keys = [];
-        foreach (Axis::cases() as $axis) {
-            $keys = [...$keys, ...$this->keysFor($axis)];
-        }
-
-        return array_values(array_unique($keys));
-    }
 }

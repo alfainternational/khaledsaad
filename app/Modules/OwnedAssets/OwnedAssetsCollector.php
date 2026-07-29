@@ -66,24 +66,6 @@ class OwnedAssetsCollector
     }
 
     /**
-     * تسجيل عدد جهات الاتصال المملوكة.
-     *
-     * يُستدعى من ربط أداة (قائمة بريدية أو CRM) لا من إدخال يدوي: رقم يكتبه
-     * صاحب النشاط عن نفسه `inferred` بطبيعته، وكتابته `measured` تخالف §١٥.
-     */
-    public function recordOwnedContacts(Project $project, int $contacts, string $sourceReference): void
-    {
-        $this->brain->record(
-            project: $project,
-            key: 'owned_contacts',
-            value: $contacts,
-            level: EvidenceLevel::Measured,
-            sourceModule: 'OwnedAssets',
-            sourceReference: $sourceReference,
-        );
-    }
-
-    /**
      * حالة المحور: لماذا لا يُحسب `owned_ratio` بعد.
      *
      * تُعرض للمستخدم بدل رقم صامت. الفجوة تُعلن ولا تُخفى (§٤.٣).

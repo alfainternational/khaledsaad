@@ -3,7 +3,6 @@
 namespace App\Modules\PlatformBridge;
 
 use App\Models\Project;
-use App\Modules\Diagnosis\Axis;
 use App\Modules\Diagnosis\FixList;
 use App\Modules\Diagnosis\MaturityAggregator;
 
@@ -64,23 +63,5 @@ class LegacyCapabilities
     public function hasDiagnosisFor(Project $project): bool
     {
         return ($this->maturity->compute($project)['axes_active'] ?? 0) > 0;
-    }
-
-    /**
-     * سبب المنع بلغة المستخدم، حين لا يكفي التشخيص.
-     */
-    public function blockedReason(): string
-    {
-        return 'لم يُقَس أي محور بعد. شغّل فحص الجاهزية أولًا لتُبنى خطتك على قياس نشاطك لا على وصفك له.';
-    }
-
-    /**
-     * الفجوات مرتّبة، لتغذية مولّد المحتوى القديم بسياق حقيقي.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function prioritisedGapsFor(Project $project, ?Axis $axis = null): array
-    {
-        return $this->fixes->build($project, $axis === null ? null : [$axis]);
     }
 }

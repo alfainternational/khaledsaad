@@ -97,27 +97,6 @@ class FixList
     }
 
     /**
-     * أعلى ثلاث فجوات بالاسم دون الحل — مخرج المستوى ٠.
-     *
-     * الفجوة المعروضة بلا حلّها تخلق فجوة معرفية ولا تقفلها. أي زيادة على
-     * هذا تقتل التحويل (§٦)، ولذلك يُجرَّد البند هنا من `why` و`fix` صراحةً
-     * لا بإخفائهما في الواجهة.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function teaser(Project $project, ?array $axes = null): array
-    {
-        return array_map(
-            fn (array $fix) => [
-                'title' => $fix['title'],
-                'axis_label' => $fix['axis_label'],
-                'is_assumption' => $fix['is_assumption'],
-            ],
-            array_slice($this->build($project, $axes), 0, 3),
-        );
-    }
-
-    /**
      * @return array<string, array<string, string>>
      */
     private function repairsFrom(SiteAuditResult $audit): array
