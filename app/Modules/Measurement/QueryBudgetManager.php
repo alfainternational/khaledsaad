@@ -7,7 +7,10 @@ use App\Models\Workspace;
 use App\Modules\Measurement\Exceptions\BudgetExhausted;
 use App\Modules\Measurement\Models\QueryBudget;
 use App\Modules\Measurement\Models\QueryReservation;
+use App\Notifications\QueryBudgetWarningNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * سقف التكلفة التشغيلي: الحجز قبل الطابور، لا المحاسبة بعده (§٩).
@@ -46,7 +49,7 @@ class QueryBudgetManager
             throw new \InvalidArgumentException('الحجز لا يكون بصفر استعلام.');
         }
 
-        return DB::transaction(function () use ($workspace, $queries, $purpose, $project): QueryReservation {
+        $reservation = DB::transaction(function () use ($workspace, $queries, $purpose, $project): QueryReservation {
             $budget = $this->lockedBudgetFor($workspace);
 
             if ($budget->remaining() < $queries) {
@@ -71,6 +74,51 @@ class QueryBudgetManager
                 'status' => QueryReservation::STATUS_HELD,
             ]);
         });
+
+        /*
+         * التنبيه **بعد** إغلاق المعاملة لا داخلها: إرسال إشعار أثرٌ جانبي،
+         * وفشله داخل المعاملة كان سيُرجع حجزًا صالحًا فيُمنع استعلام لا سبب
+         * لمنعه. وهو لا يرمي: من بلغ ٨٠٪ يستمر عمله حتى لو تعذّر إشعاره.
+         */
+        $this->warnIfDue($workspace);
+
+        return $reservation;
+    }
+
+    /**
+     * تنبيه صاحب المساحة عند بلوغ العتبة، مرة واحدة في الشهر (§٤.٤).
+     *
+     * التوقف عند ١٠٠٪ وحده يجعل الحدّ يُكتشف بالاصطدام به وسط عمل. التنبيه
+     * هو ما يمنح قرارًا قبل المنع — وبلا `warned_at` يتكرر مع كل حجز تالٍ
+     * فيُقرأ ضجيجًا ويُتجاهَل معه التوقف نفسه.
+     */
+    private function warnIfDue(Workspace $workspace): void
+    {
+        $budget = $this->budgetFor($workspace);
+
+        /*
+         * `markWarned` هو من يحسم لا `shouldWarn`: الفحص ثم الوسم في خطوتين
+         * يمرّان معًا لحجزين متزامنين عبرا العتبة في اللحظة نفسها، فيصل
+         * التنبيه مرتين. الوسم المشروط يجعل الفائز واحدًا.
+         */
+        if (! $budget->shouldWarn() || ! $this->markWarned($budget)) {
+            return;
+        }
+
+        try {
+            $workspace->owner?->notify(new QueryBudgetWarningNotification(
+                committed: $budget->committed(),
+                limit: $budget->monthly_limit,
+                period: $budget->period,
+            ));
+        } catch (Throwable $exception) {
+            // الوسم تمّ قبل الإرسال عمدًا: إشعار يفشل ثم يُعاد كل حجز أسوأ
+            // من إشعار ضاع مرة.
+            Log::warning('تعذّر إرسال تنبيه سقف الاستعلامات.', [
+                'workspace_id' => $workspace->id,
+                'reason' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -148,14 +196,31 @@ class QueryBudgetManager
     }
 
     /**
-     * هل تجاوزت المساحة عتبة التنبيه ولم تُنبَّه بعد؟
+     * حجز حقّ التنبيه لهذا الشهر، مرة واحدة لا أكثر.
      *
-     * يُستدعى بعد الحجز لا داخله: التنبيه أثر جانبي، وإقحامه في المعاملة
-     * يجعل فشل الإشعار يُرجع حجزًا صالحًا.
+     * الوسم مشروط بـ `whereNull` لا `save()` مجرّدًا: من يكتب أولًا يُنبِّه،
+     * ومن يليه ينصرف. يُستدعى بعد إغلاق المعاملة لا داخلها — التنبيه أثر
+     * جانبي، وإقحامه فيها يجعل فشل الإشعار يُرجع حجزًا صالحًا.
+     *
+     * @return bool هل صار هذا المستدعي هو المسؤول عن الإرسال؟
      */
-    public function markWarned(QueryBudget $budget): void
+    public function markWarned(QueryBudget $budget): bool
     {
-        $budget->forceFill(['warned_at' => now()])->save();
+        $now = now();
+
+        $claimed = QueryBudget::query()
+            ->whereKey($budget->getKey())
+            ->whereNull('warned_at')
+            ->update(['warned_at' => $now]);
+
+        if ($claimed === 0) {
+            return false;
+        }
+
+        // مزامنة الأصل حتى لا يُعدّ الحقل «متغيّرًا» فيُكتب مرة ثانية بلا شرط.
+        $budget->setAttribute('warned_at', $now)->syncOriginalAttribute('warned_at');
+
+        return true;
     }
 
     private function lockedBudgetFor(Workspace $workspace): QueryBudget

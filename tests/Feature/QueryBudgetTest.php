@@ -8,7 +8,9 @@ use App\Modules\Measurement\Exceptions\BudgetExhausted;
 use App\Modules\Measurement\Models\QueryBudget;
 use App\Modules\Measurement\Models\QueryReservation;
 use App\Modules\Measurement\QueryBudgetManager;
+use App\Notifications\QueryBudgetWarningNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -144,20 +146,52 @@ class QueryBudgetTest extends TestCase
     }
 
     #[Test]
-    public function the_warning_threshold_fires_once_at_eighty_percent(): void
+    public function the_warning_reaches_the_owner_once_at_eighty_percent(): void
     {
+        Notification::fake();
+
         $workspace = $this->workspace(limit: 10);
 
+        // تحت العتبة: لا تنبيه. §٤.٤ يحدّد ٨٠٪ لا «حين يقترب».
         $this->budgets->reserve($workspace, 7, 'first');
-        $this->assertFalse($this->budgets->budgetFor($workspace)->fresh()->shouldWarn());
+        Notification::assertNothingSent();
 
         $this->budgets->reserve($workspace, 1, 'second');
+
+        /*
+         * التوقف عند ١٠٠٪ وحده يجعل الحدّ يُكتشف بالاصطدام به وسط عمل.
+         * التنبيه هو ما يمنح قرارًا قبل المنع — وكان مبنيًّا بلا مستدعٍ.
+         */
+        Notification::assertSentTo($workspace->owner, QueryBudgetWarningNotification::class);
+
+        // حجز ثالث لا يعيد التنبيه: المتكرر يُقرأ ضجيجًا ويُتجاهَل معه التوقف.
+        $this->budgets->reserve($workspace, 1, 'third');
+
+        Notification::assertSentToTimes(
+            $workspace->owner,
+            QueryBudgetWarningNotification::class,
+            1,
+        );
+    }
+
+    #[Test]
+    public function the_reservation_survives_crossing_the_threshold(): void
+    {
+        Notification::fake();
+
+        $workspace = $this->workspace(limit: 10);
+
+        /*
+         * التنبيه أثرٌ جانبي يقع **بعد** إغلاق المعاملة: تجاوز العتبة لا يمسّ
+         * الحجز نفسه، ومن بلغ ٨٠٪ يستمر عمله حتى السقف (§٤.٤ يوقف عند ١٠٠٪
+         * لا عند ٨٠٪).
+         */
+        $this->budgets->reserve($workspace, 9, 'first');
+
         $budget = $this->budgets->budgetFor($workspace)->fresh();
 
-        $this->assertTrue($budget->shouldWarn());
-
-        $this->budgets->markWarned($budget);
-        $this->assertFalse($budget->fresh()->shouldWarn(), 'التنبيه تكرّر، فيصير ضوضاء تُتجاهَل.');
+        $this->assertSame(9, $budget->committed());
+        $this->assertSame(1, $budget->remaining());
     }
 
     #[Test]
