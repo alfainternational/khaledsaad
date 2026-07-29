@@ -8,6 +8,7 @@ import '../agency_reports/agency_reports_screen.dart';
 import '../consultations/consultation_screen.dart';
 import '../growth/growth_hub_screen.dart';
 import '../presence/presence_screen.dart';
+import 'project_form_screen.dart';
 import '../readiness/readiness_screen.dart';
 import '../reports/report_screen.dart';
 import '../tools/models.dart';
@@ -75,7 +76,39 @@ class _ProjectScreenState extends State<ProjectScreen> {
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       family: AdaptivePageFamily.operational,
-      appBar: AppBar(title: const Text('المشروع')),
+      appBar: AppBar(
+        title: const Text('المشروع'),
+        actions: [
+          // مدخل التعديل: كان العقد موجودًا في المستودع بلا زر يستدعيه، فلا
+          // يستطيع مستخدم التطبيق تصحيح معلومة أدخلها خطأً — وهي تنتقل إلى
+          // الدماغ وإلى الدرجة كما هي.
+          FutureBuilder<(ProjectOverview, List<ToolCard>)>(
+            future: _future,
+            builder: (context, snapshot) {
+              final project = snapshot.data?.$1;
+
+              return IconButton(
+                tooltip: 'تعديل المشروع',
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: project == null
+                    ? null
+                    : () async {
+                        final saved = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => ProjectFormScreen(
+                              repository: widget.repository,
+                              project: project,
+                            ),
+                          ),
+                        );
+
+                        if (saved == true) _reload();
+                      },
+              );
+            },
+          ),
+        ],
+      ),
       body: FutureBuilder<(ProjectOverview, List<ToolCard>)>(
         future: _future,
         builder: (context, snapshot) => AsyncView(

@@ -21,6 +21,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   void _reload() => setState(() => _future = widget.repository.notifications());
 
+  bool _busy = false;
+
+  /// تعليم الكل كمقروء — نظير `notifications.read-all` في الويب.
+  ///
+  /// قائمة إشعارات لا تُفرَّغ إلا واحدًا واحدًا تُهجَر بعد أسبوع، ومعها
+  /// يُهجَر التنبيه نفسه — وهو المخرج المتكرر الوحيد.
+  Future<void> _markAll() async {
+    setState(() => _busy = true);
+
+    try {
+      await widget.repository.markAllNotificationsRead();
+      if (mounted) _reload();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _open(AppNotification notification) async {
     if (!notification.read) {
       await widget.repository.markNotificationRead(notification.id);
@@ -33,7 +50,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       family: AdaptivePageFamily.operational,
-      appBar: AppBar(title: const Text('الإشعارات')),
+      appBar: AppBar(
+        title: const Text('الإشعارات'),
+        actions: [
+          IconButton(
+            tooltip: 'تعليم الكل كمقروء',
+            icon: const Icon(Icons.done_all),
+            onPressed: _busy ? null : _markAll,
+          ),
+        ],
+      ),
       body: FutureBuilder<NotificationList>(
         future: _future,
         builder: (context, snapshot) => AsyncView(

@@ -4,12 +4,21 @@ import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import 'models.dart';
 
-/// يقابل resources/views/app/projects/create.blade.php
+/// يقابل resources/views/app/projects/create.blade.php وedit.blade.php.
+///
+/// شاشة واحدة للإنشاء والتعديل كما في الويب: النموذج نفسه والحقول نفسها،
+/// ويختلف النداء وحده. كانت تنشئ ولا تعدّل، بينما تعلن مصفوفة التكافؤ
+/// `customer.projects.manage` مطابقًا — أي أن مستخدم التطبيق لا يستطيع تصحيح
+/// معلومة أدخلها خطأً، ومعلومةٌ خاطئة في الملف تنتقل إلى الدماغ وإلى الدرجة.
 class ProjectFormScreen extends StatefulWidget {
-  const ProjectFormScreen({super.key, required this.repository});
+  const ProjectFormScreen({super.key, required this.repository, this.project});
 
   final PlatformRepository repository;
+
+  /// النشاط المُعدَّل، أو null للإنشاء.
+  final ProjectOverview? project;
 
   @override
   State<ProjectFormScreen> createState() => _ProjectFormScreenState();
@@ -25,6 +34,28 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   String _stage = 'growth';
   bool _busy = false;
   String? _error;
+
+  bool get _isEdit => widget.project != null;
+
+  /// هل غيّر المستخدم المرحلة بنفسه؟
+  ///
+  /// القائمة تبدأ بقيمة افتراضية، وإرسالها في وضع التعديل يعيد كل نشاط إلى
+  /// «نمو» بلا أن يطلب صاحبه ذلك.
+  bool _stageTouched = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final project = widget.project;
+
+    if (project == null) return;
+
+    // ما يعرفه التطبيق يبدأ معبّأً. الوصف والنطاق ليسا في بطاقة النشاط،
+    // فيُتركان فارغين ولا يُرسلان — والفارغ لا يُرسل أصلًا في وضع التعديل.
+    _name.text = project.card.name;
+    _industry.text = project.card.industry ?? '';
+  }
 
   static const Map<String, String> _stages = {
     'idea': 'فكرة',
@@ -50,20 +81,35 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       _error = null;
     });
 
+    final payload = <String, dynamic>{
+      'name': _name.text.trim(),
+      'industry': _industry.text.trim().isEmpty ? null : _industry.text.trim(),
+      'stage': _stage,
+      'description': _description.text.trim().isEmpty
+          ? null
+          : _description.text.trim(),
+      'geography': _geography.text.trim().isEmpty
+          ? null
+          : _geography.text.trim(),
+    };
+
+    if (_isEdit) {
+      /*
+       * التعديل يرسل ما لُمس فقط. إرسال حقل فارغ يكتب فراغًا فوق قيمة قائمة،
+       * فيمحو نموذجُ تصحيحٍ معلوماتٍ لم يقصد صاحبها المساس بها — والمعلومة
+       * الممحوّة تنتقل إلى الدماغ فتخفض التغطية والدرجة معًا.
+       */
+      payload.removeWhere((key, value) => value == null);
+
+      if (!_stageTouched) payload.remove('stage');
+    }
+
     try {
-      await widget.repository.createProject({
-        'name': _name.text.trim(),
-        'industry': _industry.text.trim().isEmpty
-            ? null
-            : _industry.text.trim(),
-        'stage': _stage,
-        'description': _description.text.trim().isEmpty
-            ? null
-            : _description.text.trim(),
-        'geography': _geography.text.trim().isEmpty
-            ? null
-            : _geography.text.trim(),
-      });
+      if (_isEdit) {
+        await widget.repository.updateProject(widget.project!.card.slug, payload);
+      } else {
+        await widget.repository.createProject(payload);
+      }
 
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (exception) {
@@ -77,7 +123,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       family: AdaptivePageFamily.form,
-      appBar: AppBar(title: const Text('إضافة مشروع')),
+      appBar: AppBar(title: Text(_isEdit ? 'تعديل المشروع' : 'إضافة مشروع')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -123,7 +169,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                     ),
                   )
                   .toList(),
-              onChanged: (value) => setState(() => _stage = value ?? 'growth'),
+              onChanged: (value) => setState(() {
+                _stage = value ?? 'growth';
+                _stageTouched = true;
+              }),
             ),
             const SizedBox(height: 14),
 
