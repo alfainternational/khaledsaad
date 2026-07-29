@@ -2003,6 +2003,154 @@
         "mobile": []
       },
       "status": "verified"
+    },
+    {
+      "id": "customer.readiness.diagnose",
+      "note": "شاشة التشخيص كانت غائبة عن هذا السجل كله، فمرّ العقد ناقصًا في التطبيق: الخادم يرسل history وbenchmark وconflicts والتطبيق يقرأ الحمولة خريطة خامًا فلا يعرضها.",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.readiness.show",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.readiness.show",
+        "method": "GET"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ReadinessScreen",
+        "action": "view"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ReadinessJourneyTest",
+          "Tests\\Feature\\ConflictReviewTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ReadinessApiParityTest",
+          "Tests\\Feature\\ConflictReviewTest"
+        ],
+        "mobile": [
+          "mobile/test/features/readiness_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.readiness.audit",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.readiness.audit",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.readiness.audit",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ReadinessScreen",
+        "action": "audit"
+      },
+      "states": [
+        "loading",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ReadinessJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ReadinessApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.readiness.crawl_log",
+      "note": "رفع سجل وصول الخادم مهمة مكتبية: الملف على استضافة العميل لا على هاتفه. العقد قائم في api/v1 ونقطة التوسّع مفتوحة، والتطبيق لا يدّعيها.",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.readiness.log",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.readiness.log",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": false,
+        "screen": null,
+        "action": null
+      },
+      "states": [
+        "loading",
+        "validation",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ReadinessJourneyTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ReadinessApiParityTest"
+        ],
+        "mobile": []
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.readiness.card_pdf",
+      "note": "بطاقة الجاهزية PDF تنزيل متصفح محروس بـdiagnosis.full. لا نظير في api/v1، والتطبيق لا يعرض زرًّا لقدرة لا يملكها.",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.readiness.download",
+        "method": "GET"
+      },
+      "api": {
+        "applicable": false,
+        "route": null,
+        "method": null
+      },
+      "mobile": {
+        "applicable": false,
+        "screen": null,
+        "action": null
+      },
+      "states": [
+        "loading",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ReadinessJourneyTest"
+        ],
+        "api": [],
+        "mobile": []
+      },
+      "status": "verified"
     }
   ]
 }

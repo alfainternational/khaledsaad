@@ -4,6 +4,7 @@ import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import 'models.dart';
 
 /// الجاهزية للذكاء الاصطناعي: نظير شاشة الويب حرفيًّا.
 ///
@@ -26,7 +27,7 @@ class ReadinessScreen extends StatefulWidget {
 }
 
 class _ReadinessScreenState extends State<ReadinessScreen> {
-  late Future<Map<String, dynamic>> _data;
+  late Future<ReadinessOverview> _data;
   bool _busy = false;
 
   @override
@@ -36,7 +37,9 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
   }
 
   void _reload() {
-    _data = widget.repository.readiness(widget.projectSlug);
+    _data = widget.repository
+        .readiness(widget.projectSlug)
+        .then(ReadinessOverview.fromJson);
   }
 
   Future<void> _runAudit() async {
@@ -64,9 +67,9 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
     return AdaptiveScaffold(
       family: AdaptivePageFamily.operational,
       appBar: AppBar(title: const Text('الجاهزية للذكاء الاصطناعي')),
-      body: FutureBuilder<Map<String, dynamic>>(
+      body: FutureBuilder<ReadinessOverview>(
         future: _data,
-        builder: (context, snapshot) => AsyncView<Map<String, dynamic>>(
+        builder: (context, snapshot) => AsyncView<ReadinessOverview>(
           snapshot: snapshot,
           onRetry: () => setState(_reload),
           builder: (data) => SingleChildScrollView(
@@ -75,7 +78,7 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
               children: [
                 Eyebrow(widget.projectName),
                 const SizedBox(height: 12),
-                _maturity(context, _map(data['maturity'])),
+                _maturity(context, data.maturity),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: _busy ? null : _runAudit,
@@ -88,9 +91,12 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
                       : const Text('افحص موقعي'),
                 ),
                 const SizedBox(height: 24),
-                _axes(context, _map(data['maturity'])),
+                _conflicts(context, data.conflicts),
+                _trend(context, data),
+                _benchmark(context, data.benchmark),
+                _axes(context, data.maturity),
                 const SizedBox(height: 24),
-                _fixes(context, data['fixes'] as List<dynamic>?),
+                _fixes(context, data.fixes),
               ],
             ),
           ),
@@ -132,6 +138,153 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
     );
   }
 
+  /// «تحتاج مراجعتك»: التعارض يُعرض بقوليه ولا يُحسم صامتًا (§٩).
+  ///
+  /// أن يقول نشاطك شيئًا وتقول بياناتك غيره معلومةٌ حقيقية عنه. الويب يعرضها
+  /// والتطبيق كان يبتلعها — ومسطّحان يريان الدماغ نفسه بوجهين مختلفين.
+  Widget _conflicts(BuildContext context, List<BrainConflict> conflicts) {
+    if (conflicts.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('تحتاج مراجعتك', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        const Text(
+          'مصدران قالا شيئين مختلفين عن نفس المعلومة. لم نحسم أيّهما أصدق.',
+        ),
+        const SizedBox(height: 8),
+        for (final conflict in conflicts) _conflictTile(context, conflict),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _conflictTile(BuildContext context, BrainConflict conflict) {
+    return BrandCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(conflict.key, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 6),
+          for (final side in conflict.sides)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(side.source),
+                  Flexible(
+                    child: Text(
+                      side.value,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (conflict.revisions > 1) ...[
+            const SizedBox(height: 6),
+            Text(
+              'تغيّرت هذه المعلومة ${conflict.revisions} مرات قبل التعارض.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// الاتجاه لا يُرسم قبل أربع نقاط (§١٣).
+  ///
+  /// قبلها تُعرض النقاط بسببٍ صريح: خطٌّ من نقطتين يُقرأ اتجاهًا ويُتَّخذ عليه
+  /// قرار. `plottable` تأتي من الخادم ولا تُعاد هنا — عتبةٌ في مكانين تتباعد.
+  Widget _trend(BuildContext context, ReadinessOverview data) {
+    if (data.history.isEmpty) return const SizedBox.shrink();
+
+    if (!data.plottable) {
+      if (data.history.length < 2) return const SizedBox.shrink();
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Text(
+          'عندك ${data.history.length} قياسات. الاتجاه يُرسم عند أربعة قياسات '
+          'فأكثر — أقل من ذلك لا يفرّق بين تحسّن حقيقي وتذبذب عادي.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('اتجاه الدرجة', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final point in data.history)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 16),
+                  child: Column(
+                    children: [
+                      Text(
+                        '${point.maturityScore}',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        _day(point.occurredAt),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  /// موقعه من قطاعه، أو سبب غياب المقارنة صراحةً — لا متوسط تقريبي (§٤.٣).
+  Widget _benchmark(BuildContext context, IndustryBenchmarkView benchmark) {
+    final style = Theme.of(context).textTheme.bodySmall;
+
+    if (!benchmark.available) {
+      final reason = benchmark.reason;
+
+      if (reason == null || reason.isEmpty) return const SizedBox.shrink();
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Text(reason, style: style),
+      );
+    }
+
+    final buffer = StringBuffer(
+      'متوسط «${benchmark.industry}» ${benchmark.industryAverage}/100 '
+      'من ${benchmark.sampleSize} نشاطًا مقيسًا.',
+    );
+
+    final delta = benchmark.delta;
+
+    if (delta != null) {
+      final side = delta >= 0 ? 'أعلى بـ$delta' : 'أدنى بـ${delta.abs()}';
+      buffer.write(' أنت $side نقطة، فوق ${benchmark.percentile}٪ من أنشطة قطاعك.');
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(buffer.toString(), style: style),
+    );
+  }
+
+  String _day(DateTime? at) =>
+      at == null ? '—' : '${at.day}/${at.month}';
+
   Widget _axes(BuildContext context, Map<String, dynamic>? maturity) {
     final axes = (maturity?['axes'] as List<dynamic>?) ?? const [];
 
@@ -166,8 +319,8 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
     );
   }
 
-  Widget _fixes(BuildContext context, List<dynamic>? fixes) {
-    if (fixes == null || fixes.isEmpty) return const SizedBox.shrink();
+  Widget _fixes(BuildContext context, List<Map<String, dynamic>> fixes) {
+    if (fixes.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,7 +332,7 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
         const SizedBox(height: 4),
         const Text('مرتّبة على الأثر ثم الجهد — ابدأ من الأعلى.'),
         const SizedBox(height: 8),
-        for (final raw in fixes.take(10)) _fixTile(context, _map(raw)!),
+        for (final fix in fixes.take(10)) _fixTile(context, fix),
       ],
     );
   }

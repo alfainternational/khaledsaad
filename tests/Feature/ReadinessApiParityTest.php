@@ -46,6 +46,46 @@ class ReadinessApiParityTest extends TestCase
         ]);
     }
 
+    /**
+     * العقد يحمل كل قسم يعرضه الويب، لا الدرجة وحدها.
+     *
+     * العطل الذي يحرسه هذا الاختبار: `history` و`benchmark` و`conflicts` كانت
+     * تُرسَل ولا يعرضها التطبيق، ومرّت سنةً كاملة من التكافؤ لأن الفحص كان
+     * يقارن رقمًا واحدًا. تكافؤ العقد أن تصل **الأقسام** لا أن يتطابق عدد.
+     */
+    #[Test]
+    public function the_contract_carries_every_section_the_web_renders(): void
+    {
+        $this->fakeSite($this->goodHtml());
+        [$user, $project] = $this->ownedProject();
+
+        Sanctum::actingAs($user);
+        $this->postJson(route('api.v1.readiness.audit', $project))->assertOk();
+
+        $data = $this->getJson(route('api.v1.readiness.show', $project))
+            ->assertOk()
+            ->json('data');
+
+        foreach (['maturity', 'readiness', 'fixes', 'history', 'benchmark', 'conflicts'] as $section) {
+            $this->assertArrayHasKey(
+                $section,
+                $data,
+                "القسم {$section} يعرضه الويب ولا يحمله العقد — سطحان يريان تشخيصين.",
+            );
+        }
+
+        // العتبة تُحسم في الخادم وحده: محسوبة في مكانين تتباعد (§١٣).
+        $this->assertArrayHasKey('plottable', $data['history']);
+        $this->assertArrayHasKey('points', $data['history']);
+
+        // غياب المقارنة يصل بسببه لا فارغًا (§٤.٣).
+        $this->assertArrayHasKey('available', $data['benchmark']);
+
+        if ($data['benchmark']['available'] === false) {
+            $this->assertNotEmpty($data['benchmark']['reason']);
+        }
+    }
+
     #[Test]
     public function the_app_and_the_web_report_the_same_score(): void
     {
