@@ -67,6 +67,36 @@
         @endif
     </section>
 
+    {{--
+        التعارض يُعرض بقوليه ولا يُحسم صامتًا (§٩). أن يقول نشاطك شيئًا وتقول
+        بياناتك غيره معلومةٌ حقيقية عنه — إخفاؤها خلف «آخر قيمة تفوز» يمحو
+        أنفع ما في الدماغ.
+    --}}
+    @if ($conflicts !== [])
+        <section class="card">
+            <h2>تحتاج مراجعتك</h2>
+            <p class="muted">مصدران قالا شيئين مختلفين عن نفس المعلومة. لم نحسم أيّهما أصدق.</p>
+
+            @foreach ($conflicts as $conflict)
+                <h3 class="review-step">{{ $conflict['key'] }}</h3>
+                <ul class="kv">
+                    @foreach ($conflict['sides'] as $side)
+                        <li>
+                            <span>{{ $side['source'] }}</span>
+                            <strong>
+                                @if (is_array($side['value']))
+                                    {{ implode('، ', $side['value']) }}
+                                @else
+                                    {{ $side['value'] ?? '—' }}
+                                @endif
+                            </strong>
+                        </li>
+                    @endforeach
+                </ul>
+            @endforeach
+        </section>
+    @endif
+
     <section class="card">
         <h2>محاور التشخيص</h2>
 

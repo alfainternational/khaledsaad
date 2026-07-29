@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Modules\AiReadiness\ReadinessCollector;
+use App\Modules\Brain\BrainReader;
 use App\Modules\Diagnosis\Axis;
 use App\Modules\Diagnosis\AxisScorer;
 use App\Modules\Diagnosis\FixList;
@@ -42,6 +43,7 @@ class ReadinessController extends Controller
         private readonly IntakeCollector $intake,
         private readonly ScoreHistory $history,
         private readonly IndustryBenchmark $benchmark,
+        private readonly BrainReader $brain,
     ) {}
 
     /**
@@ -67,6 +69,7 @@ class ReadinessController extends Controller
                     'plottable' => $this->history->isPlottable($project),
                 ],
                 'benchmark' => $this->benchmark->for($project),
+                'conflicts' => $this->brain->openConflictsWithValues($project),
             ],
         ], options: self::JSON);
     }

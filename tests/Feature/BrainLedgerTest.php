@@ -86,11 +86,28 @@ class BrainLedgerTest extends TestCase
         $this->assertSame(2, BrainFact::where('project_id', $project->id)
             ->where('key', 'monthly_traffic')->active()->count());
 
-        $conflicts = $this->reader->openConflicts($project);
+        // الحدث نفسه في السجل.
+        $this->assertSame(1, BrainEvent::query()
+            ->where('project_id', $project->id)
+            ->where('type', BrainEvent::TYPE_FACT_CONFLICT)
+            ->count());
+
+        /*
+         * ويُقرأ عبر الواجهة التي تصل المستخدم فعلًا: التعارض المسجَّل ولا
+         * يراه أحد لا يُنفّذ §٩ — «يُعلَّم للمراجعة» تعني أن تصل المراجعةَ.
+         */
+        $conflicts = $this->reader->openConflictsWithValues($project);
+
         $this->assertCount(1, $conflicts);
-        $this->assertSame(BrainEvent::TYPE_FACT_CONFLICT, $conflicts->first()->type);
-        $this->assertSame('Intake', $conflicts->first()->body['existing_source']);
-        $this->assertSame('AiReadiness', $conflicts->first()->body['incoming_source']);
+        $this->assertSame('monthly_traffic', $conflicts[0]['key']);
+        $this->assertEqualsCanonicalizing(
+            ['Intake', 'AiReadiness'],
+            array_column($conflicts[0]['sides'], 'source'),
+        );
+        $this->assertEqualsCanonicalizing(
+            [5000, 900],
+            array_column($conflicts[0]['sides'], 'value'),
+        );
     }
 
     #[Test]
@@ -108,31 +125,6 @@ class BrainLedgerTest extends TestCase
         $this->assertEqualsCanonicalizing(['geography', 'business_model'], $coverage['missing']);
     }
 
-    #[Test]
-    public function an_output_built_on_one_assumption_is_never_measured(): void
-    {
-        $project = $this->project();
-
-        $this->writer->record($project, 'schema_present', true, EvidenceLevel::Measured, 'AiReadiness');
-        $this->writer->record($project, 'target_segment', 'أمهات جدد', EvidenceLevel::Inferred, 'Intake');
-
-        // الأضعف يحكم: مخرج يخلط قياسًا بفرضية يبقى فرضية.
-        $this->assertSame(
-            EvidenceLevel::Inferred,
-            $this->reader->evidenceLevelFor($project, ['schema_present', 'target_segment']),
-        );
-
-        $this->assertSame(
-            EvidenceLevel::Measured,
-            $this->reader->evidenceLevelFor($project, ['schema_present']),
-        );
-
-        // مفتاح غائب لا يُعامل كمؤكد.
-        $this->assertSame(
-            EvidenceLevel::Inferred,
-            $this->reader->evidenceLevelFor($project, ['schema_present', 'never_recorded']),
-        );
-    }
 
     #[Test]
     public function a_snapshot_freezes_the_state_a_diagnosis_was_built_on(): void

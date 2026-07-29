@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Modules\AiReadiness\CrawlLogAnalyzer;
 use App\Modules\AiReadiness\ReadinessCollector;
 use App\Modules\AiReadiness\SiteAudit;
+use App\Modules\Brain\BrainReader;
 use App\Modules\Diagnosis\Axis;
 use App\Modules\Diagnosis\AxisScorer;
 use App\Modules\Diagnosis\FixList;
@@ -41,6 +42,7 @@ class ReadinessController extends Controller
         private readonly IntakeCollector $intake,
         private readonly ScoreHistory $history,
         private readonly IndustryBenchmark $benchmark,
+        private readonly BrainReader $brain,
     ) {}
 
     public function show(Request $request, Project $project): View
@@ -75,6 +77,12 @@ class ReadinessController extends Controller
 
             // موقعه من قطاعه، أو سبب غياب المقارنة. لا متوسط تقريبي.
             'benchmark' => $this->benchmark->for($project),
+
+            /*
+             * التعارضات تُعرض ولا تُحسم صامتًا (§٩). كانت تُسجَّل كأحداث
+             * ولا يراها أحد — أي أن «تُعلَّم للمراجعة» لم تكن تعني شيئًا.
+             */
+            'conflicts' => $this->brain->openConflictsWithValues($project),
         ]);
     }
 

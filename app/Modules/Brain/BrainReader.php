@@ -6,7 +6,6 @@ use App\Models\Project;
 use App\Modules\Brain\Models\BrainEvent;
 use App\Modules\Brain\Models\BrainFact;
 use App\Modules\Brain\Models\BrainSnapshot;
-use App\Modules\Shared\Evidence\EvidenceLevel;
 use Illuminate\Support\Collection;
 
 /**
@@ -75,7 +74,7 @@ class BrainReader
      *
      * @return Collection<int, BrainEvent>
      */
-    public function openConflicts(Project $project): Collection
+    private function openConflicts(Project $project): Collection
     {
         return BrainEvent::query()
             ->where('project_id', $project->id)
@@ -83,6 +82,76 @@ class BrainReader
             ->whereNull('outcome')
             ->orderByDesc('occurred_at')
             ->get();
+    }
+
+    /**
+     * التعارضات المفتوحة بقوليها معًا، جاهزة للعرض.
+     *
+     * الحدث يحفظ معرّفات الحقيقتين لا قيمتيهما — وهو الصواب في السجل، لأن
+     * القيمة قد تُستبدل والمعرّف لا. لكن **المراجعة تحتاج أن ترى القولين**:
+     * «مصدران اختلفا» بلا إظهار ما قاله كلٌّ منهما ليست معلومة يُتخذ عليها
+     * قرار، وهي كل ما توجبه §٩ من إعلان التعارض بدل حسمه صامتًا.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function openConflictsWithValues(Project $project): array
+    {
+        $conflicts = $this->openConflicts($project);
+
+        if ($conflicts->isEmpty()) {
+            return [];
+        }
+
+        $ids = $conflicts
+            ->flatMap(fn (BrainEvent $event) => [
+                $event->body['existing_fact_id'] ?? null,
+                $event->body['incoming_fact_id'] ?? null,
+            ])
+            ->filter()
+            ->all();
+
+        $facts = BrainFact::query()->whereKey($ids)->get()->keyBy('id');
+
+        return $conflicts
+            ->map(function (BrainEvent $event) use ($facts, $project): array {
+                $existing = $facts->get($event->body['existing_fact_id'] ?? null);
+                $incoming = $facts->get($event->body['incoming_fact_id'] ?? null);
+
+                $key = $event->body['key'] ?? '';
+
+                return [
+                    'key' => $key,
+                    'occurred_at' => $event->occurred_at?->toIso8601String(),
+                    'sides' => [
+                        $this->sideOf($existing, $event->body['existing_source'] ?? null),
+                        $this->sideOf($incoming, $event->body['incoming_source'] ?? null),
+                    ],
+
+                    /*
+                     * عدد مرات تغيّر هذه المعلومة قبل التعارض.
+                     *
+                     * هو ما يجعل المراجعة قابلة للحسم: قيمة استقرّت شهورًا ثم
+                     * خالفها قياسٌ واحد ليست كقيمة تتأرجح كل أسبوع. الرقم
+                     * وحده لا يحسم، لكنه يقول لصاحب النشاط أين ينظر.
+                     */
+                    'revisions' => $key === '' ? 0 : $this->history($project, $key)->count(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sideOf(?BrainFact $fact, ?string $source): array
+    {
+        return [
+            'source' => $source ?? 'غير معروف',
+            'value' => $fact?->value_json['value'] ?? null,
+            'evidence_level' => $fact?->evidence_level->value,
+            'observed_at' => $fact?->observed_at?->toIso8601String(),
+        ];
     }
 
     /**
@@ -111,26 +180,6 @@ class BrainReader
             'ratio' => round($knownCount / count($required), 4),
             'missing' => $missing,
         ];
-    }
-
-    /**
-     * أضعف مستوى دليل بين مفاتيح — مستوى أي مخرج مبنيّ عليها.
-     *
-     * @param  array<int, string>  $keys
-     */
-    public function evidenceLevelFor(Project $project, array $keys): EvidenceLevel
-    {
-        $facts = $this->facts($project);
-
-        $levels = [];
-        foreach ($keys as $key) {
-            $fact = $facts->get($key);
-
-            // مفتاح غائب لا يرفع المستوى: غيابه نفسه يجعل المخرج فرضية.
-            $levels[] = $fact?->evidence_level ?? EvidenceLevel::Inferred;
-        }
-
-        return EvidenceLevel::weakest($levels);
     }
 
     /**
