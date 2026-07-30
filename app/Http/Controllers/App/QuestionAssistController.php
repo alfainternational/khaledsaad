@@ -117,6 +117,12 @@ class QuestionAssistController extends Controller
                 : null;
         }
 
+        // موجز الوكالة ساكن على المشروع: لا تشغيل ولا جلسة يُطابَق ملكيتهما،
+        // وملكية المشروع نفسها تحقّقت في أعلى `store`.
+        if ($validated['surface'] === QuestionAssist::SURFACE_AGENCY) {
+            return $this->locator->inAgencyBrief($key);
+        }
+
         $session = ConsultationSession::where('uuid', $validated['session_uuid'])->first();
 
         return $session !== null && $this->locator->belongsTo($project, $session)

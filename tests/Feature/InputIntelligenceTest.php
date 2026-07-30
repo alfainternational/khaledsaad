@@ -419,6 +419,63 @@ class InputIntelligenceTest extends TestCase
         $this->assertStringContainsString('فرضية', $html, 'المقترح بلا وسم يُقرأ حقيقة (§١٣).');
     }
 
+    #[Test]
+    public function the_agency_brief_offers_assistance_on_every_question_too(): void
+    {
+        [$user, $project] = $this->owned();
+
+        // موجز الوكالة كان السطح الوحيد بلا مساعدة، والقاعدة أنها على كل سؤال.
+        $html = $this->actingAs($user)
+            ->get(route('app.projects.agency-reports.index', $project))
+            ->assertOk()
+            ->getContent();
+
+        foreach (\App\Support\Marketing\BriefQuestions::fields() as $field) {
+            $this->assertStringContainsString(
+                'data-question-key="'.$field['key'].'"',
+                $html,
+                "سؤال الموجز {$field['key']} بلا مساعدة.",
+            );
+        }
+
+        // السطح المُعلَن هو الوكالة لا الأداة، فيُبنى الدليل على أسئلة الموجز.
+        $this->assertStringContainsString('data-surface="agency"', $html);
+    }
+
+    #[Test]
+    public function the_agency_surface_generates_a_draft_from_its_own_question(): void
+    {
+        [$user, $project] = $this->owned();
+
+        $this->engineReturning(fn (QuestionDescriptor $q) => new AssistDraft(
+            guide: 'اذكر خدمتك بوضوح: '.$q->text,
+            suggestions: [['label' => 'مقترح', 'value' => 'إدارة إعلانات', 'why' => 'من نطاقك.']],
+            basis: ['وصف نشاطك'],
+        ));
+
+        $this->actingAs($user)
+            ->postJson(route('app.assist.store', $project), [
+                'surface' => 'agency',
+                'question_key' => 'primary_goal',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.suggestions.0.value', 'إدارة إعلانات');
+    }
+
+    #[Test]
+    public function an_invented_agency_question_key_is_refused(): void
+    {
+        [$user, $project] = $this->owned();
+
+        // مفتاح ليس في BriefQuestions: لا سؤال يُقصد، فلا دليل يُبنى على فراغ.
+        $this->actingAs($user)
+            ->postJson(route('app.assist.store', $project), [
+                'surface' => 'agency',
+                'question_key' => 'not_a_brief_key',
+            ])
+            ->assertNotFound();
+    }
+
     // ——— أدوات الاختبار ———
 
     /**

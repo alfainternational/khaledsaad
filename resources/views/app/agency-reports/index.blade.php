@@ -156,6 +156,20 @@
                             @endif
                             <span class="question-reason" aria-label="سبب طرح السؤال">{{ $field['why'] }}</span>
                         </label>
+
+                        {{--
+                            اقتراح الإجابة على سؤال الموجز كأي سؤال آخر: موجز
+                            الوكالة كان السطح الوحيد بلا مساعدة، والقاعدة أنها
+                            على كل سؤال في كل استمارة بلا استثناء.
+                        --}}
+                        @include('app.partials.question-assist', [
+                            'projectSlug' => $project->slug,
+                            'surface' => \App\Models\QuestionAssist::SURFACE_AGENCY,
+                            'questionKey' => $field['key'],
+                            'fieldKey' => $field['key'],
+                            'answerType' => $field['type'],
+                            'inputName' => 'brief['.$field['key'].']',
+                        ])
                     @endforeach
                 </fieldset>
             @endforeach

@@ -17,6 +17,9 @@ class QuestionAssist extends Model
 
     public const SURFACE_TOOL = 'tool';
 
+    /** موجز الوكالة: أسئلة `BriefQuestions` على المشروع مباشرة، بلا تشغيل ولا جلسة. */
+    public const SURFACE_AGENCY = 'agency';
+
     protected $fillable = [
         'project_id', 'query_reservation_id', 'surface', 'question_key', 'context_hash',
         'guide', 'suggestions', 'recommended_value', 'recommendation_reason', 'basis',

@@ -83,6 +83,41 @@ final class QuestionDescriptor
     }
 
     /**
+     * سؤال من موجز الوكالة (`BriefQuestions`).
+     *
+     * حقلٌ ساكن على المشروع لا على تشغيل: مفتاحه هو مفتاح الحقيقة نفسه، تمامًا
+     * كحقل الأداة — `saveBrief` يكتب في ملف المشروع بـ`$key`، فربط الكفاية به
+     * يصل إلى ما يقرؤه المستند لا إلى مفتاح معلّق.
+     *
+     * @param  array<string, mixed>  $field  عنصر واحد من BriefQuestions::fields()
+     */
+    public static function fromBriefField(array $field): self
+    {
+        $type = (string) ($field['type'] ?? 'text');
+
+        // خيارات الموجز خريطة value=>label أحيانًا وقائمة أحيانًا؛ يُوحَّدان.
+        $options = [];
+
+        foreach (($field['options'] ?? []) as $value => $label) {
+            $options[] = is_array($label)
+                ? ['value' => $label['value'] ?? $value, 'label' => (string) ($label['label'] ?? $value)]
+                : ['value' => is_int($value) ? $label : $value, 'label' => (string) $label];
+        }
+
+        return new self(
+            surface: QuestionAssist::SURFACE_AGENCY,
+            questionKey: (string) $field['key'],
+            fieldKey: (string) $field['key'],
+            text: (string) ($field['label'] ?? $field['key']),
+            help: $field['placeholder'] ?? null,
+            why: $field['why'] ?? null,
+            type: $type,
+            options: $options,
+            required: (bool) ($field['critical'] ?? false),
+        );
+    }
+
+    /**
      * هل هذا سؤال اختيار محدود؟
      *
      * الفرق يحكم شكل المساعدة كلها: في الاختيار يُرشَّح **أفضل خيار متاح** ولا

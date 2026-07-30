@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\QuestionAssist;
 use App\Models\QuestionVersion;
 use App\Models\ToolRun;
+use App\Support\Marketing\BriefQuestions;
 
 /**
  * تحويل «مفتاح سؤال + السياق الذي يراه المستخدم» إلى وصف سؤال موحّد.
@@ -63,13 +64,31 @@ class QuestionLocator
     }
 
     /**
+     * سؤال في موجز الوكالة.
+     *
+     * لا تشغيل ولا جلسة يحدّان أيّ سؤال: أسئلة الموجز ساكنة في `BriefQuestions`
+     * ومفاتيحها فريدة، فالمفتاح وحده يكفي لتحديدها. الحدّ الوحيد أن السؤال من
+     * الموجز فعلًا لا مفتاح مخترع.
+     */
+    public function inAgencyBrief(string $questionKey): ?QuestionDescriptor
+    {
+        $field = collect(BriefQuestions::fields())->firstWhere('key', $questionKey);
+
+        return $field === null ? null : QuestionDescriptor::fromBriefField($field);
+    }
+
+    /**
      * السطح المسموح به لكل سياق — يُستعمل في التحقق من الطلب.
      *
      * @return array<int, string>
      */
     public static function surfaces(): array
     {
-        return [QuestionAssist::SURFACE_CONSULTATION, QuestionAssist::SURFACE_TOOL];
+        return [
+            QuestionAssist::SURFACE_CONSULTATION,
+            QuestionAssist::SURFACE_TOOL,
+            QuestionAssist::SURFACE_AGENCY,
+        ];
     }
 
     /**
