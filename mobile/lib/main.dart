@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/api/api_client.dart';
+import 'core/api/app_update_gate.dart';
 import 'core/api/platform_repository.dart';
 import 'core/firebase/firebase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/auth/password_reset_screen.dart';
+import 'core/widgets/app_update_screen.dart';
 import 'features/projects/dashboard_screen.dart';
 import 'features/public/public_home_screen.dart';
 import 'features/public/shared_report_screen.dart';
@@ -140,9 +142,18 @@ class _KhaledSaadAppState extends State<KhaledSaadApp> {
       supportedLocales: const [Locale('ar')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       // الواجهة عربية RTL أولًا، تمامًا كما في الويب.
+      //
+      // وبوابة التحديث تلفّ كل شيء داخل `builder` لا داخل `home`: أي مسار
+      // مفتوح — تقرير مشترك، إعادة كلمة مرور، شاشة عميقة — يعود منه ٤٢٦
+      // كذلك، فالحارس فوق المسارات كلها لا فوق أولها.
       builder: (context, child) => Directionality(
         textDirection: TextDirection.rtl,
-        child: child ?? const SizedBox.shrink(),
+        child: ValueListenableBuilder<AppUpdateRequirement?>(
+          valueListenable: AppUpdateGate.instance.requirement,
+          builder: (context, requirement, _) => requirement == null
+              ? (child ?? const SizedBox.shrink())
+              : AppUpdateScreen(requirement: requirement),
+        ),
       ),
       home: FutureBuilder<bool>(
         future: _session,

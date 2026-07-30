@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/app_environment.dart';
 import 'api_exception.dart';
+import 'app_update_gate.dart';
 import 'token_store.dart';
 
 /// عميل واحد لكل نداء نحو الخادم.
@@ -71,6 +72,12 @@ class ApiClient {
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      // التنزيل يمرّ بالبوابة نفسها: العقد واحد، وردّه ٤٢٦ هنا أيضًا.
+      _raiseUpdateGate(
+        response.statusCode,
+        response.body.isEmpty ? null : jsonDecode(response.body),
+      );
+
       throw ApiException('تعذر تنزيل الملف.', statusCode: response.statusCode);
     }
 
@@ -191,10 +198,25 @@ class ApiClient {
       );
     }
 
+    _raiseUpdateGate(response.statusCode, body);
+
     throw ApiException(
       _message(body, response.statusCode),
       statusCode: response.statusCode,
       errors: _errors(body),
+    );
+  }
+
+  /// ٤٢٦ = العقد تجاوز هذه النسخة.
+  ///
+  /// ترفع البوابة **ويُرمى الاستثناء بعدها كما هو**: الشاشة المستدعية تتوقف
+  /// كما تتوقف عند أي خطأ، والبوابة تغطّي التطبيق فوقها. لو استُبدل الاستثناء
+  /// لكان على كل مستدعٍ أن يعرف الحالة الجديدة.
+  void _raiseUpdateGate(int statusCode, dynamic body) {
+    if (statusCode != 426) return;
+
+    AppUpdateGate.instance.raise(
+      AppUpdateRequirement.fromJson(body is Map ? body : const {}),
     );
   }
 
