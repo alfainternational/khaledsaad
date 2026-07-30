@@ -776,6 +776,10 @@ class PlatformRepository {
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
+  /// بطاقة الجاهزية PDF — نظير تنزيل الويب، محروسة بـ`diagnosis.full` في الخادم.
+  Future<List<int>> readinessCardPdf(String projectSlug) =>
+      _api.downloadBytes('/projects/$projectSlug/readiness/pdf');
+
   /// تقرير الحضور في إجابات النماذج وخريطة المصادر.
   ///
   /// `metrics` تعود null حين لا دورة استطلاع بعد — لا أصفار: «لم يُقَس»

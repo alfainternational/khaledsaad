@@ -155,11 +155,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('projects/{project}/readiness/log', [ApiReadinessController::class, 'uploadLog'])
             ->middleware('throttle:20,60')->name('readiness.log');
 
-        // تقرير الحضور في الإجابات: نفس عقد الويب حرفيًّا (§١٥ بند ٨).
+        // تقرير الحضور في الإجابات وبطاقة الجاهزية PDF: نفس عقد الويب (§١٥ بند ٨).
         Route::middleware('feature:'.FeatureKey::DIAGNOSIS_FULL)->group(function (): void {
             Route::get('projects/{project}/presence', [ApiPresenceController::class, 'show'])->name('presence.show');
             Route::post('projects/{project}/presence/probe', [ApiPresenceController::class, 'probe'])
                 ->middleware('throttle:5,60')->name('presence.probe');
+            Route::get('projects/{project}/readiness/pdf', [ApiReadinessController::class, 'download'])
+                ->middleware('throttle:10,60')->name('readiness.pdf');
         });
 
         Route::middleware('feature:'.FeatureKey::GROWTH_GEO)->group(function (): void {

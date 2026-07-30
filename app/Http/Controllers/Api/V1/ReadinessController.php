@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Modules\AiReadiness\ReadinessCollector;
+use App\Modules\AiReadiness\SiteAudit;
 use App\Modules\Brain\BrainReader;
 use App\Modules\Diagnosis\Axis;
 use App\Modules\Diagnosis\AxisScorer;
@@ -14,9 +15,11 @@ use App\Modules\Diagnosis\MaturityAggregator;
 use App\Modules\Diagnosis\ScoreHistory;
 use App\Modules\Intake\IntakeCollector;
 use App\Modules\Measurement\ImpactAnalyzer;
+use App\Modules\Reporting\ReadinessCardPdfGenerator;
 use App\Policies\ProjectOwnership;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * عقد الجاهزية والتشخيص للتطبيق.
@@ -46,6 +49,8 @@ class ReadinessController extends Controller
         private readonly IndustryBenchmark $benchmark,
         private readonly BrainReader $brain,
         private readonly ImpactAnalyzer $impact,
+        private readonly SiteAudit $audit,
+        private readonly ReadinessCardPdfGenerator $pdf,
     ) {}
 
     /**
@@ -123,6 +128,25 @@ class ReadinessController extends Controller
         );
 
         return response()->json(['data' => $summary], options: self::JSON);
+    }
+
+    /**
+     * بطاقة الجاهزية PDF — نظير `app.readiness.download`.
+     *
+     * كانت على الويب وحده، فمستخدم التطبيق يرى الشاشة ولا يملك تنزيلها. محروسة
+     * بـ`diagnosis.full` كنظيرتها: التنزيل مخرج مستوى ١ لا ٠.
+     */
+    public function download(Request $request, Project $project): StreamedResponse
+    {
+        $this->authorizeProject($request, $project);
+
+        $url = $project->profile?->website;
+
+        if (blank($url)) {
+            abort(422, 'أضف رابط موقعك في ملف المشروع أولًا.');
+        }
+
+        return $this->pdf->download($project, $this->audit->audit($url));
     }
 
     private function authorizeProject(Request $request, Project $project): void

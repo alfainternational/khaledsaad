@@ -227,6 +227,7 @@
     },
     {
       "id": "admin.consultation.govern",
+      "note": "قرار لا فجوة: الإدارة ويب فقط بالتصميم. حوكمة كتالوج الاستشارة عمل مكتبي بجداول ونماذج طويلة، ولا تُبنى في تطبيق العميل.",
       "role": "admin",
       "web": {
         "applicable": true,
@@ -589,6 +590,7 @@
     },
     {
       "id": "visitor.app.download",
+      "note": "قرار لا فجوة: تنزيل التطبيق من داخل التطبيق بلا معنى — الزائر هنا مثبِّتٌ للتطبيق أصلًا. المدخل على الويب فقط.",
       "role": "visitor",
       "web": {
         "applicable": true,
@@ -1973,6 +1975,7 @@
     },
     {
       "id": "customer.portfolio.board",
+      "note": "قرار لا فجوة: لوحة الوكالة شاشة قرار مكتبية بجدول عريض (عملاء × درجات × اتجاه × تصدير). التطبيق يخدم صاحب النشاط الواحد؛ الوكيل يدير محفظته من المكتب. نقطة التوسّع مفتوحة إن طُلبت لاحقًا.",
       "role": "customer",
       "web": {
         "applicable": true,
@@ -2120,7 +2123,7 @@
     },
     {
       "id": "customer.readiness.card_pdf",
-      "note": "بطاقة الجاهزية PDF تنزيل متصفح محروس بـdiagnosis.full. لا نظير في api/v1، والتطبيق لا يعرض زرًّا لقدرة لا يملكها.",
+      "note": "بطاقة الجاهزية PDF محروسة بـdiagnosis.full. كانت على الويب وحده؛ صار لها نظير في api/v1 وزرّ في التطبيق يظهر بعد القياس.",
       "role": "customer",
       "web": {
         "applicable": true,
@@ -2128,14 +2131,14 @@
         "method": "GET"
       },
       "api": {
-        "applicable": false,
-        "route": null,
-        "method": null
+        "applicable": true,
+        "route": "api.v1.readiness.pdf",
+        "method": "GET"
       },
       "mobile": {
-        "applicable": false,
-        "screen": null,
-        "action": null
+        "applicable": true,
+        "screen": "ReadinessScreen",
+        "action": "download"
       },
       "states": [
         "loading",
@@ -2147,8 +2150,12 @@
         "web": [
           "Tests\\Feature\\ReadinessJourneyTest"
         ],
-        "api": [],
-        "mobile": []
+        "api": [
+          "Tests\\Feature\\ReadinessCardPdfApiTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
       },
       "status": "verified"
     }

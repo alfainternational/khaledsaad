@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
@@ -29,6 +33,7 @@ class ReadinessScreen extends StatefulWidget {
 class _ReadinessScreenState extends State<ReadinessScreen> {
   late Future<ReadinessOverview> _data;
   bool _busy = false;
+  bool _downloading = false;
 
   @override
   void initState() {
@@ -57,6 +62,29 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
       ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// تنزيل بطاقة الجاهزية PDF — نظير زر الويب.
+  ///
+  /// محروسة بـ`diagnosis.full` في الخادم: من لا يملكها يقابل رسالته لا زرًّا
+  /// ميتًا. والخطأ يُعرض بنصّه لا يُبتلع.
+  Future<void> _downloadCard() async {
+    setState(() => _downloading = true);
+
+    try {
+      final bytes = await widget.repository.readinessCardPdf(widget.projectSlug);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/readiness-${widget.projectSlug}.pdf');
+      await file.writeAsBytes(bytes, flush: true);
+      await OpenFilex.open(file.path);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) setState(() => _downloading = false);
     }
   }
 
@@ -98,6 +126,24 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
                 _axes(context, data.maturity),
                 const SizedBox(height: 24),
                 _fixes(context, data.fixes),
+
+                // تنزيل البطاقة: يظهر بعد القياس فقط، فبطاقةٌ بلا محور مقيس
+                // ورقة فارغة.
+                if ((data.maturity['axes_active'] as num?) != null &&
+                    (data.maturity['axes_active'] as num) > 0) ...[
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _downloading ? null : _downloadCard,
+                    icon: _downloading
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.picture_as_pdf),
+                    label: const Text('نزّل بطاقة الجاهزية PDF'),
+                  ),
+                ],
               ],
             ),
           ),
