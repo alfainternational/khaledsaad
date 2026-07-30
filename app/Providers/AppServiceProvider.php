@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Contracts\AdLibraryProvider;
 use App\Contracts\CompetitorProvider;
 use App\Modules\AiReadiness\Contracts\PageFetcher;
 use App\Modules\AiReadiness\HttpPageFetcher;
+use App\Modules\Competitors\AdLibraries\UnavailableAdLibraryProvider;
 use App\Modules\Competitors\LiveCompetitorProvider;
 use App\Modules\Intake\Contracts\SpeechToText;
 use App\Modules\Intake\HttpSpeechToText;
@@ -37,6 +39,13 @@ class AppServiceProvider extends ServiceProvider
          * المزوّدات على اللهجات الخليجية، وتبديلها قرارُ جودة بعد القياس.
          */
         $this->app->bind(SpeechToText::class, HttpSpeechToText::class);
+
+        /*
+         * سحب مكتبات الإعلانات: الافتراضي يعلن الغياب صراحةً لا يختلق. السحب
+         * من ميتا وتيك توك وجوجل هشّ وقانونيًّا رماديّ (§١٠)، فلا يُشحن ساحبٌ
+         * حيّ حتى يُعتمد مزوّد؛ ويُستبدل خلف الـinterface نفسه حينها.
+         */
+        $this->app->bind(AdLibraryProvider::class, UnavailableAdLibraryProvider::class);
     }
 
     /**

@@ -15,6 +15,12 @@ Schedule::command('benchmarks:refresh')->weeklyOn(1, '03:00')->withoutOverlappin
 Schedule::command('competitors:discover')->weeklyOn(1, '03:30')->withoutOverlapping();
 
 /*
+ * سحب مكتبات إعلانات المنافسين: أسبوعيًّا بعد اكتشافهم، فيُسحب على القائمة
+ * المؤكَّدة. خامل بلا مزوّد سحب مضبوط — لا يكتب لقطات وهمية (§١٠).
+ */
+Schedule::command('competitors:scan-ads')->weeklyOn(1, '04:00')->withoutOverlapping();
+
+/*
  * إعادة تدقيق المواقع: أسبوعيًّا قبل تقييد النقطة، فتُحسب الدرجة على قياس
  * هذا الأسبوع لا على قياس شهر مضى. بلا هذا يتجمّد المحور السابع على أول
  * فحص يدوي، فلا يتغيّر ولا يُنتج تنبيهًا.
