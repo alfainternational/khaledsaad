@@ -37,3 +37,10 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# مخلّفات حزم النشر والنسخ الاحتياطية والانهيارات — لا تُتابَع
+/deploy/release-*
+/deploy/package-*
+/deploy/_deploy_backups/
+_deploy_backups/
+*.stackdump
