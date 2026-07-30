@@ -55,3 +55,24 @@
         @include('app.partials.voice-recorder', ['projectSlug' => $projectSlug])
     @endif
 @endif
+
+{{--
+    المساعدة على **كل** نوع سؤال بلا استثناء، لا على المفتوح وحده: في سؤال
+    الاختيار ترشيحٌ لأفضل خيار متاح بسبب معلن، وفي المفتوح مقترح صياغة يعدّله
+    صاحبه. وهي خارج شرط النوع أعلاه عمدًا — أي نوع إجابة يُضاف لاحقًا يحصل عليها
+    بلا أن يتذكّرها من يضيفه.
+
+    غياب `$projectSlug` أو `$sessionUuid` يعني سياقًا بلا مشروع (معاينة أو تصدير)،
+    فلا تُعرض بدل أن تشير إلى مسار ناقص.
+--}}
+@if (isset($projectSlug, $sessionUuid) && filled($question['field_key'] ?? null))
+    @include('app.partials.question-assist', [
+        'projectSlug' => $projectSlug,
+        'surface' => 'consultation',
+        'questionKey' => $question['key'] ?? ($question['question_key'] ?? ''),
+        'fieldKey' => $question['field_key'],
+        'answerType' => $type,
+        'inputName' => 'value',
+        'sessionUuid' => $sessionUuid,
+    ])
+@endif

@@ -38,9 +38,17 @@ class VoiceIntakeController extends Controller
              * قصرُها على `audio/mp4` كان سيرفض تسجيلات صحيحة برسالة تحقّق
              * غامضة يستحيل على المستخدم فهمها.
              */
+            /*
+             * القائمة تضم `video/webm` و`video/mp4` وليس هذا خطأ نسخ: الحاوية
+             * الواحدة تُصنَّف بأسماء مختلفة حسب النظام، وتسجيلٌ صوتي بحت داخل
+             * حاوية WebM يقرؤه finfo على أنه `video/webm`. كان الحدّ يرفض
+             * تسجيلات صحيحة برسالة تحقّق غامضة يستحيل على المستخدم فهمها.
+             */
             'audio' => [
                 'required', 'file', 'max:20480',
-                'mimetypes:audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/wav,audio/x-wav,audio/webm,audio/ogg',
+                'mimetypes:audio/mpeg,audio/mp3,audio/mpga,audio/mp4,audio/m4a,audio/x-m4a,audio/aac,'
+                .'audio/x-hx-aac-adts,audio/wav,audio/wave,audio/x-wav,audio/vnd.wave,audio/webm,audio/ogg,'
+                .'audio/flac,audio/x-flac,video/mp4,video/webm,video/ogg,application/ogg',
             ],
             'seconds' => ['required', 'integer', 'min:1', 'max:'.self::MAX_SECONDS],
         ], [], ['audio' => 'التسجيل', 'seconds' => 'مدة التسجيل']);
@@ -50,6 +58,11 @@ class VoiceIntakeController extends Controller
                 $project,
                 $request->file('audio')->getRealPath(),
                 (int) $validated['seconds'],
+                /*
+                 * الاسم المعلن يُمرَّر ليُستخرج منه الامتداد: مسار الرفع المؤقت
+                 * اسمه `phpXXXX.tmp`، ومزوّد النسخ يرفض ما لا امتداد صوتي له.
+                 */
+                $request->file('audio')->getClientOriginalName(),
             );
         } catch (BudgetExhausted $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);

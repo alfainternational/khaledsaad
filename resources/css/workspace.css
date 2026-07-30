@@ -2776,3 +2776,124 @@ button.competitor-list__x:hover {
     font-size: 0.78rem;
     line-height: 1.7;
 }
+
+/*
+ * ذكاء المدخلات: المقترح والدليل ودرجة كفاية الإجابة.
+ *
+ * الوسم البصري للفرضية ليس تجميلًا بل شرط في §١٣: مقترحُ نموذج لغوي يُقرأ
+ * حقيقةً إن لم يُميَّز عن بقية الشاشة، وحينها يصير الخطأ خطأنا لا خطأ النموذج.
+ */
+.assist {
+    margin-block-start: 0.6rem;
+}
+
+.assist__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.assist__status {
+    margin: 0;
+    font-size: 0.83rem;
+}
+
+.assist__panel {
+    margin-block-start: 0.7rem;
+    padding: 0.9rem 1rem;
+    border: 1px dashed #c9b6f2;
+    border-inline-start: 4px solid #7c4dff;
+    border-radius: var(--radius-sm);
+    background: #f7f4ff;
+}
+
+.assist__badge {
+    display: inline-block;
+    margin: 0 0 0.55rem;
+    padding: 0.18rem 0.6rem;
+    border-radius: 999px;
+    background: #7c4dff;
+    color: #fff;
+    font-size: 0.74rem;
+    line-height: 1.7;
+}
+
+.assist__guide {
+    margin: 0 0 0.6rem;
+    color: #33405a;
+    font-size: 0.9rem;
+    line-height: 1.9;
+}
+
+.assist__recommendation {
+    margin: 0 0 0.6rem;
+    color: #4a2b9c;
+    font-size: 0.88rem;
+    line-height: 1.85;
+    font-weight: 600;
+}
+
+.assist__suggestions {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.assist__suggestions li {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid #e2dbf7;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    font-size: 0.85rem;
+}
+
+.assist__suggestions li.is-recommended {
+    border-color: #7c4dff;
+    box-shadow: 0 0 0 1px rgba(124, 77, 255, 0.25);
+}
+
+.assist__basis {
+    margin-block-start: 0.6rem;
+    font-size: 0.82rem;
+}
+
+.assist__basis ul {
+    margin: 0.4rem 0 0;
+    padding-inline-start: 1.1rem;
+    color: #55627a;
+    line-height: 1.9;
+}
+
+.assist__fitness {
+    margin-block-start: 0.7rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid #d8e2f2;
+    border-radius: var(--radius-sm);
+    background: #f9fbff;
+}
+
+.assist__fitness-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+.assist__fitness-head strong {
+    color: var(--brand-blue);
+}
+
+.assist__fitness-gaps {
+    margin: 0.45rem 0 0;
+    padding-inline-start: 1.1rem;
+    color: #6b5320;
+    font-size: 0.83rem;
+    line-height: 1.9;
+}

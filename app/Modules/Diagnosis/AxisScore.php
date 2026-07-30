@@ -24,6 +24,15 @@ final class AxisScore
         public readonly EvidenceLevel $evidenceLevel,
         public readonly array $breakdown,
         public readonly array $gaps,
+        /**
+         * متوسط كفاية المدخلات المفتوحة في هذا المحور (0–100)، أو `null` حين لا
+         * يحمل المحور مدخلًا مفتوحًا يُقاس.
+         *
+         * مقياس مستقل عن `axis_score` ولا يُخلط به: الأول يقول «ما مستوى نشاطك»
+         * والثاني يقول «ما مستوى ما أخبرتنا به عن نشاطك». محورٌ درجته منخفضة
+         * وكفاية مدخلاته عالية مشكلته حقيقية؛ والعكس مشكلته في البيانات.
+         */
+        public readonly ?int $inputFitness = null,
     ) {}
 
     /**
@@ -52,6 +61,7 @@ final class AxisScore
             'evidence_level' => $this->evidenceLevel->value,
             'is_assumption' => $this->evidenceLevel->needsAssumptionBadge(),
             'active' => $this->isActive(),
+            MetricKey::INPUT_FITNESS => $this->inputFitness,
             'breakdown' => $this->breakdown,
             'gaps' => $this->gaps,
         ] + $this->namedMetric();

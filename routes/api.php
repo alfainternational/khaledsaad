@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\RunController;
 use App\Http\Controllers\Api\V1\SharedAgencyReportController as PublicSharedAgencyReportController;
 use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\ToolController;
+use App\Http\Controllers\App\QuestionAssistController as ApiAssistController;
 use App\Http\Controllers\App\VoiceIntakeController as ApiVoiceController;
 use App\Support\Billing\FeatureKey;
 use Illuminate\Support\Facades\Route;
@@ -138,6 +139,15 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         // الهاتف أثقل ما في الاستقبال.
         Route::post('projects/{project}/voice', [ApiVoiceController::class, 'store'])
             ->middleware('throttle:20,60')->name('voice.store');
+
+        /*
+         * ذكاء المدخلات: نفس المتحكّم ونفس العقد. والتطبيق أولى به من الويب —
+         * من يجيب على الهاتف أحوج إلى مقترح جاهز يعدّله من أن يكتب فقرة بإصبعه.
+         */
+        Route::post('projects/{project}/assist', [ApiAssistController::class, 'store'])
+            ->middleware('throttle:30,60')->name('assist.store');
+        Route::post('projects/{project}/answer-fitness', [ApiAssistController::class, 'fitness'])
+            ->middleware('throttle:240,60')->name('assist.fitness');
 
         Route::get('projects/{project}/readiness', [ApiReadinessController::class, 'show'])->name('readiness.show');
         Route::post('projects/{project}/readiness/audit', [ApiReadinessController::class, 'audit'])

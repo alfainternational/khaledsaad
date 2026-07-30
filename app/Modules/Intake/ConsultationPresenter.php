@@ -2,6 +2,7 @@
 
 namespace App\Modules\Intake;
 
+use App\Models\AnswerFitness;
 use App\Models\ConsultationSession;
 use App\Models\QuestionVersion;
 
@@ -30,6 +31,12 @@ class ConsultationPresenter
             ],
             'question' => $question === null ? null : [
                 'key' => $question->definition->key,
+                /*
+                 * مفتاح الحقيقة في الدماغ، لا مفتاح السؤال: به تُقاس كفاية
+                 * الإجابة وبه يقرأ حساب المحور. عرضُ مفتاح السؤال مكانه كان
+                 * سيقيس تحت مفتاح لا يقرؤه أحد.
+                 */
+                'field_key' => $question->definition->internal_variable,
                 'text' => $question->user_text,
                 'help' => $question->help_text,
                 'why' => $question->why_text,
@@ -80,9 +87,21 @@ class ConsultationPresenter
         $estimates = [];
         $unknowns = [];
 
+        /*
+         * درجات الكفاية تُقرأ ولا تُحسب هنا (§١٤): الحساب جرى عند الإجابة في
+         * `AnswerFitnessScorer`، وإعادة حسابه في العرض كان سينتج رقمين للإجابة
+         * نفسها يختلفان مع أول تعديل في القاعدة.
+         */
+        $fitness = AnswerFitness::where('project_id', $session->project_id)
+            ->where('source', AnswerFitness::SOURCE_DETERMINISTIC)
+            ->get()
+            ->keyBy('field_key');
+        $weak = [];
+
         foreach ($session->answers as $answer) {
             $item = [
                 'question_key' => $answer->questionVersion->definition->key,
+                'field_key' => $answer->questionVersion->definition->internal_variable,
                 'label' => $answer->questionVersion->user_text,
                 'value' => data_get($answer->value_json, 'value'),
                 'source' => $answer->source,
@@ -94,6 +113,22 @@ class ConsultationPresenter
                 'allow_unknown' => $answer->questionVersion->allow_unknown,
                 'allow_skip' => $answer->questionVersion->allow_skip,
             ];
+            $quality = $fitness->get($answer->questionVersion->definition->internal_variable);
+
+            if ($quality !== null) {
+                $item['fitness'] = ['score' => $quality->score, 'verdict' => $quality->verdict, 'gaps' => $quality->gaps ?? []];
+
+                if ($quality->verdict !== AnswerFitness::VERDICT_SUFFICIENT) {
+                    /*
+                     * الإجابة العامة تُعرض في مجموعتها المستقلة لا تُدسّ بين
+                     * الحقائق: صاحب النشاط يراجع قبل التحليل، وهذه أنفع لحظة
+                     * يُقال له فيها إن وصفه لن يُنتج تشخيصًا دقيقًا — بعدها يقرأ
+                     * الرقم ولا يستطيع تغييره.
+                     */
+                    $weak[] = $item;
+                }
+            }
+
             if ($answer->is_unknown || $answer->is_skipped) {
                 $unknowns[] = $item;
             } elseif ($answer->source === 'estimate' || $answer->confidence === 'low') {
@@ -107,6 +142,7 @@ class ConsultationPresenter
             'facts' => $facts,
             'estimates' => $estimates,
             'unknowns' => $unknowns,
+            'weak_inputs' => $weak,
             'assumptions' => $session->inferences->whereIn('type', ['assumption', 'inference', 'missing_information'])
                 ->map(fn ($item) => ['key' => $item->key, 'statement' => $item->statement, 'confidence' => $item->confidence])
                 ->values()->all(),

@@ -40,11 +40,13 @@ class VoiceIntake
      * نسخ تسجيل، بحجز مسبق يتناسب مع طوله.
      *
      * @param  int  $estimatedSeconds  طول التسجيل كما يعلنه العميل، لتقدير الحجز.
+     * @param  string|null  $filename  اسم الملف كما أعلنه العميل — منه وحده يُعرف
+     *                                 امتداد الصوت، فمسار الرفع المؤقت لا يحمله.
      * @return array{text: string, duration_seconds: float, provider: string}
      *
      * @throws BudgetExhausted
      */
-    public function transcribe(Project $project, string $path, int $estimatedSeconds): array
+    public function transcribe(Project $project, string $path, int $estimatedSeconds, ?string $filename = null): array
     {
         $reservation = $this->budgets->reserve(
             workspace: $project->workspace,
@@ -54,7 +56,7 @@ class VoiceIntake
         );
 
         try {
-            $result = $this->speech->transcribe($path);
+            $result = $this->speech->transcribe($path, 'ar', $filename);
         } catch (Throwable $exception) {
             // لم يحصل على نصّ، فلا يُحاسَب على شيء (§١٢).
             $this->budgets->release($reservation);

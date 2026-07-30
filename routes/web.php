@@ -27,6 +27,7 @@ use App\Http\Controllers\App\PortfolioController;
 use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\ProjectController;
 use App\Http\Controllers\App\PulseController;
+use App\Http\Controllers\App\QuestionAssistController;
 use App\Http\Controllers\App\ReadinessController;
 use App\Http\Controllers\App\ReportController;
 use App\Http\Controllers\App\ReportWatchController;
@@ -119,6 +120,18 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
      */
     Route::post('projects/{project}/voice', [VoiceIntakeController::class, 'store'])
         ->middleware('throttle:20,60')->name('voice.store');
+
+    /*
+     * ذكاء المدخلات: دليل ومقترحات تخصّ هذا النشاط، وقياس كفاية ما كتبه.
+     *
+     * حدّان مختلفان لأن التكلفتين مختلفتان: التوليد يستدعي نموذجًا لغويًّا فيُحدّ
+     * بعشرين طلبًا في الساعة ويُحجز له من سقف المساحة، والقياس حتميّ محليّ بلا
+     * تكلفة فيُترك للكتابة اللحظية بحدٍّ واسع.
+     */
+    Route::post('projects/{project}/assist', [QuestionAssistController::class, 'store'])
+        ->middleware('throttle:30,60')->name('assist.store');
+    Route::post('projects/{project}/answer-fitness', [QuestionAssistController::class, 'fitness'])
+        ->middleware('throttle:240,60')->name('assist.fitness');
 
     Route::get('projects/{project}/readiness', [ReadinessController::class, 'show'])->name('readiness.show');
     Route::post('projects/{project}/readiness/audit', [ReadinessController::class, 'audit'])

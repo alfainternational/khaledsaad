@@ -5,10 +5,12 @@ namespace Tests\Feature;
 use App\Models\Project;
 use App\Models\User;
 use App\Modules\Intake\Contracts\SpeechToText;
+use App\Modules\Intake\HttpSpeechToText;
 use App\Modules\Measurement\QueryBudgetManager;
 use App\Services\Projects\ProjectService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Tests\TestCase;
@@ -88,7 +90,7 @@ class VoiceIntakeTest extends TestCase
 
         $this->app->bind(SpeechToText::class, fn () => new class implements SpeechToText
         {
-            public function transcribe(string $path, string $locale = 'ar'): array
+            public function transcribe(string $path, string $locale = 'ar', ?string $filename = null): array
             {
                 throw new RuntimeException('المزوّد لا يستجيب.');
             }
@@ -109,6 +111,48 @@ class VoiceIntakeTest extends TestCase
         // لم يحصل على نصّ فلا يُحاسَب.
         $this->assertSame(0, $budget->reserved);
         $this->assertSame(0, $budget->consumed);
+    }
+
+    /**
+     * العطل الذي كان يُسقط كل تسجيل.
+     *
+     * المسار الممرَّر إلى المزوّد هو ملف الرفع المؤقت `phpXXXX.tmp`، وكان الاسم
+     * يُشتق منه بـ `basename`. المزوّدات المتوافقة مع OpenAI تبوّب الملف بامتداده
+     * قبل بايتاته وترفض ما ليس صوتًا معروفًا — فكان كل تسجيل يعود «تعذّر نسخ
+     * التسجيل» بلا سبب ظاهر في أي سجل عندنا.
+     */
+    #[Test]
+    public function the_provider_receives_an_audio_extension_not_the_php_temp_name(): void
+    {
+        [$user, $project] = $this->owned();
+
+        Http::fake([
+            '*/audio/transcriptions' => Http::response([
+                'text' => 'نبيع قهوة مختصة.',
+                'duration' => 12.0,
+            ]),
+        ]);
+
+        config()->set('services.speech.key', 'test-key');
+        config()->set('services.speech.base_url', 'https://speech.test/v1');
+        $this->app->bind(SpeechToText::class, fn () => new HttpSpeechToText);
+
+        $this->actingAs($user)->post(route('app.voice.store', $project), [
+            'audio' => UploadedFile::fake()->create('answer.webm', 200, 'audio/webm'),
+            'seconds' => 12,
+        ])->assertOk()->assertJsonPath('data.text', 'نبيع قهوة مختصة.');
+
+        Http::assertSent(function ($request) {
+            foreach ($request->data() as $part) {
+                if (($part['name'] ?? null) === 'file') {
+                    $this->assertSame('answer.webm', $part['filename'] ?? null);
+
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 
     #[Test]
@@ -138,7 +182,7 @@ class VoiceIntakeTest extends TestCase
                 private readonly ?\Closure $onCall,
             ) {}
 
-            public function transcribe(string $path, string $locale = 'ar'): array
+            public function transcribe(string $path, string $locale = 'ar', ?string $filename = null): array
             {
                 ($this->onCall ?? static fn () => null)();
 

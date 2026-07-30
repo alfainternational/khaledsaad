@@ -24,12 +24,14 @@ class AxisScorer
     public function __construct(
         private readonly BrainReader $brain,
         private readonly AxisRegistry $registry,
+        private readonly InputFitnessReader $fitness,
     ) {}
 
     public function score(Project $project, Axis $axis): AxisScore
     {
         $inputs = $this->registry->inputsFor($axis);
         $facts = $this->brain->facts($project);
+        $fitness = $this->fitness->forProject($project);
 
         $totalWeight = 0.0;
         $earned = 0.0;
@@ -37,6 +39,7 @@ class AxisScorer
         $breakdown = [];
         $gaps = [];
         $levels = [];
+        $fitnessScores = [];
 
         foreach ($inputs as $input) {
             $weight = (float) ($input['weight'] ?? 1);
@@ -62,6 +65,29 @@ class AxisScorer
             $known++;
             $levels[] = $fact->evidence_level;
             $factor = $this->factor($input, $value);
+
+            /*
+             * معامل الكفاية: «أجاب» لا يساوي «أجاب بما يكفي».
+             *
+             * قبل هذا كان أي نصّ غير فارغ يُحسب مدخلًا كاملًا، فتستوي «الجميع»
+             * بتعريف ثلاث شرائح بأرقامها. المحور كان يقيس أن المستخدم كتب شيئًا
+             * لا جودة ما كتبه، فيخرج التقرير مطمئنًا على أضعف ما عنده.
+             *
+             * القياس نفسه يجري في `Intake` ويُقرأ هنا من قاعدة البيانات: الدرجة
+             * تبقى قابلة لإعادة الإنتاج من لقطة (§٨).
+             */
+            $quality = $fitness[$input['key']] ?? null;
+
+            if ($quality !== null) {
+                $factor *= $quality->factor();
+                $fitnessScores[] = $quality->score;
+
+                if (! $quality->isSufficient()) {
+                    // الفجوة تُسمّى بما ينقص الإجابة، لا بغياب المدخل — المدخل موجود.
+                    $gaps[] = $input['label'].' — '.implode('، ', $quality->gaps ?: ['يحتاج تحديدًا أكثر']);
+                }
+            }
+
             $earned += $weight * $factor;
 
             if ($factor < 1.0) {
@@ -74,6 +100,8 @@ class AxisScorer
                 'factor' => round($factor, 2),
                 'points' => round($weight * $factor, 2),
                 'known' => true,
+                // درجة كفاية هذا المدخل بعينه، أو null لما لا يُقاس (أسئلة الاختيار).
+                'fitness' => $quality?->score,
             ];
         }
 
@@ -86,6 +114,14 @@ class AxisScorer
             evidenceLevel: $this->levelFor($axis, $levels, $known),
             breakdown: $breakdown,
             gaps: array_values(array_unique($gaps)),
+            /*
+             * متوسط كفاية المدخلات المفتوحة في هذا المحور، أو null حين لا يحمل
+             * المحور مدخلًا مفتوحًا واحدًا. صفرٌ هنا كان سيُقرأ «مدخلاته سيئة»
+             * بينما المعنى «لا مدخل يُقاس» — وهو الفرق الذي تحرسه §٤.٣.
+             */
+            inputFitness: $fitnessScores === []
+                ? null
+                : (int) round(array_sum($fitnessScores) / count($fitnessScores)),
         );
     }
 

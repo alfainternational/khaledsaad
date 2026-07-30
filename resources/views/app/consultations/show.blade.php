@@ -22,6 +22,7 @@
                     'question' => $consultation['question'],
                     'current' => null,
                     'projectSlug' => $consultation['project']['slug'],
+                    'sessionUuid' => $consultation['uuid'],
                 ])
                 <div class="actions">
                     <button class="btn btn--primary" type="submit">احفظ وتابع</button>
@@ -39,15 +40,25 @@
             <h2>راجع ما فهمناه</h2>
             <p>اكتملت المعلومات الأساسية. صحّح أي تعارض قبل بدء التحليل.</p>
 
-            @foreach (['facts' => 'حقائق صرّحت بها', 'estimates' => 'تقديرات تحتاج تحققًا', 'unknowns' => 'معلومات غير متاحة', 'assumptions' => 'افتراضات معلنة'] as $group => $title)
+            @foreach (['weak_inputs' => 'إجابات عامة تُضعف تشخيصك', 'facts' => 'حقائق صرّحت بها', 'estimates' => 'تقديرات تحتاج تحققًا', 'unknowns' => 'معلومات غير متاحة', 'assumptions' => 'افتراضات معلنة'] as $group => $title)
                 <section class="consultation-review-group">
                     <h3>{{ $title }}</h3>
                     @forelse ($consultation['review'][$group] as $item)
                         <p><strong>{{ $item['label'] ?? $item['statement'] ?? $item['key'] }}</strong>@isset($item['value']) — {{ is_array($item['value']) ? implode('، ', $item['value']) : $item['value'] }} @endisset</p>
+                        @if (! empty($item['fitness']) && $item['fitness']['verdict'] !== 'sufficient')
+                            {{-- الرقم مع أساسه: «كفاية ٣٢ من ١٠٠» بلا ذكر ما ينقصه لا يقود لقرار (§٦، §١٣). --}}
+                            <p class="muted">كفاية هذه الإجابة {{ $item['fitness']['score'] }} من ١٠٠@if (! empty($item['fitness']['gaps'])) — ينقصها: {{ implode('، ', $item['fitness']['gaps']) }}@endif</p>
+                        @endif
                         @if(isset($item['question_key']))
                             <details class="consultation-revise"><summary>صحّح الإجابة</summary>
                                 <form method="POST" action="{{ route('app.consultations.answers.update', [$consultation['uuid'], $item['question_key']]) }}" class="question-form">@csrf @method('PUT')
-                                    @include('app.consultations._answer-field', ['question' => $item, 'current' => $item['value'] ?? null])
+                                    {{-- التصحيح يحتاج المساعدة أكثر من السؤال الأول: من يصحّح إجابته يصحّحها لأنه رآها ناقصة. --}}
+                                    @include('app.consultations._answer-field', [
+                                        'question' => $item,
+                                        'current' => $item['value'] ?? null,
+                                        'projectSlug' => $consultation['project']['slug'],
+                                        'sessionUuid' => $consultation['uuid'],
+                                    ])
                                     <button class="btn btn--secondary">احفظ التصحيح</button>
                                     @if($item['allow_unknown'])<button class="btn btn--ghost" name="unknown" value="1" formnovalidate>لا أعرف</button>@endif
                                 </form>

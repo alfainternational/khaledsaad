@@ -42,16 +42,30 @@ final class MetricKey
     public const READINESS_SCORE = 'readiness_score';
 
     /**
+     * كفاية ما وصفه صاحب النشاط عن نفسه (0–100).
+     *
+     * ليس مرادفًا لـ`axis_coverage` ولا بديلًا عنه: التغطية تقول «هل وصلت
+     * المعلومة»، وهذا يقول «هل ما وصل يكفي». إجابة «الجميع» عن الجمهور تعطي
+     * تغطية كاملة وكفاية منخفضة — وبلا هذا المقياس كان الاثنان يُقرآن اكتمالًا.
+     */
+    public const INPUT_FITNESS = 'input_fitness';
+
+    /**
      * مقاييس لا يجوز عرضها في شاشة واحدة بلا تسميتين ظاهرتين.
      *
      * mention_rate وshare_of_voice يُقرآن كنسبتين متشابهتين ومقاماهما
      * مختلفان تمامًا: الأول من محاولاتك أنت، والثاني من ذكر السوق كله.
      * خلطهما يعطي صاحب النشاط قراءة معكوسة عن موقعه.
      *
+     * axis_score وinput_fitness كذلك: الأول درجة النشاط، والثاني درجة ما قاله
+     * صاحبه عنه. عرضهما بلا تسميتين يجعل صاحب النشاط يقرأ ضعف بياناته ضعفًا في
+     * نشاطه، فيصلح الخطأ في المكان الخطأ.
+     *
      * @var array<int, array<int, string>>
      */
     public const AMBIGUOUS_PAIRS = [
         [self::MENTION_RATE, self::SHARE_OF_VOICE],
+        [self::AXIS_SCORE, self::INPUT_FITNESS],
     ];
 
     /**
@@ -69,6 +83,7 @@ final class MetricKey
             self::CITATION_RATE,
             self::OWNED_RATIO,
             self::READINESS_SCORE,
+            self::INPUT_FITNESS,
         ];
     }
 

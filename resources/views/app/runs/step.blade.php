@@ -43,14 +43,14 @@
 
                     <div class="known-block__body">
                         @foreach ($known as $field)
-                            @include('app.runs.partials.field', ['field' => $field, 'projectSlug' => $run['project']['slug']])
+                            @include('app.runs.partials.field', ['field' => $field, 'projectSlug' => $run['project']['slug'], 'runUuid' => $run['uuid']])
                         @endforeach
                     </div>
                 </details>
             @endif
 
             @foreach ($fresh as $field)
-                @include('app.runs.partials.field', ['field' => $field, 'projectSlug' => $run['project']['slug']])
+                @include('app.runs.partials.field', ['field' => $field, 'projectSlug' => $run['project']['slug'], 'runUuid' => $run['uuid']])
             @endforeach
 
             @if ($fresh === [])

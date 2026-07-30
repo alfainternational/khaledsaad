@@ -9,6 +9,7 @@ use App\Models\ToolField;
 use App\Models\ToolRun;
 use App\Models\ToolRunAnswer;
 use App\Modules\Brain\ProjectKnowledgeService;
+use App\Modules\Intake\Fitness\AnswerFitnessScorer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -24,7 +25,10 @@ use Illuminate\Support\Facades\DB;
  */
 class ProjectAnswerMemory
 {
-    public function __construct(private readonly ProjectKnowledgeService $knowledge) {}
+    public function __construct(
+        private readonly ProjectKnowledgeService $knowledge,
+        private readonly AnswerFitnessScorer $fitness,
+    ) {}
 
     /**
      * حفظ إجابات خطوة داخل ذاكرة المشروع وملفه.
@@ -57,6 +61,19 @@ class ProjectAnswerMemory
                     'tool',
                     $toolKey,
                     $run->id,
+                );
+
+                /*
+                 * كفاية الإجابة تُقاس على مسار الكتابة نفسه، لا في شاشةٍ بعينها.
+                 * هذا هو المعبر الواحد لكل إجابات الأدوات — ووضع القياس هنا يعني
+                 * أن القاعدة تسري على كل أداة قائمة وكل أداة تُضاف لاحقًا بلا
+                 * استثناء وبلا أن يتذكرها من يبنيها.
+                 */
+                $this->fitness->score(
+                    $project,
+                    (string) $key,
+                    $value,
+                    (string) ($fields->get($key)?->type ?? 'text'),
                 );
 
                 // الحقول التي لها مكان في ملف المشروع تُكتب فيه أيضًا،

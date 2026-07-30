@@ -2,10 +2,12 @@
 
 namespace App\Modules\Intake\Engine;
 
+use App\Models\AnswerFitness;
 use App\Models\ConsultationSession;
 use App\Models\ModuleQuestion;
 use App\Models\ProjectAnswer;
 use App\Models\QuestionVersion;
+use Illuminate\Support\Collection;
 
 class NextQuestionSelector
 {
@@ -23,13 +25,22 @@ class NextQuestionSelector
         $known = ProjectAnswer::where('project_id', $session->project_id)->pluck('value_json', 'field_key')
             ->map(fn ($value) => $value['value'] ?? null)->all();
 
-        return ModuleQuestion::query()
+        $bindings = ModuleQuestion::query()
             ->with(['questionVersion.definition', 'blueprintModule.module'])
-            ->whereNotIn('question_version_id', $answered)
             ->whereHas('blueprintModule', fn ($query) => $query
                 ->where('blueprint_version_id', $session->blueprint_version_id)
                 ->whereIn('diagnostic_module_id', $activeModules))
-            ->get()
+            ->get();
+
+        /*
+         * عجز الكفاية يُحسب على **كل** أسئلة الوحدة قبل تصفية المُجاب عنها: هو
+         * صفةُ ما أُجيب لا صفةُ ما بقي. حسابه بعد التصفية كان سيعطي صفرًا دائمًا
+         * لأن ما أُجيب عنه يكون قد خرج من المجموعة.
+         */
+        $deficits = $this->deficits($bindings, $session->project_id);
+
+        return $bindings
+            ->whereNotIn('question_version_id', $answered)
             ->filter(function (ModuleQuestion $binding) use ($known): bool {
                 $variable = $binding->questionVersion->definition->internal_variable;
 
@@ -37,11 +48,60 @@ class NextQuestionSelector
             })
             ->filter(fn (ModuleQuestion $binding) => $this->visible($binding->show_when, $known))
             ->sortByDesc(fn (ModuleQuestion $binding) => [
-                $this->priority->score($binding),
+                $this->priority->score($binding, false, $deficits[$binding->blueprint_module_id] ?? 0.0),
                 -$binding->sort_order,
                 $binding->questionVersion->definition->key,
             ])
             ->first()?->questionVersion;
+    }
+
+    /**
+     * نسبة المدخلات المُجاب عنها إجابةً غير كافية، لكل وحدة.
+     *
+     * تُقرأ من `answer_fitness` الذي كتبته طبقة القياس عند الإجابة. لا حساب هنا:
+     * الحساب في موضع واحد، وتكراره في المحرّك كان سينتج رقمين لنفس الإجابة.
+     *
+     * @param  Collection<int, ModuleQuestion>  $bindings
+     * @return array<int, float>  مفتاحه `blueprint_module_id`
+     */
+    private function deficits(Collection $bindings, int $projectId): array
+    {
+        $fitness = AnswerFitness::query()
+            ->where('project_id', $projectId)
+            ->where('source', AnswerFitness::SOURCE_DETERMINISTIC)
+            ->get()
+            ->keyBy('field_key');
+
+        if ($fitness->isEmpty()) {
+            return [];
+        }
+
+        $deficits = [];
+
+        foreach ($bindings->groupBy('blueprint_module_id') as $moduleId => $group) {
+            $measured = 0;
+            $weak = 0;
+
+            foreach ($group as $binding) {
+                $score = $fitness->get($binding->questionVersion->definition->internal_variable);
+
+                if ($score === null) {
+                    continue;
+                }
+
+                $measured++;
+
+                if ($score->verdict !== AnswerFitness::VERDICT_SUFFICIENT) {
+                    $weak++;
+                }
+            }
+
+            if ($measured > 0 && $weak > 0) {
+                $deficits[(int) $moduleId] = $weak / $measured;
+            }
+        }
+
+        return $deficits;
     }
 
     private function visible(?array $rules, array $known): bool

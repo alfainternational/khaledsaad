@@ -2,6 +2,7 @@
 
 namespace App\Modules\Intake;
 
+use App\Models\AnswerFitness;
 use App\Models\ConsultationAnswer;
 use App\Models\ConsultationBlueprint;
 use App\Models\ConsultationConflict;
@@ -13,6 +14,7 @@ use App\Models\QuestionVersion;
 use App\Models\User;
 use App\Modules\Brain\ProjectKnowledgeService;
 use App\Modules\Intake\Engine\AnswerValidator;
+use App\Modules\Intake\Fitness\AnswerFitnessScorer;
 use App\Modules\Intake\Engine\ConflictDetector;
 use App\Modules\Intake\Engine\ModuleScopeResolver;
 use App\Modules\Intake\Engine\NextQuestionSelector;
@@ -30,6 +32,7 @@ class ConsultationService
         private readonly ConsultationEventRecorder $events,
         private readonly AnswerValidator $answerValidator,
         private readonly ProjectKnowledgeService $knowledge,
+        private readonly AnswerFitnessScorer $fitness,
     ) {}
 
     public function confirm(ConsultationSession $session, User $user): ConsultationSession
@@ -148,6 +151,19 @@ class ConsultationService
                     $session->id,
                     $unknown ? 'low' : 'medium',
                 );
+
+                /*
+                 * الكفاية تُقاس عند الإجابة لا عند التقرير: هنا وحدها تُعرف
+                 * الإجابة ونوعها معًا، وهنا يمكن أن يُقال لصاحبها إن وصفه عامٌّ
+                 * وهو ما زال أمام السؤال. تأجيلها إلى الحساب يعني أن يكتشف
+                 * ضعف مدخلاته في تقرير لا يستطيع تعديله.
+                 */
+                $this->fitness->score(
+                    $session->project,
+                    $question->definition->internal_variable,
+                    $value,
+                    $question->answer_type,
+                );
             }
 
             if ($question->definition->internal_variable === 'consultation_depth' && ! $unknown && ! $skipped) {
@@ -207,6 +223,14 @@ class ConsultationService
                     ['consultation_session_id' => $session->id, 'key' => 'missing.'.$variable],
                     ['type' => 'missing_information', 'statement' => 'لا تتوفر معلومة مؤكدة عن '.$question->user_text, 'confidence' => 0, 'status' => 'open'],
                 );
+
+                /*
+                 * سحب المعلومة يسحب درجة كفايتها: درجةٌ باقية على إجابة أُلغيت
+                 * تُخفض محورًا بمدخل لم يعد موجودًا — وهو رقم لا يُعرف كيف حُسب.
+                 */
+                AnswerFitness::where('project_id', $session->project_id)
+                    ->where('field_key', $variable)
+                    ->delete();
             } else {
                 $this->knowledge->record(
                     $session->project,
@@ -217,6 +241,7 @@ class ConsultationService
                     $session->id,
                     'medium',
                 );
+                $this->fitness->score($session->project, $variable, $value, $question->answer_type);
                 $session->inferences()->where('key', 'missing.'.$variable)->delete();
             }
             if ($variable === 'consultation_depth' && ! $unknown && ! $skipped) {

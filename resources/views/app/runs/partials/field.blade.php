@@ -119,6 +119,23 @@
         </details>
     @endif
 
+    {{--
+        المساعدة على كل حقل بلا استثناء، أيًّا كان نوعه وأيًّا كانت الأداة: هي
+        موضوعة على القالب المشترك لا على أداة بعينها، فكل أداة قائمة وكل أداة
+        تُضاف لاحقًا تحصل عليها بلا أن يتذكّرها من يبنيها.
+    --}}
+    @if (isset($projectSlug, $runUuid))
+        @include('app.partials.question-assist', [
+            'projectSlug' => $projectSlug,
+            'surface' => 'tool',
+            'questionKey' => $field['key'],
+            'fieldKey' => $field['key'],
+            'answerType' => $field['type'],
+            'inputName' => $field['key'],
+            'runUuid' => $runUuid,
+        ])
+    @endif
+
     @error($field['key'])
         <strong class="field__error">{{ $message }}</strong>
     @enderror
