@@ -11,6 +11,7 @@ use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Models\ToolRunAnswer;
 use App\Models\User;
+use App\Exceptions\BillingLimitException;
 use App\Services\Billing\CreditManager;
 use App\Services\Billing\Entitlements;
 use App\Support\Billing\FeatureKey;
@@ -217,11 +218,7 @@ class ToolRunService
             ->count();
 
         if ($used >= $limit) {
-            throw new RuntimeException(
-                $limit === 0
-                    ? 'خطتك الحالية لا تسمح بتشغيل الأدوات. فعّل خطة مناسبة من صفحة الفوترة.'
-                    : "استهلكت حصة خطتك لهذا الشهر ({$limit} تشغيل). ارفع خطتك أو انتظر بداية الشهر القادم."
-            );
+            throw BillingLimitException::quota($limit);
         }
     }
 

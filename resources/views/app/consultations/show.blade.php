@@ -98,7 +98,19 @@
                 <meta http-equiv="refresh" content="8">
                 <p class="muted">تُحدّث الصفحة تلقائيًا كل بضع ثوانٍ.</p>
             @elseif ($consultation['status'] === 'failed')
-                <form method="POST" action="{{ route('app.consultations.retry', $consultation['uuid']) }}">@csrf<button class="btn btn--primary">أعد محاولة التحليل</button></form>
+                @if (!empty($consultation['analysis_failure']['reasons']))
+                    <ul class="consultation-failure-reasons">
+                        @foreach ($consultation['analysis_failure']['reasons'] as $reason)
+                            <li><strong>{{ $reason['title'] }}:</strong> {{ $reason['reason'] }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+                @if (data_get($consultation, 'analysis_failure.billing_blocked'))
+                    <p class="muted">إعادة المحاولة لن تُجدي قبل رفع الحدّ — السبب رصيد أو حصة خطة.</p>
+                    <a class="btn btn--primary" href="{{ route('app.billing') }}">اذهب إلى الأرصدة والاشتراك</a>
+                @else
+                    <form method="POST" action="{{ route('app.consultations.retry', $consultation['uuid']) }}">@csrf<button class="btn btn--primary">أعد محاولة التحليل</button></form>
+                @endif
             @endif
         </article>
     @endif

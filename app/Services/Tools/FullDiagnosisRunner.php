@@ -2,6 +2,7 @@
 
 namespace App\Services\Tools;
 
+use App\Exceptions\BillingLimitException;
 use App\Jobs\FinishFullDiagnosis;
 use App\Models\Project;
 use App\Models\Tool;
@@ -117,10 +118,14 @@ class FullDiagnosisRunner
                     $started[] = ['key' => $tool->key, 'title' => $tool->title];
                 } catch (Throwable $exception) {
                     // الحصة أو الرصيد أو أداة معطوبة: تُسجَّل بسببها وتُكمل البقية.
+                    // نوع الحاجز يُرافق السبب: المالي منه لا تُصلحه إعادة المحاولة.
                     $skipped[] = [
                         'key' => $tool->key,
                         'title' => $tool->title,
                         'reason' => $exception->getMessage(),
+                        'kind' => $exception instanceof BillingLimitException
+                            ? $exception->kind
+                            : 'other',
                     ];
 
                     Log::warning('تعذر تشغيل أداة ضمن التشخيص الشامل', [
@@ -144,8 +149,31 @@ class FullDiagnosisRunner
             'skipped' => $skipped,
             'started_count' => count($started),
             'skipped_count' => count($skipped),
+            'billing_blocked' => $this->billingBlocked($started, $skipped),
             'message' => $this->message($mode, count($started), count($skipped)),
         ];
+    }
+
+    /**
+     * هل توقّف كل شيء عند حدّ مالي وحده؟ حينها إعادة المحاولة عبث، والطريق
+     * الوحيد صفحة الفوترة. شرطُه: لا أداة انطلقت، وكل ما تخطّى تخطّاه لسبب مالي.
+     *
+     * @param  array<int, array<string, mixed>>  $started
+     * @param  array<int, array<string, mixed>>  $skipped
+     */
+    private function billingBlocked(array $started, array $skipped): bool
+    {
+        if ($started !== [] || $skipped === []) {
+            return false;
+        }
+
+        foreach ($skipped as $row) {
+            if (! in_array($row['kind'] ?? 'other', [BillingLimitException::KIND_CREDITS, BillingLimitException::KIND_QUOTA], true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

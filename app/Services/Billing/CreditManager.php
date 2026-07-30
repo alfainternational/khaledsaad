@@ -5,9 +5,9 @@ namespace App\Services\Billing;
 use App\Models\CreditTransaction;
 use App\Models\CreditWallet;
 use App\Models\ToolRun;
+use App\Exceptions\BillingLimitException;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 /**
  * إدارة الأرصدة بنمط حجز ثم خصم.
@@ -42,7 +42,7 @@ class CreditManager
             $wallet = $this->lockedWallet($run);
 
             if ($wallet->balance < $credits) {
-                throw new RuntimeException("رصيدك غير كافٍ لتشغيل هذه الأداة. تحتاج {$credits} رصيدًا ولديك {$wallet->balance}.");
+                throw BillingLimitException::credits($credits, $wallet->balance);
             }
 
             $wallet->decrement('balance', $credits);

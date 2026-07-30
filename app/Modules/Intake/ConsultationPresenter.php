@@ -75,6 +75,10 @@ class ConsultationPresenter
             ])->values()->all(),
             'report_uuid' => $session->agencyReport?->uuid,
             'status_message' => $this->statusMessage($session),
+            'analysis_failure' => $session->status === ConsultationSession::STATUS_FAILED ? [
+                'reasons' => array_values(data_get($session->scope_snapshot, 'analysis_reasons', [])),
+                'billing_blocked' => (bool) data_get($session->scope_snapshot, 'analysis_billing_blocked', false),
+            ] : null,
             'can_confirm' => $session->status === ConsultationSession::STATUS_REVIEW
                 && $session->conflicts->where('status', 'open')->isEmpty(),
         ];

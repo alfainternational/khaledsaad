@@ -170,6 +170,26 @@ class FullDiagnosisTest extends TestCase
         );
     }
 
+    #[Test]
+    public function a_purely_financial_stop_is_flagged_so_the_ui_points_to_billing_not_retry(): void
+    {
+        Bus::fake();
+        [$user, $project] = $this->project();
+
+        // كل أداة مدفوعة ولا رصيد: لا شيء ينطلق، والحاجز مالي محض.
+        \App\Models\ToolVersion::query()->where('credit_cost', '<', 1)->update(['credit_cost' => 1]);
+        $project->workspace->wallet()->update(['balance' => 0]);
+
+        $result = app(FullDiagnosisRunner::class)->run($project->fresh(), $user);
+
+        $this->assertSame(0, $result['started_count']);
+        $this->assertTrue($result['billing_blocked']);
+
+        foreach ($result['skipped'] as $row) {
+            $this->assertContains($row['kind'], ['credits', 'quota']);
+        }
+    }
+
     /**
      * @return array{0: User, 1: Project}
      */

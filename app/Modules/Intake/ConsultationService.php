@@ -58,9 +58,18 @@ class ConsultationService
 
         $result = $this->diagnosis->run($session->project, $user, FullDiagnosisRunner::MODE_AUTO, $session->id);
         if (($result['started_count'] ?? 0) === 0) {
+            // تُحفظ الأسباب لا الرسالة وحدها: الرسالة تحيل إلى «أسباب بجانب كل
+            // أداة»، وشاشة الاستشارة لا تعرض تلك القائمة إلا إن خُزّنت هنا.
             $session->forceFill([
                 'status' => ConsultationSession::STATUS_FAILED,
-                'scope_snapshot' => array_merge($session->scope_snapshot ?? [], ['analysis_error' => $result['message']]),
+                'scope_snapshot' => array_merge($session->scope_snapshot ?? [], [
+                    'analysis_error' => $result['message'],
+                    'analysis_reasons' => array_map(
+                        static fn (array $row): array => ['title' => $row['title'], 'reason' => $row['reason']],
+                        $result['skipped'] ?? [],
+                    ),
+                    'analysis_billing_blocked' => (bool) ($result['billing_blocked'] ?? false),
+                ]),
             ])->save();
             $this->events->record($session, 'analysis_failed', ['status' => ConsultationSession::STATUS_FAILED]);
         }
@@ -275,7 +284,14 @@ class ConsultationService
         if ($session->status !== ConsultationSession::STATUS_FAILED) {
             throw ValidationException::withMessages(['session' => 'إعادة المحاولة متاحة فقط بعد فشل التحليل.']);
         }
-        $session->forceFill(['status' => ConsultationSession::STATUS_REVIEW, 'scope_snapshot' => array_diff_key($session->scope_snapshot ?? [], ['analysis_error' => true])])->save();
+        $session->forceFill([
+            'status' => ConsultationSession::STATUS_REVIEW,
+            'scope_snapshot' => array_diff_key($session->scope_snapshot ?? [], [
+                'analysis_error' => true,
+                'analysis_reasons' => true,
+                'analysis_billing_blocked' => true,
+            ]),
+        ])->save();
 
         return $this->confirm($session->refresh(), $user);
     }

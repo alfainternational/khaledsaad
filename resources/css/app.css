@@ -2600,6 +2600,8 @@ svg {
 .consultation-conflicts,
 .consultation-evidence,
 .consultation-status { margin-block: 1rem; }
+.consultation-failure-reasons { margin-block: 0.75rem 1rem; padding-inline-start: 1.25rem; display: grid; gap: 0.4rem; }
+.consultation-failure-reasons li { color: var(--muted); line-height: 1.6; }
 .consultation-review-group { padding-block: 0.75rem; border-bottom: 1px solid var(--line); }
 .consultation-review-group:last-child { border-bottom: 0; }
 .consultation-conflicts .card--warning { margin-block: 0.75rem; border-color: #f2b47c; background: #fff8f2; }
