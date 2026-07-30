@@ -25,6 +25,16 @@ use Illuminate\Support\Facades\DB;
  */
 class ProjectAnswerMemory
 {
+    /**
+     * حقول الملف المفتوحة التي تُقاس كفايتها كما تُقاس داخل الأدوات.
+     *
+     * البقية اختيارات أو أرقام أو روابط: كفايتها صفة السؤال لا الإجابة، فقياسها
+     * يخلق درجة بلا معنى ويعاقب مدخلًا صحيحًا — لذلك لا تدخل هنا (AnswerFitnessScorer).
+     *
+     * @var array<int, string>
+     */
+    private const MEASURED_PROFILE_FIELDS = ['value_proposition', 'description'];
+
     public function __construct(
         private readonly ProjectKnowledgeService $knowledge,
         private readonly AnswerFitnessScorer $fitness,
@@ -137,6 +147,16 @@ class ProjectAnswerMemory
             }
 
             $this->knowledge->record($project, $key, $value, 'profile');
+
+            /*
+             * كفاية الإجابة تُقاس على مسار الكتابة نفسه، لا في شاشةٍ بعينها.
+             * مالئ ملف المشروع مباشرة (ويب أو تطبيق) كان يفلت من القياس بينما
+             * مالئ الحقل نفسه داخل أداة يُقاس — فتأخذ «قيمتي إني الأفضل» درجة
+             * كاملة في محور الوضوح الاستراتيجي. هذا المعبر يسوّي المسارين.
+             */
+            if (in_array($key, self::MEASURED_PROFILE_FIELDS, true)) {
+                $this->fitness->score($project, (string) $key, $value, 'textarea');
+            }
         }
     }
 

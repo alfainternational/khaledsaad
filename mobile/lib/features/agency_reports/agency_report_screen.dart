@@ -213,6 +213,16 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
                 agencyDocument.message ??
                     'أكمل المعلومات المطلوبة قبل تسليم موجز للوكالة.',
               ),
+              // البنود الناقصة بالاسم لا عددها فقط — نعلن الفجوة صراحةً كما
+              // يفعل الويب، فلا يبقى المستخدم أمام «ناقص بند» دون معرفة أيّه (§٤.٣).
+              if (agencyDocument.missingCritical.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                for (final item in agencyDocument.missingCritical)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text('• $item'),
+                  ),
+              ],
             ],
           ),
         ),

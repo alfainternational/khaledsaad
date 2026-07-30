@@ -7,8 +7,10 @@ use App\Models\ConsultationSession;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
+use App\Modules\Brain\ProjectKnowledgeService;
 use App\Modules\Intake\ConsultationContextBuilder;
 use App\Modules\Intake\ConsultationReportGate;
+use App\Modules\Intake\Fitness\AnswerFitnessScorer;
 use App\Services\Marketing\BudgetPlanner;
 use App\Support\Marketing\BriefQuestions;
 use Illuminate\Support\Collection;
@@ -37,6 +39,8 @@ class AgencyReportService
         private readonly ConsultationReportGate $reportGate,
         private readonly ConsultationContextBuilder $consultations,
         private readonly CrossToolSynthesis $crossTool,
+        private readonly ProjectKnowledgeService $knowledge,
+        private readonly AnswerFitnessScorer $fitness,
     ) {}
 
     /**
@@ -64,6 +68,7 @@ class AgencyReportService
         };
 
         $primaryGoal = $brief['primary_goal'] ?? null;
+        $successMetric = $brief['success_metric'] ?? null;
 
         unset($brief['services'], $brief['primary_goal']);
 
@@ -78,6 +83,22 @@ class AgencyReportService
         ])->save();
 
         $project->setRelation('profile', $profile->fresh());
+
+        /*
+         * موجز الوكالة سطح استقبال أيضًا، لا نموذج معزول: إجاباته المحورية تصير
+         * حقائق في الدماغ وتُقاس كفايتها كبقية الاستقبال. بدون هذا كان
+         * `primary_goal` المضبوط هنا يبقى في العمود وحده، فلا يراه حساب المحور
+         * الذي يقرأ من الدماغ لا من `project_profiles` — فيغيب مدخل الوضوح
+         * الاستراتيجي رغم أن المستخدم أجاب عنه.
+         */
+        if (filled($primaryGoal)) {
+            $this->knowledge->record($project, 'primary_goal', $primaryGoal, 'profile');
+        }
+
+        if (filled($successMetric)) {
+            $this->knowledge->record($project, 'success_metric', $successMetric, 'profile');
+            $this->fitness->score($project, 'success_metric', $successMetric, 'textarea');
+        }
     }
 
     /**

@@ -130,6 +130,8 @@ class AgencyReportController extends Controller
         $briefReadiness = $report->snapshot['agency_brief']['readiness'] ?? [
             'is_ready' => false,
             'missing_count' => 6,
+            'missing_critical' => [],
+            'requirements' => [],
             'message' => 'أنشئ إصدارًا جديدًا بعد إكمال بيانات موجز الوكالة.',
         ];
 
@@ -146,13 +148,18 @@ class AgencyReportController extends Controller
             'share' => $this->sharing->status($report),
             'documents' => [
                 'owner' => [
-                    'label' => 'تقريرك الكامل',
+                    // تسمية موحّدة عبر الأسطح: الويب يسمّيه «تقريرك الخاص».
+                    'label' => 'تقريرك الخاص',
                     'pdf_url' => route('api.v1.agency-reports.pdf', $report),
                 ],
                 'agency_brief' => [
-                    'label' => 'موجز التكليف للوكالة',
+                    'label' => 'موجز الوكالة',
                     'is_ready' => (bool) ($briefReadiness['is_ready'] ?? false),
                     'missing_count' => (int) ($briefReadiness['missing_count'] ?? 0),
+                    // البنود الناقصة بالاسم، لا مجرد عددها — نفس ما يراه الويب،
+                    // حتى يعرف مستخدم التطبيق أيّ بند يُكمله بدل حجب صامت (§٤.٣).
+                    'missing_critical' => array_values((array) ($briefReadiness['missing_critical'] ?? [])),
+                    'requirements' => array_values((array) ($briefReadiness['requirements'] ?? [])),
                     'message' => $briefReadiness['message'] ?? null,
                     'pdf_url' => ($briefReadiness['is_ready'] ?? false)
                         ? route('api.v1.agency-reports.brief.pdf', $report)

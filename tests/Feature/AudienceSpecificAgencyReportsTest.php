@@ -306,8 +306,8 @@ class AudienceSpecificAgencyReportsTest extends TestCase
 
         $this->getJson(route('api.v1.agency-reports.show', $report))
             ->assertOk()
-            ->assertJsonPath('data.documents.owner.label', 'تقريرك الكامل')
-            ->assertJsonPath('data.documents.agency_brief.label', 'موجز التكليف للوكالة')
+            ->assertJsonPath('data.documents.owner.label', 'تقريرك الخاص')
+            ->assertJsonPath('data.documents.agency_brief.label', 'موجز الوكالة')
             ->assertJsonPath('data.documents.agency_brief.is_ready', true)
             ->assertJsonPath('data.documents.agency_brief.missing_count', 0)
             ->assertJsonPath('data.documents.agency_brief.pdf_url', route('api.v1.agency-reports.brief.pdf', $report));

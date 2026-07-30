@@ -799,6 +799,7 @@ class AgencyReportDocument {
     this.isReady = true,
     this.missingCount = 0,
     this.message,
+    this.missingCritical = const [],
   });
 
   factory AgencyReportDocument.fromJson(
@@ -811,6 +812,11 @@ class AgencyReportDocument {
     isReady: json['is_ready'] as bool? ?? readyByDefault,
     missingCount: json['missing_count'] as int? ?? 0,
     message: json['message'] as String?,
+    // البنود الناقصة بالاسم — يرسلها الـAPI الآن كما يعرضها الويب، فلا يبقى
+    // مستخدم التطبيق أمام «ناقص بند» دون معرفة أيّ بند (§٤.٣).
+    missingCritical: (json['missing_critical'] as List? ?? const [])
+        .map((item) => item.toString())
+        .toList(),
   );
 
   final String label;
@@ -818,6 +824,7 @@ class AgencyReportDocument {
   final bool isReady;
   final int missingCount;
   final String? message;
+  final List<String> missingCritical;
 }
 
 class AgencyReportDetail extends AgencyReportCard {

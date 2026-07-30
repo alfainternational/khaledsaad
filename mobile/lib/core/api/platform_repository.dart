@@ -534,6 +534,54 @@ class PlatformRepository {
     );
   }
 
+  /// كفاية إجابة مفتوحة كما هي الآن — حتميّة، بلا حفظ وبلا استهلاك سقف.
+  ///
+  /// يعيد null لما لا يُقاس (اختيار/فارغ) أو حين يتعذّر الجلب: القياس معونة على
+  /// السؤال لا شرط للإجابة عنه، فلا يفشل ولا يمنع الكتابة.
+  Future<AnswerFitnessResult?> answerFitness(
+    String projectSlug, {
+    required String fieldKey,
+    required String type,
+    required String value,
+  }) async {
+    final response = await _api.post('/projects/$projectSlug/answer-fitness', {
+      'field_key': fieldKey,
+      'type': type,
+      'value': value,
+    });
+
+    final data = response['data'];
+    if (data is! Map) return null;
+
+    return AnswerFitnessResult.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  /// دليل ومقترحات لسؤال — يولّدها نموذج، فتُحجز من سقف المساحة قبل الطلب.
+  ///
+  /// يعيد null حين لا تتوفر مساعدة (سقف مُستنفد أو لا مقترح): المساعدة معونة على
+  /// السؤال لا شرط للإجابة عنه، فلا تفشل ولا تمنع الكتابة.
+  Future<AssistDraftModel?> assist(
+    String projectSlug, {
+    required String surface,
+    required String questionKey,
+    String? runUuid,
+    String? sessionUuid,
+  }) async {
+    final response = await _api.post('/projects/$projectSlug/assist', {
+      'surface': surface,
+      'question_key': questionKey,
+      'run_uuid': ?runUuid,
+      'session_uuid': ?sessionUuid,
+    });
+
+    final data = response['data'];
+    if (data is! Map) return null;
+
+    final draft = AssistDraftModel.fromJson(Map<String, dynamic>.from(data));
+
+    return draft.isEmpty ? null : draft;
+  }
+
   /// رفع دليل إلى تشغيل. يعيد قائمة الملفات المحدَّثة.
   Future<List<RunFile>> uploadFile(String uuid, String filePath) async {
     final response = await _api.upload('/runs/$uuid/files', filePath);

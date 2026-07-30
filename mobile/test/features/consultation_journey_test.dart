@@ -84,6 +84,10 @@ void main() {
       find.byType(TextField),
       'ضعف التحويل في صفحة الهبوط',
     );
+    // السؤال المفتوح صار أطول (صوت + قياس حيّ + اقتراح تحته)، فالزر قد يكون
+    // خارج نافذة العرض في الاختبار — نمرّر إليه كما يفعل المستخدم قبل النقر.
+    await tester.ensureVisible(find.text('احفظ وتابع'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('احفظ وتابع'));
     await tester.pumpAndSettle();
 

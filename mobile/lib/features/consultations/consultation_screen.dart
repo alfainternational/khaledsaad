@@ -7,7 +7,9 @@ import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/voice_answer_button.dart';
 import '../agency_reports/agency_report_screen.dart';
+import '../tools/models.dart' show AnswerFitnessResult, AssistDraftModel;
 import 'models.dart';
 
 class ConsultationScreen extends StatefulWidget {
@@ -35,6 +37,17 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   bool _busy = true;
   String? _error;
 
+  /*
+   * كفاية السؤال المفتوح الحالي، تُقاس أثناء الكتابة كما في الأدوات والويب.
+   * حقل واحد لأن الاستشارة تعرض سؤالًا واحدًا في كل مرة. حتميّة بلا تكلفة (§٤.٤).
+   */
+  AnswerFitnessResult? _fitness;
+  Timer? _fitnessTimer;
+
+  /// مقترحات السؤال الحالي بطلب صريح (يولّد بنموذج ويُحجز من السقف — §٤.٤).
+  AssistDraftModel? _assist;
+  bool _assistBusy = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +57,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   @override
   void dispose() {
     _poller?.cancel();
+    _fitnessTimer?.cancel();
     _text.dispose();
     _secondaryText.dispose();
     super.dispose();
@@ -70,6 +84,10 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
         _text.clear();
         _secondaryText.clear();
         _ranking.clear();
+        _fitness = null;
+        _fitnessTimer?.cancel();
+        _assist = null;
+        _assistBusy = false;
         _scale = (value.question?.validation['min'] as num? ?? 1).toDouble();
       });
       _configurePolling(value);
@@ -139,6 +157,188 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
         value: value,
         unknown: unknown,
         skipped: skipped,
+      ),
+    );
+  }
+
+  /// قياس كفاية السؤال المفتوح الحالي بعد توقّف الكتابة — بلا حفظ وبلا تكلفة.
+  void _scheduleConsultationFitness(ConsultationQuestion question, String value) {
+    _fitnessTimer?.cancel();
+
+    if (value.trim().isEmpty) {
+      if (_fitness != null) setState(() => _fitness = null);
+      return;
+    }
+
+    _fitnessTimer = Timer(const Duration(milliseconds: 650), () async {
+      try {
+        final result = await widget.repository.answerFitness(
+          widget.projectSlug,
+          fieldKey: question.key,
+          type: question.type,
+          value: value,
+        );
+
+        if (mounted) setState(() => _fitness = result);
+      } catch (_) {
+        // القياس معونة على السؤال لا شرط له؛ فشله لا يمنع الإجابة.
+      }
+    });
+  }
+
+  /// تلميح كفاية الإجابة، بوسم «فرضية» (§٤.١، §١٣).
+  Widget _fitnessHint(AnswerFitnessResult fitness) {
+    final ok = fitness.isSufficient;
+    final color = ok ? BrandColors.success : BrandColors.orange;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: ok ? BrandColors.surfaceSoft : BrandColors.surfaceWarm,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: BrandColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                ok ? Icons.check_circle_outline : Icons.lightbulb_outline,
+                size: 16,
+                color: color,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  fitness.label,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const Text(
+                'فرضية',
+                style: TextStyle(color: BrandColors.muted, fontSize: 10),
+              ),
+            ],
+          ),
+          if (!ok && fitness.gaps.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            for (final gap in fitness.gaps)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  '• $gap',
+                  style: const TextStyle(
+                    color: BrandColors.muted,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// طلب دليل ومقترحات للسؤال الحالي — بنقر صريح لأنه يُحجز من السقف.
+  Future<void> _requestConsultationAssist(ConsultationQuestion question) async {
+    if (_assistBusy) return;
+
+    setState(() => _assistBusy = true);
+
+    try {
+      final draft = await widget.repository.assist(
+        widget.projectSlug,
+        surface: 'consultation',
+        questionKey: question.key,
+        sessionUuid: _session?.uuid,
+      );
+
+      if (mounted) setState(() => _assist = draft);
+    } catch (_) {
+      // المساعدة معونة على السؤال لا شرط له؛ فشلها لا يمنع الإجابة.
+    } finally {
+      if (mounted) setState(() => _assistBusy = false);
+    }
+  }
+
+  /// اعتماد مقترح: يملأ الحقل ويُبقيه قابلًا للتعديل — فرضية لا قرار.
+  void _applyConsultationAssist(String value) {
+    _text.text = value;
+
+    final question = _session?.question;
+    if (question != null) {
+      _scheduleConsultationFitness(question, value);
+    }
+  }
+
+  /// لوحة المقترحات: زرٌّ قبل الطلب، ثم دليل ومقترحات قابلة للنقر بعده.
+  Widget _assistPanel(ConsultationQuestion question) {
+    final draft = _assist;
+
+    if (draft == null) {
+      return Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton.icon(
+          onPressed:
+              _assistBusy ? null : () => _requestConsultationAssist(question),
+          icon: _assistBusy
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.auto_awesome, size: 16),
+          label: Text(_assistBusy ? 'نجهّز اقتراحًا…' : 'اقترح لي إجابة'),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: BrandColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: BrandColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (draft.guide.isNotEmpty)
+            Text(
+              draft.guide,
+              style: const TextStyle(fontSize: 12, color: BrandColors.ink),
+            ),
+          if (draft.suggestions.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final suggestion in draft.suggestions)
+                  ActionChip(
+                    label: Text(
+                      suggestion.label.isEmpty
+                          ? suggestion.value
+                          : suggestion.label,
+                    ),
+                    onPressed: () => _applyConsultationAssist(suggestion.value),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            draft.assumptionLabel ?? 'فرضية — راجعها وعدّلها قبل اعتمادها.',
+            style: const TextStyle(color: BrandColors.muted, fontSize: 11),
+          ),
+        ],
       ),
     );
   }
@@ -636,7 +836,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                 ),
             ],
           )
-        else
+        else ...[
           TextField(
             controller: _text,
             keyboardType: question.isNumber
@@ -644,6 +844,9 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                 : TextInputType.multiline,
             minLines: question.isNumber ? 1 : 3,
             maxLines: question.isNumber ? 1 : 6,
+            onChanged: question.isNumber
+                ? null
+                : (value) => _scheduleConsultationFitness(question, value),
             decoration: InputDecoration(
               labelText: question.type == 'repeater'
                   ? 'كل عنصر في سطر مستقل'
@@ -651,6 +854,27 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               helperText: question.sensitive ? 'تُستخدم للتشخيص فقط.' : null,
             ),
           ),
+          // الصوت على السؤال المفتوح وحده — نظير الويب والأدوات. الرقم النقر فيه
+          // أسرع من الكلام.
+          if (!question.isNumber)
+            VoiceAnswerButton(
+              repository: widget.repository,
+              projectSlug: widget.projectSlug,
+              onTranscribed: (text) {
+                final existing = _text.text.trim();
+                _text.text = existing.isEmpty ? text : '$existing $text';
+                _scheduleConsultationFitness(question, _text.text);
+              },
+            ),
+          if (_fitness != null) ...[
+            const SizedBox(height: 8),
+            _fitnessHint(_fitness!),
+          ],
+          if (!question.isNumber) ...[
+            const SizedBox(height: 8),
+            _assistPanel(question),
+          ],
+        ],
 
         if (question.why != null && question.why!.isNotEmpty) ...[
           const SizedBox(height: 10),

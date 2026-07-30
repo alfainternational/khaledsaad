@@ -94,6 +94,8 @@ class ToolFieldModel {
     this.why,
     this.example,
     this.value,
+    this.isKnown = false,
+    this.benchmark,
   });
 
   factory ToolFieldModel.fromJson(Map<String, dynamic> json) => ToolFieldModel(
@@ -108,6 +110,10 @@ class ToolFieldModel {
         .map((e) => FieldOption.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList(),
     value: json['value'],
+    // معروف مسبقًا: عرفه النظام من إجابة سابقة، فلا يظهر كأن المستخدم كتبه الآن.
+    // كان التطبيق يتجاهله ويملأ الحقل بصمت — أسوأ من الويب الذي يعلن المصدر.
+    isKnown: json['is_known'] as bool? ?? false,
+    benchmark: json['benchmark']?.toString(),
   );
 
   final String key;
@@ -119,6 +125,12 @@ class ToolFieldModel {
   final String? example;
   final List<FieldOption> options;
   final dynamic value;
+
+  /// أجاب عنه المستخدم في مكان آخر فورِث هنا — يُعرض موسومًا لا صامتًا.
+  final bool isKnown;
+
+  /// رقم مرجعي للمقارنة بجانب الحقل، حين يوفّره العارض.
+  final String? benchmark;
 
   List<String> get selectedValues => value is List
       ? (value as List).map((e) => e.toString()).toList()
@@ -147,6 +159,90 @@ class WizardStep {
   final int step;
   final String title;
   final List<ToolFieldModel> fields;
+}
+
+/// كفاية إجابة مفتوحة كما تُقاس أثناء الكتابة — حتميّة، بلا تكلفة ولا حفظ.
+///
+/// نظير قاعدة الويب: صاحب النشاط يرى أن وصفه عامٌّ وهو ما زال أمام السؤال،
+/// لا في تقرير لا يستطيع تعديله. «أجاب» لا يساوي «أجاب بما يكفي».
+class AnswerFitnessResult {
+  const AnswerFitnessResult({
+    required this.score,
+    required this.verdict,
+    required this.gaps,
+  });
+
+  factory AnswerFitnessResult.fromJson(Map<String, dynamic> json) =>
+      AnswerFitnessResult(
+        score: json['score'] as int? ?? 0,
+        verdict: json['verdict']?.toString() ?? '',
+        gaps: (json['gaps'] as List? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+      );
+
+  final int score;
+  final String verdict;
+  final List<String> gaps;
+
+  bool get isSufficient => verdict == 'sufficient';
+
+  /// جملة قصيرة بلغة المستخدم — لا رمز داخلي. فرضية منهجية دائمًا (inferred).
+  String get label => switch (verdict) {
+    'sufficient' => 'إجابة واضحة بما يكفي للتشخيص.',
+    'partial' => 'مفيدة، وتحتمل تحديدًا أكثر.',
+    _ => 'عامة — حدّدها أكثر ليقيسها التشخيص بدقة.',
+  };
+}
+
+/// مقترح إجابة واحد: نصّ جاهز للزر + سبب ملاءمته لهذا النشاط تحديدًا.
+class AssistSuggestion {
+  const AssistSuggestion({
+    required this.label,
+    required this.value,
+    required this.why,
+  });
+
+  factory AssistSuggestion.fromJson(Map<String, dynamic> json) =>
+      AssistSuggestion(
+        label: json['label']?.toString() ?? '',
+        value: json['value']?.toString() ?? '',
+        why: json['why']?.toString() ?? '',
+      );
+
+  final String label;
+  final String value;
+  final String why;
+}
+
+/// مسوّدة مساعدة على سؤال: دليل ومقترحات مبنية على ما وصفه صاحب النشاط.
+///
+/// فرضية موسومة دائمًا (§١٣): تُراجَع وتُعدَّل قبل اعتمادها، ولا تُخترع خيارًا
+/// خارج خيارات السؤال. تُولَّد بنموذج لغوي فتُحجز من سقف المساحة قبل الطلب (§٤.٤).
+class AssistDraftModel {
+  const AssistDraftModel({
+    required this.guide,
+    required this.suggestions,
+    this.assumptionLabel,
+  });
+
+  factory AssistDraftModel.fromJson(Map<String, dynamic> json) =>
+      AssistDraftModel(
+        guide: json['guide']?.toString() ?? '',
+        suggestions: (json['suggestions'] as List? ?? const [])
+            .map(
+              (item) =>
+                  AssistSuggestion.fromJson(Map<String, dynamic>.from(item as Map)),
+            )
+            .toList(),
+        assumptionLabel: json['assumption_label']?.toString(),
+      );
+
+  final String guide;
+  final List<AssistSuggestion> suggestions;
+  final String? assumptionLabel;
+
+  bool get isEmpty => guide.trim().isEmpty && suggestions.isEmpty;
 }
 
 class RunStage {

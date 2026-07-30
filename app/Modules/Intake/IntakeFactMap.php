@@ -44,7 +44,14 @@ final class IntakeFactMap
             ],
             'primary_goal' => [
                 'axis' => Axis::StrategicClarity,
-                'answers' => ['primary_goal', 'goal_statement', 'objective', 'campaign_objective'],
+                /*
+                 * `campaign_objective` خارج القائمة عمدًا: هو هدف إعلان بعينه في
+                 * `campaign-planner` («ما النتيجة التي تريدها من هذا الإعلان؟»)،
+                 * لا هدف النشاط. دمجه هنا كان يحوّل هدف حملة واحدة إلى الهدف
+                 * الاستراتيجي للنشاط كله — تخمين معنى يخالف §٤.١، وبقية النظام
+                 * يعامله منفصلًا أصلًا (PipelineSchemas، AgencyStateLedger).
+                 */
+                'answers' => ['primary_goal', 'goal_statement', 'objective'],
                 'profile' => 'primary_goal',
                 'shape' => 'text',
             ],

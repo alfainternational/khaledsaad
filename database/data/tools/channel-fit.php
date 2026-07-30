@@ -22,7 +22,7 @@ return [
 
         'scoring_rules' => [
             'rules' => [
-                ['field' => 'active_channels', 'label' => 'عدد القنوات', 'type' => 'map', 'weight' => 16,
+                ['field' => 'channel_count', 'label' => 'عدد القنوات', 'type' => 'map', 'weight' => 16,
                     'map' => ['none' => 0, 'one_two' => 1, 'three_four' => 0.6, 'many' => 0.25]],
                 ['field' => 'weekly_hours', 'label' => 'وقت متاح معلن', 'type' => 'present', 'weight' => 12],
                 ['field' => 'who_executes', 'label' => 'منفّذ واضح', 'type' => 'map', 'weight' => 16,
@@ -87,7 +87,7 @@ return [
                 ['value' => 'offline', 'label' => 'أماكن على أرض الواقع'],
             ]],
 
-        ['key' => 'active_channels', 'label' => 'على كم منصة تعمل اليوم؟', 'type' => 'select', 'step' => 1,
+        ['key' => 'channel_count', 'label' => 'على كم منصة تعمل اليوم؟', 'type' => 'select', 'step' => 1,
             'why' => 'الانتشار الواسع بجهد صغير يعطي حضورًا باهتًا في كل مكان. التركيز يصنع أثرًا يُلاحظ.',
             'options' => [
                 ['value' => 'none', 'label' => 'لا شيء منتظم'],

@@ -56,6 +56,20 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
   bool _insightsBusy = false;
   Timer? _insightTimer;
 
+  /*
+   * كفاية كل حقل مفتوح، تُقاس أثناء الكتابة بمؤقّت مؤجَّل حتى لا نستدعي على كل
+   * حرف. القياس حتميّ ومحليّ بلا تكلفة (§٤.٤)، فلا يُحجز له من سقف المساحة.
+   */
+  final Map<String, AnswerFitnessResult?> _fitness = {};
+  final Map<String, Timer> _fitnessTimers = {};
+
+  /*
+   * مقترحات كل حقل بطلب صريح. الاقتراح يولّد بنموذج ويُحجز من السقف، فلا يُستدعى
+   * تلقائيًّا كالقياس — يظهر زر «اقترح لي» ويُستدعى بالنقر وحده (§٤.٤).
+   */
+  final Map<String, AssistDraftModel?> _assist = {};
+  final Set<String> _assistBusy = {};
+
   Future<void> _pickAndUpload() async {
     final picked = await FilePicker.platform.pickFiles(withData: false);
     final path = picked?.files.single.path;
@@ -111,11 +125,51 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
   void dispose() {
     _insightTimer?.cancel();
 
+    for (final timer in _fitnessTimers.values) {
+      timer.cancel();
+    }
+
     for (final controller in _openFields.values) {
       controller.dispose();
     }
 
     super.dispose();
+  }
+
+  /// الأنواع التي تُقاس كفايتها — نظير AnswerFitnessScorer::MEASURABLE_TYPES.
+  bool _isMeasurable(String type) =>
+      const {'text', 'textarea', 'long_text', 'repeater'}.contains(type);
+
+  /// جدولة قياس كفاية حقلٍ مفتوح بعد توقّف الكتابة، وحفظ النتيجة للعرض.
+  void _scheduleFitness(ToolFieldModel field, String value) {
+    if (widget.guest || !_isMeasurable(field.type)) return;
+
+    _fitnessTimers[field.key]?.cancel();
+
+    if (value.trim().isEmpty) {
+      if (_fitness[field.key] != null) {
+        setState(() => _fitness.remove(field.key));
+      }
+      return;
+    }
+
+    _fitnessTimers[field.key] = Timer(
+      const Duration(milliseconds: 650),
+      () async {
+        try {
+          final result = await widget.repository.answerFitness(
+            _run.projectSlug,
+            fieldKey: field.key,
+            type: field.type,
+            value: value,
+          );
+
+          if (mounted) setState(() => _fitness[field.key] = result);
+        } catch (_) {
+          // القياس معونة على السؤال لا شرط له؛ فشله لا يمنع الكتابة أو الحفظ.
+        }
+      },
+    );
   }
 
   void _seedDraft() {
@@ -366,6 +420,187 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
     _draftChanged(key, merged);
   }
 
+  /// طلب دليل ومقترحات لسؤال — بنقر صريح لأنه يولّد بنموذج ويُحجز من السقف.
+  Future<void> _requestAssist(ToolFieldModel field) async {
+    if (widget.guest || _assistBusy.contains(field.key)) return;
+
+    setState(() => _assistBusy.add(field.key));
+
+    try {
+      final draft = await widget.repository.assist(
+        _run.projectSlug,
+        surface: 'tool',
+        questionKey: field.key,
+        runUuid: _run.uuid,
+      );
+
+      if (mounted) setState(() => _assist[field.key] = draft);
+    } catch (_) {
+      // المساعدة معونة على السؤال لا شرط له؛ فشلها لا يمنع الإجابة.
+    } finally {
+      if (mounted) setState(() => _assistBusy.remove(field.key));
+    }
+  }
+
+  /// اعتماد مقترح: يملأ الحقل ويُبقيه قابلًا للتعديل — فرضية لا قرار.
+  void _applyAssist(ToolFieldModel field, String value) {
+    if (_openFields.containsKey(field.key)) {
+      final controller = _openFieldController(field.key);
+      controller.text = value;
+      _draftChanged(field.key, value);
+      _scheduleFitness(field, value);
+    } else {
+      setState(() => _draftChanged(field.key, value));
+    }
+  }
+
+  /// لوحة المقترحات: زرٌّ قبل الطلب، ثم دليل ومقترحات قابلة للنقر بعده.
+  Widget _assistPanel(ToolFieldModel field) {
+    final busy = _assistBusy.contains(field.key);
+    final draft = _assist[field.key];
+
+    if (draft == null) {
+      return Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton.icon(
+          onPressed: busy ? null : () => _requestAssist(field),
+          icon: busy
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.auto_awesome, size: 16),
+          label: Text(busy ? 'نجهّز اقتراحًا…' : 'اقترح لي إجابة'),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: BrandColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: BrandColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (draft.guide.isNotEmpty)
+            Text(
+              draft.guide,
+              style: const TextStyle(fontSize: 12, color: BrandColors.ink),
+            ),
+          if (draft.suggestions.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final suggestion in draft.suggestions)
+                  ActionChip(
+                    label: Text(
+                      suggestion.label.isEmpty
+                          ? suggestion.value
+                          : suggestion.label,
+                    ),
+                    onPressed: () => _applyAssist(field, suggestion.value),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            draft.assumptionLabel ?? 'فرضية — راجعها وعدّلها قبل اعتمادها.',
+            style: const TextStyle(color: BrandColors.muted, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// وسم بصري صغير: هذه الإجابة موروثة من قبل، لا مكتوبة الآن.
+  Widget _knownBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: BrandColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: BrandColors.line),
+      ),
+      child: const Text(
+        'نعرفها من قبل',
+        style: TextStyle(
+          color: BrandColors.blue,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  /// تلميح كفاية الإجابة أثناء الكتابة: يُظهر أن الوصف عامّ وهو قابل للتعديل.
+  ///
+  /// حكم منهجيّ على نصّ كتبه صاحب النشاط عن نفسه، فيحمل وسم «فرضية» (§٤.١، §١٣).
+  Widget _fitnessHint(AnswerFitnessResult fitness) {
+    final ok = fitness.isSufficient;
+    final color = ok ? BrandColors.success : BrandColors.orange;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: ok ? BrandColors.surfaceSoft : BrandColors.surfaceWarm,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: BrandColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                ok ? Icons.check_circle_outline : Icons.lightbulb_outline,
+                size: 16,
+                color: color,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  fitness.label,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const Text(
+                'فرضية',
+                style: TextStyle(color: BrandColors.muted, fontSize: 10),
+              ),
+            ],
+          ),
+          if (!ok && fitness.gaps.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            for (final gap in fitness.gaps)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  '• $gap',
+                  style: const TextStyle(
+                    color: BrandColors.muted,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildField(ToolFieldModel field) {
     final label = field.required ? field.label : '${field.label} (اختياري)';
 
@@ -377,7 +612,10 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
             controller: _openFieldController(field.key),
             decoration: const InputDecoration(),
             maxLines: 4,
-            onChanged: (value) => _draftChanged(field.key, value),
+            onChanged: (value) {
+              _draftChanged(field.key, value);
+              _scheduleFitness(field, value);
+            },
           ),
 
           /*
@@ -428,14 +666,33 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: BrandColors.navy,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: BrandColors.navy,
+                ),
+              ),
+            ),
+            if (field.isKnown) ...[
+              const SizedBox(width: 8),
+              _knownBadge(),
+            ],
+          ],
         ),
+        // إعلان المصدر صراحةً: الإجابة موروثة لا مكتوبة الآن، وقابلة للتعديل.
+        if (field.isKnown) ...[
+          const SizedBox(height: 4),
+          const Text(
+            'نعرفها من إجابة سابقة لك — راجعها أو عدّلها إن تغيّرت.',
+            style: TextStyle(color: BrandColors.muted, fontSize: 12),
+          ),
+        ],
         if (field.help != null && field.help!.isNotEmpty) ...[
           const SizedBox(height: 5),
           Text(field.help!, style: const TextStyle(color: BrandColors.muted)),
@@ -449,6 +706,14 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
         ],
         const SizedBox(height: 10),
         control,
+        if (_fitness[field.key] != null) ...[
+          const SizedBox(height: 8),
+          _fitnessHint(_fitness[field.key]!),
+        ],
+        if (!widget.guest) ...[
+          const SizedBox(height: 8),
+          _assistPanel(field),
+        ],
         if (field.why != null && field.why!.isNotEmpty) ...[
           const SizedBox(height: 8),
           QuestionReason(field.why!),
