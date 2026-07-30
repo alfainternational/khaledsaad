@@ -34,7 +34,7 @@ class ToolRun extends Model
 
     protected $fillable = [
         'uuid', 'project_id', 'consultation_session_id', 'tool_version_id', 'user_id', 'guest_session_id', 'status',
-        'current_step', 'base_score', 'confidence', 'snapshot', 'failure_reason',
+        'allow_incomplete', 'current_step', 'base_score', 'confidence', 'snapshot', 'failure_reason',
         'attempts', 'started_at', 'completed_at',
     ];
 
@@ -42,6 +42,7 @@ class ToolRun extends Model
     {
         return [
             'snapshot' => 'array',
+            'allow_incomplete' => 'boolean',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
         ];

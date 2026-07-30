@@ -191,6 +191,34 @@ class ToolRunPipelineTest extends TestCase
         $this->assertSame(73, $project->fresh()->latest_score);
     }
 
+    #[Test]
+    public function a_full_diagnosis_run_completes_with_gaps_instead_of_failing_on_missing_data(): void
+    {
+        $this->fakeSuccessfulProvider();
+
+        $user = User::factory()->create();
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروع ناقص']);
+        $tool = Tool::where('key', 'marketing-score')->firstOrFail();
+        $run = app(ToolRunService::class)->start($project, $tool, $user);
+
+        // خطوة واحدة فقط: بيانات ناقصة عمدًا. علَم التشخيص الشامل يسمح بالإكمال.
+        app(ToolRunService::class)->saveStep($run, 1, [
+            'business_model' => 'services',
+            'description' => str_repeat('وصف واضح للخدمة ', 3),
+            'geography' => 'الرياض',
+            'monthly_budget' => 5000,
+        ]);
+        $run->forceFill(['allow_incomplete' => true])->save();
+
+        app(ToolRunPipeline::class)->handle($run->refresh());
+        $run->refresh();
+
+        // لم يعد النقص يفشل التشغيل — يُكمل بفجوات معلنة (مكتمل أو جزئي).
+        $this->assertContains($run->status, [ToolRun::STATUS_COMPLETED, ToolRun::STATUS_PARTIAL]);
+        $this->assertNotSame(ToolRun::STATUS_FAILED, $run->status);
+        $this->assertNotNull($run->base_score, 'الدرجة الحتمية تُحسب حتى مع نقص المدخلات.');
+    }
+
     private function completedDraft(): ToolRun
     {
         $user = User::factory()->create();

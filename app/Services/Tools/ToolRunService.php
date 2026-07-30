@@ -174,8 +174,11 @@ class ToolRunService
 
         ToolRunPipeline::seedStages($run);
 
+        // العلَم يُثبَّت على التشغيل ليقرأه خط الأنابيب وقت التنفيذ: التشخيص
+        // الشامل يُكمل بفجوات معلنة، والتشغيل المستقل يبقى صارمًا كما كان.
         $run->forceFill([
             'status' => ToolRun::STATUS_QUEUED,
+            'allow_incomplete' => $allowIncomplete,
             'failure_reason' => null,
         ])->save();
 

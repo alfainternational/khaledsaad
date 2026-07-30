@@ -95,7 +95,11 @@ class FullDiagnosisRunner
             ? Bus::batch([])
                 ->name("full-diagnosis:{$project->id}")
                 ->allowFailures()
-                ->then(fn () => FinishFullDiagnosis::dispatch($project->id, $user->id, $consultationSessionId))
+                // finally لا then: مع allowFailures يبقى then معلّقًا للأبد إن فشلت
+                // أداة واحدة، فلا يُبنى المستند وتعلق الاستشارة. finally يُطلَق بعد
+                // استقرار كل الوظائف مهما فشل بعضها، وFinishFullDiagnosis يقرر
+                // حينها أبناءُ التقرير ممكن أم يُعلَن النقص.
+                ->finally(fn () => FinishFullDiagnosis::dispatch($project->id, $user->id, $consultationSessionId))
             : null;
 
         $this->runs->collectInto($batch);

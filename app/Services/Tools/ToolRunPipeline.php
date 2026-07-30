@@ -15,6 +15,7 @@ use App\Services\Tools\V2\ReportSemanticGuard;
 use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -208,9 +209,23 @@ class ToolRunPipeline
 
         $missing = app(AnswerCompleteness::class)->missingRequired($run);
 
-        if ($missing !== []) {
-            throw new \RuntimeException('بيانات ناقصة: '.implode('، ', $missing));
+        if ($missing === []) {
+            return;
         }
+
+        // التشخيص الشامل يُشغّل «بما هو معروف» (§٤.٣): النقص لا يمنع التشغيل بل
+        // يُعلَن فجوةً، والمراحل الحتمية (اللقطة، الدرجة) لا تحتاج اكتمالًا.
+        // التشغيل المستقل يبقى صارمًا كي لا يُهدر استدعاء نموذج على بيانات ناقصة.
+        if ($run->allow_incomplete) {
+            Log::info('تشخيص شامل يُكمل رغم نقص بيانات أداة', [
+                'tool_run_id' => $run->id,
+                'missing' => $missing,
+            ]);
+
+            return;
+        }
+
+        throw new \RuntimeException('بيانات ناقصة: '.implode('، ', $missing));
     }
 
     /**
@@ -432,7 +447,9 @@ class ToolRunPipeline
 
         $run->forceFill([
             'status' => ToolRun::STATUS_FAILED,
-            'failure_reason' => $exception->getMessage(),
+            // قصّ دفاعي: حتى مع عمود TEXT لا نخزّن رسالة مرضية الطول، والقصّ
+            // يحمي أيضًا أي بيئة لم تُطبَّق فيها هجرة التوسيع بعد.
+            'failure_reason' => Str::limit($exception->getMessage(), 2000),
             'completed_at' => now(),
         ])->save();
 

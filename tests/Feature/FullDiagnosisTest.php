@@ -103,8 +103,9 @@ class FullDiagnosisTest extends TestCase
         app(FullDiagnosisRunner::class)->run($project, $user);
 
         Bus::assertBatched(function ($batch) {
-            // الدفعة تحمل خطوة الإنهاء التي تبني المستند بلا ضغطة ثانية.
-            return $batch->name !== '' && $batch->thenCallbacks() !== [];
+            // الدفعة تحمل خطوة الإنهاء في finally لا then: فشل أداة واحدة يجب ألّا
+            // يمنع بناء المستند، وthen يبقى معلّقًا مع أي فشل رغم allowFailures.
+            return $batch->name !== '' && $batch->finallyCallbacks() !== [];
         });
 
         // وخطوة الإنهاء نفسها لا تنهار حين تكون الأدوات الأساسية ناقصة.
