@@ -31,6 +31,10 @@ class VoiceRecorderSurfaceTest extends TestCase
     {
         parent::setUp();
         $this->seed(ToolCatalogSeeder::class);
+
+        // المفتاح مضبوط في الحالة الأساسية: بدونه لا مسجّل — وهو ما يفحصه
+        // الاختبار الأخير صراحةً.
+        config(['services.speech.key' => 'test-speech-key']);
     }
 
     #[Test]
@@ -63,6 +67,28 @@ class VoiceRecorderSurfaceTest extends TestCase
          */
         $this->assertStringNotContainsString('form.submit()', $html);
         $this->assertStringContainsString('راجع النص قبل الإرسال', $html);
+    }
+
+    /**
+     * زرٌّ يعِد بما لا تستطيعه المنصة أسوأ من غيابه.
+     *
+     * بلا مفتاح خدمة النسخ يسجّل المستخدم دقيقةً كاملة، ثم يقابل «لم يُضبط
+     * المفتاح» فيقرؤه عطلًا في ميكروفونه أو في تسجيله — لا في إعداد لم يكتمل.
+     * نفس منطق إخفاء الزر حيث لا يدعم المتصفح `MediaRecorder`.
+     */
+    #[Test]
+    public function no_recorder_is_offered_while_the_service_is_unconfigured(): void
+    {
+        config(['services.speech.key' => null]);
+
+        [$user, , $run] = $this->startedRun();
+
+        $response = $this->actingAs($user)
+            ->get(route('app.runs.step', [$run->uuid, 1]))
+            ->assertOk();
+
+        $response->assertDontSee('data-voice', false);
+        $response->assertDontSee('سجّل إجابتك صوتيًّا', false);
     }
 
     /**

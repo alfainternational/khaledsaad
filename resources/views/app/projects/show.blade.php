@@ -52,6 +52,25 @@
                 <a href="{{ route('app.readiness.show', $project['slug']) }}" class="btn btn--ghost btn--sm">افحص موقعي</a>
             </article>
 
+            {{--
+                تقرير الحضور بعد بطاقة الجاهزية مباشرةً: الأولى تقول هل موقعك
+                مقروء، والثاني يقول هل تُذكر فعلًا. القياس ثم النتيجة، وقلبهما
+                يجعل «لا أحد يذكرك» بلا سبب يُفسّره.
+
+                كان مبنيًّا ومنشورًا **بلا رابط واحد في الواجهة كلها** — أغلى
+                قدرة تشغيليًّا لا يبلغها مستخدم.
+            --}}
+            <article class="card card--link">
+                <p class="eyebrow">مقيس من إجابات النماذج</p>
+                <h3>حضورك في الإجابات</h3>
+                <p class="muted">نسأل النماذج أسئلة عميلك بلسانه، ونعدّ كم مرة ذُكرت أنت ومن ظهر بدلًا منك.</p>
+                @feature(\App\Support\Billing\FeatureKey::DIAGNOSIS_FULL)
+                    <a href="{{ route('app.presence.show', $project['slug']) }}" class="btn btn--ghost btn--sm">افتح التقرير</a>
+                @else
+                    <a href="{{ route('app.billing') }}" class="btn btn--ghost btn--sm">متاح في خطة أعلى</a>
+                @endfeature
+            </article>
+
             <article class="card card--link">
                 <p class="eyebrow">عملاؤك يسألون ChatGPT</p>
                 <h3>الظهور في محركات الذكاء</h3>

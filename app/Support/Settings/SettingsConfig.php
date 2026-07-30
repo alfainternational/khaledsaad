@@ -74,6 +74,24 @@ class SettingsConfig
                 ],
             ],
             [
+                /*
+                 * الاستقبال الصوتي. `config/services.php` يعلن أن هذه المفاتيح
+                 * «تُضبط من لوحة الآدمن»، ولم تكن في الكتالوج — فلم يكن لها
+                 * مكان تُضبط منه، وبقي الصوت معطّلًا بلا سبب ظاهر.
+                 */
+                'group' => 'الاستقبال الصوتي',
+                'fields' => [
+                    ['key' => 'services.speech.key', 'label' => 'مفتاح خدمة النسخ', 'type' => 'secret',
+                        'hint' => 'بدونه لا يعمل تسجيل الإجابات صوتًا. يُخزَّن مشفّرًا ولا يُعرض بعد الحفظ.'],
+                    ['key' => 'services.speech.base_url', 'label' => 'عنوان الخدمة', 'type' => 'string',
+                        'hint' => 'الافتراضي https://api.groq.com/openai/v1'],
+                    ['key' => 'services.speech.model', 'label' => 'نموذج النسخ', 'type' => 'string',
+                        'hint' => 'مثال: whisper-large-v3. تبديله قرار جودة يُقاس على اللهجات الخليجية.'],
+                    ['key' => 'services.speech.cost_per_minute', 'label' => 'تكلفة الدقيقة (دولار)', 'type' => 'string',
+                        'hint' => 'اتركه صفرًا ويعمل النسخ، لكن تقرير التكلفة يُسجّل صفرًا لكل تسجيل — السقف يعدّ المواضع ولا يعرف ما أُنفق.'],
+                ],
+            ],
+            [
                 'group' => 'أرقام السوق واكتشاف المنافسين',
                 'fields' => [
                     ['key' => 'benchmarks.live_enabled', 'label' => 'تفعيل المصدر الحيّ', 'type' => 'bool',

@@ -31,6 +31,58 @@
         </article>
     </section>
 
+    {{--
+        سقوف الاستعلامات: ما يمنع الإنفاق، لا ما يسجّله بعد وقوعه.
+
+        الجدولان أدناه يقولان ما أُنفق. هذا يقول من اقترب من حدّه ومن توقّف —
+        وهو القرار الوحيد الذي يمكن اتخاذه قبل الفاتورة لا بعدها.
+    --}}
+    <section aria-labelledby="budgets-heading">
+        <h2 id="budgets-heading" class="section-title">سقوف الاستعلامات — شهر {{ now()->format('Y-m') }}</h2>
+
+        @if ($budgets === [])
+            <p class="muted">لا مساحة استهلكت استعلامًا هذا الشهر. السقف يُنشأ عند أول حجز.</p>
+        @else
+            <p class="muted">الأقرب إلى حدّه أولًا. النسبة على المحجوز والمستهلك معًا — الحجز التزامٌ بالإنفاق لا نيّة.</p>
+
+            <div class="table-wrap">
+                <table class="table" data-table="matrix">
+                    <thead>
+                        <tr>
+                            <th>مساحة العمل</th>
+                            <th>المستهلك</th>
+                            <th>المتبقي</th>
+                            <th>النسبة</th>
+                            <th>التكلفة</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($budgets as $budget)
+                            <tr>
+                                <td>{{ $budget['workspace'] }}</td>
+                                {{-- الرقم مع أساسه دائمًا (§١٣). --}}
+                                <td>{{ $budget['committed'] }} من {{ $budget['limit'] }}</td>
+                                <td>{{ $budget['remaining'] }}</td>
+                                <td>{{ $budget['usage_percent'] }}٪</td>
+                                <td>{{ number_format($budget['cost_usd'], 4) }}$</td>
+                                <td>
+                                    @if ($budget['exhausted'])
+                                        متوقّفة حتى الشهر القادم
+                                    @elseif ($budget['warned'])
+                                        نُبِّهت عند ٨٠٪
+                                    @else
+                                        تعمل
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </section>
+
     <div class="layout-main-aside">
     <div class="layout-flow">
     <section aria-labelledby="models-heading">

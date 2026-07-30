@@ -46,8 +46,12 @@
 
         `$projectSlug` يصل من الشاشة المستدعية؛ غيابه يعني سياقًا بلا مشروع
         (معاينة أو تصدير) فلا يُعرض المسجّل بدل أن يشير إلى مسار ناقص.
+
+        ومفتاح خدمة النسخ شرطٌ كذلك: بلا ضبطه من لوحة الآدمن يسجّل المستخدم
+        دقيقةً كاملة ثم يقابل «لم يُضبط المفتاح» — عطلٌ يبدو له عطلَ تسجيله.
+        الزرّ يختفي كما يختفي عند غياب دعم المتصفح، للسبب نفسه.
     --}}
-    @isset($projectSlug)
+    @if (isset($projectSlug) && filled(config('services.speech.key')))
         @include('app.partials.voice-recorder', ['projectSlug' => $projectSlug])
-    @endisset
+    @endif
 @endif

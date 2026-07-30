@@ -35,10 +35,13 @@
             {{--
                 الصوت على السؤال المفتوح وحده: هو ما يثقل كتابته فيُترك فارغًا،
                 وهو ما يخفض تغطية المحاور ١–٦. سؤال باختيارات لا يحتاج إملاءً.
+
+                ومفتاح خدمة النسخ شرط: بلا ضبطه يسجّل المستخدم دقيقةً ثم يقابل
+                «لم يُضبط المفتاح» — يقرؤه عطلًا في تسجيله لا في إعداد المنصة.
             --}}
-            @isset($projectSlug)
+            @if (isset($projectSlug) && filled(config('services.speech.key')))
                 @include('app.partials.voice-recorder', ['projectSlug' => $projectSlug])
-            @endisset
+            @endif
             @break
 
         @case('select')

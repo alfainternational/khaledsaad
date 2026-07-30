@@ -95,6 +95,18 @@
             <span>التشخيص الذكي الشامل</span>
         </a>
 
+        {{--
+            لوحة الوكالة: محفظة الأنشطة كلها في شاشة واحدة. نطاقها مساحة العمل
+            لا مشروعًا، فمكانها التنقّل العام لا شاشة مشروع — وكانت مبنيّة
+            ومنشورة بلا رابط واحد يصلها.
+        --}}
+        @feature(\App\Support\Billing\FeatureKey::REPORTS_AGENCY)
+            <a href="{{ route('app.portfolio') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.portfolio')])>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+                <span>محفظة العملاء</span>
+            </a>
+        @endfeature
+
         @feature(\App\Support\Billing\FeatureKey::GROWTH_PULSE)
             <a href="{{ route('app.pulse.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.pulse.*')])>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l3-8 6 16 3-8h4"/></svg>
