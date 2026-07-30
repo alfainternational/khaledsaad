@@ -13,15 +13,43 @@
             <p class="muted">صورة ثابتة لحالة مشروعك في {{ $agencyReport->generated_at?->locale('ar')->translatedFormat('j F Y، H:i') }}</p>
         </div>
         <div class="page-head__actions">
-            <a class="btn btn--ghost" href="{{ route('app.agency-reports.pdf', $agencyReport) }}">حمّل تقريرك PDF</a>
+            <a class="btn btn--ghost" href="{{ route('app.agency-reports.pdf', $agencyReport) }}">حمّل تقريرك الخاص PDF</a>
             @if ($briefReady)
                 <a class="btn btn--primary" href="{{ route('app.agency-reports.brief', $agencyReport) }}">افتح موجز الوكالة</a>
             @else
-                <a class="btn btn--ghost" href="{{ route('app.projects.agency-reports.index', $agencyReport->project) }}">أكمل بيانات موجز الوكالة</a>
+                <a class="btn btn--primary" href="{{ route('app.projects.agency-reports.index', $agencyReport->project) }}">أكمل موجز الوكالة</a>
             @endif
             <a class="btn btn--ghost" href="{{ route('app.projects.agency-reports.index', $agencyReport->project) }}">الإصدارات</a>
         </div>
     </header>
+
+    {{--
+        موجز الوكالة مستند ثانٍ منفصل عن «تقريرك الخاص»، ولا يصدر حتى يكتمل
+        موجز التكليف. كان الحجب صامتًا (زر عام بلا سبب)، فيظنّ المستخدم أن
+        موجز الوكالة غير موجود. نعلن الفجوة صراحةً بالبنود الناقصة بالاسم (§٤.٣).
+    --}}
+    @unless ($briefReady)
+        @php($briefReadiness = $snapshot['agency_brief']['readiness'] ?? [])
+        @php($briefMissing = collect($briefReadiness['requirements'] ?? [])->reject(fn ($r) => $r['complete'] ?? false)->values())
+        <section class="card card--warn">
+            <p class="eyebrow">مستند ثانٍ — موجز الوكالة</p>
+            <h2 class="section-title">موجز الوكالة لم يصدر بعد</h2>
+            <p>
+                ما حمّلته أعلاه هو <b>تقريرك الخاص</b>: يشرح لك وضع مشروعك.
+                <b>موجز الوكالة</b> مستند مختلف — النسخة التي ترسلها للوكالات لتسعّر على أساس واحد —
+                ولا يصدر حتى يكتمل موجز التكليف.
+            </p>
+            @if ($briefMissing->isNotEmpty())
+                <p class="evidence"><b>{{ $briefReadiness['message'] ?? 'ينقص موجز الوكالة بعض البنود.' }}</b></p>
+                <ul class="bullets">
+                    @foreach ($briefMissing as $requirement)
+                        <li>ينقصك: {{ $requirement['label'] }}</li>
+                    @endforeach
+                </ul>
+            @endif
+            <a class="btn btn--primary" href="{{ route('app.projects.agency-reports.index', $agencyReport->project) }}">أكمل البنود الناقصة الآن</a>
+        </section>
+    @endunless
 
     @if ($freshness['is_stale'])
         <section class="card card--warn">
