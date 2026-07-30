@@ -92,6 +92,7 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
                 ),
                 const SizedBox(height: 24),
                 _conflicts(context, data.conflicts),
+                _impact(context, data.impact),
                 _trend(context, data),
                 _benchmark(context, data.benchmark),
                 _axes(context, data.maturity),
@@ -191,6 +192,60 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  /// أثر الإصلاحات: هل تحرّكت الدرجة بعد ما غيّره صاحب النشاط؟
+  ///
+  /// الحركة مرصودة والنسبة فرضية (§٤.١). الملاحظة تُعرض بجوار الرقم بنصّها من
+  /// الخادم لا بإعادة صياغة. يختفي القسم حتى تنضج نافذة ٤ أسابيع.
+  Widget _impact(BuildContext context, List<ImpactCard> impact) {
+    if (impact.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('أثر إصلاحاتك', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        const Text('قارنّا درجتك أربعة أسابيع قبل كل تغيير وبعده.'),
+        const SizedBox(height: 8),
+        for (final card in impact) _impactTile(context, card),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _impactTile(BuildContext context, ImpactCard card) {
+    final delta = card.signalDelta;
+    final sign = delta != null && delta > 0 ? '+' : '';
+
+    return BrandCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(child: Text(card.intervention)),
+              Chip(
+                label: const Text('فرضية'),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'قبل ${card.signalBefore} · بعد ${card.signalAfter} · '
+            'الفرق $sign${card.signalDelta} نقطة',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            card.attributionNote,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );

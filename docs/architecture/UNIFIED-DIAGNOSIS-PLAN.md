@@ -228,6 +228,8 @@ consistency       = ظهور السؤال الواحد ÷ محاولاته
 citation_rate     = مرات ربط الموقع كمصدر ÷ مرات الذكر
 owned_ratio       = جهات الاتصال المملوكة ÷ إجمالي الجمهور المتاح
 readiness_score   = درجة التدقيق التقني (0–100)
+signal_delta      = متوسط الإشارة بعد الإصلاح − متوسطها قبله (نافذتا ٤ أسابيع)
+                    الحركة derived، ونسبتها للإصلاح inferred — SPEC-advanced-impact
 ```
 
 `mention_rate` و`share_of_voice` لا يُعرضان معًا بلا تسميتين ظاهرتين.

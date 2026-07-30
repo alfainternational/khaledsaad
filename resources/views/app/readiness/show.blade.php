@@ -182,6 +182,42 @@
         </p>
     </section>
 
+    {{--
+        أثر الإصلاحات: هل تحرّكت درجتك بعد ما غيّرته؟ (SPEC-advanced-impact)
+
+        القاعدة الحاكمة §٤.١: الحركة مرصودة والنسبة فرضية. لا جملة سببية بصيغة
+        الجزم — «تحرّكت بعد إصلاحك» لا «إصلاحك حرّكها». القسم يختفي حتى تنضج
+        نافذة ٤ أسابيع، وغيابه صحيح لا نقص.
+    --}}
+    @if (! empty($impact))
+        <section class="card">
+            <h2>أثر إصلاحاتك</h2>
+            <p class="muted">
+                قارنّا درجتك في الأربعة أسابيع قبل كل تغيير أجريته وبعده.
+                <span class="tag tag--assumption">فرضية</span>
+                النسبة إلى إصلاحك تزامنٌ زمنيّ لا سبب مثبت.
+            </p>
+
+            @foreach ($impact as $card)
+                <div class="impact-row">
+                    <h3 class="review-step">{{ $card['intervention'] }}</h3>
+                    <ul class="kv">
+                        <li><span>قبل</span> <strong>{{ $card['signal_before'] }}/100</strong></li>
+                        <li><span>بعد</span> <strong>{{ $card['signal_after'] }}/100</strong></li>
+                        <li>
+                            <span>الفرق</span>
+                            <strong>
+                                @php($delta = $card['signal_delta'])
+                                {{ $delta > 0 ? '+'.$delta : $delta }} نقطة
+                            </strong>
+                        </li>
+                    </ul>
+                    <p class="muted">{{ $card['attribution_note'] }}</p>
+                </div>
+            @endforeach
+        </section>
+    @endif
+
     <section class="card">
         <h2>سجل الزحف</h2>
 

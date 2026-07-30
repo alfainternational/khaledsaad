@@ -66,7 +66,7 @@ class ReadinessApiParityTest extends TestCase
             ->assertOk()
             ->json('data');
 
-        foreach (['maturity', 'readiness', 'fixes', 'history', 'benchmark', 'conflicts'] as $section) {
+        foreach (['maturity', 'readiness', 'fixes', 'history', 'benchmark', 'conflicts', 'impact'] as $section) {
             $this->assertArrayHasKey(
                 $section,
                 $data,

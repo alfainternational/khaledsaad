@@ -15,6 +15,7 @@ use App\Modules\Diagnosis\IndustryBenchmark;
 use App\Modules\Diagnosis\MaturityAggregator;
 use App\Modules\Diagnosis\ScoreHistory;
 use App\Modules\Intake\IntakeCollector;
+use App\Modules\Measurement\ImpactAnalyzer;
 use App\Modules\Reporting\ReadinessCardPdfGenerator;
 use App\Policies\ProjectOwnership;
 use Illuminate\Http\RedirectResponse;
@@ -43,6 +44,7 @@ class ReadinessController extends Controller
         private readonly ScoreHistory $history,
         private readonly IndustryBenchmark $benchmark,
         private readonly BrainReader $brain,
+        private readonly ImpactAnalyzer $impact,
     ) {}
 
     public function show(Request $request, Project $project): View
@@ -83,6 +85,13 @@ class ReadinessController extends Controller
              * ولا يراها أحد — أي أن «تُعلَّم للمراجعة» لم تكن تعني شيئًا.
              */
             'conflicts' => $this->brain->openConflictsWithValues($project),
+
+            /*
+             * أثر الإصلاحات: هل تحرّكت درجة النضج بعد ما غيّره صاحب النشاط؟
+             * حركةٌ مرصودة ونسبتها إليه فرضية (SPEC-advanced-impact §٢). غالبًا
+             * فارغة حتى تنضج نافذة ٤ أسابيع، وفراغها صحيح لا عطل.
+             */
+            'impact' => $this->impact->forProject($project),
         ]);
     }
 

@@ -14,6 +14,7 @@ class ReadinessOverview {
     required this.plottable,
     required this.benchmark,
     required this.conflicts,
+    required this.impact,
   });
 
   factory ReadinessOverview.fromJson(Map<String, dynamic> json) {
@@ -30,6 +31,9 @@ class ReadinessOverview {
       conflicts: _list(
         json['conflicts'],
       ).map(BrainConflict.fromJson).toList(growable: false),
+      impact: _list(
+        json['impact'],
+      ).map(ImpactCard.fromJson).toList(growable: false),
     );
   }
 
@@ -48,6 +52,36 @@ class ReadinessOverview {
   final IndustryBenchmarkView benchmark;
 
   final List<BrainConflict> conflicts;
+
+  final List<ImpactCard> impact;
+}
+
+/// أثر إصلاح واحد على درجة النضج — نظير `ImpactWindow::toArray`.
+///
+/// الحركة `signalDelta` مرصودة، ونسبتها إلى الإصلاح فرضية لا سبب مثبت. تُحمَل
+/// الملاحظة معها لتُعرض بجوار الرقم، لا تُعاد صياغتها في التطبيق (§٤.١).
+class ImpactCard {
+  const ImpactCard({
+    required this.intervention,
+    required this.signalBefore,
+    required this.signalAfter,
+    required this.signalDelta,
+    required this.attributionNote,
+  });
+
+  factory ImpactCard.fromJson(Map<String, dynamic> json) => ImpactCard(
+    intervention: json['intervention']?.toString() ?? '',
+    signalBefore: (json['signal_before'] as num?)?.toDouble(),
+    signalAfter: (json['signal_after'] as num?)?.toDouble(),
+    signalDelta: (json['signal_delta'] as num?)?.toDouble(),
+    attributionNote: json['attribution_note']?.toString() ?? '',
+  );
+
+  final String intervention;
+  final double? signalBefore;
+  final double? signalAfter;
+  final double? signalDelta;
+  final String attributionNote;
 }
 
 /// نقطة واحدة في السلسلة الزمنية لدرجة النضج.

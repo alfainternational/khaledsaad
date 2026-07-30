@@ -13,6 +13,7 @@ use App\Modules\Diagnosis\IndustryBenchmark;
 use App\Modules\Diagnosis\MaturityAggregator;
 use App\Modules\Diagnosis\ScoreHistory;
 use App\Modules\Intake\IntakeCollector;
+use App\Modules\Measurement\ImpactAnalyzer;
 use App\Policies\ProjectOwnership;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,6 +45,7 @@ class ReadinessController extends Controller
         private readonly ScoreHistory $history,
         private readonly IndustryBenchmark $benchmark,
         private readonly BrainReader $brain,
+        private readonly ImpactAnalyzer $impact,
     ) {}
 
     /**
@@ -70,6 +72,9 @@ class ReadinessController extends Controller
                 ],
                 'benchmark' => $this->benchmark->for($project),
                 'conflicts' => $this->brain->openConflictsWithValues($project),
+
+                // أثر الإصلاحات: حركةٌ مرصودة ونسبتها فرضية (SPEC-advanced-impact).
+                'impact' => $this->impact->forProject($project),
             ],
         ], options: self::JSON);
     }

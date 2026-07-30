@@ -51,6 +51,15 @@ final class MetricKey
     public const INPUT_FITNESS = 'input_fitness';
 
     /**
+     * فرق متوسط الإشارة بين نافذتي ما قبل الإصلاح وما بعده (§٤.٢).
+     *
+     * `derived` لا `measured`: حسابٌ فوق إشارات مرصودة. والأخطر أن **نسبته
+     * إلى الإصلاح `inferred`** — تزامنٌ زمنيّ لا سببية. عرضه بصيغة الجزم
+     * «إصلاحك رفع الزحف» يخالف §٤.١؛ الصيغة الصحيحة «ارتفع الزحف بعد إصلاحك».
+     */
+    public const SIGNAL_DELTA = 'signal_delta';
+
+    /**
      * مقاييس لا يجوز عرضها في شاشة واحدة بلا تسميتين ظاهرتين.
      *
      * mention_rate وshare_of_voice يُقرآن كنسبتين متشابهتين ومقاماهما
@@ -84,6 +93,7 @@ final class MetricKey
             self::OWNED_RATIO,
             self::READINESS_SCORE,
             self::INPUT_FITNESS,
+            self::SIGNAL_DELTA,
         ];
     }
 

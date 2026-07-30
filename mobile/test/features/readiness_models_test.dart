@@ -76,6 +76,19 @@ void main() {
         ],
       },
     ],
+    'impact': [
+      {
+        'signal': 'maturity_score',
+        'intervention': 'حدّثت: geography',
+        'intervention_at': '2026-06-20T00:00:00+00:00',
+        'signal_before': 50.0,
+        'signal_after': 64.0,
+        'signal_delta': 14.0,
+        'delta_evidence': 'derived',
+        'attribution_evidence': 'inferred',
+        'attribution_note': 'تزامنٌ زمنيّ لا سبب مثبت: تحرّكت الإشارة بعد إصلاحك، وقد يكون لسبب آخر.',
+      },
+    ],
   };
 
   test('العقد يصل بأقسامه الخمسة لا بثلاثة', () {
@@ -86,6 +99,16 @@ void main() {
     expect(overview.history, hasLength(2));
     expect(overview.benchmark.available, isTrue);
     expect(overview.conflicts, hasLength(1));
+    expect(overview.impact, hasLength(1));
+  });
+
+  test('بطاقة الأثر تحمل الحركة وملاحظة أنها فرضية لا سبب', () {
+    final card = ReadinessOverview.fromJson(payload).impact.single;
+
+    expect(card.intervention, 'حدّثت: geography');
+    expect(card.signalDelta, 14.0);
+    // النسبة إلى الإصلاح تصل كملاحظة لا كجزم (§٤.١).
+    expect(card.attributionNote, contains('لا سبب مثبت'));
   });
 
   test('التعارض يحمل قولَي المصدرين لا وجودَه وحده', () {
