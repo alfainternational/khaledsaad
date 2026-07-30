@@ -48,8 +48,16 @@ class ReportSemanticGuard
             $seen[$fingerprint] = true;
             $evidence = trim((string) ($finding['evidence'] ?? ''));
             $supported = $evidence !== '' && Str::contains($source, $this->normalise($evidence));
+            // فحص الأرقام يقتصر على حقول الادعاء (ما يُقدَّم كحقيقة عن النشاط):
+            // العنوان والوصف والدليل. أرقام التوصيات أهداف فعل توجيهية مشروعة
+            // («انشر 3 مرات»، «استهدف 30 عميلًا») لا ادعاءات، فلا تُسقط الدليل.
+            $claim = $this->searchable([
+                'title' => $finding['title'] ?? '',
+                'description' => $finding['description'] ?? '',
+                'evidence' => $finding['evidence'] ?? '',
+            ]);
             $unsupportedNumbers = array_diff(
-                $this->numbers($this->searchable($finding)),
+                $this->numbers($claim),
                 $allowedNumbers,
             );
 

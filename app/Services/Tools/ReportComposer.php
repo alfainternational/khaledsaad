@@ -83,6 +83,9 @@ class ReportComposer
             $this->writeSections($report, $sections);
             $this->writeCompetitorSection($report, $run, $competitorView);
             $this->writeFindings($report, $findings);
+            // ضمان حتمي: كل نتيجة افتراضية يظهر أساسها في assumptions، بعد أن
+            // يُعرف القسر النهائي لـ is_assumption داخل writeFindings.
+            $this->reconcileAssumptions($report);
 
             $run->forceFill([
                 'confidence' => $synthesis['confidence'] ?? $this->inferredConfidence($report),
@@ -287,15 +290,25 @@ class ReportComposer
     private function writeFindings(Report $report, array $findings): void
     {
         foreach (array_values($findings) as $index => $payload) {
+            // BR-007: غياب الدليل يجعلها افتراضًا حتى لو ادعى النموذج غير ذلك.
+            $isAssumption = (bool) ($payload['is_assumption'] ?? false) || blank($payload['evidence'] ?? null);
+            $confidence = (int) ($payload['confidence'] ?? 50);
+
+            // اتساق مع rubric المعايير: الفرضية لا تتجاوز ثقتها 75. يُطبَّق هنا
+            // لأنه آخر كاتب — يغطّي ما فرضه الحارس الدلالي وما فرضه BR-007 معًا،
+            // فلا يصل للعميل «فرضية بثقة 95».
+            if ($isAssumption) {
+                $confidence = min($confidence, 75);
+            }
+
             $finding = $report->findings()->create([
                 'category' => $payload['category'] ?? 'عام',
                 'title' => $payload['title'],
                 'description' => $payload['description'],
                 'severity' => $payload['severity'] ?? 'medium',
                 'evidence' => $payload['evidence'] ?? null,
-                'confidence' => (int) ($payload['confidence'] ?? 50),
-                // BR-007: غياب الدليل يجعلها افتراضًا حتى لو ادعى النموذج غير ذلك.
-                'is_assumption' => (bool) ($payload['is_assumption'] ?? false) || blank($payload['evidence'] ?? null),
+                'confidence' => $confidence,
+                'is_assumption' => $isAssumption,
                 'sort_order' => $index,
             ]);
 
@@ -354,6 +367,46 @@ class ReportComposer
         $penalty = $finding->is_assumption ? 12 : 0;
 
         return max(1, min(100, $impact + $effort + $severity - $penalty));
+    }
+
+    /**
+     * ضمان حتمي لـ BR-007: كل نتيجة is_assumption=true يظهر أساسها في assumptions.
+     *
+     * النموذج قد يعلّم نتيجة افتراضًا دون ذكر أساسها، أو يقسرها BR-007 افتراضًا
+     * لغياب الدليل. نغلق الفجوة بعد كتابة النتائج: نحقن سطر أساس لكل افتراض غير
+     * مذكور، محترمين حدّ المخطط (maxItems:10) وبلا تكرار.
+     */
+    private function reconcileAssumptions(Report $report): void
+    {
+        $assumptions = $report->assumptions ?? [];
+
+        $pending = $report->findings()
+            ->where('is_assumption', true)
+            ->orderBy('sort_order')
+            ->get(['title', 'description']);
+
+        foreach ($pending as $finding) {
+            if (count($assumptions) >= 10) {
+                break; // احترام maxItems:10 — لا نتجاوز الحدّ
+            }
+
+            // أساس النتيجة مذكور أصلًا إن ورد عنوانها في أي سطر افتراض قائم.
+            $cited = collect($assumptions)->contains(
+                fn (string $line) => mb_strpos($line, (string) $finding->title) !== false,
+            );
+
+            if ($cited) {
+                continue;
+            }
+
+            $assumptions[] = "افتراض بلا سند صريح: {$finding->title} — {$finding->description}";
+        }
+
+        $assumptions = array_values(array_unique($assumptions));
+
+        if ($assumptions !== ($report->assumptions ?? [])) {
+            $report->forceFill(['assumptions' => $assumptions])->save();
+        }
     }
 
     /**

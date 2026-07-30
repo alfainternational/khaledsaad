@@ -82,6 +82,18 @@ class ToolRunPipelineTest extends TestCase
         $this->assertNotNull($withoutEvidence);
         $this->assertTrue($withoutEvidence->is_assumption);
         $this->assertSame(2, $report->evidenceBackedFindings()->count());
+
+        // ضمان BR-007 الحتمي: أساس النتيجة الافتراضية يظهر في assumptions،
+        // لأن النموذج لم يذكره في مصفوفة assumptions المُعادة.
+        $this->assertTrue(
+            collect($report->assumptions ?? [])->contains(
+                fn (string $line) => str_contains($line, 'نتيجة بلا دليل'),
+            ),
+            'كل نتيجة افتراضية يجب أن يظهر أساسها في assumptions بعد التركيب.',
+        );
+
+        // احترام maxItems:10 — لا يتجاوز عدد الافتراضات حدّ المخطط.
+        $this->assertLessThanOrEqual(10, count($report->assumptions ?? []));
     }
 
     #[Test]
