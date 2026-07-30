@@ -53,6 +53,7 @@ class ToolRunPipeline
         private readonly CompetitorRegistry $competitors,
         private readonly ReportSemanticGuard $semanticGuard,
         private readonly IntakeCollector $intake,
+        private readonly DeterministicInsights $deterministic,
     ) {}
 
     public static function seedStages(ToolRun $run): void
@@ -356,15 +357,31 @@ class ToolRunPipeline
      */
     private function synthesis(ToolRun $run, array $snapshot, array $sections, ?array $consistency, array $baseline): array
     {
+        // أضعف بنود الدرجة أولًا (الأدنى نقاطًا) لتنطلق النتائج منها لا من ترتيب حر.
+        $breakdown = collect($baseline['breakdown'] ?? [])->sortBy('points')->values()->all();
+
+        $messages = $this->messages($run, 'synthesis', [
+            'snapshot' => $snapshot,
+            'sections' => $sections,
+            'consistency' => $consistency,
+            'baseline' => $baseline,
+            'breakdown' => $breakdown,
+            // مرساة النصيحة المُنسَّقة لأضعف البنود، من نفس مصدر الأرضية الحتمية.
+            'weak_advice' => $this->deterministic->anchors($run, $baseline),
+            // منافسو المشروع بالاسم: التحليل يقارن بهم لا بمنافسة مجرّدة.
+            'competitors' => $this->competitorContext($run),
+        ]);
+
+        // بند التركيب: يوضع أخيرًا حيث انتباه النموذج أقوى.
+        $messages[] = [
+            'role' => 'user',
+            'content' => 'ابدأ من الأضعف: رتّب نتائجك انطلاقًا من أدنى بنود breakdown نقاطًا (الأثقل وزنًا أولًا)، '
+                .'لا بترتيبك الحرّ. لكل بند ضعيف مُرِّر إليك ضمن weak_advice، ابنِ توصيتك على مرساته وكيّف صياغتها '
+                .'لإجابات العميل تحديدًا، دون أن تناقض اتجاهها. لا تُعِد اختراع النصيحة من الصفر حين تتوفّر مرساة.',
+        ];
+
         return $this->runner->run(AIRequest::json(
-            messages: $this->messages($run, 'synthesis', [
-                'snapshot' => $snapshot,
-                'sections' => $sections,
-                'consistency' => $consistency,
-                'baseline' => $baseline,
-                // منافسو المشروع بالاسم: التحليل يقارن بهم لا بمنافسة مجرّدة.
-                'competitors' => $this->competitorContext($run),
-            ]),
+            messages: $messages,
             schema: $run->toolVersion->output_schema,
             tier: 'advanced',
             stage: 'synthesis',

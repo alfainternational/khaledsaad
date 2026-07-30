@@ -44,6 +44,33 @@ class DeterministicInsights
     }
 
     /**
+     * مراسي مرحلة التركيب: أضعف بنود الدرجة (الأدنى نقاطًا) مع نصيحتها المُنسَّقة.
+     *
+     * تُمرَّر إلى مرحلة الخلاصة ليبني الذكاء توصياته على مواطن الضعف الفعلية لا
+     * على ترتيب حر، من نفس مصدر weak_advice الذي تقرأه الأرضية الحتمية — لا مصدر ثانٍ.
+     *
+     * @param  array{breakdown: array<int, array<string, mixed>>}  $baseline
+     * @return array<int, array<string, mixed>>
+     */
+    public function anchors(ToolRun $run, array $baseline, int $limit = 3): array
+    {
+        $advice = $this->adviceMap($run);
+
+        return collect($baseline['breakdown'] ?? [])
+            ->sortBy('points')
+            ->take($limit)
+            ->map(fn (array $row) => [
+                'field' => $row['field'] ?? null,
+                'label' => $row['label'] ?? ($row['field'] ?? null),
+                'points' => $row['points'] ?? null,
+                'weight' => $row['weight'] ?? null,
+                'advice' => $advice[$row['field'] ?? ''] ?? null,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * @param  array<string, mixed>  $row
      * @param  array{title?: string, description?: string, recommendation?: string, kpi?: string}|null  $advice
      * @return array<string, mixed>
