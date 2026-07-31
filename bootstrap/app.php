@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // «سجّل خروجي من الأجهزة الأخرى» (بند ٢٣) يحتاج هذا الحارس ليُبطل
         // الجلسات الأخرى فعليًا عند إعادة توقيع كلمة المرور.
         $middleware->web(append: [
-            \Illuminate\Session\Middleware\AuthenticateSession::class,
+            \App\Http\Middleware\AuthenticateBrowserSession::class,
         ]);
 
         // إشعارات البوابات تصل من خوادمها بلا جلسة ولا رمز CSRF؛

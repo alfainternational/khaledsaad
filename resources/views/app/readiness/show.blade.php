@@ -207,8 +207,7 @@
                         <li>
                             <span>الفرق</span>
                             <strong>
-                                @php($delta = $card['signal_delta'])
-                                {{ $delta > 0 ? '+'.$delta : $delta }} نقطة
+                                {{ $card['signal_delta'] > 0 ? '+'.$card['signal_delta'] : $card['signal_delta'] }} نقطة
                             </strong>
                         </li>
                     </ul>

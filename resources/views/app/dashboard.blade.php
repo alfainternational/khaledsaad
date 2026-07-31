@@ -64,7 +64,7 @@
         </section>
         @else
         <section aria-labelledby="projects-heading">
-            <h2 id="projects-heading" class="section-title" data-tour="هنا مشاريعك ودرجة كل واحد منها — الدرجة تتحدث كلما شخّصت.">مشاريعك</h2>
+            <h2 data-tour="هنا مشاريعك ودرجة كل واحد منها — الدرجة تتحدث كلما شخّصت." id="projects-heading" class="section-title">مشاريعك</h2>
             <div class="card-grid">
                 @foreach ($projects as $project)
                     <a class="card card--link" href="{{ route('app.projects.show', $project['slug']) }}">
@@ -111,7 +111,7 @@
     </div>
 
     <section aria-labelledby="tools-heading">
-        <h2 id="tools-heading" class="section-title" data-tour="اختر أول تشخيص من هنا — نحو 10 دقائق وتخرج بدرجة وفجوات واضحة.">تشخيصات مقترحة للبدء</h2>
+        <h2 data-tour="اختر أول تشخيص من هنا — نحو 10 دقائق وتخرج بدرجة وفجوات واضحة." id="tools-heading" class="section-title">تشخيصات مقترحة للبدء</h2>
         <div class="card-grid">
             @foreach ($suggested_tools as $tool)
                 <a class="card card--link" href="{{ route('app.tools.show', $tool['key']) }}">
