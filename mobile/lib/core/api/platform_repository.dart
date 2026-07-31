@@ -384,6 +384,90 @@ class PlatformRepository {
     );
   }
 
+  // --- محفظة الوكالة (نطاقها مساحة العمل كلها) ---
+
+  Future<Map<String, dynamic>> portfolio() async {
+    final response = await _api.get('/portfolio');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  // --- موجز التكليف: قراءةً وحفظًا ---
+
+  Future<Map<String, dynamic>> agencyBrief(String projectSlug) async {
+    final response = await _api.get('/projects/$projectSlug/agency-brief');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> saveAgencyBrief(
+    String projectSlug,
+    Map<String, dynamic> brief,
+  ) async {
+    final response = await _api.post(
+      '/projects/$projectSlug/agency-brief',
+      {'brief': brief},
+    );
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  // --- محرّر مخططات الاستشارة (آدمن) ---
+
+  Future<List<dynamic>> adminConsultations() async {
+    final response = await _api.get('/admin/consultations');
+
+    return List<dynamic>.from(response['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> adminConsultationVersion(int versionId) async {
+    final response =
+        await _api.get('/admin/consultations/versions/$versionId');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> adminCreateConsultationDraft(
+    int blueprintId,
+  ) async {
+    final response = await _api
+        .post('/admin/consultations/blueprints/$blueprintId/draft');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> adminUpdateConsultationQuestion(
+    int versionId,
+    int questionId,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _api.put(
+      '/admin/consultations/versions/$versionId/questions/$questionId',
+      data,
+    );
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> adminPublishConsultation(int versionId) async {
+    final response = await _api
+        .post('/admin/consultations/versions/$versionId/publish');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> adminSimulateConsultation(
+    int versionId,
+    String projectSlug,
+  ) async {
+    final response = await _api.post(
+      '/admin/consultations/versions/$versionId/simulate',
+      {'project': projectSlug},
+    );
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
   // --- الأدوات ---
 
   Future<List<ToolCard>> tools() async {

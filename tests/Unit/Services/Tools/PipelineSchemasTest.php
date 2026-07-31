@@ -35,4 +35,39 @@ class PipelineSchemasTest extends TestCase
         $this->assertStringContainsString('خاطب صاحب المشروع مباشرة بصيغة «أنت»', $synthesis);
         $this->assertStringContainsString('لا تعتبر الملف كاملًا إذا اضطر صاحبه للعودة', $synthesis);
     }
+
+    #[Test]
+    public function both_generation_paths_share_the_exact_same_classification_rubric(): void
+    {
+        // معيار واحد بنصّ واحد: أي انجراف بين المسار الآلي واليدوي يكسر
+        // هذا الاختبار قبل أن يكسر اتساق التقارير.
+        $rubric = PipelineSchemas::classificationRubric();
+
+        $this->assertStringContainsString($rubric, PipelineSchemas::systemPreamble());
+
+        $instructions = new \ReflectionMethod(\App\Services\Tools\ManualReportService::class, 'instructions');
+        $service = (new \ReflectionClass(\App\Services\Tools\ManualReportService::class))
+            ->newInstanceWithoutConstructor();
+
+        $this->assertStringContainsString($rubric, $instructions->invoke($service));
+    }
+
+    #[Test]
+    public function the_rubric_keeps_every_criterion_the_manual_path_used_to_lose(): void
+    {
+        $rubric = PipelineSchemas::classificationRubric();
+
+        foreach ([
+            'الخطورة severity',
+            'الأثر impact',
+            'الجهد effort',
+            'الثقة confidence',
+            'حدود القدرة المالية',
+            'اتساق الاستنتاج',
+            'المدخلات المعطوبة',
+            'حالات الغياب الثلاث',
+        ] as $criterion) {
+            $this->assertStringContainsString($criterion, $rubric);
+        }
+    }
 }

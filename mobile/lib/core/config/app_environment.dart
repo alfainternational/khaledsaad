@@ -25,5 +25,5 @@ abstract final class AppEnvironment {
   /// الخادم يقارنه بـ`mobile.min_supported_build` ليردّ رسالة تحديث مفهومة
   /// بدل أن ينكسر العقد صامتًا عند نسخة قديمة. يجب أن يطابق `build` في
   /// `config/mobile.php` و`pubspec.yaml` عند كل إصدار.
-  static const int appBuild = int.fromEnvironment('APP_BUILD', defaultValue: 9);
+  static const int appBuild = int.fromEnvironment('APP_BUILD', defaultValue: 10);
 }

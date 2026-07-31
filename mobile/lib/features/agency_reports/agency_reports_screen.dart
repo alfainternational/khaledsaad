@@ -4,6 +4,7 @@ import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import 'agency_brief_edit_screen.dart';
 import 'agency_report_screen.dart';
 import 'models.dart';
 
@@ -28,7 +29,36 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
     widget.projectSlug,
   );
   bool _generating = false;
+  bool _sweeping = false;
   final Map<String, String> _visibility = const {};
+
+  /// التشخيص الشامل بأمر واحد: يشغّل الأدوات الناقصة كلها ثم يبني المستند —
+  /// نظير زر الويب. يُدخل المهام في الطابور ويعود، فتُتابَع النتيجة بعد قليل.
+  Future<void> _sweep() async {
+    setState(() => _sweeping = true);
+
+    try {
+      await widget.repository.runFullDiagnosis(widget.projectSlug);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'بدأ التشخيص الشامل — نجهّز أدواتك ثم المستند. تابع بعد قليل.',
+          ),
+        ),
+      );
+      _reload();
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _sweeping = false);
+    }
+  }
 
   void _reload() {
     setState(
@@ -71,7 +101,24 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       family: AdaptivePageFamily.operational,
-      appBar: AppBar(title: const Text('تقارير مشروعك')),
+      appBar: AppBar(
+        title: const Text('تقارير مشروعك'),
+        actions: [
+          IconButton(
+            tooltip: 'تحرير موجز التكليف',
+            icon: const Icon(Icons.edit_note_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => AgencyBriefEditScreen(
+                  repository: widget.repository,
+                  projectSlug: widget.projectSlug,
+                  projectName: widget.projectName,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: FutureBuilder<AgencyReportIndex>(
         future: _future,
         builder: (context, snapshot) => AsyncView(
@@ -133,6 +180,23 @@ class _AgencyReportsScreenState extends State<AgencyReportsScreen> {
                           const SizedBox(height: 6),
                           for (final tool in index.readiness.missingCore)
                             Text('• ${tool.title}'),
+                          const SizedBox(height: 12),
+                          // بدل إكمالها يدويًا واحدة واحدة: زرٌّ يشغّلها كلها ثم
+                          // يبني المستند — نظير التشخيص الشامل في الويب.
+                          FilledButton.icon(
+                            onPressed: _sweeping ? null : _sweep,
+                            icon: _sweeping
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.auto_fix_high),
+                            label: const Text('شخّص كل شيء تلقائيًا'),
+                          ),
                         ],
                       ),
               ),

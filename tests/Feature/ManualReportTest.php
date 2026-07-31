@@ -80,6 +80,28 @@ class ManualReportTest extends TestCase
     }
 
     #[Test]
+    public function the_manual_path_scores_and_exports_only_stage_applicable_fields(): void
+    {
+        [, $run] = $this->completedRun();
+
+        // مشروع في مرحلة فكرة: أسئلة التشغيل (القنوات النشطة) لا تُعرض عليه،
+        // فلا يجوز أن تدخل حزمة المراجع ولا أن تسحب درجته الحتمية.
+        $run->project->forceFill(['stage' => 'idea'])->save();
+        $run->refresh();
+
+        $package = app(ManualReportService::class)->exportPackage($run);
+
+        $questionKeys = collect($package['questions_and_answers'])->pluck('key');
+        $this->assertFalse($questionKeys->contains('active_channels'));
+
+        $scoredFields = collect($package['deterministic_score']['breakdown'])->pluck('field');
+        $this->assertFalse($scoredFields->contains('active_channels'));
+
+        // المسار التلقائي يستبعدها أيضًا — العدالة نفسها على الطرفين.
+        $this->assertNotEmpty($scoredFields);
+    }
+
+    #[Test]
     public function importing_a_valid_payload_builds_the_same_report_marked_as_human_reviewed(): void
     {
         [$user, $run] = $this->completedRun();

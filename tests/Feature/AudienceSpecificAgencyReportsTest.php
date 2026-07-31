@@ -346,6 +346,44 @@ class AudienceSpecificAgencyReportsTest extends TestCase
     }
 
     /** @return array{0: User, 1: Project} */
+    #[Test]
+    public function the_api_exposes_the_workspace_portfolio_for_the_app(): void
+    {
+        [$user, $project] = $this->project();
+        $this->completeCoreReports($project, $user);
+        Sanctum::actingAs($user);
+
+        $this->getJson(route('api.v1.portfolio'))
+            ->assertOk()
+            ->assertJsonPath('data.workspace.id', $user->primaryWorkspace()->id)
+            ->assertJsonPath('data.projects.0.project.slug', $project->slug);
+    }
+
+    #[Test]
+    public function the_api_loads_and_saves_the_agency_brief_for_the_app(): void
+    {
+        [$user, $project] = $this->project();
+        Sanctum::actingAs($user);
+
+        $this->getJson(route('api.v1.projects.agency-brief.show', $project))
+            ->assertOk()
+            ->assertJsonPath('data.readiness.is_ready', false)
+            ->assertJsonStructure(['data' => ['groups', 'saved', 'readiness']]);
+
+        $this->postJson(route('api.v1.projects.agency-brief.save', $project), [
+            'brief' => [
+                'primary_goal' => 'sales',
+                'success_metric' => 'مضاعفة الطلبات الشهرية خلال تسعين يومًا',
+            ],
+        ])->assertOk()->assertJsonPath('data.readiness.missing_critical', fn ($missing) => is_array($missing));
+
+        // primary_goal المحفوظ من الموجز يبلغ الدماغ (إسقاط project_answers).
+        $this->assertDatabaseHas('project_answers', [
+            'project_id' => $project->id,
+            'field_key' => 'primary_goal',
+        ]);
+    }
+
     private function project(): array
     {
         $user = User::factory()->create();

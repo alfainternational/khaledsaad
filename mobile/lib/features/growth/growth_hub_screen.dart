@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
@@ -60,6 +64,27 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(exception.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// تنزيل ملف llms.txt وفتحه — الملف الذي يقرأه محرّك الإجابة عن موقعك.
+  /// نظير زر «نزّل llms.txt» في الويب.
+  Future<void> _downloadLlms() async {
+    setState(() => _busy = true);
+    try {
+      final bytes = await widget.repository.geoLlms(widget.projectSlug);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/llms.txt');
+      await file.writeAsBytes(bytes, flush: true);
+      await OpenFilex.open(file.path);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -247,15 +272,26 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
               builder: (context, snapshot) => _Section(
                 title: 'الظهور في محركات الإجابة',
                 error: snapshot.error,
-                action: FilledButton.tonal(
-                  onPressed: _busy
-                      ? null
-                      : () => _action(
-                          () =>
-                              widget.repository.generateGeo(widget.projectSlug),
-                          success: 'تحدثت حزمة الظهور.',
-                        ),
-                  child: const Text('إنشاء أو تحديث'),
+                action: Wrap(
+                  spacing: 6,
+                  children: [
+                    FilledButton.tonal(
+                      onPressed: _busy
+                          ? null
+                          : () => _action(
+                              () => widget.repository
+                                  .generateGeo(widget.projectSlug),
+                              success: 'تحدثت حزمة الظهور.',
+                            ),
+                      child: const Text('إنشاء أو تحديث'),
+                    ),
+                    // تنزيل الملف الذي يقرأه محرّك الإجابة عن موقعك.
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _downloadLlms,
+                      icon: const Icon(Icons.download_outlined, size: 18),
+                      label: const Text('نزّل llms.txt'),
+                    ),
+                  ],
                 ),
                 child: snapshot.hasData
                     ? _MapSummary(data: snapshot.data!)

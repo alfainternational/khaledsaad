@@ -47,7 +47,7 @@ class ReportSemanticGuard
 
             $seen[$fingerprint] = true;
             $evidence = trim((string) ($finding['evidence'] ?? ''));
-            $supported = $evidence !== '' && Str::contains($source, $this->normalise($evidence));
+            $supported = $this->evidenceSupported($evidence, $source);
             // فحص الأرقام يقتصر على حقول الادعاء (ما يُقدَّم كحقيقة عن النشاط):
             // العنوان والوصف والدليل. أرقام التوصيات أهداف فعل توجيهية مشروعة
             // («انشر 3 مرات»، «استهدف 30 عميلًا») لا ادعاءات، فلا تُسقط الدليل.
@@ -108,6 +108,107 @@ class ReportSemanticGuard
         }
 
         return $synthesis;
+    }
+
+    /**
+     * كلمات وظيفية لا تحمل مضمونًا — لا تُحسب في تغطية الدليل.
+     * مطبَّعة مسبقًا بنفس تطبيع المقارنة (بلا أل التعريف ولا همزات).
+     */
+    private const STOPWORDS = [
+        'من', 'في', 'علي', 'عن', 'الي', 'ان', 'كان', 'كانت', 'مع', 'هذا', 'هذه',
+        'ذلك', 'تلك', 'التي', 'الذي', 'ما', 'لا', 'لم', 'لن', 'هو', 'هي', 'هم',
+        'انت', 'انا', 'نحن', 'ثم', 'حتي', 'قد', 'لقد', 'كل', 'بعض', 'غير', 'بين',
+        'عند', 'او', 'اذا', 'لكن', 'كما', 'فيه', 'فيها', 'بها', 'به', 'له', 'لها',
+        'لديه', 'لديك', 'عنده', 'عندك', 'اجاب', 'قال', 'ذكر', 'كتب',
+        // أفعال الإسناد التي يفتتح بها النموذج اقتباسه — تأطير لا مضمون.
+        'ذكرت', 'قلت', 'اجبت', 'كتبت', 'وصفت', 'اخبرتنا', 'اشرت',
+    ];
+
+    /**
+     * الدليل مدعوم إن ظهر حرفيًا في المصدر، أو إن كانت جُلّ كلماته الدالة
+     * موجودة فيه بعد تطبيع عربي — فإعادة الصياغة الأمينة («المقهى» بدل
+     * «مقهى»، همزة مختلفة، تقديم وتأخير) لا تُسقط نتيجة صادقة، بينما
+     * الدليل المختلَق تبقى كلماته غائبة عن المصدر فيسقط كما كان.
+     */
+    private function evidenceSupported(string $evidence, string $source): bool
+    {
+        if ($evidence === '') {
+            return false;
+        }
+
+        if (Str::contains($source, $this->normalise($evidence))) {
+            return true;
+        }
+
+        $needle = $this->arabify($this->normalise($evidence));
+        $haystack = $this->arabify($source);
+
+        if ($needle !== '' && Str::contains($haystack, $needle)) {
+            return true;
+        }
+
+        $tokens = array_values(array_diff($this->contentTokens($needle), self::STOPWORDS));
+
+        // أقل من كلمتين دالتين لا تكفي حكمًا — نبقى على السلوك المحافظ.
+        if (count($tokens) < 2) {
+            return false;
+        }
+
+        $sourceTokens = $this->contentTokens($haystack);
+        $sourceSet = array_flip($sourceTokens);
+        $found = count(array_filter(
+            $tokens,
+            fn (string $token) => isset($sourceSet[$token]) || $this->tokenNearlyMatches($token, $sourceTokens),
+        ));
+
+        return $found / count($tokens) >= 0.7;
+    }
+
+    /**
+     * تسامح لاحقات خفيف: «زوار» و«زوارا» كلمة واحدة — تطابق بادئة مشتركة
+     * لا تقل عن أربعة أحرف يكفي، دون أي اجتهاد أعمق من ذلك.
+     */
+    private function tokenNearlyMatches(string $token, array $sourceTokens): bool
+    {
+        if (mb_strlen($token) < 4) {
+            return false;
+        }
+
+        foreach ($sourceTokens as $candidate) {
+            if (mb_strlen($candidate) < 4) {
+                continue;
+            }
+
+            if (str_starts_with($token, $candidate) || str_starts_with($candidate, $token)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * تطبيع عربي للمقارنة فقط: إسقاط التشكيل والتطويل، توحيد الهمزات
+     * والألف المقصورة والتاء المربوطة، ونزع أل التعريف من أول الكلمات.
+     */
+    private function arabify(string $value): string
+    {
+        $value = (string) preg_replace('/[\x{064B}-\x{0652}\x{0670}\x{0640}]/u', '', $value);
+        $value = strtr($value, ['أ' => 'ا', 'إ' => 'ا', 'آ' => 'ا', 'ٱ' => 'ا', 'ى' => 'ي', 'ة' => 'ه', 'ؤ' => 'و', 'ئ' => 'ي']);
+
+        // «والمبيعات» = واو عطف + أل تعريف + الكلمة: يُنزعان معًا في أول
+        // الكلمة فقط، حيث لا لبس مع كلمات تبدأ بواو أصلية مثل «وصف».
+        $value = (string) preg_replace('/(?<![\pL\pN])[وفب]?ال(?=\pL\pL)/u', '', $value);
+
+        return $value;
+    }
+
+    /** @return array<int, string> */
+    private function contentTokens(string $value): array
+    {
+        preg_match_all('/[\pL\pN]{2,}/u', $value, $matches);
+
+        return array_values(array_unique($matches[0] ?? []));
     }
 
     private function searchable(mixed $value): string

@@ -2,12 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\PromptVersion;
 use App\Models\Tool;
-use App\Models\ToolField;
-use App\Models\ToolVersion;
+use App\Services\Tools\ToolBuilder;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ToolCatalogSeeder extends Seeder
 {
@@ -65,8 +62,12 @@ class ToolCatalogSeeder extends Seeder
     {
         $definitions = $this->definitions();
 
+        // مصدر واحد لمنطق التركيب (ToolBuilder): البذر ولوحة الآدمن
+        // وأمر tool:release يتبعون القواعد نفسها — BR-012 والإصدار وtier.
+        $builder = app(ToolBuilder::class);
+
         foreach ($definitions as $definition) {
-            $this->syncTool($definition);
+            $builder->sync($definition);
         }
 
         $built = collect($definitions)->pluck('key')->all();

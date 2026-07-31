@@ -51,6 +51,13 @@ android {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
+
+            // رفع خريطة الرموز إلى Firebase يتطلّب شبكة أثناء البناء ويكسره حين
+            // تتعذّر (كما في bundleRelease). Crashlytics يظل يعمل وقت التشغيل؛
+            // رفع الخريطة اختياري ويُفعَّل في CI عند الحاجة لا في كل بناء محلي.
+            configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                mappingFileUploadEnabled = false
+            }
         }
     }
 }

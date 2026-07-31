@@ -67,7 +67,11 @@ class ManualReportService
             ->map(fn ($value) => is_array($value) && array_key_exists('value', $value) ? $value['value'] : $value);
 
         // السؤال بنصه مع إجابته: من يعالجها خارجيًا يفهم السياق بلا رجوع للمنصة.
-        $questions = $run->toolVersion->fields
+        // الحقول المرئية لسياق المشروع فقط — سؤال لم يُعرض على العميل أصلًا
+        // يصل المراجعَ بإجابة فارغة فيُحسب عليه ظلمًا.
+        $completeness = app(AnswerCompleteness::class);
+        $questions = $completeness
+            ->visibleFields($run->toolVersion, $completeness->contextualAnswers($run))
             ->map(fn ($field) => [
                 'key' => $field->key,
                 'question' => $field->label,
@@ -169,7 +173,15 @@ class ManualReportService
             ->map(fn ($value) => is_array($value) && array_key_exists('value', $value) ? $value['value'] : $value)
             ->all();
 
-        return $this->scorer->score($run->toolVersion, $answers);
+        // نفس عدالة التكيف في المسار التلقائي: القاعدة التي يخفي سياقُ
+        // المشروع سؤالَها لا تدخل الميزان.
+        $completeness = app(AnswerCompleteness::class);
+        $activeKeys = $completeness
+            ->visibleFields($run->toolVersion, $completeness->contextualAnswers($run))
+            ->pluck('key')
+            ->all();
+
+        return $this->scorer->score($run->toolVersion, $answers, $activeKeys);
     }
 
     private function instructions(): string
@@ -184,8 +196,10 @@ class ManualReportService
             'اجعل النص يبيّن أنك فهمته هو تحديدًا: اقتبس من كلماته، وأشر إلى تفاصيل مشروعه بالاسم، ولا تكتب نصائح عامة تصلح لأي أحد.',
             'ابدأ كل قسم من وجعه أو سؤاله كما يقوله هو، ثم ما سيكسبه. كل نتيجة تحمل توصية واحدة على الأقل يقدر ينفّذها هذا الأسبوع.',
             'صنّف كل ادعاء إلى: ملاحظة من مدخلات العميل، أو نتيجة حساب ثابت، أو استنتاج — ولا تقدّم الاستنتاج كحقيقة. وميّز بوضوح بين ما يدعمه كلامه (is_assumption=false) وما هو اجتهاد منك (is_assumption=true).',
-            'طبّق معايير التصنيف كما في المخرج التلقائي: severity تُشتق من قوة الفجوة في deterministic_score.breakdown (critical = خسارة مال فعلية الآن أو إيقاف إطلاق، high = هدر بلا عائد أو factor ≤ 0.25، medium = يبطّئ النمو دون خسارة مباشرة، low = تجميلي). وconfidence = ثقتك أن النتيجة تعكس الواقع (90+ مدعومة بكلامه الصريح، 60–75 اجتهاد من قرائن، وأي نتيجة is_assumption=true تكون ثقتها ≤ 75).',
-            'لا تخترع أرقامًا لم يذكرها. الدرجة محسوبة مسبقًا في deterministic_score فلا تعِد حسابها.',
+            'لا تخترع أرقامًا لم يذكرها. الدرجة محسوبة مسبقًا في deterministic_score فلا تعِد حسابها، وbreakdown فيها هو مصدر قوة الفجوات.',
+            // المعايير من المصدر الموحّد نفسه الذي يقرأه التوليد الآلي —
+            // نسختان لمعيار واحد تعنيان انجرافًا حتميًّا (حدث فعلًا وأُصلح).
+            PipelineSchemas::classificationRubric(),
         ]);
     }
 }

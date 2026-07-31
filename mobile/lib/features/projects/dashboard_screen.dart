@@ -9,6 +9,7 @@ import '../account/billing_screen.dart';
 import '../account/notifications_screen.dart';
 import '../admin/admin_hub_screen.dart';
 import '../consultations/consultation_screen.dart';
+import '../portfolio/portfolio_screen.dart';
 import '../tools/engagement.dart';
 import '../tools/models.dart';
 import '../tools/resume_navigator.dart';
@@ -97,6 +98,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               MaterialPageRoute(
                 builder: (_) =>
                     ToolCatalogScreen(repository: widget.repository),
+              ),
+            ),
+          ),
+          // محفظة العملاء: نطاقها مساحة العمل. متاحة لمن له ميزة تقارير الوكالة —
+          // ومن لا يملكها يرى رسالة الترقية من الشاشة نفسها بدل حجب المدخل.
+          IconButton(
+            tooltip: 'محفظة العملاء',
+            icon: const Icon(Icons.business_center_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => PortfolioScreen(repository: widget.repository),
               ),
             ),
           ),

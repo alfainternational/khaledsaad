@@ -421,7 +421,7 @@ class ToolRunPipeline
         $prompt->lock();
 
         return [
-            ['role' => 'system', 'content' => PipelineSchemas::systemPreamble()],
+            ['role' => 'system', 'content' => PipelineSchemas::systemPreamble($run->toolVersion->tool->key)],
             ['role' => 'user', 'content' => $prompt->content],
             [
                 'role' => 'user',

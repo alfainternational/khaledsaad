@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\Admin\BillingCatalogController as AdminBillingCatalogController;
+use App\Http\Controllers\Api\V1\Admin\ConsultationController as AdminConsultationController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\ManualReportController as AdminManualReportController;
 use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\EngagementController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\GuestRunController;
+use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\PresenceController as ApiPresenceController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\PublicContentController;
@@ -82,6 +84,11 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('consultations/{consultation}/evidence/{evidence}', [ConsultationController::class, 'deleteEvidence'])->name('consultations.evidence.destroy');
         // نفس بوابات الميزات التي تحكم الويب حرفيًا: التطبيق ليس بابًا خلفيًا.
         Route::middleware('feature:'.FeatureKey::REPORTS_AGENCY)->group(function (): void {
+            // محفظة الوكالة: نطاقها مساحة العمل كلها لا مشروعًا بعينه (§٥.٢).
+            Route::get('portfolio', [PortfolioController::class, 'index'])->name('portfolio');
+            // موجز التكليف: قراءةً للتعبئة، وحفظًا من نموذج التطبيق — نظير الويب.
+            Route::get('projects/{project}/agency-brief', [AgencyReportController::class, 'brief'])->name('projects.agency-brief.show');
+            Route::post('projects/{project}/agency-brief', [AgencyReportController::class, 'saveBrief'])->name('projects.agency-brief.save');
             Route::get('projects/{project}/agency-reports', [AgencyReportController::class, 'index'])->name('projects.agency-reports.index');
             Route::post('projects/{project}/agency-reports', [AgencyReportController::class, 'store'])->name('projects.agency-reports.store');
             Route::post('projects/{project}/full-diagnosis', [AgencyReportController::class, 'sweep'])
@@ -240,6 +247,14 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('manual-reports/{run}', [AdminManualReportController::class, 'store'])->name('manual-reports.store');
             Route::get('settings', [AdminSettingController::class, 'index'])->name('settings.index');
             Route::put('settings', [AdminSettingController::class, 'update'])->name('settings.update');
+
+            // محرّر مخططات الاستشارة: المسودة تُحرَّر، والمنشور مقفل ضد التعديل.
+            Route::get('consultations', [AdminConsultationController::class, 'index'])->name('consultations.index');
+            Route::get('consultations/versions/{version}', [AdminConsultationController::class, 'show'])->name('consultations.show');
+            Route::post('consultations/blueprints/{blueprint}/draft', [AdminConsultationController::class, 'createDraft'])->name('consultations.draft');
+            Route::put('consultations/versions/{version}/questions/{question}', [AdminConsultationController::class, 'updateQuestion'])->name('consultations.questions.update');
+            Route::post('consultations/versions/{version}/publish', [AdminConsultationController::class, 'publish'])->name('consultations.publish');
+            Route::post('consultations/versions/{version}/simulate', [AdminConsultationController::class, 'simulate'])->name('consultations.simulate');
         });
     });
 });

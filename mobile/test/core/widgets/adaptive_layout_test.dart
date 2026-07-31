@@ -121,9 +121,11 @@ void main() {
       'account/billing_screen.dart': AdaptivePageFamily.operational,
       'account/notifications_screen.dart': AdaptivePageFamily.operational,
       'admin/admin_hub_screen.dart': AdaptivePageFamily.operational,
+      'agency_reports/agency_brief_edit_screen.dart': AdaptivePageFamily.form,
       'agency_reports/agency_report_screen.dart': AdaptivePageFamily.reading,
       'agency_reports/agency_reports_screen.dart':
           AdaptivePageFamily.operational,
+      'portfolio/portfolio_screen.dart': AdaptivePageFamily.operational,
       'auth/auth_screen.dart': AdaptivePageFamily.form,
       'auth/password_reset_request_screen.dart': AdaptivePageFamily.form,
       'auth/password_reset_screen.dart': AdaptivePageFamily.form,

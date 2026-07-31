@@ -43,6 +43,54 @@ class ReportSemanticGuardTest extends TestCase
     }
 
     #[Test]
+    public function a_faithful_paraphrase_of_the_user_words_keeps_the_evidence(): void
+    {
+        // النموذج أعاد الصياغة: أل تعريف، همزة مختلفة، تقديم وتأخير —
+        // الكلمات الدالة كلها من كلام المستخدم فعلًا.
+        $payload = $this->payload('العملاء يصلون ولا يشترون.');
+        $payload['findings'][0]['evidence'] = 'ذكرت أن الإعلانات تجلب زوارًا كثيرين لكن المبيعات ضعيفة';
+        $payload['findings'][0]['is_assumption'] = false;
+
+        $result = $this->guard->repair($payload, [
+            'answer' => 'اعلانات تجلب زوار كثيرين والمبيعات ضعيفه جدا',
+        ], ['score' => 55]);
+
+        $this->assertFalse($result['findings'][0]['is_assumption']);
+        $this->assertSame('observed', $result['findings'][0]['claim_type']);
+    }
+
+    #[Test]
+    public function fabricated_evidence_still_falls_to_assumption(): void
+    {
+        // كلمات الدليل غائبة عن أي شيء قاله المستخدم — يسقط كما كان.
+        $payload = $this->payload('وصف عام للمشكلة.');
+        $payload['findings'][0]['evidence'] = 'قلت إن منافسك يخصم عشرين بالمئة كل جمعة';
+        $payload['findings'][0]['is_assumption'] = false;
+
+        $result = $this->guard->repair($payload, [
+            'answer' => 'القياس عندي ضعيف ولا اعرف مصدر عملائي',
+        ], ['score' => 55]);
+
+        $this->assertTrue($result['findings'][0]['is_assumption']);
+        $this->assertArrayNotHasKey('evidence', $result['findings'][0]);
+    }
+
+    #[Test]
+    public function a_short_evidence_with_one_content_word_stays_conservative(): void
+    {
+        // كلمة دالة واحدة لا تكفي حكمًا بالدعم — يبقى السلوك المحافظ.
+        $payload = $this->payload('وصف عام للمشكلة.');
+        $payload['findings'][0]['evidence'] = 'قال هذا عن التسويق';
+        $payload['findings'][0]['is_assumption'] = false;
+
+        $result = $this->guard->repair($payload, [
+            'answer' => 'اهتم بالتسويق قليلًا',
+        ], ['score' => 55]);
+
+        $this->assertTrue($result['findings'][0]['is_assumption']);
+    }
+
+    #[Test]
     public function injected_and_duplicate_findings_are_removed(): void
     {
         $payload = $this->payload('وصف آمن قابل للاستخدام.');

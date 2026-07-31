@@ -38,7 +38,13 @@ class ToolBuilder
                 ],
             );
 
-            $versionNumber = max(1, (int) ($definition['version']['number'] ?? 1));
+            // لا تنزيل أبدًا: لو أصدر tool:release إصدارًا أعلى مما يعلنه
+            // الملف، فإعادة البذر تلحق بالأعلى ولا تعيد المؤشر للخلف بصمت.
+            $versionNumber = max(
+                1,
+                (int) ($definition['version']['number'] ?? 1),
+                (int) ToolVersion::where('tool_id', $tool->id)->max('version'),
+            );
             $version = ToolVersion::updateOrCreate(
                 ['tool_id' => $tool->id, 'version' => $versionNumber],
                 [

@@ -13,6 +13,7 @@ use App\Modules\Reporting\AgencyReportSharing;
 use App\Modules\Reporting\OwnerReportPdfGenerator;
 use App\Modules\Reporting\ReportFreshnessService;
 use App\Services\Tools\FullDiagnosisRunner;
+use App\Support\Marketing\BriefQuestions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -53,6 +54,49 @@ class AgencyReportController extends Controller
                 $validated['mode'] ?? FullDiagnosisRunner::MODE_AUTO,
             ),
         ], 202);
+    }
+
+    /**
+     * حفظ موجز التكليف من التطبيق — نظير مسار الويب. يعيد جاهزية الموجز
+     * المحدَّثة فورًا حتى تعرض الشاشة البنود الناقصة بلا إعادة تحميل.
+     */
+    public function saveBrief(Request $request, Project $project): JsonResponse
+    {
+        $this->authorizeProject($request, $project);
+
+        $validated = $request->validate(array_merge(BriefQuestions::rules(), [
+            'brief' => 'nullable|array',
+        ]));
+
+        $this->service->saveBrief($project, $validated['brief'] ?? []);
+
+        return response()->json([
+            'data' => [
+                'fields' => BriefQuestions::fields(),
+                'readiness' => $this->service->briefCompleteness($project),
+            ],
+        ]);
+    }
+
+    /**
+     * أسئلة موجز التكليف وحالته الراهنة — لتعبئة نموذج التحرير في التطبيق.
+     */
+    public function brief(Request $request, Project $project): JsonResponse
+    {
+        $this->authorizeProject($request, $project);
+
+        $project->loadMissing('profile');
+
+        return response()->json([
+            'data' => [
+                'groups' => BriefQuestions::groups(),
+                'saved' => $project->profile?->brief ?? [],
+                'primary_goal' => $project->profile?->primary_goal,
+                'agency_services' => $project->profile?->agency_services ?? [],
+                'budget_includes_agency_fee' => $project->profile?->budget_includes_agency_fee,
+                'readiness' => $this->service->briefCompleteness($project),
+            ],
+        ]);
     }
 
     public function store(Request $request, Project $project): JsonResponse
