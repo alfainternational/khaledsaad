@@ -3489,3 +3489,157 @@ svg {
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================================================
+   الوضع الداكن (بند ٢ من خطة الواجهات)
+   الطبقة مبنية على متغيرات الجذر نفسها، فكل مكوّن يقرأ من المتغيرات يرث
+   الوضع تلقائيًا. الافتراضي يتبع نظام الجهاز، ومفتاح الواجهة يثبّت الاختيار
+   في data-theme (يُزرع قبل الرسم في الـlayout فلا وميض).
+   ========================================================================== */
+
+:root[data-theme='dark'] {
+    color-scheme: dark;
+    --surface: #0b1220;
+    --surface-soft: #101a2e;
+    --surface-warm: #17131f;
+    --ink: #e8eefb;
+    --muted: #93a2bb;
+    --line: #23324d;
+    --shadow-card: 0 24px 70px rgba(0, 0, 0, 0.45);
+    --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme='dark'] img.theme-invertible,
+:root[data-theme='dark'] .hero-orb {
+    opacity: 0.55;
+}
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.4rem;
+    block-size: 2.4rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    color: var(--ink);
+}
+
+.theme-toggle .theme-toggle__moon,
+:root[data-theme='dark'] .theme-toggle .theme-toggle__sun {
+    display: none;
+}
+
+:root[data-theme='dark'] .theme-toggle .theme-toggle__moon {
+    display: block;
+}
+
+/* ==========================================================================
+   وسم الدليل وسطر التغطية (بند ١) — مفردة §4.1 و§13 مجسّدة بصريًا
+   ========================================================================== */
+
+.evidence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.6;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.evidence-badge__dot {
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.evidence-badge--measured {
+    color: #0c7a43;
+    background: rgba(18, 183, 106, 0.12);
+    border-color: rgba(18, 183, 106, 0.35);
+}
+
+.evidence-badge--derived {
+    color: #1d5fd6;
+    background: rgba(37, 117, 255, 0.12);
+    border-color: rgba(37, 117, 255, 0.35);
+}
+
+.evidence-badge--inferred {
+    color: #b05c00;
+    background: rgba(255, 155, 39, 0.14);
+    border-color: rgba(255, 155, 39, 0.4);
+}
+
+:root[data-theme='dark'] .evidence-badge--measured { color: #4ade9b; }
+:root[data-theme='dark'] .evidence-badge--derived { color: #7fb0ff; }
+:root[data-theme='dark'] .evidence-badge--inferred { color: #ffb75e; }
+
+.freshness-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.6rem;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.freshness-line__gap {
+    color: #b05c00;
+}
+
+.gaps-diff {
+    display: grid;
+    gap: 0.35rem;
+    margin-block-start: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.gaps-diff p {
+    margin: 0;
+}
+
+.gaps-diff__closed b { color: #0c7a43; }
+.gaps-diff__new b { color: #b05c00; }
+
+:root[data-theme='dark'] .gaps-diff__closed b { color: #4ade9b; }
+:root[data-theme='dark'] .gaps-diff__new b { color: #ffb75e; }
+
+:root[data-theme='dark'] .freshness-line__gap {
+    color: #ffb75e;
+}
+
+/* ==========================================================================
+   وصولية عامة (بند ٣): تركيز مرئي موحّد + احترام تقليل الحركة
+   ========================================================================== */
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--brand-blue);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

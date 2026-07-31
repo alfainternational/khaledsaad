@@ -159,7 +159,29 @@ class ReportPresenter
 
         $delta = (int) $current->score - (int) $previous->score;
 
-        return $this->deltaBlock($previous, $current, $delta);
+        return array_merge(
+            $this->deltaBlock($previous, $current, $delta),
+            $this->gapsDiff($previous, $current),
+        );
+    }
+
+    /**
+     * فرق الفجوات بين تقريرين: ما أُغلق وما ظهر — بعنوان النتيجة المطبَّع.
+     * الدرجة تقول «كم تحركت»، وهذا يقول «ماذا تغيّر فعلًا» — وهو ما يقود القرار.
+     *
+     * @return array{closed_gaps: array<int, string>, new_gaps: array<int, string>}
+     */
+    private function gapsDiff(Report $previous, Report $current): array
+    {
+        $normalize = fn (string $title) => mb_strtolower(preg_replace('/\s+/u', ' ', trim($title)) ?? $title);
+
+        $previousTitles = $previous->findings->pluck('title')->keyBy($normalize);
+        $currentTitles = $current->findings->pluck('title')->keyBy($normalize);
+
+        return [
+            'closed_gaps' => $previousTitles->diffKeys($currentTitles)->take(5)->values()->all(),
+            'new_gaps' => $currentTitles->diffKeys($previousTitles)->take(5)->values()->all(),
+        ];
     }
 
     /**

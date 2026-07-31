@@ -11,6 +11,7 @@
         <title>@yield('title', $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم') — خالد سعد</title>
 
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        @include('partials.theme')
         @include('partials.font')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('head')
@@ -79,6 +80,7 @@
                 </div>
 
                 <div class="panel__top-actions">
+                    @include('partials.theme-toggle')
                     <a href="{{ route('app.notifications.index') }}" class="bell" aria-label="الإشعارات">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
                         @if ($panelUnread > 0)

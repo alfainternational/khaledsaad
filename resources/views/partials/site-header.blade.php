@@ -22,6 +22,7 @@
         </nav>
 
         <div class="nav-actions">
+            @include('partials.theme-toggle')
             @guest
                 <a class="nav-login" href="{{ route('login') }}">تسجيل الدخول</a>
             @endguest

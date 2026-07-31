@@ -32,7 +32,20 @@
                 <p @class(['delta', 'delta--up' => $comparison['direction'] === 'up', 'delta--down' => $comparison['direction'] === 'down'])>
                     {{ $comparison['label'] }}
                 </p>
+
+                @if ($comparison['closed_gaps'] !== [] || $comparison['new_gaps'] !== [])
+                    <div class="gaps-diff">
+                        @if ($comparison['closed_gaps'] !== [])
+                            <p class="gaps-diff__closed"><b>فجوات أُغلقت:</b> {{ implode('، ', $comparison['closed_gaps']) }}</p>
+                        @endif
+                        @if ($comparison['new_gaps'] !== [])
+                            <p class="gaps-diff__new"><b>فجوات ظهرت:</b> {{ implode('، ', $comparison['new_gaps']) }}</p>
+                        @endif
+                    </div>
+                @endif
             @endif
+
+            <x-freshness-line :updated-at="$report['generated_at'] ?? null" />
         </article>
 
         <article class="card">
@@ -142,7 +155,7 @@
                 <header class="finding__head">
                     <h3>{{ $finding['title'] }}</h3>
                     <span class="badge badge--{{ $finding['severity'] }}">{{ $finding['severity_label'] }}</span>
-                    <span @class(['badge', 'badge--assumption' => $finding['is_assumption']])>{{ $finding['basis_label'] }}</span>
+                    <x-evidence-badge :level="$finding['is_assumption'] ? 'inferred' : 'measured'" compact />
                 </header>
 
                 <p>{{ $finding['description'] }}</p>

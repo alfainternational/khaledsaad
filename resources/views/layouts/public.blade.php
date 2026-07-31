@@ -23,6 +23,7 @@
         <meta name="twitter:title" content="@yield('title', 'خالد سعد | تشخيص وتسويق ونمو رقمي')">
         <meta name="twitter:description" content="@yield('description', config('brand.tagline'))">
 
+        @include('partials.theme')
         @include('partials.font')
 
         <script type="application/ld+json">
