@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -88,6 +89,30 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
     }
   }
 
+  /// رفع سجل زحف بوتات الذكاء يدويًا حين لا نصل إليه تلقائيًا — نظير نموذج الويب.
+  Future<void> _uploadLog() async {
+    final picked = await FilePicker.platform.pickFiles(withData: false);
+    final path = picked?.files.single.path;
+    if (path == null) return;
+
+    setState(() => _busy = true);
+    try {
+      await widget.repository.uploadReadinessLog(widget.projectSlug, path);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('رُفع سجل الزحف وحُدّثت الجاهزية.')),
+      );
+      setState(_reload);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // AdaptiveScaffold يلفّ المحتوى بـAdaptivePage بنفسه؛ لفّه ثانيةً يضاعف
@@ -117,6 +142,13 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Text('افحص موقعي'),
+                ),
+                const SizedBox(height: 8),
+                // حين لا نصل لسجل الزحف تلقائيًا: ارفعه يدويًا ليُقرأ أي بوت زار.
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _uploadLog,
+                  icon: const Icon(Icons.upload_file_outlined, size: 18),
+                  label: const Text('ارفع سجل الزحف يدويًا'),
                 ),
                 const SizedBox(height: 24),
                 _conflicts(context, data.conflicts),

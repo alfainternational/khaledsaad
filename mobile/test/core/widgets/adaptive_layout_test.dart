@@ -120,6 +120,9 @@ void main() {
     const expectedFamilies = {
       'account/billing_screen.dart': AdaptivePageFamily.operational,
       'account/notifications_screen.dart': AdaptivePageFamily.operational,
+      'admin/admin_consultation_version_screen.dart':
+          AdaptivePageFamily.operational,
+      'admin/admin_consultations_screen.dart': AdaptivePageFamily.operational,
       'admin/admin_hub_screen.dart': AdaptivePageFamily.operational,
       'agency_reports/agency_brief_edit_screen.dart': AdaptivePageFamily.form,
       'agency_reports/agency_report_screen.dart': AdaptivePageFamily.reading,
@@ -133,6 +136,7 @@ void main() {
       'consultations/consultations_list_screen.dart':
           AdaptivePageFamily.operational,
       'growth/growth_hub_screen.dart': AdaptivePageFamily.operational,
+      'growth/pulse_screen.dart': AdaptivePageFamily.operational,
       'projects/dashboard_screen.dart': AdaptivePageFamily.operational,
       'projects/project_form_screen.dart': AdaptivePageFamily.form,
       'projects/project_screen.dart': AdaptivePageFamily.operational,

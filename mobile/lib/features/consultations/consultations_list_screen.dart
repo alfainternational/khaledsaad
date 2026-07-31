@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
@@ -30,6 +35,26 @@ class _ConsultationsListScreenState extends State<ConsultationsListScreen> {
 
   void _load() {
     _future = widget.repository.consultationsList();
+  }
+
+  /// تصدير بيانات الاستشارة (JSON) وفتحها — نظير «تصدير» في الويب. حقّ المستخدم
+  /// في نسخة من بياناته (§خصوصية).
+  Future<void> _export(String uuid) async {
+    try {
+      final data = await widget.repository.exportConsultation(uuid);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/consultation-$uuid.json');
+      await file.writeAsString(
+        const JsonEncoder.withIndent('  ').convert(data),
+        flush: true,
+      );
+      await OpenFilex.open(file.path);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
   }
 
   static const _statusLabels = {
@@ -123,6 +148,12 @@ class _ConsultationsListScreenState extends State<ConsultationsListScreen> {
                 ],
               ),
             ),
+            if (consultation?['uuid'] != null)
+              IconButton(
+                tooltip: 'صدّر بيانات الاستشارة',
+                icon: const Icon(Icons.download_outlined, size: 20),
+                onPressed: () => _export(consultation!['uuid'].toString()),
+              ),
             Icon(
               status == 'completed'
                   ? Icons.check_circle_outline

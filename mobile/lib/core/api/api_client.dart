@@ -125,11 +125,11 @@ class ApiClient {
   );
 
   /// رفع ملف عبر multipart. المفتاح لا يغادر الخادم — نرسل رمز المستخدم فقط.
-  Future<dynamic> upload(String path, String filePath) async {
+  Future<dynamic> upload(String path, String filePath, {String field = 'file'}) async {
     final token = await _tokenStore.read();
     final request = http.MultipartRequest('POST', _uri(path))
       ..headers['Accept'] = 'application/json'
-      ..files.add(await http.MultipartFile.fromPath('file', filePath));
+      ..files.add(await http.MultipartFile.fromPath(field, filePath));
 
     if (token != null) {
       request.headers['Authorization'] = 'Bearer $token';

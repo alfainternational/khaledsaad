@@ -398,6 +398,20 @@ class PlatformRepository {
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
+  /// رفع سجل زحف بوتات الذكاء يدويًا (حقل `log`) — نظير نموذج الويب.
+  Future<Map<String, dynamic>> uploadReadinessLog(
+    String projectSlug,
+    String filePath,
+  ) async {
+    final response = await _api.upload(
+      '/projects/$projectSlug/readiness/log',
+      filePath,
+      field: 'log',
+    );
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
   // --- محفظة الوكالة (نطاقها مساحة العمل كلها) ---
 
   Future<Map<String, dynamic>> portfolio() async {

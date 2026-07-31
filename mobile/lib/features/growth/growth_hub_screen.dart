@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -64,6 +65,45 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(exception.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// عرض نصّ llms.txt داخل التطبيق — نظير عرض الويب الكامل للنصّ الخام.
+  Future<void> _viewLlms() async {
+    setState(() => _busy = true);
+    try {
+      final bytes = await widget.repository.geoLlms(widget.projectSlug);
+      final text = utf8.decode(bytes, allowMalformed: true);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('llms.txt'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: SelectableText(
+                text.isEmpty ? '(الملف فارغ — أنشئ الحزمة أولًا.)' : text,
+                style: const TextStyle(fontSize: 12, height: 1.5),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('إغلاق'),
+            ),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -285,11 +325,16 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
                             ),
                       child: const Text('إنشاء أو تحديث'),
                     ),
-                    // تنزيل الملف الذي يقرأه محرّك الإجابة عن موقعك.
+                    // عرض النصّ الخام داخل التطبيق أو تنزيل الملف.
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _viewLlms,
+                      icon: const Icon(Icons.description_outlined, size: 18),
+                      label: const Text('اعرض llms.txt'),
+                    ),
                     OutlinedButton.icon(
                       onPressed: _busy ? null : _downloadLlms,
                       icon: const Icon(Icons.download_outlined, size: 18),
-                      label: const Text('نزّل llms.txt'),
+                      label: const Text('نزّل'),
                     ),
                   ],
                 ),

@@ -7,6 +7,7 @@ import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import 'admin_consultations_screen.dart';
 
 class AdminHubScreen extends StatefulWidget {
   const AdminHubScreen({super.key, required this.repository});
@@ -768,6 +769,16 @@ class _AdminHubScreenState extends State<AdminHubScreen> {
       appBar: AppBar(
         title: const Text('لوحة الإدارة'),
         actions: [
+          IconButton(
+            tooltip: 'مخططات الاستشارة',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    AdminConsultationsScreen(repository: widget.repository),
+              ),
+            ),
+            icon: const Icon(Icons.forum_outlined),
+          ),
           IconButton(
             tooltip: 'إضافة أداة',
             onPressed: _busy ? null : _createTool,
