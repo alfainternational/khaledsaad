@@ -230,6 +230,9 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
     // البحث الشامل في أسطح المستخدم الأربعة (بند ٢٥).
     Route::get('search', [\App\Http\Controllers\App\SearchController::class, 'index'])->name('search');
 
+    // إنهاء الانتحال: يستدعيه الآدمن وهو داخل حساب المستخدم (بند ٢١).
+    Route::post('impersonation/stop', [\App\Http\Controllers\Admin\ImpersonationController::class, 'stop'])->name('impersonation.stop');
+
     // أمان الحساب: خطوة التحقق الثانية + الأجهزة المتصلة (بند ٢٣).
     Route::get('security', [\App\Http\Controllers\App\SecurityController::class, 'index'])->name('security');
     Route::post('security/otp', [\App\Http\Controllers\App\SecurityController::class, 'toggleOtp'])->name('security.otp');
@@ -341,6 +344,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('tools/{tool}', [AdminToolController::class, 'destroy'])->name('tools.destroy');
     Route::patch('tools/{tool}/status', [AdminToolController::class, 'updateStatus'])->name('tools.status');
     Route::put('tools/{tool}/prompts/{prompt}', [AdminToolController::class, 'updatePrompt'])->name('tools.prompts.update');
+    Route::post('tools/{tool}/release', [AdminToolController::class, 'release'])->name('tools.release');
+
+    // غرفة العمليات: الصحة والقمع والتدقيق (بنود ٢٠ و٢٢ و٣٠).
+    Route::get('operations', [\App\Http\Controllers\Admin\OperationsController::class, 'index'])->name('operations');
+
+    // انتحال مستخدم لخدمة العملاء (بند ٢١) — الإيقاف خارج مجموعة admin
+    // لأن المنتحِل يتصفح بحساب المستخدم لا كآدمن.
+    Route::post('users/{user}/impersonate', [\App\Http\Controllers\Admin\ImpersonationController::class, 'start'])->name('users.impersonate');
 
     // الخطط وحزم الأرصدة وبوابات الدفع: CRUD كامل.
     // فهرس الميزات: عناصر حقيقية تُختار في الخطط، لا سطور نصّية.

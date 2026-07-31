@@ -3965,6 +3965,71 @@ svg {
 }
 
 /* ==========================================================================
+   الآدمن — موجة ٥: أشرطة الميزانية، غرفة العمليات، الانتحال، الساحة
+   ========================================================================== */
+
+.budget-bar {
+    inline-size: 100%;
+    max-inline-size: 9rem;
+    block-size: 0.5rem;
+    border-radius: 999px;
+    background: var(--surface-soft);
+    overflow: hidden;
+    margin-block-end: 0.25rem;
+}
+
+.budget-bar__fill {
+    display: block;
+    block-size: 100%;
+    border-radius: inherit;
+    background: #12b76a;
+}
+
+.budget-bar__fill--warn { background: var(--brand-orange); }
+.budget-bar__fill--stop { background: var(--brand-red); }
+
+.stat--alert .stat__value { color: var(--brand-red); }
+
+tr.is-problem td { color: var(--brand-red); }
+
+.prompt-preview {
+    max-block-size: 26rem;
+    overflow: auto;
+    padding: 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+    font-size: 0.8rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.impersonation-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 1.25rem;
+    background: var(--brand-red);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.impersonation-banner .btn {
+    background: #fff;
+    color: var(--brand-red);
+    border: 0;
+}
+
+.otp-input {
+    letter-spacing: 0.6rem;
+    font-size: 1.4rem;
+    text-align: center;
+}
+
+/* ==========================================================================
    وصولية عامة (بند ٣): تركيز مرئي موحّد + احترام تقليل الحركة
    ========================================================================== */
 

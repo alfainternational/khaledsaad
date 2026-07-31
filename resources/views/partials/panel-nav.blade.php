@@ -10,6 +10,11 @@
             <span>نظرة عامة</span>
         </a>
 
+        <a href="{{ route('admin.operations') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.operations')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span>غرفة العمليات</span>
+        </a>
+
         <a href="{{ route('admin.usage') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.usage')])>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
             <span>التكلفة</span>

@@ -36,6 +36,13 @@
                         <td data-label="انضم">{{ $user['joined'] }}</td>
                         <td class="table__actions" data-label="الإجراءات">
                             <a href="{{ route('admin.users.edit', $user['id']) }}" class="btn btn--ghost btn--sm">تعديل</a>
+                            @unless ($user['is_admin'])
+                                <form method="POST" action="{{ route('admin.users.impersonate', $user['id']) }}" class="inline-form"
+                                    data-confirm="ستدخل بحساب {{ $user['name'] }} وتُسجَّل الجلسة في التدقيق. متأكد؟">
+                                    @csrf
+                                    <button type="submit" class="btn btn--ghost btn--sm">ادخل بحسابه</button>
+                                </form>
+                            @endunless
                             <form method="POST" action="{{ route('admin.users.credits', $user['id']) }}" class="inline-form">
                                 @csrf
                                 <input type="number" name="credits" min="1" placeholder="عدد" required aria-label="عدد الرصيد" style="max-width: 5rem;">

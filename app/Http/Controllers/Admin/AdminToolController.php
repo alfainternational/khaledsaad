@@ -72,16 +72,72 @@ class AdminToolController extends Controller
         return redirect()->route('admin.tools.show', $tool->key)->with('status', 'أُنشئت الأداة.');
     }
 
+    /**
+     * بروفايلات المحاكاة — نفس سبعة scripts/audit-tool-adaptivity.php حرفيًا،
+     * حتى يرى الآدمن ما يراه المدقق دون طرفية (بند ٢٨).
+     */
+    private const SIMULATION_PROFILES = [
+        'فكرة (بلا نوع)' => ['project.stage' => 'idea', 'project.maturity' => 'early', 'project.has_website' => 'no', 'project.budget_band' => 'none', 'project.sector' => 'general'],
+        'إطلاق خدمات' => ['project.stage' => 'launch', 'project.maturity' => 'early', 'project.business_model' => 'services', 'project.has_website' => 'no', 'project.budget_band' => 'small', 'project.sector' => 'services'],
+        'متجر شغّال' => ['project.stage' => 'growth', 'project.maturity' => 'operating', 'project.business_model' => 'b2c', 'project.has_website' => 'yes', 'project.budget_band' => 'medium', 'project.sector' => 'ecommerce'],
+        'خدمات B2B' => ['project.stage' => 'growth', 'project.maturity' => 'operating', 'project.business_model' => 'b2b', 'project.has_website' => 'yes', 'project.budget_band' => 'medium', 'project.sector' => 'services'],
+        'اشتراك SaaS' => ['project.stage' => 'scale', 'project.maturity' => 'operating', 'project.business_model' => 'saas', 'project.has_website' => 'yes', 'project.budget_band' => 'large', 'project.sector' => 'saas'],
+        'نشاط محلي' => ['project.stage' => 'growth', 'project.maturity' => 'operating', 'project.business_model' => 'b2c', 'project.has_website' => 'no', 'project.budget_band' => 'small', 'project.sector' => 'local'],
+        'ضيف (محايد)' => ['project.stage' => 'growth', 'project.maturity' => 'operating', 'project.has_website' => 'no', 'project.budget_band' => 'unknown', 'project.sector' => 'general'],
+    ];
+
     public function show(Tool $tool): View
     {
         $version = $tool->currentVersion()->with(['fields', 'prompts'])->first();
+        $fields = $version?->fields ?? collect();
+        $ruleFields = collect($version?->scoring_rules['rules'] ?? [])->pluck('field');
+
+        // محاكي التكيف (بند ٢٨): كيف يرى كل نوع مشروع أسئلة هذه الأداة.
+        $simulation = collect(self::SIMULATION_PROFILES)->map(function (array $context) use ($fields, $ruleFields): array {
+            $visible = $fields->filter(fn ($field) => $field->isVisible($context));
+
+            return [
+                'questions' => $visible->count(),
+                'required' => $visible->where('required', true)->count(),
+                'scored' => $ruleFields->intersect($visible->pluck('key'))->count(),
+                'keys' => $visible->pluck('key')->all(),
+            ];
+        });
+
+        // ساحة المعاينة (بند ٢٩): الرسائل الفعلية التي تُرسل للنموذج في مرحلة
+        // التركيب، بمدخل المثال الذهبي — بلا أي استدعاء ولا تكلفة.
+        $example = \App\Services\Tools\GoldenExamples::catalog()[$tool->key] ?? null;
+        $synthesisPrompt = ($version?->prompts ?? collect())->firstWhere('stage', 'synthesis');
+        $preview = $synthesisPrompt === null ? null : implode("\n\n────────────────────\n\n", [
+            "[system]\n".\App\Services\Tools\PipelineSchemas::systemPreamble($tool->key),
+            "[برومبت الأداة — synthesis v".($version?->version ?? '?')."]\n".$synthesisPrompt->content,
+            "[بيانات التشغيل — مدخل المثال الذهبي]\n".($example['input'] ?? 'لا مثال لهذه الأداة'),
+        ]);
 
         return view('admin.tools.show', [
             'tool' => $tool,
             'version' => $version,
-            'fields' => $version?->fields ?? collect(),
+            'fields' => $fields,
             'prompts' => $version?->prompts ?? collect(),
+            'simulation' => $simulation,
+            'preview' => $preview,
+            // تاريخ الإصدارات وزر السكّ (بند ١١).
+            'versions' => $tool->versions()
+                ->withCount(['prompts', 'prompts as locked_prompts_count' => fn ($query) => $query->whereNotNull('locked_at')])
+                ->orderByDesc('version')->get(),
         ]);
+    }
+
+    /**
+     * سكّ إصدار جديد من اللوحة (بند ١١) — نفس أمر tool:release حرفيًا.
+     */
+    public function release(Tool $tool): RedirectResponse
+    {
+        \Illuminate\Support\Facades\Artisan::call('tool:release', ['key' => $tool->key]);
+
+        \App\Models\AuditLog::write('tool.release', $tool, ['output' => trim(\Illuminate\Support\Facades\Artisan::output())]);
+
+        return back()->with('status', 'صدر إصدار جديد ببرومبتات غير مقفلة، وصار هو الفعّال.');
     }
 
     public function edit(Tool $tool): View
@@ -164,6 +220,8 @@ class AdminToolController extends Controller
         ]);
 
         $prompt->update($data);
+
+        \App\Models\AuditLog::write('prompt.update', $prompt, ['tool' => $tool->key, 'stage' => $prompt->stage]);
 
         return back()->with('status', 'حُدّث البرومبت.');
     }

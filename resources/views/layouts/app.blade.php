@@ -101,6 +101,17 @@
                 </div>
             </header>
 
+            @if (session()->has('impersonator_id'))
+                {{-- شارة الانتحال (بند ٢١): تحذير دائم لا يُغفل + خروج بنقرة --}}
+                <div class="impersonation-banner" role="alert">
+                    <span>أنت الآن داخل حساب {{ $user->name }} — كل ما تفعله يُسجَّل.</span>
+                    <form method="POST" action="{{ route('app.impersonation.stop') }}">
+                        @csrf
+                        <button type="submit" class="btn btn--sm">عد لحسابك الإداري</button>
+                    </form>
+                </div>
+            @endif
+
             <main id="main-content"
                 class="panel__main layout-page layout-page--{{ in_array($layoutFamily, ['reading', 'auth'], true) ? 'reading' : (in_array($layoutFamily, ['form', 'wizard'], true) ? 'form' : 'operational') }}"
                 data-layout="{{ $layoutFamily }}">
