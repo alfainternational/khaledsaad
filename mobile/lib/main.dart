@@ -20,7 +20,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final repository = PlatformRepository(ApiClient());
-  await FirebaseService.instance.initialize();
+
+  // تهيئة Firebase (إشعارات/تحليلات) لا تُسقط فتح التطبيق أبدًا: هي خدمة جانبية
+  // لا شرط لبدء التطبيق. أي فشل فيها يُبتلع ليفتح التطبيق على كل حال.
+  try {
+    await FirebaseService.instance.initialize();
+  } catch (error, stack) {
+    debugPrint('Firebase init failed (non-fatal): $error\n$stack');
+  }
 
   runApp(KhaledSaadApp(repository: repository));
 }
