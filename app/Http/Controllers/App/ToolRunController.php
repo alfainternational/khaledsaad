@@ -82,11 +82,17 @@ class ToolRunController extends Controller
         ]);
     }
 
-    public function saveStep(Request $request, ToolRun $run, int $step): RedirectResponse
+    public function saveStep(Request $request, ToolRun $run, int $step): RedirectResponse|JsonResponse
     {
         $this->authorizeRun($request, $run);
 
         $this->service->saveStep($run, $step, $request->except(['_token', '_method']));
+
+        // الحفظ التلقائي (بند ٧): نفس المسار والمنطق، لكن دون تنقّل —
+        // فقدان الاتصال أو إغلاق التبويب لم يعد يضيع إجابات.
+        if ($request->wantsJson()) {
+            return response()->json(['saved_at' => now()->format('H:i')]);
+        }
 
         // الخطوات تُعاد قراءتها بعد الحفظ: إجابة هذه الخطوة قد تكشف خطوة تالية.
         $next = $this->stepAfter($this->presenter->wizard($run)['steps'], $step);

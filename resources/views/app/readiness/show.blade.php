@@ -273,8 +273,38 @@
             <h2>ما أصلحه هذا الأسبوع</h2>
             <p class="muted">مرتّبة على الأثر ثم الجهد — ابدأ من الأعلى.</p>
 
+            @php
+                // مصفوفة الأثر × الجهد (بند ٢٦): الترجمة البصرية لتعريف المخرج في
+                // الدستور §٦. عرض فقط — الأثر محسوب في FixList لا هنا.
+                $shown = array_slice($fixes, 0, 10);
+                $impacts = array_column($shown, 'impact');
+                sort($impacts);
+                $median = $impacts === [] ? 0 : $impacts[intdiv(count($impacts), 2)];
+                $quadrant = fn (array $fix) => (($fix['impact'] >= $median ? 'high' : 'low')
+                    .'-'.($fix['effort'] === 'low' ? 'easy' : 'hard'));
+                $groups = collect($shown)->groupBy($quadrant);
+            @endphp
+
+            <div class="fix-matrix" role="table" aria-label="الفجوات مرتبة على الأثر والجهد">
+                @foreach ([
+                    'high-easy' => ['label' => 'اكسب سريعًا — ابدأ هنا', 'tone' => 'win'],
+                    'high-hard' => ['label' => 'خطط له هذا الشهر', 'tone' => 'plan'],
+                    'low-easy' => ['label' => 'نفّذه حين تفرغ', 'tone' => 'later'],
+                    'low-hard' => ['label' => 'أجّله بلا ندم', 'tone' => 'skip'],
+                ] as $key => $cell)
+                    <div class="fix-matrix__cell fix-matrix__cell--{{ $cell['tone'] }}">
+                        <h3>{{ $cell['label'] }}</h3>
+                        @forelse ($groups->get($key, collect()) as $fix)
+                            <p>{{ $fix['title'] }}</p>
+                        @empty
+                            <p class="muted">لا شيء هنا</p>
+                        @endforelse
+                    </div>
+                @endforeach
+            </div>
+
             <ol class="fix-list">
-                @foreach (array_slice($fixes, 0, 10) as $fix)
+                @foreach ($shown as $fix)
                     <li>
                         <strong>{{ $fix['title'] }}</strong>
                         <span class="tag tag--{{ $fix['effort'] }}">{{ $fix['effort_label'] }}</span>

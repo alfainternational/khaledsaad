@@ -26,7 +26,7 @@
     </div>
 
     <div class="wizard-live-layout layout-main-aside">
-        <form id="tool-run-form" method="POST" action="{{ route('app.runs.step.save', [$run['uuid'], $step_number]) }}" class="form form--wide">
+        <form id="tool-run-form" method="POST" action="{{ route('app.runs.step.save', [$run['uuid'], $step_number]) }}" class="form form--wide" data-autosave>
             @csrf
 
             @if ($known !== [])

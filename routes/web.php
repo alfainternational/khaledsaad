@@ -101,6 +101,10 @@ Route::get('try/{run}/result', [GuestRunController::class, 'result'])->name('try
  * كي لا يُستخدم لتخمين الرموز، وبلا فهرسة في محركات البحث.
  */
 Route::middleware('throttle:30,1')->group(function (): void {
+    // تقرير للقراءة فقط برابط موقّع مؤقت — بلا حساب (بند ١٨).
+    Route::get('r/report/{report}', [\App\Http\Controllers\Site\SharedReportController::class, 'show'])
+        ->middleware('signed')->name('shared.report');
+
     Route::get('r/{token}', [SharedAgencyReportController::class, 'show'])->name('shared.agency-report');
     Route::get('r/{token}/pdf', [SharedAgencyReportController::class, 'pdf'])->name('shared.agency-report.pdf');
     Route::get('r/{token}/data.json', [SharedAgencyReportController::class, 'data'])->name('shared.agency-report.data');
@@ -217,6 +221,9 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
         Route::post('agency-reports/{agencyReport}/share', [AgencyReportController::class, 'share'])->name('agency-reports.share');
         Route::delete('agency-reports/{agencyReport}/share', [AgencyReportController::class, 'revokeShare'])->name('agency-reports.share.revoke');
     });
+
+    // البحث الشامل في أسطح المستخدم الأربعة (بند ٢٥).
+    Route::get('search', [\App\Http\Controllers\App\SearchController::class, 'index'])->name('search');
 
     Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('projects.tasks');
     Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');

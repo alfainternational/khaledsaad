@@ -9,7 +9,7 @@
             <p class="eyebrow">لوحة التحكم</p>
             <h1>ملخص مشاريعك وخطوتك التالية</h1>
         </div>
-        <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعًا</a>
+        <a href="{{ route('app.projects.create') }}" class="btn btn--primary" data-tour="ابدأ من هنا: أضف مشروعك مرة واحدة، وكل التشخيصات بعدها تبني عليه.">أضف مشروعًا</a>
     </header>
 
     <section class="layout-metrics" aria-label="الملخص الأساسي">
@@ -64,7 +64,7 @@
         </section>
         @else
         <section aria-labelledby="projects-heading">
-            <h2 id="projects-heading" class="section-title">مشاريعك</h2>
+            <h2 id="projects-heading" class="section-title" data-tour="هنا مشاريعك ودرجة كل واحد منها — الدرجة تتحدث كلما شخّصت.">مشاريعك</h2>
             <div class="card-grid">
                 @foreach ($projects as $project)
                     <a class="card card--link" href="{{ route('app.projects.show', $project['slug']) }}">
@@ -111,7 +111,7 @@
     </div>
 
     <section aria-labelledby="tools-heading">
-        <h2 id="tools-heading" class="section-title">تشخيصات مقترحة للبدء</h2>
+        <h2 id="tools-heading" class="section-title" data-tour="اختر أول تشخيص من هنا — نحو 10 دقائق وتخرج بدرجة وفجوات واضحة.">تشخيصات مقترحة للبدء</h2>
         <div class="card-grid">
             @foreach ($suggested_tools as $tool)
                 <a class="card card--link" href="{{ route('app.tools.show', $tool['key']) }}">

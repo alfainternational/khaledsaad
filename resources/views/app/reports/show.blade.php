@@ -10,6 +10,10 @@
             <h1>{{ $report['title'] }}</h1>
         </div>
         <div class="page-head__actions">
+            {{-- رابط قراءة موقّع ٧ أيام: يُنسخ بنقرة ويُرسل لشريك أو مموّل (بند ١٨) --}}
+            <button type="button" class="btn btn--ghost" data-copy-link="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('shared.report', now()->addDays(7), ['report' => $report['id']]) }}">
+                انسخ رابط مشاركة (7 أيام)
+            </button>
             @feature(\App\Support\Billing\FeatureKey::REPORTS_PDF)
                 <a href="{{ route('app.reports.pdf', $report['id']) }}" class="btn btn--ghost">حمّل PDF</a>
             @else
@@ -344,8 +348,9 @@
     </div>
 
     <aside class="layout-aside layout-flow" aria-label="فهرس التقرير ومصادره">
-        <nav class="card report-index" aria-labelledby="report-index-heading">
+        <nav class="card report-index report-toc" aria-labelledby="report-index-heading" data-report-toc>
             <h2 id="report-index-heading" class="section-title">في هذا التقرير</h2>
+            {{-- روابط ثابتة احتياطًا؛ ومع JS تُستبدل بفهرس مبني من العناوين الفعلية --}}
             <a href="#report-summary">الدرجة والخلاصة</a>
             <a href="#findings-heading">أهم ما وجدناه</a>
             <a href="#sections-heading">تفاصيل التحليل</a>

@@ -19,13 +19,13 @@
             <p>افتح أحد تقارير المشروع وحوّل التوصيات التي تريد تنفيذها إلى مهام قابلة للمتابعة.</p>
         </section>
     @else
-        <div class="board layout-board">
+        <div class="board layout-board" data-task-board>
             @foreach (['todo' => 'لم تبدأ', 'doing' => 'قيد التنفيذ', 'done' => 'منجزة'] as $key => $label)
-                <section class="board__column" aria-labelledby="column-{{ $key }}">
+                <section class="board__column" aria-labelledby="column-{{ $key }}" data-task-column="{{ $key }}">
                     <h2 id="column-{{ $key }}">{{ $label }} ({{ count($tasks[$key]) }})</h2>
 
                     @forelse ($tasks[$key] as $task)
-                        <article @class(['task', 'task--overdue' => $task['is_overdue']])>
+                        <article @class(['task', 'task--overdue' => $task['is_overdue']]) data-task-id="{{ $task['id'] }}">
                             <strong>{{ $task['title'] }}</strong>
 
                             @if ($task['description'])
