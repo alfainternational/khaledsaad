@@ -11,12 +11,14 @@
         <title>@yield('title', $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم') — خالد سعد</title>
 
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+        <link rel="apple-touch-icon" href="{{ asset('assets/brand/khaled-saad-mark.png') }}">
         @include('partials.theme')
         @include('partials.font')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('head')
     </head>
-    <body class="panel">
+    <body class="panel" data-notifications-feed="{{ route('app.notifications.index') }}">
         <a class="skip-link" href="#main-content">تجاوز إلى المحتوى</a>
 
         @php($user = auth()->user())

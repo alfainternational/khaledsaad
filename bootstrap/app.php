@@ -28,6 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureSupportedAppVersion::class,
         ]);
 
+        // «سجّل خروجي من الأجهزة الأخرى» (بند ٢٣) يحتاج هذا الحارس ليُبطل
+        // الجلسات الأخرى فعليًا عند إعادة توقيع كلمة المرور.
+        $middleware->web(append: [
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
+        ]);
+
         // إشعارات البوابات تصل من خوادمها بلا جلسة ولا رمز CSRF؛
         // التحقق من صحتها يتم بتوقيع المزوّد داخل المتحكّم.
         $middleware->validateCsrfTokens(except: [

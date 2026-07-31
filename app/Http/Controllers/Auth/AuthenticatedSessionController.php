@@ -38,6 +38,23 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        // خطوة التحقق الثانية (بند ٢٣): من فعّلها لا يدخل بكلمة المرور وحدها.
+        // نوقف الجلسة، نرسل رمزًا قصير العمر بالبريد، ونحوّله لشاشة الرمز.
+        $user = auth()->user();
+
+        if ($user->two_factor_email_enabled) {
+            auth()->logout();
+
+            $code = (string) random_int(100000, 999999);
+            cache()->put('login-otp:'.$user->id, \Illuminate\Support\Facades\Hash::make($code), now()->addMinutes(10));
+            $user->notify(new \App\Notifications\LoginOtpNotification($code));
+
+            $request->session()->put('otp_user_id', $user->id);
+            $request->session()->put('otp_remember', $request->boolean('remember'));
+
+            return redirect()->route('login.otp');
+        }
+
         $request->session()->regenerate();
 
         // العائد الذي جاء من أداة يُنقل إليها مباشرة ليختار المشروع ويشغّلها.
@@ -48,6 +65,42 @@ class AuthenticatedSessionController extends Controller
         }
 
         return redirect()->intended(route('app.dashboard'));
+    }
+
+    public function otpForm(Request $request): View|RedirectResponse
+    {
+        if (! $request->session()->has('otp_user_id')) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.otp');
+    }
+
+    public function otpVerify(Request $request): RedirectResponse
+    {
+        $request->validate(['code' => 'required|digits:6']);
+
+        $userId = $request->session()->get('otp_user_id');
+        $hashed = $userId ? cache()->get('login-otp:'.$userId) : null;
+
+        if ($userId === null || $hashed === null || ! \Illuminate\Support\Facades\Hash::check($request->string('code'), $hashed)) {
+            throw ValidationException::withMessages([
+                'code' => 'الرمز غير صحيح أو انتهت صلاحيته — اطلب الدخول من جديد.',
+            ]);
+        }
+
+        // رمز يُستخدم مرة واحدة.
+        cache()->forget('login-otp:'.$userId);
+
+        auth()->loginUsingId($userId, (bool) $request->session()->pull('otp_remember', false));
+        $request->session()->forget('otp_user_id');
+        $request->session()->regenerate();
+
+        $tool = $this->consumeStartIntent($request);
+
+        return $tool !== null
+            ? redirect()->route('app.tools.show', $tool->key)
+            : redirect()->intended(route('app.dashboard'));
     }
 
     public function destroy(Request $request): RedirectResponse

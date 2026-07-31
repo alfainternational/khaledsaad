@@ -234,6 +234,57 @@ document.addEventListener('DOMContentLoaded', () => {
         show();
     }
 
+    /* ------------------------------------------------------------------
+     * PWA (بند ١٥): تسجيل عامل الخدمة — تثبيت على الجوال + صفحة انقطاع.
+     * ------------------------------------------------------------------ */
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
+    /* ------------------------------------------------------------------
+     * تنبيهات المتصفح (بند ٣٢): بإذن صريح من صفحة التنبيهات. ما دام
+     * تبويب مفتوحًا نراقب الجديد ونعرضه كتنبيه نظام.
+     * ------------------------------------------------------------------ */
+    const notifyToggle = document.querySelector('[data-browser-notifications]');
+
+    if (notifyToggle && 'Notification' in window) {
+        const refreshLabel = () => {
+            notifyToggle.textContent = Notification.permission === 'granted'
+                ? 'تنبيهات المتصفح مفعّلة على هذا الجهاز'
+                : 'فعّل تنبيهات المتصفح على هذا الجهاز';
+            notifyToggle.disabled = Notification.permission === 'granted';
+        };
+
+        refreshLabel();
+        notifyToggle.hidden = Notification.permission === 'denied';
+        notifyToggle.addEventListener('click', () => Notification.requestPermission().then(refreshLabel));
+    }
+
+    const feedUrl = document.body.dataset.notificationsFeed;
+
+    if (feedUrl && 'Notification' in window && Notification.permission === 'granted') {
+        const seenKey = 'notified-ids';
+        const check = () => {
+            fetch(feedUrl, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+                .then((response) => (response.ok ? response.json() : Promise.reject()))
+                .then((payload) => {
+                    const seen = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]'));
+                    (payload.data || [])
+                        .filter((item) => !item.read && !seen.has(item.id))
+                        .slice(0, 3)
+                        .forEach((item) => {
+                            new Notification(item.title, { body: item.body, icon: '/assets/brand/khaled-saad-mark.png', dir: 'rtl', lang: 'ar' });
+                            seen.add(item.id);
+                        });
+                    localStorage.setItem(seenKey, JSON.stringify([...seen].slice(-100)));
+                })
+                .catch(() => {});
+        };
+
+        check();
+        setInterval(check, 60000);
+    }
+
     const revealElements = document.querySelectorAll('.reveal');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

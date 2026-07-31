@@ -17,6 +17,13 @@
         @endif
     </header>
 
+    {{-- بند ٣٢: تنبيهات نظام المتصفح بإذن صريح — تكمل البريد ولا تستبدله --}}
+    <p>
+        <button type="button" class="btn btn--ghost btn--sm" data-browser-notifications>
+            فعّل تنبيهات المتصفح على هذا الجهاز
+        </button>
+    </p>
+
     @php($activeGroup = request()->query('group', ''))
     <nav class="filter-chips" aria-label="تصفية التنبيهات">
         @foreach (['' => 'الكل', 'watch' => 'المتابعة والمنافسون', 'reports' => 'تقاريري', 'tasks' => 'المهام', 'billing' => 'الرصيد'] as $key => $label)

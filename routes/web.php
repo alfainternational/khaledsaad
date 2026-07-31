@@ -120,6 +120,11 @@ Route::middleware('guest')->group(function (): void {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    // خطوة التحقق الثانية بالبريد (بند ٢٣) — لمن فعّلها فقط.
+    Route::get('login/code', [AuthenticatedSessionController::class, 'otpForm'])->name('login.otp');
+    Route::post('login/code', [AuthenticatedSessionController::class, 'otpVerify'])
+        ->middleware('throttle:6,1')->name('login.otp.verify');
+
     // من نسي كلمة مروره كان يخرج من المنتج نهائيًا قبل هذا المسار.
     Route::get('forgot-password', [PasswordResetController::class, 'request'])->name('password.request');
     Route::post('forgot-password', [PasswordResetController::class, 'email'])->name('password.email');
@@ -224,6 +229,11 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
 
     // البحث الشامل في أسطح المستخدم الأربعة (بند ٢٥).
     Route::get('search', [\App\Http\Controllers\App\SearchController::class, 'index'])->name('search');
+
+    // أمان الحساب: خطوة التحقق الثانية + الأجهزة المتصلة (بند ٢٣).
+    Route::get('security', [\App\Http\Controllers\App\SecurityController::class, 'index'])->name('security');
+    Route::post('security/otp', [\App\Http\Controllers\App\SecurityController::class, 'toggleOtp'])->name('security.otp');
+    Route::post('security/logout-others', [\App\Http\Controllers\App\SecurityController::class, 'logoutOthers'])->name('security.logout-others');
 
     Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('projects.tasks');
     Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');

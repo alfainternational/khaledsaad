@@ -10,6 +10,8 @@
         <title>@yield('title', 'خالد سعد | تشخيص وتسويق ونمو رقمي')</title>
 
         <link rel="canonical" href="{{ url()->current() }}">
+        <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+        <link rel="apple-touch-icon" href="{{ asset('assets/brand/khaled-saad-mark.png') }}">
         <link rel="icon" href="{{ asset('assets/brand/khaled-saad-approved.png') }}" type="image/png">
 
         <meta property="og:type" content="website">

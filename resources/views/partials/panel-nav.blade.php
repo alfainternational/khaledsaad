@@ -128,5 +128,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
             <span>الأرصدة والاشتراك</span>
         </a>
+
+        <a href="{{ route('app.security') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.security*')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6.5V11c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6.5z"/></svg>
+            <span>أمان الحساب</span>
+        </a>
     </nav>
 @endif

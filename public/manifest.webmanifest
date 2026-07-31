@@ -1,0 +1,20 @@
+{
+    "name": "خالد سعد — تشخيص التسويق",
+    "short_name": "خالد سعد",
+    "description": "شخّص تسويق مشروعك واعرف درجتك وفجواتك وخطوتك التالية.",
+    "lang": "ar",
+    "dir": "rtl",
+    "start_url": "/app/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#071F5B",
+    "icons": [
+        {
+            "src": "/assets/brand/khaled-saad-mark.png",
+            "sizes": "any",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
