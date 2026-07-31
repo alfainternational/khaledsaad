@@ -70,6 +70,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
         Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
         Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+        Route::get('consultations', [ConsultationController::class, 'index'])->name('consultations.index');
         Route::post('projects/{project}/consultations', [ConsultationController::class, 'store'])->middleware('throttle:10,1')->name('consultations.store');
         Route::get('consultations/{consultation}', [ConsultationController::class, 'show'])->name('consultations.show');
         Route::put('consultations/{consultation}/answers/{question}', [ConsultationController::class, 'answer'])->middleware('throttle:120,1')->name('consultations.answer');

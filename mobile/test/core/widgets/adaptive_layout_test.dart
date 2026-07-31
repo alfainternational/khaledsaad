@@ -130,6 +130,8 @@ void main() {
       'auth/password_reset_request_screen.dart': AdaptivePageFamily.form,
       'auth/password_reset_screen.dart': AdaptivePageFamily.form,
       'consultations/consultation_screen.dart': AdaptivePageFamily.form,
+      'consultations/consultations_list_screen.dart':
+          AdaptivePageFamily.operational,
       'growth/growth_hub_screen.dart': AdaptivePageFamily.operational,
       'projects/dashboard_screen.dart': AdaptivePageFamily.operational,
       'projects/project_form_screen.dart': AdaptivePageFamily.form,

@@ -43,6 +43,27 @@ class ConsultationApiTest extends TestCase
     }
 
     #[Test]
+    public function the_api_lists_projects_with_their_latest_consultation(): void
+    {
+        $user = User::factory()->create();
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروعي', 'stage' => 'growth']);
+        Sanctum::actingAs($user);
+
+        // قبل أي استشارة: المشروع يظهر بلا جلسة.
+        $this->getJson(route('api.v1.consultations.index'))
+            ->assertOk()
+            ->assertJsonPath('data.0.slug', $project->slug)
+            ->assertJsonPath('data.0.consultation', null);
+
+        // بعد بدء استشارة: أحدث جلسة تظهر بحالتها.
+        $this->postJson(route('api.v1.consultations.store', $project), ['depth' => 'standard']);
+
+        $this->getJson(route('api.v1.consultations.index'))
+            ->assertOk()
+            ->assertJsonPath('data.0.consultation.status', fn ($status) => $status !== null);
+    }
+
+    #[Test]
     public function another_user_receives_not_found_for_the_session(): void
     {
         $owner = User::factory()->create();

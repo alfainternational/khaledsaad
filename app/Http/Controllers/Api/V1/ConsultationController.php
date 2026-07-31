@@ -24,6 +24,38 @@ class ConsultationController extends Controller
         private readonly ConsultationEvidenceService $evidence,
     ) {}
 
+    /**
+     * قائمة الاستشارات: كل مشاريع المستخدم بأحدث جلسة استشارة لكلٍّ —
+     * نظير `App\Http\Controllers\App\ConsultationController::index`.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $projects = Project::whereHas(
+            'workspace',
+            fn ($query) => $query->where('owner_id', $request->user()->id),
+        )
+            ->with(['consultationSessions' => fn ($query) => $query->latest('id')])
+            ->latest('id')
+            ->get();
+
+        return response()->json([
+            'data' => $projects->map(function (Project $project): array {
+                $latest = $project->consultationSessions->first();
+
+                return [
+                    'slug' => $project->slug,
+                    'name' => $project->name,
+                    'stage' => $project->stage,
+                    'consultation' => $latest ? [
+                        'uuid' => $latest->uuid,
+                        'status' => $latest->status,
+                        'answered' => $latest->questions_answered,
+                    ] : null,
+                ];
+            })->all(),
+        ]);
+    }
+
     public function store(Request $request, Project $project): JsonResponse
     {
         $this->authorizeOwned($request, $project);

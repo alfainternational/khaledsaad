@@ -384,6 +384,20 @@ class PlatformRepository {
     );
   }
 
+  // --- قائمة الاستشارات + تصديرها ---
+
+  Future<List<dynamic>> consultationsList() async {
+    final response = await _api.get('/consultations');
+
+    return List<dynamic>.from(response['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> exportConsultation(String uuid) async {
+    final response = await _api.get('/consultations/$uuid/export');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
   // --- محفظة الوكالة (نطاقها مساحة العمل كلها) ---
 
   Future<Map<String, dynamic>> portfolio() async {

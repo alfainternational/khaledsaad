@@ -9,6 +9,7 @@ import '../account/billing_screen.dart';
 import '../account/notifications_screen.dart';
 import '../admin/admin_hub_screen.dart';
 import '../consultations/consultation_screen.dart';
+import '../consultations/consultations_list_screen.dart';
 import '../portfolio/portfolio_screen.dart';
 import '../tools/engagement.dart';
 import '../tools/models.dart';
@@ -103,6 +104,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           // محفظة العملاء: نطاقها مساحة العمل. متاحة لمن له ميزة تقارير الوكالة —
           // ومن لا يملكها يرى رسالة الترقية من الشاشة نفسها بدل حجب المدخل.
+          IconButton(
+            tooltip: 'الاستشارات',
+            icon: const Icon(Icons.forum_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    ConsultationsListScreen(repository: widget.repository),
+              ),
+            ),
+          ),
           IconButton(
             tooltip: 'محفظة العملاء',
             icon: const Icon(Icons.business_center_outlined),
