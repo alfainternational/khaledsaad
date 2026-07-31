@@ -55,6 +55,37 @@ Route::get('download/android', MobileAppController::class)->name('mobile.downloa
 
 // واجهة الأدوات العامة: يراها الزائر قبل التسجيل ليعرف ما الذي سيدخل إليه.
 Route::get('tools', [ToolShowcaseController::class, 'index'])->name('tools.index');
+Route::get('pricing', [\App\Http\Controllers\Site\PricingController::class, 'index'])->name('pricing');
+
+// خريطة الموقع (بند ١٦): الصفحات العامة + صفحات الأدوات — من قاعدة البيانات
+// لا من قائمة يدوية تنجرف. كاش ساعة لأنها لا تتغير إلا ببذر أو إصدار.
+Route::get('sitemap.xml', function () {
+    $xml = cache()->remember('sitemap.xml', now()->addHour(), function (): string {
+        $urls = collect([
+            ['loc' => route('home'), 'priority' => '1.0'],
+            ['loc' => route('tools.index'), 'priority' => '0.9'],
+            ['loc' => route('pricing'), 'priority' => '0.9'],
+            ['loc' => route('mobile.download'), 'priority' => '0.6'],
+        ])->merge(
+            \App\Models\Tool::orderBy('sort_order')->get()
+                ->map(fn ($tool) => [
+                    'loc' => route('tools.show', $tool->key),
+                    'priority' => '0.8',
+                    'lastmod' => $tool->updated_at?->toAtomString(),
+                ]),
+        );
+
+        $entries = $urls->map(function (array $url): string {
+            $lastmod = isset($url['lastmod']) && $url['lastmod'] ? "<lastmod>{$url['lastmod']}</lastmod>" : '';
+
+            return "<url><loc>{$url['loc']}</loc>{$lastmod}<priority>{$url['priority']}</priority></url>";
+        })->implode('');
+
+        return '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'.$entries.'</urlset>';
+    });
+
+    return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
+})->name('sitemap');
 Route::get('tools/{tool}', [ToolShowcaseController::class, 'show'])->name('tools.show');
 
 // التجربة بلا حساب: يجرّب أولًا ثم يقرر التسجيل.

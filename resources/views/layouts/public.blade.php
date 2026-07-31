@@ -18,6 +18,7 @@
         <meta property="og:description" content="@yield('description', config('brand.tagline'))">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:site_name" content="{{ config('brand.name') }}">
+        <meta property="og:image" content="@yield('og_image', asset('assets/brand/khaled-saad-approved.png'))">
 
         <meta name="twitter:card" content="summary">
         <meta name="twitter:title" content="@yield('title', 'خالد سعد | تشخيص وتسويق ونمو رقمي')">

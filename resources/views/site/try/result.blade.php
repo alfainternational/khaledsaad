@@ -32,6 +32,16 @@
                         {{ $preview['band'] }} — محسوبة من {{ $preview['basis_count'] }} بندًا تنطبق على نشاطك.
                     </p>
 
+                    @if ($peers !== null)
+                        <p @class(['try-peers', 'try-peers--above' => $preview['score'] >= $peers['average'], 'try-peers--below' => $preview['score'] < $peers['average']])>
+                            @if ($preview['score'] >= $peers['average'])
+                                أنت أعلى من متوسط من أكملوا هذا التشخيص ({{ $peers['average'] }} من 100 — من {{ $peers['count'] }} تشخيصًا).
+                            @else
+                                متوسط من أكملوا هذا التشخيص {{ $peers['average'] }} من 100 (من {{ $peers['count'] }} تشخيصًا) — الفجوات أدناه تريك أين يذهب الفرق.
+                            @endif
+                        </p>
+                    @endif
+
                     @if ($preview['gaps'] !== [])
                         <h3 class="review-step">أكبر ثلاث فجوات عندك</h3>
                         <ul class="check-list check-list--gaps">

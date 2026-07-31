@@ -118,6 +118,22 @@
             </div>
         </section>
 
+        @if ($proof !== null)
+            {{-- برهان حقيقي من بيانات فعلية، لا شعار: يظهر فقط حين تكفي العينة (§٤.٢) --}}
+            <section class="proof-strip" aria-label="نشاط المنصة الفعلي">
+                <div class="container proof-strip__inner">
+                    <p>
+                        <strong>{{ \App\Support\Presentation\Num::int($proof['count']) }}</strong>
+                        تشخيصًا اكتمل خلال آخر 30 يومًا
+                    </p>
+                    <p>
+                        متوسط الدرجة <strong>{{ \App\Support\Presentation\Num::score($proof['average']) }}</strong>
+                        <span class="muted">— من {{ \App\Support\Presentation\Num::int($proof['count']) }} تشخيصًا مكتملًا</span>
+                    </p>
+                </div>
+            </section>
+        @endif
+
         <section class="section problems-section" id="why">
             <div class="container">
                 <x-section-heading

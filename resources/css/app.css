@@ -3621,6 +3621,180 @@ svg {
 }
 
 /* ==========================================================================
+   الواجهة العامة — موجة ٢: الأسعار، البرهان، عينة التقرير، مقارنة الأقران
+   ========================================================================== */
+
+.hero--slim {
+    padding-block: 4.5rem 2.5rem;
+    text-align: center;
+}
+
+.hero--slim .hero-lead {
+    max-inline-size: 42rem;
+    margin-inline: auto;
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1.25rem;
+    align-items: stretch;
+}
+
+.pricing-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.75rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.pricing-card--featured {
+    border-color: var(--brand-blue);
+    box-shadow: var(--shadow-card);
+}
+
+.pricing-card h3 {
+    margin: 0;
+}
+
+.pricing-card__price {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+
+.pricing-card__price strong {
+    font-size: 2.1rem;
+    line-height: 1;
+}
+
+.pricing-card__price span {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.pricing-card .button {
+    margin-block-start: auto;
+    text-align: center;
+}
+
+.pricing-note {
+    margin-block-start: 1.5rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.faq-item {
+    border-block-end: 1px solid var(--line);
+    padding-block: 0.9rem;
+}
+
+.faq-item summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.faq-item p {
+    margin: 0.6rem 0 0;
+    color: var(--muted);
+}
+
+.proof-strip {
+    border-block: 1px solid var(--line);
+    background: var(--surface-soft);
+    padding-block: 1rem;
+}
+
+.proof-strip__inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 2.5rem;
+}
+
+.proof-strip p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.proof-strip strong {
+    color: var(--brand-blue);
+}
+
+.sample-report {
+    max-inline-size: 46rem;
+    margin-inline: auto;
+    display: grid;
+    gap: 1rem;
+    padding: 1.75rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.sample-report__summary {
+    margin: 0;
+    font-weight: 600;
+}
+
+.sample-report__finding {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.15rem;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.sample-report__finding header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.sample-report__finding h3 {
+    margin: 0;
+    font-size: 1.02rem;
+}
+
+.sample-report__finding p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.sample-report__evidence {
+    font-style: italic;
+}
+
+.try-peers {
+    margin: 0.6rem 0 0;
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.try-peers--above {
+    background: rgba(18, 183, 106, 0.1);
+    color: #0c7a43;
+}
+
+.try-peers--below {
+    background: rgba(255, 155, 39, 0.12);
+    color: #b05c00;
+}
+
+:root[data-theme='dark'] .try-peers--above { color: #4ade9b; }
+:root[data-theme='dark'] .try-peers--below { color: #ffb75e; }
+
+/* ==========================================================================
    وصولية عامة (بند ٣): تركيز مرئي موحّد + احترام تقليل الحركة
    ========================================================================== */
 

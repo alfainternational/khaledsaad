@@ -16,6 +16,7 @@
         <nav class="desktop-nav" aria-label="التنقل الرئيسي">
             <a href="{{ $anchorBase }}#method">المنهجية</a>
             <a href="{{ route('tools.index') }}" @class(['is-active' => request()->routeIs('tools.*')])>التشخيصات</a>
+            <a href="{{ route('pricing') }}" @class(['is-active' => request()->routeIs('pricing')])>الأسعار</a>
             <a href="{{ $anchorBase }}#about">عن خالد</a>
             <a href="{{ $anchorBase }}#knowledge">المعرفة</a>
             <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>

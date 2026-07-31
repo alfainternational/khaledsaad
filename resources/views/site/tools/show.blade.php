@@ -98,6 +98,44 @@
             </div>
         </section>
 
+        @if ($sample !== null)
+            <section class="section sample-section" aria-labelledby="sample-title">
+                <div class="container">
+                    <x-section-heading
+                        eyebrow="مثال توضيحي — ليس نتيجة عميل"
+                        title="هكذا تصلك النتيجة"
+                        description="مقطع بصيغة التقرير الحقيقية نفسها: خلاصة، ونتيجة بدليلها، وفرضية موسومة بصراحة."
+                        id="sample-title"
+                    />
+
+                    <div class="sample-report">
+                        <p class="sample-report__summary">{{ $sample['summary'] }}</p>
+
+                        @if ($sample['finding'])
+                            <article class="sample-report__finding">
+                                <header>
+                                    <h3>{{ $sample['finding']['title'] }}</h3>
+                                    <x-evidence-badge level="measured" compact />
+                                </header>
+                                <p>{{ $sample['finding']['description'] }}</p>
+                                <p class="sample-report__evidence">الدليل: {{ $sample['finding']['evidence'] }}</p>
+                            </article>
+                        @endif
+
+                        @if ($sample['assumption'])
+                            <article class="sample-report__finding">
+                                <header>
+                                    <h3>{{ $sample['assumption']['title'] }}</h3>
+                                    <x-evidence-badge level="inferred" compact />
+                                </header>
+                                <p>{{ $sample['assumption']['description'] }}</p>
+                            </article>
+                        @endif
+                    </div>
+                </div>
+            </section>
+        @endif
+
         @if ($tool['is_runnable'] && $tool['steps'] !== [])
             <section class="section steps-section">
                 <div class="container">

@@ -120,7 +120,32 @@ class GuestRunController extends Controller
             'preview' => $preflight['missing'] === []
                 ? $this->preview->build($run->toolVersion, $this->answersOf($run), $this->activeKeysOf($run))
                 : null,
+
+            /*
+             * مقارنة الأقران: متوسط من أكملوا التشخيص نفسه. تُعرض فقط حين
+             * تبلغ العينة ١٠ فأكثر (§٤.٢ — لا قياس من عينة صغيرة)، ومعها
+             * أساسها دائمًا (§١٣).
+             */
+            'peers' => $this->peersOf($run),
         ]);
+    }
+
+    /**
+     * @return array{average: int, count: int}|null
+     */
+    private function peersOf(ToolRun $run): ?array
+    {
+        $stats = ToolRun::where('tool_version_id', $run->tool_version_id)
+            ->where('id', '!=', $run->id)
+            ->whereNotNull('base_score')
+            ->selectRaw('count(*) as n, avg(base_score) as avg_score')
+            ->first();
+
+        if ($stats === null || (int) $stats->n < 10) {
+            return null;
+        }
+
+        return ['average' => (int) round((float) $stats->avg_score), 'count' => (int) $stats->n];
     }
 
     /**
