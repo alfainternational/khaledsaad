@@ -16,7 +16,7 @@ return [
     'status' => 'published',
 
     'version' => [
-        'number' => 2,
+        'number' => 3,
         'credit_cost' => 6,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -261,6 +261,28 @@ return [
                 ['value' => 'city', 'label' => 'المدينة'],
                 ['value' => 'region', 'label' => 'المنطقة أو عدة مدن'],
                 ['value' => 'country', 'label' => 'كل الدولة'],
+            ]],
+
+        // التعليم: الحملة خارج موسم التسجيل تشتري وعيًا لا تسجيلات.
+        ['key' => 'enrollment_season', 'label' => 'متى موسم التسجيل الرئيسي عندكم؟', 'type' => 'select', 'step' => 3,
+            'visible_when' => ['project.sector' => 'education'],
+            'required' => false,
+            'why' => 'قرار التسجيل يُتخذ في أسابيع محددة من السنة، والميزانية نفسها تعطي قبل الموسم أضعاف ما تعطيه بعده. الحملة الصحيحة تُبنى للخلف من تاريخ إغلاق التسجيل.',
+            'options' => [
+                ['value' => 'school_year', 'label' => 'قبل بداية العام الدراسي'],
+                ['value' => 'semesters', 'label' => 'مع كل فصل دراسي'],
+                ['value' => 'continuous', 'label' => 'التسجيل مستمر طوال السنة'],
+            ]],
+
+        // العقارات: تسويق مشروع محدد غير تسويق خدمة الوساطة نفسها.
+        ['key' => 're_focus', 'label' => 'ما الذي تسوّقه في هذه الحملة؟', 'type' => 'select', 'step' => 3,
+            'visible_when' => ['project.sector' => 'real_estate'],
+            'required' => false,
+            'why' => 'حملة مشروع محدد تُقاس بالوحدات المباعة وتنتهي بنفاده، وحملة الوساطة تُقاس بتدفق عملاء دائم. الخلط بينهما يجعل الميزانية تطارد هدفين لا يلتقيان.',
+            'options' => [
+                ['value' => 'project', 'label' => 'مشروع أو مخطط محدد'],
+                ['value' => 'units', 'label' => 'وحدات متفرقة'],
+                ['value' => 'brokerage', 'label' => 'خدمة الوساطة نفسها'],
             ]],
 
         ['key' => 'tracking_setup', 'label' => 'هل تستطيع معرفة من اشترى بسبب الإعلان؟', 'type' => 'select', 'step' => 4,

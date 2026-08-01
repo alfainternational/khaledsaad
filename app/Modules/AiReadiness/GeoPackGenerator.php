@@ -81,7 +81,11 @@ class GeoPackGenerator
 
         return [
             'name' => $project->name,
-            'industry' => $project->industry,
+            // القطاع المعلن أدق من النص الحر حين وُجد — والنص الحر تفصيل يليه.
+            'industry' => \App\Modules\Shared\Sectors\Sector::isSpecialized($project->sector)
+                ? trim(\App\Modules\Shared\Sectors\Sector::label($project->sector).($project->industry ? " — {$project->industry}" : ''))
+                : $project->industry,
+            'sector' => \App\Modules\Shared\Sectors\Sector::declaredOrGeneral($project->sector),
             'stage' => $project->stage,
             'business_model' => $profile?->business_model,
             'description' => $profile?->description,
@@ -187,7 +191,14 @@ class GeoPackGenerator
     {
         $organization = array_filter([
             '@context' => 'https://schema.org',
-            '@type' => 'Organization',
+            // نوع القطاع أبلغ من Organization العام: EducationalOrganization
+            // وRealEstateAgent يدخلان تصنيفات لا يبلغها النوع العام أصلًا.
+            '@type' => match ($facts['sector'] ?? 'general') {
+                \App\Modules\Shared\Sectors\Sector::EDUCATION => 'EducationalOrganization',
+                \App\Modules\Shared\Sectors\Sector::ECOMMERCE => 'Store',
+                \App\Modules\Shared\Sectors\Sector::REAL_ESTATE => 'RealEstateAgent',
+                default => 'Organization',
+            },
             'name' => $facts['name'],
             'description' => $composed['summary'],
             'url' => $facts['website'] ?: null,

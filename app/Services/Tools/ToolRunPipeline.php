@@ -421,7 +421,11 @@ class ToolRunPipeline
         $prompt->lock();
 
         return [
-            ['role' => 'system', 'content' => PipelineSchemas::systemPreamble($run->toolVersion->tool->key)],
+            // القطاع المعلن يبدّل المثال الذهبي إلى نظيره القطاعي إن أُلِّف.
+            ['role' => 'system', 'content' => PipelineSchemas::systemPreamble(
+                $run->toolVersion->tool->key,
+                $run->project?->sector,
+            )],
             ['role' => 'user', 'content' => $prompt->content],
             [
                 'role' => 'user',

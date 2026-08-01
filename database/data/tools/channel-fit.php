@@ -16,7 +16,7 @@ return [
     'status' => 'published',
 
     'version' => [
-        'number' => 2,
+        'number' => 3,
         'credit_cost' => 5,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -154,6 +154,34 @@ return [
                 ['value' => 'none', 'label' => 'لا، الموقع بعيد عن الحركة'],
                 ['value' => 'some', 'label' => 'مرور متوسط'],
                 ['value' => 'heavy', 'label' => 'نعم، حركة كثيفة'],
+            ]],
+
+        // التعليم: مصدر الاستفسارات يكشف أي قناة تستحق الميزانية فعلًا.
+        ['key' => 'education_lead_sources', 'label' => 'من أين تأتيكم استفسارات التسجيل اليوم؟', 'type' => 'multiselect', 'step' => 1,
+            'visible_when' => ['project.sector' => 'education'],
+            'required' => false,
+            'why' => 'في التعليم تسبق توصية وليّ أمر راضٍ أي إعلان مدفوع. معرفة مصدر الاستفسارات الحقيقي تمنعك من دفع ميزانية لقناة تجلب فضوليين لا مسجّلين.',
+            'options' => [
+                ['value' => 'referrals', 'label' => 'توصيات أولياء الأمور'],
+                ['value' => 'google', 'label' => 'بحث جوجل أو الخرائط'],
+                ['value' => 'social', 'label' => 'إنستغرام وسناب وتيك توك'],
+                ['value' => 'events', 'label' => 'معارض وأيام مفتوحة'],
+                ['value' => 'ads', 'label' => 'إعلانات مدفوعة'],
+                ['value' => 'unknown', 'label' => 'لا أعرف بدقة'],
+            ]],
+
+        // العقارات: البوابات قناة القطاع الأولى، والاعتماد الكامل عليها جمهور مستأجر.
+        ['key' => 're_portals', 'label' => 'أين تعرض وحداتك أو مشاريعك اليوم؟', 'type' => 'multiselect', 'step' => 1,
+            'visible_when' => ['project.sector' => 'real_estate'],
+            'required' => false,
+            'why' => 'البوابات العقارية تجلب طلبًا جاهزًا لكنها تملك العميل لا أنت. معرفة اعتمادك عليها تحدد كم يجب أن تستثمر في قنواتك المملوكة قبل أن ترفع عمولاتها أو يسبقك منافس فيها.',
+            'options' => [
+                ['value' => 'aqar', 'label' => 'تطبيقات العقار المحلية'],
+                ['value' => 'bayut', 'label' => 'بوابات إقليمية'],
+                ['value' => 'haraj', 'label' => 'مواقع الإعلانات العامة'],
+                ['value' => 'social', 'label' => 'حساباتي في التواصل'],
+                ['value' => 'own_site', 'label' => 'موقعي الخاص'],
+                ['value' => 'none', 'label' => 'لا أعرض إلكترونيًا بعد'],
             ]],
 
         /*

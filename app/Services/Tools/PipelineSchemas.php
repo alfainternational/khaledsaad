@@ -8,7 +8,7 @@ namespace App\Services\Tools;
  */
 class PipelineSchemas
 {
-    public static function systemPreamble(?string $toolKey = null): string
+    public static function systemPreamble(?string $toolKey = null, ?string $sector = null): string
     {
         return implode("\n", [
             // من نكتب له: صاحب مشروع صغير، غالبًا أول تجربته مع التسويق،
@@ -38,7 +38,7 @@ class PipelineSchemas
             // المثال الذهبي المخصّص للأداة (أو المشترك عند غياب المفتاح):
             // يجسّد القواعد مجتمعةً بحقول الأداة نفسها. الهدف تثبيت النبرة
             // والبنية، لا نسخ المحتوى.
-            GoldenExamples::for($toolKey),
+            GoldenExamples::for($toolKey, $sector),
         ]);
     }
 

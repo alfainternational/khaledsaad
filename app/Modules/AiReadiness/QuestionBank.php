@@ -3,6 +3,7 @@
 namespace App\Modules\AiReadiness;
 
 use App\Models\Project;
+use App\Modules\Shared\Sectors\Sector;
 
 /**
  * بنك الأسئلة القطاعي — أحد أصول الخندق الأربعة (CLAUDE.md §٣).
@@ -56,6 +57,96 @@ class QuestionBank
         ],
     ];
 
+    /**
+     * قوالب القطاعات المتخصصة — نية المشتري تختلف باختلاف ما يشتريه.
+     *
+     * وليّ الأمر لا يسأل «مين أفضل تعليم» بل «أي مدرسة أسجّل ولدي»، وباحث
+     * السكن يسأل بالحي لا بالمدينة. القالب العام يبقى للأساس، وهذه تحل محله
+     * حين يكون القطاع معلنًا — بنفس المفاتيح حتى يصح تتبع النية زمنيًّا.
+     *
+     * @var array<string, array<string, array<string, string>>>
+     */
+    private const SECTOR_TEMPLATES = [
+        Sector::EDUCATION => [
+            'best_provider' => [
+                'intent' => 'يبحث عن الأفضل',
+                'text' => 'وش أفضل {category} في {city}؟',
+            ],
+            'recommendation' => [
+                'intent' => 'يطلب ترشيحًا',
+                'text' => 'أبغى أسجّل ولدي في {category} كويسة في {city}، وش تنصحوني؟',
+            ],
+            'pricing' => [
+                'intent' => 'يقارن الرسوم',
+                'text' => 'كم رسوم {category} في {city}؟',
+            ],
+            'shortlist' => [
+                'intent' => 'يبني قائمة مختصرة',
+                'text' => 'وش أشهر {category} عند أهل {city}؟',
+            ],
+            'trust' => [
+                'intent' => 'يتحقق قبل التسجيل',
+                'text' => 'كيف أتأكد إن {category} معتمدة ومرخّصة في {city}؟',
+            ],
+            'comparison' => [
+                'intent' => 'يوازن بين خيارين',
+                'text' => 'أيهما أفضل لولدي: {category} أهلية ولا حكومية في {city}؟',
+            ],
+        ],
+        Sector::ECOMMERCE => [
+            'best_provider' => [
+                'intent' => 'يبحث عن الأفضل',
+                'text' => 'وش أفضل متجر {category} يوصّل داخل {city}؟',
+            ],
+            'recommendation' => [
+                'intent' => 'يطلب ترشيحًا',
+                'text' => 'أبغى أطلب {category} أونلاين، وش المتجر اللي تنصحوني فيه؟',
+            ],
+            'pricing' => [
+                'intent' => 'يقارن السعر',
+                'text' => 'كم سعر {category} مع التوصيل في {city}؟',
+            ],
+            'shortlist' => [
+                'intent' => 'يبني قائمة مختصرة',
+                'text' => 'وش أشهر متاجر {category} في السعودية؟',
+            ],
+            'trust' => [
+                'intent' => 'يتحقق قبل الشراء',
+                'text' => 'كيف أعرف إن متجر {category} موثوق قبل ما أدفع؟',
+            ],
+            'comparison' => [
+                'intent' => 'يوازن بين خيارين',
+                'text' => 'أطلب {category} من متجر محلي ولا من المنصات الكبيرة؟',
+            ],
+        ],
+        Sector::REAL_ESTATE => [
+            'best_provider' => [
+                'intent' => 'يبحث عن الأفضل',
+                'text' => 'مين أفضل {category} في {city}؟',
+            ],
+            'recommendation' => [
+                'intent' => 'يطلب ترشيحًا',
+                'text' => 'أدور شقة أو فيلا في {city}، مين {category} اللي تنصحوني أتعامل معه؟',
+            ],
+            'pricing' => [
+                'intent' => 'يقارن الأسعار والعمولة',
+                'text' => 'كم أسعار العقار وعمولة {category} في {city}؟',
+            ],
+            'shortlist' => [
+                'intent' => 'يبني قائمة مختصرة',
+                'text' => 'وش أشهر مكاتب العقار في {city}؟',
+            ],
+            'trust' => [
+                'intent' => 'يتحقق قبل التعامل',
+                'text' => 'كيف أتأكد إن {category} مرخّص وعنده فال في {city}؟',
+            ],
+            'comparison' => [
+                'intent' => 'يوازن بين خيارين',
+                'text' => 'أشتري عن طريق {category} ولا مباشرة من المطوّر في {city}؟',
+            ],
+        ],
+    ];
+
     /** الحدّ الأدنى لعدد الأسئلة في دورة قابلة للنشر. */
     public const MIN_QUESTIONS = 3;
 
@@ -71,7 +162,10 @@ class QuestionBank
 
         $questions = [];
 
-        foreach (self::TEMPLATES as $key => $template) {
+        // القطاع المعلن يبدّل مجموعة القوالب كلها لا سؤالًا بعينه.
+        $templates = self::SECTOR_TEMPLATES[Sector::declaredOrGeneral($project->sector)] ?? self::TEMPLATES;
+
+        foreach ($templates as $key => $template) {
             $questions[] = [
                 'key' => $key,
                 'intent' => $template['intent'],

@@ -88,7 +88,7 @@ class ProjectController extends Controller
             'project' => $this->presenter->overview($project),
             'tools' => $tools->map(fn ($tool) => $this->tools->card($tool))->all(),
             // مؤشرات نموذجية يفهم منها المستخدم المقصود ويبدأ بضغطة.
-            'kpiTemplates' => KpiTemplates::catalog(),
+            'kpiTemplates' => KpiTemplates::catalog($project->sector),
             // حالة كل أداة داخل هذا المشروع تحديدًا، لا عبر مشاريعه كلها.
             'engagements' => $tools
                 ->mapWithKeys(fn (Tool $tool) => [

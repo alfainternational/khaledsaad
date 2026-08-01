@@ -32,16 +32,38 @@ class GoldenExamplesTest extends TestCase
         $validator = new JsonSchemaValidator;
         $schema = PipelineSchemas::synthesis();
 
-        foreach (GoldenExamples::catalog() as $key => $example) {
+        // all() لا catalog(): الأمثلة القطاعية تحت الحارس نفسه منذ أول ملف.
+        foreach (GoldenExamples::all() as $key => $example) {
             $violations = $validator->validate($example['output'], $schema);
             $this->assertSame([], $violations, "مثال {$key} يخالف المخطط: ".implode(' | ', $violations));
         }
     }
 
     #[Test]
+    public function sector_examples_cover_real_tools_in_specialized_sectors_only(): void
+    {
+        $tools = array_map(
+            fn (string $path) => basename($path, '.php'),
+            glob(dirname(__DIR__, 4).'/database/data/tools/*.php') ?: [],
+        );
+
+        foreach (GoldenExamples::sectorCatalog() as $sector => $examples) {
+            $this->assertContains(
+                $sector,
+                \App\Modules\Shared\Sectors\Sector::SPECIALIZED,
+                "ملف أمثلة لقطاع غير متخصص: {$sector} — المواصفة تحصر التأليف القطاعي في الثلاثة.",
+            );
+
+            foreach (array_keys($examples) as $toolKey) {
+                $this->assertContains($toolKey, $tools, "مثال قطاعي لأداة غير موجودة: {$toolKey}@{$sector}.");
+            }
+        }
+    }
+
+    #[Test]
     public function assumption_findings_obey_the_confidence_cap_and_declare_their_basis(): void
     {
-        foreach (GoldenExamples::catalog() as $key => $example) {
+        foreach (GoldenExamples::all() as $key => $example) {
             $hasAssumption = false;
 
             foreach ($example['output']['findings'] as $finding) {

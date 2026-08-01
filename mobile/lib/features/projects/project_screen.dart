@@ -143,7 +143,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     ),
                   ),
                   Text(
-                    project.card.industry ?? 'قطاع غير محدد',
+                    project.card.sectorLabel ?? 'قطاع غير محدد',
                     style: const TextStyle(color: BrandColors.muted),
                   ),
                   const SizedBox(height: 16),

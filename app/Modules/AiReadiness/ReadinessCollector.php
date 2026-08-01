@@ -31,7 +31,8 @@ class ReadinessCollector
      */
     public function collectSiteAudit(Project $project, string $url): SiteAuditResult
     {
-        $result = $this->audit->audit($url);
+        // القطاع المعلن وحده يوجّه الفحص: التدقيق measured ولا يُبنى على ترجيح.
+        $result = $this->audit->audit($url, \App\Modules\Shared\Sectors\Sector::declaredOrGeneral($project->sector));
 
         /*
          * موقع تعذّر الوصول إليه لا يكتب شيئًا. لو كتبنا صفرًا لأصبح غياب

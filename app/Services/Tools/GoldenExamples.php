@@ -13,10 +13,16 @@ namespace App\Services\Tools;
  */
 class GoldenExamples
 {
-    public static function for(?string $toolKey): string
+    public static function for(?string $toolKey, ?string $sector = null): string
     {
-        $catalog = self::catalog();
-        $example = $catalog[$toolKey] ?? $catalog['marketing-score'];
+        /*
+         * المثال القطاعي يتقدّم على العام (مواصفة التخصص القطاعي): مشروع
+         * تعليمي يستحق مثالًا بلسان مدرسة لا بلسان متجر كيك. غيابه ليس
+         * نقصًا بل تدرّجًا في التأليف — العام يغطي حتى يُكتب القطاعي.
+         */
+        $example = self::sectorCatalog()[$sector][$toolKey]
+            ?? self::catalog()[$toolKey]
+            ?? self::catalog()['marketing-score'];
 
         return implode("\n", [
             'مثال إرشادي (مُدخل ← مُخرج مثالي). التزم بنبرته وبنيته وتطبيقه للقواعد، لا بمحتواه:',
@@ -24,6 +30,50 @@ class GoldenExamples
             'المُخرج المثالي (ثلاث نتائج = الحد الأدنى؛ الأعلى ثماني): البنودُ الحتمية الأضعف أولًا ثم الفرضية أخيرًا:',
             json_encode($example['output'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ]);
+    }
+
+    /**
+     * الأمثلة القطاعية من ملفات بيانات، لكل قطاع متخصص ملفه.
+     *
+     * في ملفات لا هنا: التأليف القطاعي يتراكم أداةً بعد أداة دون تضخيم هذا
+     * الصنف، والاختبار يمر على الكل عبر `all()` فلا مثال بلا حارس مخطط.
+     *
+     * @return array<string, array<string, array{input: string, output: array<string, mixed>}>>
+     */
+    public static function sectorCatalog(): array
+    {
+        static $loaded = null;
+
+        if ($loaded !== null) {
+            return $loaded;
+        }
+
+        $loaded = [];
+
+        // مسار نسبي لا database_path(): الاختبار الحارس يعمل بلا حاوية Laravel.
+        foreach (glob(dirname(__DIR__, 3).'/database/data/golden-examples/*.php') ?: [] as $file) {
+            $loaded[basename($file, '.php')] = require $file;
+        }
+
+        return $loaded;
+    }
+
+    /**
+     * كل الأمثلة — العامة والقطاعية — بمفاتيح مميّزة للاختبار الشامل.
+     *
+     * @return array<string, array{input: string, output: array<string, mixed>}>
+     */
+    public static function all(): array
+    {
+        $all = self::catalog();
+
+        foreach (self::sectorCatalog() as $sector => $examples) {
+            foreach ($examples as $toolKey => $example) {
+                $all["{$toolKey}@{$sector}"] = $example;
+            }
+        }
+
+        return $all;
     }
 
     /**

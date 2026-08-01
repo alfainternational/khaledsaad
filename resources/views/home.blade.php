@@ -31,6 +31,11 @@
                         أجب عن أسئلة واضحة حول مشروعك، لتحصل على صورة أقرب إلى واقعك:
                         أين تتعطل النتائج، وما الخطوات التي تستحق أن تبدأ بها الآن.
                     </p>
+                    <p class="hero-lead reveal" aria-label="قطاعات التخصص">
+                        نتعمّق أكثر في <strong>التعليم</strong> و<strong>التجارة الإلكترونية</strong>
+                        و<strong>العقارات</strong>: أسئلة وفحوصات بلسان قطاعك، ومقارنة بأنشطة مثلك —
+                        وبقية القطاعات نخدمها بالمسار الكامل نفسه.
+                    </p>
                     <div class="hero-actions reveal">
                         <a class="button button--primary button--large" href="{{ $startUrl }}">
                             {{ $startLabel }}

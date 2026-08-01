@@ -16,7 +16,7 @@ return [
     'status' => 'published',
 
     'version' => [
-        'number' => 2,
+        'number' => 3,
         'credit_cost' => 5,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -211,6 +211,44 @@ return [
                 ['value' => 'none', 'label' => 'لا، أبيع لأي شخص مهتم'],
                 ['value' => 'rough', 'label' => 'عندي تصور في ذهني لكنه غير مكتوب'],
                 ['value' => 'documented', 'label' => 'نعم، محدد ومكتوب ونعمل به'],
+            ]],
+
+        // التعليم: من يستخدم الخدمة غير من يدفع ويقرّر — والرسالة تتبع المقرِّر.
+        ['key' => 'decision_audience', 'label' => 'من يتخذ قرار التسجيل عندكم فعلًا؟', 'type' => 'select', 'step' => 2,
+            'visible_when' => ['project.sector' => 'education'],
+            'required' => false,
+            'why' => 'الطالب يعيش التجربة ووليّ الأمر يدفع ويقرّر، ولكل منهما لغة تقنعه. تسويق يخاطب الطالب وحده يكسب إعجابًا لا تسجيلات، والعكس يكسب جدية بلا حماس.',
+            'options' => [
+                ['value' => 'student', 'label' => 'الطالب أو المتدرب نفسه'],
+                ['value' => 'parent', 'label' => 'وليّ الأمر'],
+                ['value' => 'sponsor', 'label' => 'جهة عمل أو ابتعاث'],
+                ['value' => 'mixed', 'label' => 'خليط يختلف حسب المرحلة'],
+            ]],
+
+        // العقارات: الصفة في السوق تقلب رحلة العميل كلها.
+        ['key' => 're_role', 'label' => 'ما صفتكم في السوق العقاري؟', 'type' => 'select', 'step' => 2,
+            'visible_when' => ['project.sector' => 'real_estate'],
+            'required' => false,
+            'why' => 'المطوّر يبيع مشروعه مرة واحدة لجمهور واسع، والوسيط يبيع ثقته مرة بعد مرة لنطاق محدد. الخلط بين التسويقين يجعل الميزانية تشتري الجمهور الخطأ.',
+            'options' => [
+                ['value' => 'broker', 'label' => 'وساطة وتسويق عقاري'],
+                ['value' => 'developer', 'label' => 'تطوير عقاري'],
+                ['value' => 'marketer', 'label' => 'تسويق لمشاريع مطوّرين'],
+                ['value' => 'property_mgmt', 'label' => 'إدارة أملاك'],
+            ]],
+
+        // المتاجر: منصة المتجر تحدد ما يمكن قياسه وربطه دون تطوير.
+        ['key' => 'store_platform', 'label' => 'على أي منصة يعمل متجرك؟', 'type' => 'select', 'step' => 2,
+            'visible_when' => ['project.sector' => 'ecommerce'],
+            'required' => false,
+            'why' => 'المنصة تقرر ما هو متاح لك بضغطة زر: الفيد والتتبع والسلة المتروكة أدوات جاهزة في بعض المنصات وتطوير مكلف في غيرها. توصياتنا تتبع ما تتيحه منصتك فعلًا.',
+            'options' => [
+                ['value' => 'salla', 'label' => 'سلة'],
+                ['value' => 'zid', 'label' => 'زد'],
+                ['value' => 'shopify', 'label' => 'شوبيفاي'],
+                ['value' => 'woo', 'label' => 'ووكومرس أو ووردبريس'],
+                ['value' => 'custom', 'label' => 'متجر مبني خصيصًا'],
+                ['value' => 'marketplace_only', 'label' => 'أبيع عبر منصات وسيطة فقط'],
             ]],
 
         // الخطوة 3 — أين تسوّق وهل تعرف ما ينجح

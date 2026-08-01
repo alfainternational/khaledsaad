@@ -2,6 +2,8 @@
 
 namespace App\Modules\AiReadiness;
 
+use App\Modules\Shared\Sectors\Sector;
+
 /**
  * نتيجة تدقيق موقع واحد.
  *
@@ -33,6 +35,12 @@ final class SiteAuditResult
          * معًا، وإعادة جلبها لكل جامع نداءٌ شبكي مكرر على موقع العميل.
          */
         public readonly ?string $homepageHtml = null,
+
+        /*
+         * القطاع الذي فُحص به الموقع: يقرّر تسمية بند «العرض المنظَّم»
+         * ونص إصلاحه، ولا يغيّر مفاتيح الحقائق (§٤ من مواصفة التخصص).
+         */
+        public readonly string $sector = 'general',
     ) {}
 
     /**
@@ -77,16 +85,16 @@ final class SiteAuditResult
             ],
             [
                 'key' => 'schema_products',
-                'label' => 'بيانات المنتجات المنظَّمة',
+                ...$this->offerItem(),
                 'passed' => $this->schemaProducts,
-                'why' => 'المنتج غير الموصوف آليًّا لا يظهر في إجابة عن «أفضل ...».',
-                'fix' => 'أضف JSON-LD من نوع Product لكل صفحة منتج.',
             ],
             [
                 'key' => 'prices_machine_readable',
-                'label' => 'أسعار مقروءة آليًّا',
+                'label' => $this->sector === Sector::EDUCATION ? 'رسوم مقروءة آليًّا' : 'أسعار مقروءة آليًّا',
                 'passed' => $this->pricesMachineReadable,
-                'why' => 'السعر في صورة أو نص حر لا يدخل المقارنات.',
+                'why' => $this->sector === Sector::EDUCATION
+                    ? 'الرسوم في صورة أو ملف PDF لا تدخل مقارنات «كم تكلف مدارس …».'
+                    : 'السعر في صورة أو نص حر لا يدخل المقارنات.',
                 'fix' => 'اكتب السعر داخل Offer مع priceCurrency.',
             ],
             [
@@ -120,5 +128,32 @@ final class SiteAuditResult
                 'fix' => 'راجع robots.txt وأزل منع GPTBot وPerplexityBot وما شابههما.',
             ],
         ];
+    }
+
+    /**
+     * بند «العرض المنظَّم» بلسان القطاع: الفحص واحد والمفتاح واحد، لكن مدرسةً
+     * تُنصح بـProduct توصيةٌ خاطئة تُفقد البطاقة مصداقيتها أمام صاحبها.
+     *
+     * @return array{label: string, why: string, fix: string}
+     */
+    private function offerItem(): array
+    {
+        return match ($this->sector) {
+            Sector::EDUCATION => [
+                'label' => 'بيانات البرامج الدراسية المنظَّمة',
+                'why' => 'البرنامج غير الموصوف آليًّا لا يظهر في إجابة عن «أفضل مدرسة أو معهد …».',
+                'fix' => 'أضف JSON-LD من نوع Course لكل برنامج أو مرحلة دراسية.',
+            ],
+            Sector::REAL_ESTATE => [
+                'label' => 'بيانات العقارات المنظَّمة',
+                'why' => 'الوحدة غير الموصوفة آليًّا لا تظهر في إجابة عن «شقق أو أراضٍ في …».',
+                'fix' => 'أضف JSON-LD من نوع RealEstateListing لكل وحدة أو إعلان.',
+            ],
+            default => [
+                'label' => 'بيانات المنتجات المنظَّمة',
+                'why' => 'المنتج غير الموصوف آليًّا لا يظهر في إجابة عن «أفضل ...».',
+                'fix' => 'أضف JSON-LD من نوع Product لكل صفحة منتج.',
+            ],
+        };
     }
 }

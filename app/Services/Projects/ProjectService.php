@@ -4,6 +4,7 @@ namespace App\Services\Projects;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Modules\Shared\Sectors\Sector;
 use App\Services\Billing\SubscriptionManager;
 use App\Services\Tools\ProjectAnswerMemory;
 use Illuminate\Support\Str;
@@ -36,6 +37,7 @@ class ProjectService
             'name' => $data['name'],
             'slug' => $this->uniqueSlug($workspace->id, $data['name']),
             'industry' => $data['industry'] ?? null,
+            'sector' => $data['sector'] ?? null,
             'stage' => $data['stage'] ?? 'growth',
         ]);
 
@@ -63,6 +65,7 @@ class ProjectService
         $project->update(array_filter([
             'name' => $data['name'] ?? null,
             'industry' => $data['industry'] ?? null,
+            'sector' => $data['sector'] ?? null,
             'stage' => $data['stage'] ?? null,
         ], fn ($value) => $value !== null));
 
@@ -98,6 +101,7 @@ class ProjectService
         return [
             'name' => ($creating ? 'required' : 'sometimes').'|string|max:120',
             'industry' => 'nullable|string|max:120',
+            'sector' => 'nullable|in:'.implode(',', Sector::DECLARABLE),
             'stage' => 'nullable|in:idea,launch,growth,scale',
             'business_model' => 'nullable|string|max:60',
             'description' => 'nullable|string|max:2000',

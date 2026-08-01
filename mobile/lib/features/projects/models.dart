@@ -1,8 +1,17 @@
+/// تسميات القطاعات المعلَنة كما في الويب — مصدر واحد حتى لا تتكرر في الشاشات.
+const Map<String, String> sectorLabels = {
+  'education': 'التعليم',
+  'ecommerce': 'التجارة الإلكترونية',
+  'real_estate': 'العقارات',
+  'other': 'قطاع آخر',
+};
+
 class ProjectCard {
   const ProjectCard({
     required this.slug,
     required this.name,
     this.industry,
+    this.sector,
     this.latestScore,
     this.scoreBand,
   });
@@ -11,6 +20,7 @@ class ProjectCard {
     slug: json['slug'] as String,
     name: json['name'] as String,
     industry: json['industry'] as String?,
+    sector: json['sector'] as String?,
     latestScore: json['latest_score'] as int?,
     scoreBand: json['score_band'] as String?,
   );
@@ -18,8 +28,19 @@ class ProjectCard {
   final String slug;
   final String name;
   final String? industry;
+  final String? sector;
   final int? latestScore;
   final String? scoreBand;
+
+  /// التسمية المعروضة للقطاع: تسمية القطاع المعلَن إن كان أحد القطاعات
+  /// المتخصصة الثلاثة، وإلا وصف المجال الحر كما كتبه صاحب المشروع.
+  String? get sectorLabel {
+    final declared = sector;
+    if (declared != null && declared != 'other') {
+      return sectorLabels[declared] ?? industry;
+    }
+    return industry;
+  }
 }
 
 class ScoreComparison {

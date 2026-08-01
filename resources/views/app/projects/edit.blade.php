@@ -26,12 +26,24 @@
             <span class="question-reason" aria-label="سبب طرح السؤال">لأن الاسم يميز مشروعك داخل المنصة، ويظهر في التقارير والملفات التي تنشئها.</span>
         </label>
 
+        <label class="field">
+            <span class="field__label">في أي قطاع يعمل مشروعك؟</span>
+            <span class="field__help">نتعمق أكثر في التعليم والتجارة الإلكترونية والعقارات، وبقية القطاعات نخدمها بالمسار الكامل المعتاد.</span>
+            <select name="sector">
+                <option value="" @selected(old('sector', $project->sector) === null || old('sector', $project->sector) === '')>اختر القطاع…</option>
+                @foreach (\App\Modules\Shared\Sectors\Sector::options() as $option)
+                    <option value="{{ $option['value'] }}" @selected(old('sector', $project->sector) === $option['value'])>{{ $option['label'] }} — {{ $option['hint'] }}</option>
+                @endforeach
+            </select>
+            <span class="question-reason" aria-label="سبب طرح السؤال">لأن اختيارك يفتح أسئلة وفحوصات خاصة بقطاعك، ويقارن نتيجتك بأنشطة قطاعك لا بالسوق كله.</span>
+        </label>
+
         <div class="field-row">
             <label class="field">
-                <span class="field__label">في أي مجال يعمل مشروعك؟</span>
-                <span class="field__help">اكتب المجال بكلمة أو كلمتين، مثل: تعليم، تجزئة، أو خدمات منزلية.</span>
-                <input type="text" name="industry" value="{{ old('industry', $project->industry) }}" maxlength="120" placeholder="تعليم، تجزئة، خدمات…">
-                <span class="question-reason" aria-label="سبب طرح السؤال">لأن طبيعة السوق والعملاء والمنافسة تختلف من مجال إلى آخر، وهذا يجعل التشخيص أقرب إلى واقعك.</span>
+                <span class="field__label">صف مجالك بكلمة أو كلمتين</span>
+                <span class="field__help">تفصيل يضيّق القطاع، مثل: مدارس أهلية، متجر عطور، وساطة سكنية.</span>
+                <input type="text" name="industry" value="{{ old('industry', $project->industry) }}" maxlength="120" placeholder="مدارس أهلية، متجر عطور…">
+                <span class="question-reason" aria-label="سبب طرح السؤال">لأن التفصيل يجعل التشخيص أقرب إلى واقعك داخل قطاعك.</span>
             </label>
 
             <label class="field">

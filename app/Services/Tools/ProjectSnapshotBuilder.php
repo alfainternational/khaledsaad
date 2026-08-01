@@ -38,6 +38,10 @@ class ProjectSnapshotBuilder
             'project' => [
                 'name' => $project->name,
                 'industry' => $project->industry,
+                // القطاع القانوني بتسميته العربية: النموذج يتخصص بمفردة
+                // مضبوطة لا باجتهاده في تفسير نص حر.
+                'sector' => $project->sector,
+                'sector_label' => \App\Modules\Shared\Sectors\Sector::label($project->sector),
                 'stage' => $project->stage,
             ],
             'profile' => $project->profile?->only([

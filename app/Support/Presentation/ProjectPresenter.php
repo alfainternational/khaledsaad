@@ -25,6 +25,8 @@ class ProjectPresenter
             'slug' => $project->slug,
             'name' => $project->name,
             'industry' => $project->industry,
+            'sector' => $project->sector,
+            'sector_label' => \App\Modules\Shared\Sectors\Sector::label($project->sector),
             'stage' => $project->stage,
             'latest_score' => $project->latest_score,
             'score_band' => $project->latest_score !== null

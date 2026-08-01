@@ -146,7 +146,7 @@ class ReadinessController extends Controller
             abort(422, 'أضف رابط موقعك في ملف المشروع أولًا.');
         }
 
-        return $this->pdf->download($project, $this->audit->audit($url));
+        return $this->pdf->download($project, $this->audit->audit($url, \App\Modules\Shared\Sectors\Sector::declaredOrGeneral($project->sector)));
     }
 
     private function authorizeProject(Request $request, Project $project): void

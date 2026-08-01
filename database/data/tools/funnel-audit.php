@@ -16,7 +16,7 @@ return [
     'status' => 'published',
 
     'version' => [
-        'number' => 2,
+        'number' => 3,
         'credit_cost' => 6,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -224,6 +224,40 @@ return [
                 ['value' => 'many', 'label' => 'أربع خطوات فأكثر'],
                 ['value' => 'few', 'label' => 'خطوتان أو ثلاث'],
                 ['value' => 'one', 'label' => 'خطوة واحدة'],
+            ]],
+
+        // المتاجر: السلة المتروكة أكبر تسرب صامت في المتجر كله.
+        ['key' => 'cart_abandonment', 'label' => 'هل تعرف كم نسبة من يضعون في السلة ثم يغادرون دون شراء؟', 'type' => 'select', 'step' => 3,
+            'visible_when' => ['project.sector' => 'ecommerce'],
+            'required' => false,
+            'why' => 'من وضع في السلة قرّر الشراء تقريبًا، وخسارته أغلى خسارة في المتجر. من لا يقيس هذه النسبة لا يعرف إن كانت مشكلته في جلب الزوار أم في تسريبهم عند الدفع.',
+            'options' => [
+                ['value' => 'measured', 'label' => 'أعرفها بالأرقام'],
+                ['value' => 'rough', 'label' => 'تقدير تقريبي'],
+                ['value' => 'none', 'label' => 'لا أقيسها'],
+            ]],
+
+        // التعليم: بين الاستفسار والتسجيل زيارة أو جولة — وهناك يُفقد أغلب المهتمين.
+        ['key' => 'inquiry_to_enrollment', 'label' => 'كيف يصل المهتم عندكم من الاستفسار إلى التسجيل؟', 'type' => 'select', 'step' => 3,
+            'visible_when' => ['project.sector' => 'education'],
+            'required' => false,
+            'why' => 'في التعليم لا يسجّل وليّ الأمر من إعلان، بل بعد زيارة أو مكالمة تبني الثقة. من لا يعرف مساره يضخ استفسارات في قمع مثقوب من منتصفه.',
+            'options' => [
+                ['value' => 'visit_first', 'label' => 'زيارة أو جولة ثم تسجيل'],
+                ['value' => 'call_first', 'label' => 'مكالمة أو واتساب ثم تسجيل'],
+                ['value' => 'direct_online', 'label' => 'تسجيل إلكتروني مباشر'],
+                ['value' => 'mixed', 'label' => 'خليط ولا أتتبعه بدقة'],
+            ]],
+
+        // العقارات: نسبة الاستفسار إلى المعاينة هي عنق الزجاجة الحقيقي.
+        ['key' => 'viewing_conversion', 'label' => 'كم استفسارًا تحتاج عادة للوصول إلى معاينة واحدة؟', 'type' => 'select', 'step' => 3,
+            'visible_when' => ['project.sector' => 'real_estate'],
+            'required' => false,
+            'why' => 'العقار لا يُباع من صورة بل من معاينة. إن كانت الاستفسارات كثيرة والمعاينات قليلة فالمشكلة في جودة العرض أو سرعة الرد، لا في الإعلان — وكل ريال إضافي على الإعلان يضيع.',
+            'options' => [
+                ['value' => 'measured', 'label' => 'أعرف النسبة بالأرقام'],
+                ['value' => 'rough', 'label' => 'تقدير تقريبي'],
+                ['value' => 'none', 'label' => 'لا أقيسها'],
             ]],
 
         /*

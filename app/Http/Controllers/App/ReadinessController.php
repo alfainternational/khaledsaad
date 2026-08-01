@@ -166,7 +166,7 @@ class ReadinessController extends Controller
 
         return $this->pdf->download(
             $project,
-            $this->audit->audit($url),
+            $this->audit->audit($url, \App\Modules\Shared\Sectors\Sector::declaredOrGeneral($project->sector)),
             session('readiness.crawl'),
         );
     }

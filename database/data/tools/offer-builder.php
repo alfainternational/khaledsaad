@@ -16,7 +16,7 @@ return [
     'status' => 'published',
 
     'version' => [
-        'number' => 2,
+        'number' => 3,
         'credit_cost' => 5,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -162,6 +162,25 @@ return [
                 ['value' => 'whatsapp', 'label' => 'واتساب'],
                 ['value' => 'walkin', 'label' => 'الحضور مباشرة'],
                 ['value' => 'online', 'label' => 'حجز إلكتروني'],
+            ]],
+
+        // التعليم: الاعتماد والترخيص أقوى إشارة ثقة عند وليّ الأمر — إن ظهرت.
+        ['key' => 'accreditation', 'label' => 'ما التراخيص أو الاعتمادات التي يحملها نشاطكم التعليمي؟', 'type' => 'textarea', 'step' => 3,
+            'visible_when' => ['project.sector' => 'education'],
+            'required' => false,
+            'help' => 'مثل: ترخيص الوزارة، اعتماد مناهج دولية، شراكات جامعية.',
+            'why' => 'وليّ الأمر يقارن بينك وبين غيرك على الثقة قبل السعر. اعتماد تحمله ولا تعلنه في صفحتك الأولى وإعلاناتك كأنه غير موجود.'],
+
+        // العقارات: الترخيص شرط نظامي وإشارة ثقة تحسم التردد.
+        ['key' => 'fal_license', 'label' => 'هل لديكم رخصة وساطة عقارية سارية تظهر في موقعكم وإعلاناتكم؟', 'type' => 'select', 'step' => 3,
+            'visible_when' => ['project.sector' => 'real_estate'],
+            'required' => false,
+            'why' => 'العميل العقاري يتعامل بمبالغ كبيرة مع من لا يعرفه، ورقم الرخصة الظاهر يجيب عن سؤاله الأول قبل أن يطرحه. غيابه من الإعلان يفقدك جادّين لا تراهم.',
+            'options' => [
+                ['value' => 'shown', 'label' => 'سارية وتظهر في كل إعلان'],
+                ['value' => 'hidden', 'label' => 'سارية لكنها لا تُعرض'],
+                ['value' => 'pending', 'label' => 'قيد الإصدار'],
+                ['value' => 'none', 'label' => 'لا توجد بعد'],
             ]],
 
         ['key' => 'upsell', 'label' => 'هل هناك شيء إضافي تبيعه بعد أول شراء؟', 'type' => 'select', 'step' => 3,

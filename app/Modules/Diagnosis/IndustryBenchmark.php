@@ -5,6 +5,7 @@ namespace App\Modules\Diagnosis;
 use App\Models\Project;
 use App\Modules\Brain\Models\BrainEvent;
 use App\Modules\Shared\Metrics\MetricKey;
+use App\Modules\Shared\Sectors\Sector;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -34,13 +35,21 @@ class IndustryBenchmark
      */
     public function for(Project $project): array
     {
-        $industry = $project->industry;
+        /*
+         * القطاع المعلن يجمع الأقران (مواصفة التخصص القطاعي): «التعليم»
+         * مجموعة واحدة مهما اختلفت صياغات أصحابها لمجالهم. النص الحر يبقى
+         * احتياطًا للمشاريع التي سبقت المنتقي — تفتّته عيب موروث معلن.
+         */
+        $declared = Sector::isSpecialized($project->sector);
+        $industry = $declared ? Sector::label($project->sector) : $project->industry;
 
         if (blank($industry)) {
             return $this->unavailable('قطاع النشاط غير محدَّد، فلا مجموعة يُقارَن بها.');
         }
 
-        $scores = $this->latestScoresIn($industry, exceptProject: $project->id);
+        $scores = $declared
+            ? $this->latestScoresInSector($project->sector, exceptProject: $project->id)
+            : $this->latestScoresIn($industry, exceptProject: $project->id);
 
         if (count($scores) < self::MIN_SAMPLE) {
             return $this->unavailable(sprintf(
@@ -91,13 +100,33 @@ class IndustryBenchmark
      */
     private function latestScoresIn(string $industry, int $exceptProject): array
     {
+        return $this->latestScoresOfPeers(
+            Project::query()->where('industry', $industry)->whereKeyNot($exceptProject),
+        );
+    }
+
+    /**
+     * أقران القطاع المعلن: العمود القانوني يجمع ما كان النص الحر يفتّته.
+     *
+     * @return array<int, int>
+     */
+    private function latestScoresInSector(string $sector, int $exceptProject): array
+    {
+        return $this->latestScoresOfPeers(
+            Project::query()->where('sector', $sector)->whereKeyNot($exceptProject),
+        );
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Project>  $peers
+     * @return array<int, int>
+     */
+    private function latestScoresOfPeers($peers): array
+    {
         $latest = BrainEvent::query()
             ->selectRaw('MAX(id) as id')
             ->where('type', BrainEvent::TYPE_DIAGNOSIS_SCORED)
-            ->whereIn('project_id', Project::query()
-                ->where('industry', $industry)
-                ->whereKeyNot($exceptProject)
-                ->select('id'))
+            ->whereIn('project_id', $peers->select('id'))
             ->groupBy('project_id');
 
         return BrainEvent::query()

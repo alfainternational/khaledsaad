@@ -58,6 +58,9 @@ class AssistContextBuilder
             'business' => array_filter([
                 'name' => $project->name,
                 'industry' => $project->industry,
+                'sector' => \App\Modules\Shared\Sectors\Sector::isSpecialized($project->sector)
+                    ? \App\Modules\Shared\Sectors\Sector::label($project->sector)
+                    : null,
                 'stage' => $project->stage,
                 'business_model' => $profile?->business_model,
                 'description' => $this->trim((string) $profile?->description),

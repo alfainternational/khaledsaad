@@ -15,7 +15,7 @@ class Project extends Model
     use HasFactory;
 
     protected $fillable = [
-        'workspace_id', 'name', 'slug', 'industry', 'stage', 'status', 'latest_score',
+        'workspace_id', 'name', 'slug', 'industry', 'sector', 'stage', 'status', 'latest_score',
     ];
 
     public function workspace(): BelongsTo

@@ -32,6 +32,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   final _geography = TextEditingController();
 
   String _stage = 'growth';
+  String? _sector;
   bool _busy = false;
   String? _error;
 
@@ -55,6 +56,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     // فيُتركان فارغين ولا يُرسلان — والفارغ لا يُرسل أصلًا في وضع التعديل.
     _name.text = project.card.name;
     _industry.text = project.card.industry ?? '';
+    _sector = project.card.sector;
   }
 
   static const Map<String, String> _stages = {
@@ -62,6 +64,14 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     'launch': 'إطلاق',
     'growth': 'نمو',
     'scale': 'توسّع',
+  };
+
+  /// شرح كل قطاع معلَن — يظهر تحت القائمة عند الاختيار.
+  static const Map<String, String> _sectorHints = {
+    'education': 'مدرسة، جامعة، معهد، مركز تدريب، أو منصة تعليمية',
+    'ecommerce': 'متجر إلكتروني أو بيع عبر المنصات الوسيطة',
+    'real_estate': 'وساطة، تطوير، تسويق عقاري، أو إدارة أملاك',
+    'other': 'أي نشاط آخر — تصلك كل القدرات بالمسار العام',
   };
 
   @override
@@ -83,6 +93,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
 
     final payload = <String, dynamic>{
       'name': _name.text.trim(),
+      'sector': _sector,
       'industry': _industry.text.trim().isEmpty ? null : _industry.text.trim(),
       'stage': _stage,
       'description': _description.text.trim().isEmpty
@@ -149,11 +160,29 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             ),
             const SizedBox(height: 14),
 
+            DropdownButtonFormField<String>(
+              initialValue: _sector,
+              decoration: InputDecoration(
+                labelText: 'القطاع',
+                helperText: _sector == null ? null : _sectorHints[_sector],
+              ),
+              items: sectorLabels.entries
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _sector = value),
+            ),
+            const SizedBox(height: 14),
+
             TextFormField(
               controller: _industry,
               decoration: const InputDecoration(
-                labelText: 'القطاع',
-                hintText: 'تعليم، تجزئة، خدمات…',
+                labelText: 'وصف المجال',
+                hintText: 'مدارس أهلية، متجر عطور…',
               ),
             ),
             const SizedBox(height: 14),

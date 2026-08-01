@@ -74,7 +74,10 @@ class UserFacingQuestionCopyTest extends TestCase
 
         foreach ([$create, $edit] as $view) {
             $this->assertStringContainsString('ما اسم مشروعك؟', $view);
-            $this->assertStringContainsString('في أي مجال يعمل مشروعك؟', $view);
+            // منتقي القطاع المغلق + وصف المجال الحر (مواصفة التخصص القطاعي).
+            $this->assertStringContainsString('في أي قطاع يعمل مشروعك؟', $view);
+            $this->assertStringContainsString('صف مجالك بكلمة أو كلمتين', $view);
+            $this->assertStringContainsString('Sector::options()', $view);
             $this->assertStringContainsString('class="form form--wide form-layout question-form"', $view);
             $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $view);
         }
