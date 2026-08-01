@@ -307,12 +307,19 @@
 
 .panel__main {
     inline-size: 100%;
-    max-inline-size: 1400px;
     margin-inline: auto;
-    padding: 1.9rem clamp(1rem, 3vw, 2.25rem) 4.5rem;
+    /* الهامش الجانبي ≤ 1 سم (~2.36rem) بطلب المالك — كان سقف 1400px
+       يضيف فراغًا جانبيًا ضخمًا على الشاشات العريضة فوق هذا الهامش. */
+    padding: 1.9rem clamp(0.75rem, 1.5vw, 2.3rem) 4.5rem;
     display: grid;
     gap: 2rem;
     align-content: start;
+}
+
+/* داخل اللوحة تُرفع سقوف عائلات التخطيط أيضًا — الهامش الجانبي وحده يحدّ
+   العرض، فلا يتراكب سقفان (1400px + 56rem) كما كان في شاشة خطوات الأداة. */
+.panel__main.layout-page {
+    max-inline-size: none;
 }
 
 /*
