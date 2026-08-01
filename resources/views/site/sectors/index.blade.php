@@ -39,16 +39,20 @@
 
                             {{-- الأرقام من المحرّك لا من ادّعاء: تنقص إن نقص المنتج. --}}
                             <ul class="sector-card__facts">
+                                {{-- التمييز يتبع العدد: ٣–١٠ جمعٌ، و١١ فأكثر مفردٌ منصوب. --}}
                                 @if ($item['questions']['count'] > 0)
                                     <li>
                                         <strong>{{ \App\Support\Presentation\Num::int($item['questions']['count']) }}</strong>
-                                        سؤال إضافي داخل
-                                        {{ \App\Support\Presentation\Num::int($item['questions']['tools']) }}
-                                        تشخيصًا
+                                        {{ $item['questions']['count'] <= 10 ? 'أسئلة إضافية' : 'سؤالًا إضافيًّا' }}
+                                        داخل
+                                        {{ \App\Modules\Shared\Text\ArabicText::counted($item['questions']['tools'], 'تشخيصًا', 'تشخيصات', 'تشخيصين') }}
                                     </li>
                                 @endif
                                 @if ($item['kpis'] !== [])
-                                    <li><strong>{{ \App\Support\Presentation\Num::int(count($item['kpis'])) }}</strong> مؤشرات تتصدّر لوحتك</li>
+                                    <li>
+                                        <strong>{{ \App\Support\Presentation\Num::int(count($item['kpis'])) }}</strong>
+                                        {{ count($item['kpis']) <= 10 ? 'مؤشرات' : 'مؤشرًا' }} تتصدّر لوحتك
+                                    </li>
                                 @endif
                                 <li>
                                     فحص بيانات {{ $item['schema']['label'] }} المنظَّمة

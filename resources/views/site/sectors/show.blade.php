@@ -50,14 +50,14 @@
                     <p class="eyebrow">أسئلتك أنت</p>
                     <h2 id="questions-title" class="section-title">
                         نسألك {{ \App\Support\Presentation\Num::int($capabilities['questions']['count']) }}
-                        {{ $capabilities['questions']['count'] == 2 ? 'سؤالًا إضافيين' : 'سؤالًا إضافيًّا' }}
+                        {{ $capabilities['questions']['count'] <= 10 ? 'أسئلة إضافية' : 'سؤالًا إضافيًّا' }}
                         لأنك في {{ $label }}
                     </h2>
                     <p class="muted">
                         {{-- الرقم من الحقول المبذورة لا من ادّعاء (§٤.٢): يتغيّر بتغيّر المنتج. --}}
                         تظهر داخل
-                        {{ \App\Support\Presentation\Num::int($capabilities['questions']['tools']) }}
-                        من تشخيصاتك حين تختار قطاعك، ولا تظهر لغيرك. منها:
+                        {{ \App\Modules\Shared\Text\ArabicText::counted($capabilities['questions']['tools'], 'تشخيصًا', 'تشخيصات', 'تشخيصين') }}
+                        حين تختار قطاعك، ولا تظهر لغيرك. منها:
                     </p>
                     <ul class="bullets">
                         @foreach ($capabilities['questions']['samples'] as $sample)

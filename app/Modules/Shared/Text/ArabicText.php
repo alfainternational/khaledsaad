@@ -30,6 +30,29 @@ final class ArabicText
         'ى' => 'ي', 'ئ' => 'ي', 'ؤ' => 'و', 'ة' => 'ه',
     ];
 
+    /**
+     * العدد مع تمييزه الصحيح.
+     *
+     * **سبب وجوده:** «10 سؤال إضافي داخل 8 تشخيصًا» جملة تكتبها الآلة ولا
+     * يكتبها عربي. والتمييز في العربية يتبع العدد لا العكس: ٣–١٠ يليها جمع،
+     * و١١ فما فوق يليها مفرد منصوب. أي صفحة تعرض عددًا محسوبًا تحتاج هذا،
+     * فمكانه هنا لا في قالب بعينه.
+     *
+     * @param  string  $singular  المفرد المنصوب: «سؤالًا»
+     * @param  string  $plural  جمع القلة: «أسئلة»
+     * @param  string|null  $dual  المثنى: «سؤالان» — يسقط إلى الجمع إن غاب
+     */
+    public static function counted(int $count, string $singular, string $plural, ?string $dual = null): string
+    {
+        return match (true) {
+            $count === 0 => 'لا '.$plural,
+            $count === 1 => $singular,
+            $count === 2 => $dual ?? ($count.' '.$plural),
+            $count <= 10 => $count.' '.$plural,
+            default => $count.' '.$singular,
+        };
+    }
+
     public static function normalize(string $value): string
     {
         $value = strtr($value, self::DIGITS);
