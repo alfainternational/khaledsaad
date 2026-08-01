@@ -8,6 +8,7 @@ use App\Models\Task;
 use App\Modules\Diagnosis\MaturityAggregator;
 use App\Modules\Shared\Evidence\EvidenceLevel;
 use App\Modules\Shared\Metrics\MetricKey;
+use App\Modules\Shared\Sectors\Sector;
 
 class ProjectPresenter
 {
@@ -26,7 +27,7 @@ class ProjectPresenter
             'name' => $project->name,
             'industry' => $project->industry,
             'sector' => $project->sector,
-            'sector_label' => \App\Modules\Shared\Sectors\Sector::label($project->sector),
+            'sector_label' => Sector::label($project->sector),
             'stage' => $project->stage,
             'latest_score' => $project->latest_score,
             'score_band' => $project->latest_score !== null
@@ -116,8 +117,18 @@ class ProjectPresenter
             'priority' => $task->priority,
             'impact' => $task->impact,
             'effort' => $task->effort,
+            'timeframe' => $task->timeframe,
             'due_date' => $task->due_date?->toDateString(),
+            'reminder_at' => $task->reminder_at?->toIso8601String(),
             'is_overdue' => $task->isOverdue(),
+            // ما يجعل المهمة قابلة للتنفيذ: الخطوات والمثال والدليل المطوَّر.
+            // مصدر واحد للويب والتطبيق فلا يعرض أحدهما ما يخفيه الآخر.
+            'steps' => $task->steps ?? [],
+            'worked_example' => $task->worked_example,
+            'guide' => $task->guide,
+            'guide_status' => $task->guide_status,
+            'guide_status_label' => $task->guideStatusLabel(),
+            'has_guide' => $task->hasGuide(),
         ];
     }
 }

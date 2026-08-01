@@ -202,6 +202,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
         Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('tasks.index');
         Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+        Route::post('tasks/{task}/develop', [TaskController::class, 'develop'])->name('tasks.develop');
         Route::middleware('feature:'.FeatureKey::KPI_TRACKING)->group(function (): void {
             Route::post('projects/{project}/kpis', [TaskController::class, 'storeKpi'])->name('kpis.store');
             Route::post('kpis/{kpi}/entries', [TaskController::class, 'recordKpi'])->name('kpis.record');

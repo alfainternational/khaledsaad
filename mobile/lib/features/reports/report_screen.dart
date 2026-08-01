@@ -8,6 +8,7 @@ import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/worked_example.dart';
 import '../tools/run_wizard_screen.dart';
 import 'competitors_card.dart';
 import 'models.dart';
@@ -61,13 +62,21 @@ class _ReportScreenState extends State<ReportScreen> {
   void _reload() =>
       setState(() => _future = widget.repository.report(widget.reportId));
 
-  Future<void> _convert({int? recommendationId}) async {
+  /// العدّ من النتائج المعروضة لا باستعلام ثانٍ: الرقم في الزر يجب أن
+  /// يطابق ما يراه المستخدم تحته بالضبط.
+  int _pendingRecommendations(ReportDetail report) => report.findings
+      .expand((finding) => finding.recommendations)
+      .where((recommendation) => !recommendation.isTask)
+      .length;
+
+  Future<void> _convert({int? recommendationId, bool all = false}) async {
     setState(() => _converting = true);
 
     try {
       final tasks = await widget.repository.convertRecommendations(
         widget.reportId,
         recommendationId: recommendationId,
+        all: all,
       );
 
       if (!mounted) return;
@@ -286,10 +295,17 @@ class _ReportScreenState extends State<ReportScreen> {
 
               AdaptiveActionBar(
                 children: [
+                  // «الكل» هو الزر الأول: من قرأ تقريره كاملًا وقرّر تنفيذه
+                  // لا يُفترض أن يضغط زرًّا لكل توصية. العدد من التقرير نفسه.
                   FilledButton.icon(
-                    onPressed: _converting ? null : () => _convert(),
+                    onPressed: _converting
+                        ? null
+                        : () => _convert(all: true),
                     icon: const Icon(Icons.checklist),
-                    label: const Text('حوّل أهم 3 توصيات إلى مهام'),
+                    label: Text(
+                      'حوّل كل التوصيات إلى مهام'
+                      '${_pendingRecommendations(report) > 0 ? ' (${_pendingRecommendations(report)})' : ''}',
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _downloadingPdf ? null : _downloadPdf,
@@ -542,6 +558,11 @@ class _ReportScreenState extends State<ReportScreen> {
                       label: recommendation.effortLabel,
                       severity: 'low',
                     ),
+                    if (recommendation.timeframe != null)
+                      SeverityBadge(
+                        label: 'المدة: ${recommendation.timeframe}',
+                        severity: 'low',
+                      ),
                     if (recommendation.kpiHint != null)
                       SeverityBadge(
                         label: 'المؤشر: ${recommendation.kpiHint}',
@@ -549,6 +570,23 @@ class _ReportScreenState extends State<ReportScreen> {
                       ),
                   ],
                 ),
+
+                // الخطوات قبل المثال: المسار أولًا ثم المادة التي يُنفَّذ بها.
+                if (recommendation.actionSteps.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  for (var i = 0; i < recommendation.actionSteps.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '${i + 1}) ${recommendation.actionSteps[i]}',
+                        style: const TextStyle(fontSize: 13, height: 1.6),
+                      ),
+                    ),
+                ],
+
+                if (recommendation.workedExample != null)
+                  WorkedExampleCard(example: recommendation.workedExample!),
+
                 const SizedBox(height: 10),
                 if (recommendation.isTask)
                   const SeverityBadge(label: 'أصبحت مهمة', severity: 'low')

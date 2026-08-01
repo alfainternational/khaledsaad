@@ -151,8 +151,29 @@
         </section>
     @endif
 
+    @php
+        // العدّ من نفس المصدر المعروض، لا استعلامًا ثانيًا: الرقم في الزر
+        // يجب أن يطابق ما يراه تحته بالضبط.
+        $allRecommendations = collect($report['findings'])->flatMap(fn ($finding) => $finding['recommendations']);
+        $pendingCount = $allRecommendations->whereNull('task_id')->count();
+    @endphp
+
     <section aria-labelledby="findings-heading">
-        <h2 id="findings-heading" class="section-title">أهم ما وجدناه والخطوات المقترحة</h2>
+        <div class="section-head">
+            <h2 id="findings-heading" class="section-title">أهم ما وجدناه والخطوات المقترحة</h2>
+
+            @if ($pendingCount > 0)
+                <form method="POST" action="{{ route('app.reports.convert', $report['id']) }}">
+                    @csrf
+                    <input type="hidden" name="scope" value="all">
+                    <button type="submit" class="btn btn--primary btn--sm">
+                        حوّل كل التوصيات إلى مهام ({{ $pendingCount }})
+                    </button>
+                </form>
+            @elseif ($allRecommendations->isNotEmpty())
+                <p class="muted">كل التوصيات صارت مهامًا. <a href="{{ route('app.projects.tasks', $report['project']['slug']) }}">افتح لوحة المهام</a></p>
+            @endif
+        </div>
 
         @forelse ($report['findings'] as $finding)
             <article class="finding">
@@ -176,10 +197,27 @@
                             <p class="tags">
                                 <span>{{ $recommendation['impact_label'] }}</span>
                                 <span>{{ $recommendation['effort_label'] }}</span>
+                                @if ($recommendation['timeframe'] ?? null)
+                                    <span>المدة: {{ $recommendation['timeframe'] }}</span>
+                                @endif
                                 @if ($recommendation['kpi_hint'])
                                     <span>المؤشر: {{ $recommendation['kpi_hint'] }}</span>
                                 @endif
                             </p>
+
+                            {{-- الخطوات قبل المثال: القارئ يحتاج المسار أولًا ثم
+                                 المادة التي ينفّذ بها أول خطوة فيه. --}}
+                            @if ($recommendation['action_steps'] ?? [])
+                                <ol class="recommendation__steps">
+                                    @foreach ($recommendation['action_steps'] as $step)
+                                        <li>{{ $step }}</li>
+                                    @endforeach
+                                </ol>
+                            @endif
+
+                            <x-worked-example
+                                :example="$recommendation['worked_example'] ?? null"
+                                :source="$recommendation['example_source'] ?? null" />
 
                             @if ($recommendation['task_id'])
                                 <p class="badge">أصبحت مهمة</p>

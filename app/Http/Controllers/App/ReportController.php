@@ -54,6 +54,10 @@ class ReportController extends Controller
             $recommendation = Recommendation::where('report_id', $report->id)->findOrFail($recommendationId);
             $this->runs->convertRecommendation($recommendation, $request->user());
             $message = 'أُضيفت التوصية إلى قائمة مهامك.';
+        } elseif ($request->input('scope') === 'all') {
+            // «الكل» يعني الكل: من قرّر تنفيذ تقريره كاملًا لا يُجزَّأ عليه.
+            $tasks = $this->runs->convertAllRecommendations($report, $request->user());
+            $message = count($tasks).' توصية أصبحت مهامًا مرتّبة بالأولوية ومعها خطواتها.';
         } else {
             $tasks = $this->runs->convertTopRecommendations($report, $request->user());
             $message = count($tasks).' توصيات أصبحت مهامًا بمواعيد نهائية.';

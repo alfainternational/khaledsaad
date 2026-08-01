@@ -235,6 +235,16 @@
                 <p class="eyebrow">الوقت المتوقع: {{ $item['estimated_time'] }}</p>
                 <h3>{{ $item['title'] }}</h3>
                 <p>{{ $item['description'] }}</p>
+
+                @if (! empty($item['action_steps']))
+                    <ol class="recommendation__steps">
+                        @foreach ($item['action_steps'] as $step)
+                            <li>{{ $step }}</li>
+                        @endforeach
+                    </ol>
+                @endif
+
+                <x-worked-example :example="$item['worked_example'] ?? null" />
             </article>
         @empty
             <p class="muted">لا توجد خطوة موثقة بعد. ارجع إلى قسم المعلومات الناقصة وابدأ بأول بند.</p>

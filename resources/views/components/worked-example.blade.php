@@ -1,0 +1,59 @@
+@props(['example' => null, 'source' => null, 'open' => false, 'inferred' => true, 'ltr' => false])
+
+@php
+    // المثال التطبيقي: النص الجاهز للنسخ. مكوّن واحد لكل الأسطح — التقرير
+    // ولوحة المهام ودليل التنفيذ — فلا يعرض سطحٌ ما يخفيه الآخر.
+    $example = is_array($example) ? $example : null;
+    $body = trim((string) ($example['body'] ?? ''));
+    $notes = array_values(array_filter((array) ($example['notes'] ?? [])));
+    $source = $source ?? ($example['source'] ?? null);
+@endphp
+
+@if ($body !== '')
+    <details class="worked-example" @if ($open) open @endif>
+        <summary class="worked-example__summary">
+            <span class="worked-example__kind">{{ $example['kind_label'] ?? 'مثال جاهز' }}</span>
+            <span class="worked-example__title">{{ $example['title'] ?? 'مثال تطبيقي' }}</span>
+            {{-- مثالُ التوصية اجتهاد منهجي مهما كان مصدره (§٤.١). أما القصاصة
+                 التقنية فمعيار ثابت لا ادعاء عن النشاط، ووسمها «فرضية» يُفقد
+                 الوسم معناه حين يظهر على ما ليس بفرضية. --}}
+            @if ($inferred)
+                <x-evidence-badge level="inferred" compact />
+            @endif
+        </summary>
+
+        <div class="worked-example__body">
+            <p class="worked-example__lead">
+                هذا نصّ جاهز للنسخ. املأ ما بين الأقواس المربعة ببياناتك قبل استعماله.
+            </p>
+
+            {{-- الكود يُقرأ من اليسار: عرض JSON-LD بـRTL يقلب الأقواس فيصير
+                 النص غير صالح للصق، وهو كل الغرض منه. --}}
+            <pre @class(['worked-example__text', 'worked-example__text--ltr' => $ltr])
+                @if ($ltr) dir="ltr" @endif
+                data-copy-source>{{ $body }}</pre>
+
+            <div class="worked-example__actions">
+                <button type="button" class="btn btn--ghost btn--sm" data-copy-example>انسخ النص</button>
+                <span class="worked-example__copied" data-copy-feedback hidden>نُسخ</span>
+            </div>
+
+            @if ($notes !== [])
+                <ul class="worked-example__notes">
+                    @foreach ($notes as $note)
+                        <li>{{ $note }}</li>
+                    @endforeach
+                </ul>
+            @endif
+
+            {{-- مصدر المثال يُعلَن: قالب مأمون ليس كصياغة على حالة النشاط،
+                 وإخفاء الفرق يجعل المستخدم يثق بما لا يستحق نفس الثقة. --}}
+            @if ($source === 'deterministic')
+                <p class="worked-example__source muted">
+                    مثال مبدئي من قوالب المنصة، لم يُصَغ على حالة نشاطك بعد.
+                    حوّل التوصية إلى مهمة واطلب تطويرها للحصول على مثال مكتوب ببياناتك.
+                </p>
+            @endif
+        </div>
+    </details>
+@endif

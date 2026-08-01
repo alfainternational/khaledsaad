@@ -310,6 +310,17 @@
                         @if ($fix['fix'])
                             <p class="muted">{{ $fix['fix'] }}</p>
                         @endif
+
+                        {{-- القصاصة تُعاد استخدام مكوّن المثال نفسه: نصّ يُنسخ
+                             ويُلصق، بنفس الشكل الذي تعلّمه المستخدم في التقرير. --}}
+                        @if ($fix['snippet'] ?? null)
+                            <x-worked-example :example="[
+                                'kind_label' => 'قصاصة جاهزة',
+                                'title' => $fix['snippet']['where'],
+                                'body' => $fix['snippet']['code'],
+                                'notes' => ['غيّر ما بين الأقواس المربعة ببياناتك قبل النشر، ثم تحقق من الصفحة بعد الرفع.'],
+                            ]" :inferred="false" :ltr="$fix['snippet']['language'] !== 'text'" />
+                        @endif
                     </li>
                 @endforeach
             </ol>

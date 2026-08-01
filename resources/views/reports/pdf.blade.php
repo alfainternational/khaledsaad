@@ -67,6 +67,19 @@
         .rec { border-top: 1px dashed #dfe8f5; padding-top: 5pt; margin-top: 5pt; }
         .tags { font-size: 8pt; color: #5d6b82; }
 
+        /* الخطوات والمثال الجاهز داخل التوصية.
+           المثال بخلفية رمادية وحدود ثابتة ليُقرأ ككتلة تُنسخ لا كنصّ تحليل،
+           وwhite-space: pre-wrap يحفظ أسطر الرسالة كما كُتبت — سطرٌ ملتصق
+           يُفقد الرسالة شكلها فتُقرأ كفقرة لا كنصّ يُلصق. */
+        .rec-steps { margin: 4pt 12pt 4pt 0; padding: 0; font-size: 9pt; color: #33415c; }
+        .rec-steps li { margin-bottom: 2pt; }
+        .rec-example { border: 1px solid #e5ddc8; background-color: #fbf8ef; padding: 6pt 8pt; margin-top: 5pt;
+            page-break-inside: avoid; }
+        .rec-example__head { font-size: 9pt; font-weight: 700; color: #6b5b20; margin: 0 0 4pt; }
+        .rec-example__body { white-space: pre-wrap; font-size: 9pt; line-height: 1.7; color: #2b3648;
+            margin: 0; padding: 0; }
+        .rec-example__notes { margin: 5pt 12pt 0 0; padding: 0; font-size: 8pt; color: #5d6b82; }
+
         /* كتلة الخلاصة: صندوق كتلي يتمدد مع النص، لا خلية جدول تقصّه. */
         .summary-box { border: 1px solid #dfe8f5; border-right: 3px solid #2575ff; background-color: #ffffff;
             padding: 9pt 12pt 12pt; margin-top: 7pt; }
@@ -364,8 +377,36 @@
                 </table>
                 <p class="muted" style="font-size: 9pt;">{{ $rec['description'] }}</p>
                 <p class="tags">
-                    {{ $rec['impact_label'] }} — {{ $rec['effort_label'] }}@if (! empty($rec['kpi_hint'])) — المؤشر: {{ $rec['kpi_hint'] }}@endif
+                    {{ $rec['impact_label'] }} — {{ $rec['effort_label'] }}@if (! empty($rec['timeframe'])) — المدة: {{ $rec['timeframe'] }}@endif @if (! empty($rec['kpi_hint'])) — المؤشر: {{ $rec['kpi_hint'] }}@endif
                 </p>
+
+                {{-- الخطوات والمثال في المطبوع أيضًا: التقرير الذي يُطبع ويُقرأ
+                     على الطاولة هو أكثر نسخة يُنفَّذ منها، فحذفهما منه يفرغه. --}}
+                @if (! empty($rec['action_steps']))
+                    <ol class="rec-steps">
+                        @foreach ($rec['action_steps'] as $step)
+                            <li>{{ $step }}</li>
+                        @endforeach
+                    </ol>
+                @endif
+
+                @if (! empty($rec['worked_example']['body']))
+                    <div class="rec-example">
+                        <p class="rec-example__head">
+                            {{ $rec['worked_example']['kind_label'] ?? 'مثال جاهز' }}:
+                            {{ $rec['worked_example']['title'] ?? '' }}
+                            <span class="badge badge-assumption">فرضية</span>
+                        </p>
+                        <pre class="rec-example__body">{{ $rec['worked_example']['body'] }}</pre>
+                        @if (! empty($rec['worked_example']['notes']))
+                            <ul class="rec-example__notes">
+                                @foreach ($rec['worked_example']['notes'] as $note)
+                                    <li>{{ $note }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                @endif
             </div>
         @endforeach
     </div>

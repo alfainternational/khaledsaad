@@ -2,6 +2,7 @@
 
 namespace App\Services\Tools;
 
+use App\Exceptions\BillingLimitException;
 use App\Jobs\RunToolPipeline;
 use App\Models\Project;
 use App\Models\Recommendation;
@@ -11,7 +12,6 @@ use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Models\ToolRunAnswer;
 use App\Models\User;
-use App\Exceptions\BillingLimitException;
 use App\Services\Billing\CreditManager;
 use App\Services\Billing\Entitlements;
 use App\Support\Billing\FeatureKey;
@@ -243,20 +243,54 @@ class ToolRunService
      */
     public function convertRecommendation(Recommendation $recommendation, ?User $owner = null): Task
     {
-        return Task::firstOrCreate(
+        $dueInDays = $this->dueInDays($recommendation->effort);
+
+        $task = Task::firstOrCreate(
             ['recommendation_id' => $recommendation->id],
             [
                 'project_id' => $recommendation->report->project_id,
                 'owner_id' => $owner?->id,
                 'title' => $recommendation->title,
                 'description' => $recommendation->description,
+                // الخطوات والمثال ينتقلان مع المهمة لحظة إنشائها: المهمة التي
+                // تنسخ العنوان وحده تعيد المستخدم إلى نفس الحيرة في لوحة أخرى.
+                'steps' => $recommendation->action_steps ?: null,
+                'worked_example' => $recommendation->worked_example,
+                'timeframe' => $recommendation->timeframe,
                 'status' => Task::STATUS_TODO,
                 'priority' => $recommendation->priority,
                 'impact' => $recommendation->impact,
                 'effort' => $recommendation->effort,
-                'due_date' => now()->addDays($this->dueInDays($recommendation->effort)),
+                'due_date' => now()->addDays($dueInDays),
+                // التنبيه قبل الموعد بثلث المدة: تنبيهٌ يوم الاستحقاق يصل
+                // متأخرًا عن أن يُنقذ المهمة، وتنبيهٌ مبكر جدًّا يُتجاهل.
+                'reminder_at' => now()->addDays(max(1, (int) floor($dueInDays * 2 / 3))),
             ],
         );
+
+        return $task;
+    }
+
+    /**
+     * تحويل كل توصيات التقرير دفعة واحدة.
+     *
+     * حدّ الثلاث السابق كان قرار واجهة تسرّب إلى الخدمة: من قرأ تقريره
+     * وقرّر تنفيذ كل ما فيه لا يُفترض أن يضغط زرًّا لكل توصية. `firstOrCreate`
+     * يجعل التكرار آمنًا، فالضغط مرتين لا يُنشئ مهمتين.
+     *
+     * الترتيب بالأولوية المحسوبة في `ReportComposer::priority` لا بترتيب
+     * الإدخال: لوحة تبدأ بالأهم تُنفَّذ، ولوحة عشوائية تُتصفَّح.
+     *
+     * @return array<int, Task>
+     */
+    public function convertAllRecommendations(Report $report, ?User $owner = null): array
+    {
+        return $report->recommendations()
+            ->orderByDesc('priority')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Recommendation $recommendation) => $this->convertRecommendation($recommendation, $owner))
+            ->all();
     }
 
     /**
@@ -265,13 +299,15 @@ class ToolRunService
     public function convertTopRecommendations(Report $report, ?User $owner, int $limit = 3): array
     {
         return $report->recommendations()
+            ->orderByDesc('priority')
+            ->orderBy('id')
             ->limit($limit)
             ->get()
             ->map(fn ($recommendation) => $this->convertRecommendation($recommendation, $owner))
             ->all();
     }
 
-    private function dueInDays(string $effort): int
+    private function dueInDays(?string $effort): int
     {
         return match ($effort) {
             'low' => 7,

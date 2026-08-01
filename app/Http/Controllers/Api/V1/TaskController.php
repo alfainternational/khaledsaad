@@ -51,6 +51,21 @@ class TaskController extends Controller
         return response()->json(['data' => $this->presenter->task($task->refresh())]);
     }
 
+    /**
+     * نظير `App\TaskController::develop` — نفس القاعدة في الاثنين لأن
+     * التطبيق والويب نسختان من منتج واحد لا تنفيذان متوازيان.
+     */
+    public function develop(Request $request, Task $task): JsonResponse
+    {
+        $this->authorizeTask($request, $task);
+
+        if ($task->guide_status !== Task::GUIDE_PENDING) {
+            $this->guides->dispatch($task);
+        }
+
+        return response()->json(['data' => $this->presenter->task($task->refresh())], 202);
+    }
+
     public function storeKpi(Request $request, Project $project): JsonResponse
     {
         $this->authorizeProject($request, $project);

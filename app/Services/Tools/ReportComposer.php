@@ -7,6 +7,8 @@ use App\Models\Recommendation;
 use App\Models\Report;
 use App\Models\ToolRun;
 use App\Modules\Competitors\CompetitorRegistry;
+use App\Modules\Execution\ExampleContext;
+use App\Modules\Execution\RecommendationEnricher;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -21,6 +23,7 @@ class ReportComposer
         private readonly DeterministicInsights $deterministic,
         private readonly AdLibraries $adLibraries,
         private readonly CompetitorRegistry $competitors,
+        private readonly RecommendationEnricher $enricher,
     ) {}
 
     /**
@@ -82,7 +85,7 @@ class ReportComposer
             $this->writeScoreSection($report, $baseline);
             $this->writeSections($report, $sections);
             $this->writeCompetitorSection($report, $run, $competitorView);
-            $this->writeFindings($report, $findings);
+            $this->writeFindings($report, $findings, ExampleContext::fromProject($run->project));
             // ضمان حتمي: كل نتيجة افتراضية يظهر أساسها في assumptions، بعد أن
             // يُعرف القسر النهائي لـ is_assumption داخل writeFindings.
             $this->reconcileAssumptions($report);
@@ -287,7 +290,7 @@ class ReportComposer
     /**
      * @param  array<int, array<string, mixed>>  $findings
      */
-    private function writeFindings(Report $report, array $findings): void
+    private function writeFindings(Report $report, array $findings, ExampleContext $context): void
     {
         foreach (array_values($findings) as $index => $payload) {
             // BR-007: غياب الدليل يجعلها افتراضًا حتى لو ادعى النموذج غير ذلك.
@@ -312,16 +315,20 @@ class ReportComposer
                 'sort_order' => $index,
             ]);
 
-            $this->writeRecommendations($report, $finding, $payload['recommendations'] ?? []);
+            $this->writeRecommendations($report, $finding, $payload['recommendations'] ?? [], $context);
         }
     }
 
     /**
      * @param  array<int, array<string, mixed>>  $recommendations
      */
-    private function writeRecommendations(Report $report, Finding $finding, array $recommendations): void
+    private function writeRecommendations(Report $report, Finding $finding, array $recommendations, ExampleContext $context): void
     {
         foreach ($recommendations as $payload) {
+            // الخطوات والمثال يمرّان من مسار واحد: مخرج النموذج إن صحّ،
+            // وأرضية حتمية إن غاب. لا توصية تصل بلا خطوة ولا بلا مثال.
+            $actionable = $this->enricher->enrich($payload, $context);
+
             Recommendation::create([
                 'finding_id' => $finding->id,
                 'report_id' => $report->id,
@@ -329,7 +336,9 @@ class ReportComposer
                 'description' => $payload['description'],
                 'root_cause' => $payload['root_cause'] ?? $finding->description,
                 'commercial_impact' => $payload['commercial_impact'] ?? 'يؤثر في كفاءة النمو أو تكلفة الوصول إلى النتيجة المستهدفة.',
-                'action_steps' => array_values($payload['action_steps'] ?? [$payload['description']]),
+                'action_steps' => $actionable['action_steps'],
+                'worked_example' => $actionable['worked_example'],
+                'example_source' => $actionable['example_source'],
                 'owner_role' => $payload['owner_role'] ?? 'مسؤول التسويق بالتنسيق مع صاحب القرار',
                 'resources' => array_values($payload['resources'] ?? ['وقت الفريق', 'بيانات القياس المتاحة']),
                 'timeframe' => $payload['timeframe'] ?? 'خلال 30 يومًا',

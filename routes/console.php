@@ -41,6 +41,10 @@ Schedule::command('diagnosis:record')->dailyAt('04:00')->withoutOverlapping();
 // التقرير الحي: فحص حتمي يومي بلا تكلفة نموذج — بعد تحديثات السوق الليلية.
 Schedule::command('growth:watch')->dailyAt('04:10')->withoutOverlapping();
 
+// تنبيهات المهام: تذكير قبل الموعد وإشعار عند التأخر. صباحًا لا فجرًا —
+// تنبيه بمهمة يصل الساعة الرابعة يُقرأ بعد أن يكون اليوم قد بدأ بغيرها.
+Schedule::command('tasks:remind')->dailyAt('08:00')->withoutOverlapping();
+
 // نبض الأسبوع: صباح الاثنين، بعد أن تكون أرقام السوق والمنافسون قد تحدّثوا.
 Schedule::command('growth:pulse')->weeklyOn(1, '07:30')->withoutOverlapping();
 

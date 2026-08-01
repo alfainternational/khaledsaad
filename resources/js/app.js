@@ -285,6 +285,61 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(check, 60000);
     }
 
+    /*
+     * نسخ المثال التطبيقي.
+     *
+     * مفوَّض على المستند لا مربوط بكل زر: بطاقات المهام والتوصيات تُحقن
+     * ديناميكيًّا في أكثر من سطح، والربط المباشر يفقد ما وصل بعد التحميل.
+     *
+     * لا نعتمد على clipboard API وحده: صفحات المنصة تُفتح أحيانًا عبر
+     * http في التطوير، وهناك تكون navigator.clipboard غير متاحة أصلًا،
+     * فيبقى المستخدم أمام زرّ لا يفعل شيئًا.
+     */
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-copy-example]');
+
+        if (!button) {
+            return;
+        }
+
+        const block = button.closest('.worked-example');
+        const source = block?.querySelector('[data-copy-source]');
+        const feedback = block?.querySelector('[data-copy-feedback]');
+
+        if (!source) {
+            return;
+        }
+
+        const text = source.textContent ?? '';
+        const done = () => {
+            if (!feedback) {
+                return;
+            }
+
+            feedback.hidden = false;
+            setTimeout(() => {
+                feedback.hidden = true;
+            }, 2000);
+        };
+
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(() => selectFallback(source));
+
+            return;
+        }
+
+        selectFallback(source);
+    });
+
+    /* تعذّر النسخ البرمجي: نُظلّل النص ليكمل المستخدم بلوحة المفاتيح. */
+    function selectFallback(node) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+    }
+
     const revealElements = document.querySelectorAll('.reveal');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

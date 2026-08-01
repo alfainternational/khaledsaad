@@ -36,6 +36,9 @@
                                 @if ($task['due_date'])
                                     <span>{{ $task['is_overdue'] ? 'تأخرت عن' : 'حتى' }} {{ $task['due_date'] }}</span>
                                 @endif
+                                @if ($task['timeframe'] ?? null)
+                                    <span>المدة: {{ $task['timeframe'] }}</span>
+                                @endif
                                 @if ($task['impact'])
                                     <span>الأثر: {{ $task['impact'] }}</span>
                                 @endif
@@ -43,6 +46,16 @@
                                     <span>الجهد: {{ $task['effort'] }}</span>
                                 @endif
                             </p>
+
+                            @if ($task['steps'] ?? [])
+                                <ol class="task__steps">
+                                    @foreach ($task['steps'] as $step)
+                                        <li>{{ $step }}</li>
+                                    @endforeach
+                                </ol>
+                            @endif
+
+                            @include('app.tasks.partials.guide', ['task' => $task])
 
                             <form method="POST" action="{{ route('app.tasks.update', $task['id']) }}" class="inline-form">
                                 @csrf

@@ -84,6 +84,10 @@ class ReportPresenter
                     'root_cause' => $recommendation->root_cause,
                     'commercial_impact' => $recommendation->commercial_impact,
                     'action_steps' => $recommendation->action_steps ?? [],
+                    // المثال التطبيقي: النص الذي ينسخه ويستعمله. مصدره يمرّ معه
+                    // لأن مثال النموذج ومثال الأرضية الحتمية لا يُقرآن بنفس الثقة.
+                    'worked_example' => $recommendation->worked_example,
+                    'example_source' => $recommendation->example_source,
                     'owner_role' => $recommendation->owner_role,
                     'resources' => $recommendation->resources ?? [],
                     'timeframe' => $recommendation->timeframe,

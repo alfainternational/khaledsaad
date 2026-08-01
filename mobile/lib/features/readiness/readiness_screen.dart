@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import 'models.dart';
@@ -472,14 +474,81 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
 
   Widget _fixTile(BuildContext context, Map<String, dynamic> fix) {
     final repair = fix['fix']?.toString();
+    final snippet = _map(fix['snippet']);
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(fix['title']?.toString() ?? ''),
-      subtitle: repair == null || repair.isEmpty ? null : Text(repair),
-      trailing: Chip(
-        label: Text(fix['effort_label']?.toString() ?? ''),
-        visualDensity: VisualDensity.compact,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(fix['title']?.toString() ?? ''),
+          subtitle: repair == null || repair.isEmpty ? null : Text(repair),
+          trailing: Chip(
+            label: Text(fix['effort_label']?.toString() ?? ''),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        // القصاصة الجاهزة للصق: البند الذي يُصلَح بنصّ معياري ثابت لا عذر
+        // لتركه وصفًا. نظير `app/readiness/show.blade.php`.
+        if (snippet != null) _snippet(snippet),
+      ],
+    );
+  }
+
+  Widget _snippet(Map<String, dynamic> snippet) {
+    final code = snippet['code']?.toString() ?? '';
+    final where = snippet['where']?.toString() ?? '';
+    // الكود يُقرأ من اليسار: عرضه بـRTL يقلب الأقواس فيصير غير صالح للصق.
+    final isCode = snippet['language']?.toString() != 'text';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (where.isNotEmpty)
+            Text(
+              where,
+              style: const TextStyle(color: BrandColors.muted, fontSize: 12),
+            ),
+          const SizedBox(height: 4),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: BrandColors.surfaceSoft,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: BrandColors.line),
+            ),
+            child: Directionality(
+              textDirection: isCode ? TextDirection.ltr : TextDirection.rtl,
+              child: SelectableText(
+                code,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.6,
+                  fontFamily: isCode ? 'monospace' : null,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          OutlinedButton.icon(
+            onPressed: () async {
+              // المُرسِل يُلتقط قبل الانتظار: استعمال context بعد await داخل
+              // State يفتح فجوة قد تكون الشاشة أُغلقت خلالها.
+              final messenger = ScaffoldMessenger.of(context);
+
+              await Clipboard.setData(ClipboardData(text: code));
+
+              messenger.showSnackBar(
+                const SnackBar(content: Text('نُسخت القصاصة.')),
+              );
+            },
+            icon: const Icon(Icons.copy_all, size: 18),
+            label: const Text('انسخ القصاصة'),
+          ),
+        ],
       ),
     );
   }

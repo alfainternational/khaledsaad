@@ -1,3 +1,5 @@
+import '../../core/widgets/worked_example.dart';
+
 /// تسميات القطاعات المعلَنة كما في الويب — مصدر واحد حتى لا تتكرر في الشاشات.
 const Map<String, String> sectorLabels = {
   'education': 'التعليم',
@@ -159,6 +161,53 @@ class ProjectOverview {
   final int doneTasks;
 }
 
+/// دليل تنفيذ المهمة — نظير `app/tasks/partials/guide.blade.php`.
+class TaskGuideModel {
+  const TaskGuideModel({
+    this.how,
+    this.when,
+    this.where,
+    this.deliverable,
+    this.checkpoints = const [],
+    this.pitfalls = const [],
+    this.examples = const [],
+  });
+
+  static TaskGuideModel? fromJson(Map<String, dynamic>? json) {
+    if (json == null) return null;
+
+    return TaskGuideModel(
+      how: json['how'] as String?,
+      when: json['when'] as String?,
+      where: json['where'] as String?,
+      deliverable: json['deliverable'] as String?,
+      checkpoints: _strings(json['checkpoints']),
+      pitfalls: _strings(json['pitfalls']),
+      examples: (json['examples'] as List? ?? const [])
+          .map(
+            (e) => WorkedExampleModel.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .whereType<WorkedExampleModel>()
+          .toList(),
+    );
+  }
+
+  static List<String> _strings(dynamic value) => (value as List? ?? const [])
+      .map((e) => e.toString())
+      .where((e) => e.trim().isNotEmpty)
+      .toList();
+
+  final String? how;
+  final String? when;
+  final String? where;
+  final String? deliverable;
+  final List<String> checkpoints;
+  final List<String> pitfalls;
+  final List<WorkedExampleModel> examples;
+}
+
 class TaskModel {
   const TaskModel({
     required this.id,
@@ -170,6 +219,11 @@ class TaskModel {
     this.dueDate,
     this.impact,
     this.effort,
+    this.timeframe,
+    this.steps = const [],
+    this.workedExample,
+    this.guide,
+    this.guideStatus = 'none',
   });
 
   factory TaskModel.fromJson(Map<String, dynamic> json) => TaskModel(
@@ -182,6 +236,19 @@ class TaskModel {
     dueDate: json['due_date'] as String?,
     impact: json['impact'] as String?,
     effort: json['effort'] as String?,
+    timeframe: json['timeframe'] as String?,
+    steps: TaskGuideModel._strings(json['steps']),
+    workedExample: WorkedExampleModel.fromJson(
+      json['worked_example'] == null
+          ? null
+          : Map<String, dynamic>.from(json['worked_example'] as Map),
+    ),
+    guide: TaskGuideModel.fromJson(
+      json['guide'] == null
+          ? null
+          : Map<String, dynamic>.from(json['guide'] as Map),
+    ),
+    guideStatus: json['guide_status'] as String? ?? 'none',
   );
 
   final int id;
@@ -193,4 +260,14 @@ class TaskModel {
   final String? dueDate;
   final String? impact;
   final String? effort;
+  final String? timeframe;
+  final List<String> steps;
+  final WorkedExampleModel? workedExample;
+  final TaskGuideModel? guide;
+  final String guideStatus;
+
+  bool get isDeveloping => guideStatus == 'pending';
+
+  /// الدليل المبدئي حالة قائمة بذاتها: قالب مأمون لا صياغة على حالة النشاط.
+  bool get isFallbackGuide => guideStatus == 'fallback';
 }

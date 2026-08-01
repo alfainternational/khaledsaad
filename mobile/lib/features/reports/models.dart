@@ -1,3 +1,5 @@
+import '../../core/widgets/worked_example.dart';
+
 class RecommendationModel {
   const RecommendationModel({
     required this.id,
@@ -6,6 +8,9 @@ class RecommendationModel {
     required this.impactLabel,
     required this.effortLabel,
     this.kpiHint,
+    this.timeframe,
+    this.actionSteps = const [],
+    this.workedExample,
     this.taskId,
   });
 
@@ -17,6 +22,16 @@ class RecommendationModel {
         impactLabel: json['impact_label'] as String? ?? '',
         effortLabel: json['effort_label'] as String? ?? '',
         kpiHint: json['kpi_hint'] as String?,
+        timeframe: json['timeframe'] as String?,
+        actionSteps: (json['action_steps'] as List? ?? const [])
+            .map((e) => e.toString())
+            .where((e) => e.trim().isNotEmpty)
+            .toList(),
+        workedExample: WorkedExampleModel.fromJson(
+          json['worked_example'] == null
+              ? null
+              : Map<String, dynamic>.from(json['worked_example'] as Map),
+        ),
         taskId: json['task_id'] as int?,
       );
 
@@ -26,6 +41,9 @@ class RecommendationModel {
   final String impactLabel;
   final String effortLabel;
   final String? kpiHint;
+  final String? timeframe;
+  final List<String> actionSteps;
+  final WorkedExampleModel? workedExample;
   final int? taskId;
 
   bool get isTask => taskId != null;

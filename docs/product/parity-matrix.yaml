@@ -1081,6 +1081,45 @@
       "status": "verified"
     },
     {
+      "id": "customer.tasks.develop",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.tasks.develop",
+        "method": "POST"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.tasks.develop",
+        "method": "POST"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "TasksScreen",
+        "action": "develop_guide"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "forbidden",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\TaskExecutionGuideTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ApiParityTest"
+        ],
+        "mobile": [
+          "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
       "id": "customer.kpis.manage",
       "role": "customer",
       "web": {

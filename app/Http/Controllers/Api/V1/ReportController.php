@@ -69,12 +69,16 @@ class ReportController extends Controller
 
         $recommendationId = $request->integer('recommendation_id');
 
-        $tasks = $recommendationId > 0
-            ? [$this->runs->convertRecommendation(
+        // نفس العقد لا إصدارًا ثانيًا (§١٤): scope حقل اختياري، وغيابه يبقي
+        // سلوك النسخ المنشورة من التطبيق كما هو.
+        $tasks = match (true) {
+            $recommendationId > 0 => [$this->runs->convertRecommendation(
                 Recommendation::where('report_id', $report->id)->findOrFail($recommendationId),
                 $request->user(),
-            )]
-            : $this->runs->convertTopRecommendations($report, $request->user());
+            )],
+            $request->input('scope') === 'all' => $this->runs->convertAllRecommendations($report, $request->user()),
+            default => $this->runs->convertTopRecommendations($report, $request->user()),
+        };
 
         return response()->json([
             'data' => array_map(fn ($task) => $this->projects->task($task), $tasks),

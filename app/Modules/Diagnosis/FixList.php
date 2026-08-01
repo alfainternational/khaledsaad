@@ -3,6 +3,7 @@
 namespace App\Modules\Diagnosis;
 
 use App\Models\Project;
+use App\Modules\AiReadiness\RepairSnippets;
 use App\Modules\AiReadiness\SiteAuditResult;
 
 /**
@@ -40,6 +41,7 @@ class FixList
     public function __construct(
         private readonly AxisScorer $scorer,
         private readonly AxisRegistry $registry,
+        private readonly RepairSnippets $snippets,
     ) {}
 
     /**
@@ -82,6 +84,13 @@ class FixList
                     'is_assumption' => $score->evidenceLevel->needsAssumptionBadge(),
                     'why' => $repairs[$input['key']]['why'] ?? null,
                     'fix' => $repairs[$input['key']]['fix'] ?? null,
+
+                    /*
+                     * القصاصة الجاهزة للصق. «أضف JSON-LD من نوع Organization»
+                     * تعليمة صحيحة وعديمة الأثر لمن لا يعرف ما هو JSON-LD،
+                     * والبند الذي يُصلَح بنصّ معياري ثابت لا عذر لتركه وصفًا.
+                     */
+                    'snippet' => $this->snippets->for($input['key'], $project->sector),
                 ];
             }
         }

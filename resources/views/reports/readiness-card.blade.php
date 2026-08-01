@@ -30,6 +30,15 @@
         .why { color: #5d6b82; font-size: 8.5pt; margin: 3pt 0 0; }
         .fix { background-color: #f5f9ff; padding: 5pt 9pt; border-radius: 4pt; font-size: 8.5pt; margin-top: 5pt; }
 
+        /* القصاصة الجاهزة للصق. dir="ltr" على الكود: JSON-LD وrobots.txt
+           تُقرآن من اليسار، وعرضهما بـRTL يقلب الأقواس فيصير النص غير صالح
+           للنسخ — وهو كل الغرض منه. */
+        .snippet { margin-top: 4pt; }
+        .snippet__where { font-size: 8pt; color: #5d6b82; margin-bottom: 2pt; }
+        .snippet__code { direction: ltr; text-align: left; white-space: pre-wrap; font-family: monospace;
+            font-size: 7.5pt; line-height: 1.5; background-color: #fbf8ef; border: 1px solid #e5ddc8;
+            padding: 5pt 7pt; margin: 0; page-break-inside: avoid; }
+
         .tbl { border-collapse: collapse; width: 100%; }
         .tbl td, .tbl th { border: 1px solid #dfe8f5; font-size: 8.5pt; padding: 4pt 6pt; text-align: right; }
         .tbl th { background-color: #f5f9ff; color: #071f5b; }
@@ -202,6 +211,15 @@
                     {{ $fix['title'] }}
                     @if ($fix['fix'])
                         <div class="muted" style="font-size: 8pt;">{{ $fix['fix'] }}</div>
+                    @endif
+
+                    {{-- القصاصة في المطبوع أيضًا: أكثر من يُنفّذ هذه البنود
+                         مطوّر يقرأ البطاقة مطبوعة بجانب المحرر. --}}
+                    @if ($fix['snippet'] ?? null)
+                        <div class="snippet">
+                            <div class="snippet__where">{{ $fix['snippet']['where'] }}</div>
+                            <pre class="snippet__code">{{ $fix['snippet']['code'] }}</pre>
+                        </div>
                     @endif
                 </td>
                 <td><span class="effort effort-{{ $fix['effort'] }}">{{ $fix['effort_label'] }}</span></td>

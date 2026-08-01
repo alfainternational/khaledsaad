@@ -844,16 +844,17 @@ class PlatformRepository {
     return (response['data'] as Map)['verdict'] as String;
   }
 
+  /// [all] يحوّل كل توصيات التقرير لا أعلى ثلاث. نفس المسار لا إصدارًا
+  /// ثانيًا (§١٤): الحقل اختياري وغيابه يبقي سلوك النسخ المنشورة كما هو.
   Future<List<TaskModel>> convertRecommendations(
     int reportId, {
     int? recommendationId,
+    bool all = false,
   }) async {
-    final response = await _api.post(
-      '/reports/$reportId/tasks',
-      recommendationId == null
-          ? const {}
-          : {'recommendation_id': recommendationId},
-    );
+    final response = await _api.post('/reports/$reportId/tasks', {
+      'recommendation_id': ?recommendationId,
+      if (all) 'scope': 'all',
+    });
 
     return (response['data'] as List)
         .map((e) => TaskModel.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -878,6 +879,16 @@ class PlatformRepository {
 
   Future<TaskModel> updateTask(int id, String status) async {
     final response = await _api.patch('/tasks/$id', {'status': status});
+
+    return TaskModel.fromJson(
+      Map<String, dynamic>.from(response['data'] as Map),
+    );
+  }
+
+  /// طلب تطوير دليل المهمة. الاستجابة 202: العمل في طابور، والقراءة
+  /// اللاحقة هي ما يُظهر الدليل — لا انتظار داخل الطلب.
+  Future<TaskModel> developTask(int id) async {
+    final response = await _api.post('/tasks/$id/develop', const {});
 
     return TaskModel.fromJson(
       Map<String, dynamic>.from(response['data'] as Map),

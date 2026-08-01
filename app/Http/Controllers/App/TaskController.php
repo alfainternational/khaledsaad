@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
+use App\Modules\Execution\TaskGuideRequest;
 use App\Support\Presentation\ProjectPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,10 @@ class TaskController extends Controller
 {
     use ResolvesWorkspace;
 
-    public function __construct(private readonly ProjectPresenter $presenter) {}
+    public function __construct(
+        private readonly ProjectPresenter $presenter,
+        private readonly TaskGuideRequest $guides,
+    ) {}
 
     public function index(Request $request, Project $project): View
     {
@@ -43,6 +47,25 @@ class TaskController extends Controller
         ]);
 
         return back()->with('status', 'حُدثت حالة المهمة.');
+    }
+
+    /**
+     * تطوير المهمة: كيف تُنفَّذ، متى، أين، ماذا تقدّم، وأمثلة تُنسخ وتُستعمل.
+     *
+     * إعادة الطلب مسموحة والدليل يُكتب فوق سابقه — المهمة تظل حيّة (§٤.٥).
+     * ما يُمنع هو طلبٌ ثانٍ وأول في الطابور، فهو صرفٌ مكرر على نفس النتيجة.
+     */
+    public function develop(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorizeTask($request, $task);
+
+        if ($task->guide_status === Task::GUIDE_PENDING) {
+            return back()->with('status', 'دليل هذه المهمة قيد التطوير الآن.');
+        }
+
+        $this->guides->dispatch($task);
+
+        return back()->with('status', 'بدأ تطوير المهمة. ستجد الخطوات والأمثلة هنا خلال دقيقة.');
     }
 
     /**

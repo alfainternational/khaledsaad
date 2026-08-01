@@ -240,6 +240,7 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
 
     Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('projects.tasks');
     Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::post('tasks/{task}/develop', [TaskController::class, 'develop'])->name('tasks.develop');
 
     Route::middleware('feature:'.FeatureKey::KPI_TRACKING)->group(function (): void {
         Route::post('projects/{project}/kpis', [KpiController::class, 'store'])->name('kpis.store');
