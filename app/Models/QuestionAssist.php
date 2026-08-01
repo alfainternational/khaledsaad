@@ -20,6 +20,9 @@ class QuestionAssist extends Model
     /** موجز الوكالة: أسئلة `BriefQuestions` على المشروع مباشرة، بلا تشغيل ولا جلسة. */
     public const SURFACE_AGENCY = 'agency';
 
+    /** ملف المشروع: أسئلة `ProfileQuestions` — الباب الذي يدخل منه أغلب المستخدمين أولًا. */
+    public const SURFACE_PROFILE = 'profile';
+
     protected $fillable = [
         'project_id', 'query_reservation_id', 'surface', 'question_key', 'context_hash',
         'guide', 'suggestions', 'recommended_value', 'recommendation_reason', 'basis',

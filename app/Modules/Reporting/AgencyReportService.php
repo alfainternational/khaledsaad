@@ -68,7 +68,6 @@ class AgencyReportService
         };
 
         $primaryGoal = $brief['primary_goal'] ?? null;
-        $successMetric = $brief['success_metric'] ?? null;
 
         unset($brief['services'], $brief['primary_goal']);
 
@@ -93,11 +92,30 @@ class AgencyReportService
          */
         if (filled($primaryGoal)) {
             $this->knowledge->record($project, 'primary_goal', $primaryGoal, 'profile');
+            $this->fitness->score($project, 'primary_goal', $primaryGoal, 'select');
         }
 
-        if (filled($successMetric)) {
-            $this->knowledge->record($project, 'success_metric', $successMetric, 'profile');
-            $this->fitness->score($project, 'success_metric', $successMetric, 'textarea');
+        /*
+         * وبقية الموجز كذلك، لا حقلين منتقيين.
+         *
+         * «ما جُرّب قبلًا» و«ما ينجح الآن» و«القيود» أثمن ما يقوله صاحب النشاط
+         * عن نفسه، وكانت تُدفن في عمود `brief` كـJSON لا يقرؤه إلا مستند الوكالة.
+         * قدرةٌ لا تغذّي الدماغ لا مكان لها (§١٥)، والموجز كان آخر سطح استقبال
+         * خارجه.
+         *
+         * النوع يأتي من `BriefQuestions` نفسها فيُقاس المفتوح ويُترك الاختيار:
+         * الحكم على «ريال» جوابًا عن العملة يخلق درجة بلا معنى.
+         */
+        foreach (BriefQuestions::fields() as $field) {
+            $key = (string) $field['key'];
+            $value = $brief[$key] ?? null;
+
+            if ($key === 'primary_goal' || ! filled($value)) {
+                continue;
+            }
+
+            $this->knowledge->record($project, $key, $value, 'profile');
+            $this->fitness->score($project, $key, $value, (string) ($field['type'] ?? 'text'));
         }
     }
 
@@ -1235,6 +1253,10 @@ class AgencyReportService
                         'root_cause' => $recommendation->root_cause ?: $finding->description,
                         'commercial_impact' => $recommendation->commercial_impact ?: 'يؤثر في كفاءة النمو أو تكلفة الوصول إلى النتيجة المستهدفة.',
                         'action_steps' => $recommendation->action_steps ?: [$recommendation->description],
+                        // المثال ينتقل مع الأولوية: «تقريرك الخاص» هو أكثر
+                        // مستند يقرؤه صاحب النشاط وحده، وحذفه منه يتركه أمام
+                        // خطوة يفهمها ولا يعرف كيف يكتبها.
+                        'worked_example' => $recommendation->worked_example,
                         'owner_role' => $recommendation->owner_role ?: 'مسؤول التسويق بالتنسيق مع صاحب القرار',
                         'resources' => $recommendation->resources ?: ['وقت الفريق', 'بيانات القياس المتاحة'],
                         'timeframe' => $recommendation->timeframe ?: 'خلال 30 يومًا',

@@ -74,6 +74,38 @@ final class MarkerLexicon
         'هنقرستيشن', 'مرسول', 'نون', 'امازون', 'أمازون', 'سلة', 'زد',
     ];
 
+    /**
+     * لغة التمايز: المقارنة الصريحة بغيرك.
+     *
+     * @var array<int, string>
+     */
+    public const CONTRAST = [
+        'بينما', 'بدل', 'بدلا', 'على عكس', 'عكس', 'خلاف', 'بخلاف',
+        'غيري', 'غيرنا', 'غيره', 'غيرهم', 'الاخرين', 'الآخرين',
+        'المنافس', 'المنافسين', 'منافسي', 'التقليدي', 'المعتاد', 'السائد',
+        'لا يقدم', 'ما يقدمه', 'ما لا', 'لا يفعله', 'لا يستطيع',
+        'الوحيد', 'اول من', 'أول من', 'دون غيره', 'اسرع من', 'أسرع من',
+        'ارخص من', 'أرخص من', 'اقرب من', 'أقرب من', 'افضل من', 'أفضل من',
+        'اما غيره', 'في حين',
+    ];
+
+    /**
+     * أعداد ومُدد مكتوبة بالحروف.
+     *
+     * الرصد بـ`\d` وحده يفشل على العربية: «مئة عميل جديد في ستة أشهر» رقمان
+     * صريحان بلا خانة واحدة — وهي المثال الذي نعرضه للمستخدم بوصفه إجابة كافية.
+     * قياسٌ يرفض مثاله الذي يعلّمه إياه يفقد ثقته عن حق.
+     *
+     * @var array<int, string>
+     */
+    public const NUMBER_WORDS = [
+        'واحد', 'اثنين', 'اثنان', 'ثلاث', 'اربع', 'أربع', 'خمس', 'ست', 'سبع',
+        'ثمان', 'تسع', 'عشر', 'عشرين', 'ثلاثين', 'اربعين', 'أربعين', 'خمسين',
+        'ستين', 'سبعين', 'ثمانين', 'تسعين', 'مئة', 'مائة', 'الف', 'ألف', 'مليون',
+        'نصف', 'ثلث', 'ربع', 'ضعف', 'ضعفين', 'يومين', 'ساعتين', 'شهرين',
+        'اسبوعين', 'أسبوعين', 'سنتين', 'عامين',
+    ];
+
     /** مقابل مالي أو ميزانية أو حجم. @var array<int, string> */
     public const MONEY = [
         'ريال', 'درهم', 'دينار', 'دولار', 'جنيه', 'ميزانية', 'سعر', 'اسعار', 'أسعار',
@@ -92,7 +124,9 @@ final class MarkerLexicon
             FieldExpectation::NEED => ArabicText::containsAny($value, self::NEED),
             FieldExpectation::CHANNEL => ArabicText::containsAny($value, self::CHANNEL),
             FieldExpectation::MONEY => ArabicText::containsAny($value, self::MONEY),
-            FieldExpectation::NUMBER => preg_match('/\d/', ArabicText::normalize($value)) === 1,
+            FieldExpectation::CONTRAST => ArabicText::containsAny($value, self::CONTRAST),
+            FieldExpectation::NUMBER => preg_match('/\d/', ArabicText::normalize($value)) === 1
+                || ArabicText::containsAny($value, self::NUMBER_WORDS),
             FieldExpectation::SEGMENTS => ArabicText::segmentCount($value) >= 2,
             default => false,
         };
@@ -111,6 +145,7 @@ final class MarkerLexicon
             FieldExpectation::SEGMENTS => 'أكثر من عنصر واحد مفصول',
             FieldExpectation::CHANNEL => 'القناة أو المنصة بالاسم',
             FieldExpectation::MONEY => 'المقابل المالي أو الميزانية',
+            FieldExpectation::CONTRAST => 'مقارنة صريحة بما يقدّمه غيرك',
             default => $want,
         };
     }

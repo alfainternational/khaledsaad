@@ -224,6 +224,8 @@ class AssistDraftModel {
     required this.guide,
     required this.suggestions,
     this.assumptionLabel,
+    this.recommendedValue,
+    this.recommendationReason,
   });
 
   factory AssistDraftModel.fromJson(Map<String, dynamic> json) =>
@@ -236,11 +238,24 @@ class AssistDraftModel {
             )
             .toList(),
         assumptionLabel: json['assumption_label']?.toString(),
+        recommendedValue: json['recommended_value']?.toString(),
+        recommendationReason: json['recommendation_reason']?.toString(),
       );
 
   final String guide;
   final List<AssistSuggestion> suggestions;
   final String? assumptionLabel;
+
+  /*
+   * ترشيح أفضل خيار متاح وسببه — لأسئلة الاختيار وحدها.
+   *
+   * الخادم يرسلهما ويصفّيهما مقابل خيارات السؤال الفعلية، وكان التطبيق يُسقطهما
+   * عند فك الـJSON: فيرى مستخدم الويب «الأقرب لوصفك: كذا» ولا يراه مستخدم
+   * التطبيق على السؤال نفسه. حقلٌ يرسله الخادم ولا يقرؤه العميل فرقٌ صامت في
+   * التجربة، لا اختصار.
+   */
+  final String? recommendedValue;
+  final String? recommendationReason;
 
   bool get isEmpty => guide.trim().isEmpty && suggestions.isEmpty;
 }

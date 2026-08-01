@@ -118,6 +118,36 @@ final class QuestionDescriptor
     }
 
     /**
+     * سؤال من ملف المشروع.
+     *
+     * @param  array<string, mixed>  $field  بند من `ProfileQuestions::fields()`
+     */
+    public static function fromProfileField(array $field): self
+    {
+        return new self(
+            surface: QuestionAssist::SURFACE_PROFILE,
+            questionKey: (string) $field['key'],
+            /*
+             * المفتاح نفسه في الحالتين: `rememberProfile` يكتب في الدماغ
+             * بـ`$key` مباشرة، فمفتاح الحقيقة هو مفتاح الحقل بلا وساطة.
+             */
+            fieldKey: (string) $field['key'],
+            text: (string) $field['label'],
+            help: $field['help'] ?? null,
+            why: $field['why'] ?? null,
+            type: (string) $field['type'],
+            options: array_map(
+                fn (array $option) => [
+                    'value' => $option['value'] ?? '',
+                    'label' => (string) ($option['label'] ?? $option['value'] ?? ''),
+                ],
+                $field['options'] ?? [],
+            ),
+            required: (bool) ($field['required'] ?? false),
+        );
+    }
+
+    /**
      * هل هذا سؤال اختيار محدود؟
      *
      * الفرق يحكم شكل المساعدة كلها: في الاختيار يُرشَّح **أفضل خيار متاح** ولا

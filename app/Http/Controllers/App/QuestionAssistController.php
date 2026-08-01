@@ -123,6 +123,11 @@ class QuestionAssistController extends Controller
             return $this->locator->inAgencyBrief($key);
         }
 
+        // وملف المشروع كذلك: أسئلته ساكنة على المشروع بلا سياق ثالث يحدّها.
+        if ($validated['surface'] === QuestionAssist::SURFACE_PROFILE) {
+            return $this->locator->inProfile($key);
+        }
+
         $session = ConsultationSession::where('uuid', $validated['session_uuid'])->first();
 
         return $session !== null && $this->locator->belongsTo($project, $session)

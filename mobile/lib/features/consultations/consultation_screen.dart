@@ -315,6 +315,19 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               draft.guide,
               style: const TextStyle(fontSize: 12, color: BrandColors.ink),
             ),
+          // ترشيح أفضل خيار متاح — نظير ما يعرضه الويب على سؤال الاختيار نفسه.
+          if (draft.recommendationReason != null &&
+              draft.recommendationReason!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'الأقرب لوصفك: ${draft.recommendationReason}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: BrandColors.ink,
+              ),
+            ),
+          ],
           if (draft.suggestions.isNotEmpty) ...[
             const SizedBox(height: 8),
             Wrap(

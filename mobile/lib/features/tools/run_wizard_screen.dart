@@ -492,6 +492,23 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
               draft.guide,
               style: const TextStyle(fontSize: 12, color: BrandColors.ink),
             ),
+          /*
+           * ترشيح أفضل خيار متاح — لأسئلة الاختيار. الخادم يرسله ويصفّيه مقابل
+           * خيارات السؤال، وإسقاطه هنا كان يعني أن الويب يعرض «الأقرب لوصفك»
+           * ولا يعرضه التطبيق على السؤال نفسه.
+           */
+          if (draft.recommendationReason != null &&
+              draft.recommendationReason!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'الأقرب لوصفك: ${draft.recommendationReason}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: BrandColors.ink,
+              ),
+            ),
+          ],
           if (draft.suggestions.isNotEmpty) ...[
             const SizedBox(height: 8),
             Wrap(

@@ -29,6 +29,16 @@ final class FieldExpectation
     public const MONEY = 'money';
 
     /**
+     * لغة التمايز: «بينما»، «بدل»، «ما لا يقدّمه غيري».
+     *
+     * فئة قائمة بذاتها لأن التمايز يُقال بالمقارنة لا بالحاجة. كانت
+     * `value_proposition` تطلب `NEED`، فكان وصفٌ ممتاز مثل «نوصّل خلال ساعتين
+     * بأسعار الجملة، ما لا يقدّمه المورّد التقليدي» يُحسب ناقصًا لأنه لا يحوي
+     * فعل احتياج — وهو أدقّ ما يمكن أن يقوله صاحب نشاط عن تمايزه.
+     */
+    public const CONTRAST = 'contrast';
+
+    /**
      * @param  array<int, string>  $wants  فئات العلامات المتوقعة في إجابة كافية.
      */
     private function __construct(
@@ -49,12 +59,24 @@ final class FieldExpectation
         return self::map()[$fieldKey] ?? self::general();
     }
 
+    /**
+     * التوقّع العام: طولٌ معقول وحده، بلا فئة علامة مفروضة.
+     *
+     * **لا يفرض `WHO` و`NEED` عمدًا.** كان يفرضهما، فكان كل حقل نصّي قصير
+     * وجيهٍ يُحاسَب بمقياس سؤال الجمهور: «الرياض» جوابًا عن «أين عملاؤك؟» تُقرأ
+     * كلمةً واحدة بلا «من» ولا «لماذا» فتنزل إلى أدنى معامل — وتخفض محورًا
+     * لإجابة صحيحة تمامًا. الخطأ في اتجاه العقوبة أسوأ من الخطأ في اتجاه
+     * التساهل: الأول يدفع صاحب النشاط إلى إصلاح ما ليس مكسورًا.
+     *
+     * الحقول التي تستحق أكثر تُعلن توقّعها في `map()` صراحةً. ما لا يُعلَن
+     * يُقاس بطوله وبلفظه العام وحدهما.
+     */
     public static function general(): self
     {
         return new self(
             minWords: 6,
-            wants: [self::WHO, self::NEED],
-            sufficientAnswerLooksLike: 'إجابة كافية تذكر تفصيلًا محددًا لا وصفًا عامًّا: من، وماذا، ولماذا.',
+            wants: [],
+            sufficientAnswerLooksLike: 'إجابة كافية تذكر تفصيلًا محددًا لا وصفًا عامًّا.',
         );
     }
 
@@ -76,8 +98,8 @@ final class FieldExpectation
             ),
             'differentiation' => new self(
                 minWords: 8,
-                wants: [self::NEED, self::WHO],
-                sufficientAnswerLooksLike: 'إجابة كافية تذكر ما تفعله ولا يفعله منافسوك، ولمن يهمّه هذا الفرق.',
+                wants: [self::CONTRAST],
+                sufficientAnswerLooksLike: 'إجابة كافية تذكر ما تفعله ولا يفعله منافسوك، بمقارنة صريحة لا بوصف عام.',
             ),
             'offer_summary' => new self(
                 minWords: 8,
@@ -103,6 +125,44 @@ final class FieldExpectation
                 minWords: 4,
                 wants: [self::SEGMENTS],
                 sufficientAnswerLooksLike: 'إجابة كافية تسمّي ثلاثة منافسين بأسمائهم، لا بأوصافهم.',
+            ),
+
+            /*
+             * مدخلات محاور قصيرة بطبيعتها.
+             *
+             * تُعلَن هنا لا لتشديد القياس بل لتخفيفه إلى ما تستحقه: هذه مفاتيح
+             * يقرؤها `AxisRegistry` فعلًا، وتركها للتوقّع العام كان يعني أن
+             * إجابةً صحيحة من كلمتين تُخفض محورًا بلا سبب.
+             */
+            'geography' => new self(
+                minWords: 1,
+                wants: [self::WHERE],
+                sufficientAnswerLooksLike: 'إجابة كافية تسمّي مدينة أو دولة أو نطاقًا: «الرياض» أو «الخليج» أو «أونلاين داخل السعودية».',
+            ),
+            'industry' => new self(
+                minWords: 1,
+                wants: [],
+                sufficientAnswerLooksLike: 'إجابة كافية تضيّق القطاع بكلمتين: «مدارس أهلية» لا «تعليم».',
+            ),
+            'execution_owner' => new self(
+                minWords: 1,
+                wants: [],
+                sufficientAnswerLooksLike: 'إجابة كافية تسمّي من ينفّذ فعلًا: شخصًا أو دورًا أو جهة.',
+            ),
+            'description' => new self(
+                minWords: 10,
+                wants: [self::WHO, self::WHERE],
+                sufficientAnswerLooksLike: 'إجابة كافية تذكر ما تبيعه ولمن وفي أي نطاق، بلغة يفهمها من يسمع بنشاطك أول مرة.',
+            ),
+            'value_proposition' => new self(
+                minWords: 8,
+                wants: [self::CONTRAST],
+                sufficientAnswerLooksLike: 'إجابة كافية تذكر الفرق الذي يلمسه العميل مقارنةً بغيرك: «أوصّل في اليوم نفسه بينما يحتاج غيري ثلاثة أيام» لا «جودة عالية».',
+            ),
+            'primary_goal' => new self(
+                minWords: 3,
+                wants: [],
+                sufficientAnswerLooksLike: 'إجابة كافية تذكر هدفًا واحدًا محددًا لا ثلاثة أهداف عامة.',
             ),
         ];
     }

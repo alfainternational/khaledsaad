@@ -4,6 +4,7 @@ import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/question_assist_panel.dart';
 import 'models.dart';
 
 /// يقابل resources/views/app/projects/create.blade.php وedit.blade.php.
@@ -30,6 +31,16 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   final _industry = TextEditingController();
   final _description = TextEditingController();
   final _geography = TextEditingController();
+
+  /*
+   * «لماذا يشتري منك؟» كان غائبًا عن نموذج التطبيق وحاضرًا في الويب، وهو مدخل
+   * وزنه ٣ في محور الوضوح الاستراتيجي. غيابه يعني أن مستخدم التطبيق يُقاس على
+   * مدخل لا سبيل له إلى تعبئته — فيرى درجة أدنى بلا ذنب.
+   */
+  final _valueProposition = TextEditingController();
+
+  /// مفاتيح لوحات المساعدة، لدفع القياس إليها عند كل تغيير في خانتها.
+  final Map<String, GlobalKey<QuestionAssistPanelState>> _assistKeys = {};
 
   String _stage = 'growth';
   String? _sector;
@@ -80,6 +91,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     _industry.dispose();
     _description.dispose();
     _geography.dispose();
+    _valueProposition.dispose();
     super.dispose();
   }
 
@@ -102,6 +114,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       'geography': _geography.text.trim().isEmpty
           ? null
           : _geography.text.trim(),
+      'value_proposition': _valueProposition.text.trim().isEmpty
+          ? null
+          : _valueProposition.text.trim(),
     };
 
     if (_isEdit) {
@@ -128,6 +143,47 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// دفع القيمة الحالية إلى لوحة السؤال لتقيسها بعد سكون الكتابة.
+  void _measure(String key, String value) {
+    _assistKeys[key]?.currentState?.scheduleMeasure(value);
+  }
+
+  /// لوحة مساعدة سؤال واحد من ملف المشروع.
+  ///
+  /// تختفي في وضع الإنشاء: المقترح يُبنى على ما نعرفه عن النشاط، ولا نشاط بعد —
+  /// وهي نفس قاعدة شاشة الإنشاء في الويب. زرٌّ هنا كان سيُنتج كلامًا عامًّا لا
+  /// يفرّق بين عميل وعميل، ويستهلك من السقف ثمنه.
+  Widget _assist(
+    String key,
+    String type,
+    String Function() currentValue,
+    ValueChanged<String> onApply,
+  ) {
+    final slug = widget.project?.card.slug;
+
+    if (slug == null) return const SizedBox.shrink();
+
+    final panelKey = _assistKeys.putIfAbsent(
+      key,
+      GlobalKey<QuestionAssistPanelState>.new,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: QuestionAssistPanel(
+        key: panelKey,
+        repository: widget.repository,
+        projectSlug: slug,
+        surface: 'profile',
+        questionKey: key,
+        fieldKey: key,
+        answerType: type,
+        currentValue: currentValue(),
+        onApply: onApply,
+      ),
+    );
   }
 
   @override
@@ -158,6 +214,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                   ? 'الاسم مطلوب.'
                   : null,
             ),
+            _assist('name', 'text', () => _name.text, (value) {
+              _name.text = value;
+            }),
             const SizedBox(height: 14),
 
             DropdownButtonFormField<String>(
@@ -176,6 +235,11 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                   .toList(),
               onChanged: (value) => setState(() => _sector = value),
             ),
+            _assist('sector', 'select', () => _sector ?? '', (value) {
+              if (sectorLabels.containsKey(value)) {
+                setState(() => _sector = value);
+              }
+            }),
             const SizedBox(height: 14),
 
             TextFormField(
@@ -184,7 +248,11 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                 labelText: 'وصف المجال',
                 hintText: 'مدارس أهلية، متجر عطور…',
               ),
+              onChanged: (value) => _measure('industry', value),
             ),
+            _assist('industry', 'text', () => _industry.text, (value) {
+              _industry.text = value;
+            }),
             const SizedBox(height: 14),
 
             DropdownButtonFormField<String>(
@@ -203,6 +271,14 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                 _stageTouched = true;
               }),
             ),
+            _assist('stage', 'select', () => _stage, (value) {
+              if (_stages.containsKey(value)) {
+                setState(() {
+                  _stage = value;
+                  _stageTouched = true;
+                });
+              }
+            }),
             const SizedBox(height: 14),
 
             TextFormField(
@@ -213,13 +289,41 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                     'اكتب وصفًا مباشرًا يفهمه شخص يتعرف إلى مشروعك للمرة الأولى.',
               ),
               maxLines: 3,
+              onChanged: (value) => _measure('description', value),
+            ),
+            _assist('description', 'textarea', () => _description.text, (value) {
+              _description.text = value;
+            }),
+            const SizedBox(height: 14),
+
+            TextFormField(
+              controller: _valueProposition,
+              decoration: const InputDecoration(
+                labelText: 'لماذا يشتري منك العميل بدل غيرك؟',
+                helperText:
+                    'اكتب السبب الحقيقي بجملة أو جملتين، مثل: أوصّل في اليوم نفسه بينما يحتاج غيري ثلاثة أيام.',
+              ),
+              maxLines: 3,
+              onChanged: (value) => _measure('value_proposition', value),
+            ),
+            _assist(
+              'value_proposition',
+              'textarea',
+              () => _valueProposition.text,
+              (value) {
+                _valueProposition.text = value;
+              },
             ),
             const SizedBox(height: 14),
 
             TextFormField(
               controller: _geography,
               decoration: const InputDecoration(labelText: 'السوق الجغرافي'),
+              onChanged: (value) => _measure('geography', value),
             ),
+            _assist('geography', 'text', () => _geography.text, (value) {
+              _geography.text = value;
+            }),
             const SizedBox(height: 24),
 
             FilledButton(

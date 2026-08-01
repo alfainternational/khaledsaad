@@ -9,6 +9,7 @@ use App\Models\ToolField;
 use App\Models\ToolRun;
 use App\Models\ToolRunAnswer;
 use App\Modules\Brain\ProjectKnowledgeService;
+use App\Modules\Intake\Assist\ProfileQuestions;
 use App\Modules\Intake\Fitness\AnswerFitnessScorer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -25,16 +26,6 @@ use Illuminate\Support\Facades\DB;
  */
 class ProjectAnswerMemory
 {
-    /**
-     * حقول الملف المفتوحة التي تُقاس كفايتها كما تُقاس داخل الأدوات.
-     *
-     * البقية اختيارات أو أرقام أو روابط: كفايتها صفة السؤال لا الإجابة، فقياسها
-     * يخلق درجة بلا معنى ويعاقب مدخلًا صحيحًا — لذلك لا تدخل هنا (AnswerFitnessScorer).
-     *
-     * @var array<int, string>
-     */
-    private const MEASURED_PROFILE_FIELDS = ['value_proposition', 'description'];
-
     public function __construct(
         private readonly ProjectKnowledgeService $knowledge,
         private readonly AnswerFitnessScorer $fitness,
@@ -153,9 +144,16 @@ class ProjectAnswerMemory
              * مالئ ملف المشروع مباشرة (ويب أو تطبيق) كان يفلت من القياس بينما
              * مالئ الحقل نفسه داخل أداة يُقاس — فتأخذ «قيمتي إني الأفضل» درجة
              * كاملة في محور الوضوح الاستراتيجي. هذا المعبر يسوّي المسارين.
+             *
+             * ما يُقاس وما لا يُقاس معلنٌ في `ProfileQuestions` لا في قائمة هنا:
+             * القالب يعرض السؤال، والمساعدة تبني عليه، والقياس يحكم عليه —
+             * ثلاثتها من مصدر واحد. قائمة ثانية هنا كانت ستنسى `geography` وهو
+             * مدخل محور، أو تُبقيها بعد أن يُحذف الحقل من النموذج.
              */
-            if (in_array($key, self::MEASURED_PROFILE_FIELDS, true)) {
-                $this->fitness->score($project, (string) $key, $value, 'textarea');
+            $type = ProfileQuestions::measurableType((string) $key);
+
+            if ($type !== null) {
+                $this->fitness->score($project, (string) $key, $value, $type);
             }
         }
     }

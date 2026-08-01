@@ -78,6 +78,19 @@ class QuestionLocator
     }
 
     /**
+     * سؤال في ملف المشروع.
+     *
+     * كالموجز: لا تشغيل ولا جلسة يحدّانه، ومفاتيح `ProfileQuestions` فريدة
+     * فالمفتاح وحده يكفي. والحدّ أن يكون السؤال من الملف فعلًا لا مفتاحًا مخترعًا.
+     */
+    public function inProfile(string $questionKey): ?QuestionDescriptor
+    {
+        $field = ProfileQuestions::find($questionKey);
+
+        return $field === null ? null : QuestionDescriptor::fromProfileField($field);
+    }
+
+    /**
      * السطح المسموح به لكل سياق — يُستعمل في التحقق من الطلب.
      *
      * @return array<int, string>
@@ -88,6 +101,7 @@ class QuestionLocator
             QuestionAssist::SURFACE_CONSULTATION,
             QuestionAssist::SURFACE_TOOL,
             QuestionAssist::SURFACE_AGENCY,
+            QuestionAssist::SURFACE_PROFILE,
         ];
     }
 

@@ -31,12 +31,21 @@ class AnswerFitnessScorer
     private const PARTIAL_AT = 45;
 
     /**
-     * سقف ما يمنحه الطول وحده.
+     * سقف ما يمنحه الطول وحده حين يطلب الحقل علامات محددة.
      *
-     * الطول ليس جودة: فقرة من ثلاثين كلمة عامة أسوأ من سطر محدد. لذلك لا تبلغ
-     * إجابة درجة «كافية» بطولها وحده — تحتاج علامات محددة.
+     * الطول ليس جودة: فقرة من ثلاثين كلمة عامة أسوأ من سطر محدد. فحيث نعرف ما
+     * الذي يجب أن تحمله الإجابة، لا تبلغ «كافية» بطولها وحده.
      */
     private const LENGTH_CEILING = 62;
+
+    /**
+     * وسقفه حين لا يطلب الحقل علامة بعينها.
+     *
+     * الفرق ضروري لا تجميلي: لو بقي السقف ٦٢ لحقلٍ توقّعه بلا علامات، لاستحال
+     * أن تبلغ أي إجابة عنه «كافية» مهما أُتقنت — لأن الباقي كان يأتي من علامات
+     * لا تُطلب أصلًا. سقفٌ لا يمكن بلوغه ليس قياسًا بل عقوبة دائمة.
+     */
+    private const OPEN_LENGTH_CEILING = 85;
 
     /** ما تمنحه كل فئة علامة متحققة. */
     private const MARKER_POINTS = 12;
@@ -97,7 +106,7 @@ class AnswerFitnessScorer
         $expectation = FieldExpectation::for($fieldKey);
         $words = ArabicText::wordCount($text);
 
-        $score = $this->lengthScore($words, $expectation->minWords);
+        $score = $this->lengthScore($words, $expectation->minWords, $expectation->wants === []);
         $basis = [$this->wordBasis($words, $expectation->minWords)];
         $gaps = [];
         $met = [];
@@ -156,15 +165,16 @@ class AnswerFitnessScorer
      * «ثلاثة منافسين بأسمائهم» ست كلمات وهي إجابة كاملة، و«جمهوري» كلمة واحدة
      * وهي لا شيء. الحد المطلق كان سيظلم الأول ويُنجّي الثاني.
      */
-    private function lengthScore(int $words, int $minWords): int
+    private function lengthScore(int $words, int $minWords, bool $withoutExpectedMarkers): int
     {
         if ($words === 0) {
             return 0;
         }
 
+        $ceiling = $withoutExpectedMarkers ? self::OPEN_LENGTH_CEILING : self::LENGTH_CEILING;
         $ratio = $words / max(1, $minWords);
 
-        return (int) round(min(self::LENGTH_CEILING, self::LENGTH_CEILING * min(1.0, $ratio)));
+        return (int) round($ceiling * min(1.0, $ratio));
     }
 
     /**
