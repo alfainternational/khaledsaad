@@ -7,11 +7,15 @@ use App\Models\ConsultationSession;
 use App\Models\ModuleQuestion;
 use App\Models\ProjectAnswer;
 use App\Models\QuestionVersion;
+use App\Services\Tools\ProjectContextResolver;
 use Illuminate\Support\Collection;
 
 class NextQuestionSelector
 {
-    public function __construct(private readonly QuestionPriority $priority) {}
+    public function __construct(
+        private readonly QuestionPriority $priority,
+        private readonly ProjectContextResolver $context,
+    ) {}
 
     public function next(ConsultationSession $session): ?QuestionVersion
     {
@@ -24,6 +28,14 @@ class NextQuestionSelector
         $activeModules = $session->moduleStates()->whereIn('state', ['core', 'supporting'])->pluck('diagnostic_module_id');
         $known = ProjectAnswer::where('project_id', $session->project_id)->pluck('value_json', 'field_key')
             ->map(fn ($value) => $value['value'] ?? null)->all();
+
+        /*
+         * مفاتيح project.* المحجوزة تُدمج مع الإجابات كما في مسار الأداة
+         * الكلاسيكي (AnswerCompleteness::contextualAnswers): شروط القطاع ونوع
+         * البيع تُقيَّم بنفس الدلالات في المسارين، ولا تتصادم مع متغيرات
+         * الأسئلة لأن المحلّل يحجز أسماءها.
+         */
+        $known = array_merge($known, $this->context->for($session->project));
 
         $bindings = ModuleQuestion::query()
             ->with(['questionVersion.definition', 'blueprintModule.module'])
@@ -62,7 +74,7 @@ class NextQuestionSelector
      * الحساب في موضع واحد، وتكراره في المحرّك كان سينتج رقمين لنفس الإجابة.
      *
      * @param  Collection<int, ModuleQuestion>  $bindings
-     * @return array<int, float>  مفتاحه `blueprint_module_id`
+     * @return array<int, float> مفتاحه `blueprint_module_id`
      */
     private function deficits(Collection $bindings, int $projectId): array
     {
@@ -111,17 +123,35 @@ class NextQuestionSelector
         }
 
         foreach ($rules as $key => $expected) {
-            if (str_starts_with((string) $key, 'project.')) {
-                continue;
-            }
             $allowed = is_array($expected) ? $expected : [$expected];
             $actual = $known[$key] ?? null;
-            $excluded = array_map(fn ($value) => is_string($value) && str_starts_with($value, '!') ? substr($value, 1) : null, $allowed);
-            if (in_array($actual, array_filter($excluded), true)) {
+
+            $excluded = [];
+            $required = [];
+            foreach ($allowed as $value) {
+                if (is_string($value) && str_starts_with($value, '!')) {
+                    $excluded[] = substr($value, 1);
+
+                    continue;
+                }
+                $required[] = $value;
+            }
+
+            if (in_array($actual, $excluded, true)) {
                 return false;
             }
-            $required = array_values(array_filter($allowed, fn ($value) => ! is_string($value) || ! str_starts_with($value, '!')));
-            if ($required !== [] && $actual !== null && ! in_array($actual, $required, true)) {
+
+            if ($required === [] || in_array($actual, $required, true)) {
+                continue;
+            }
+
+            /*
+             * مفتاح project.* قيمته من محلّل السياق لا من إجابة منتظرة: غيابه
+             * قرارٌ (لا نخمّن نوع البيع) فيُخفي السؤال — نفس دلالات
+             * ToolField::isVisible في مسار الأداة. أما مفتاح إجابة لم تصل بعد
+             * فيبقى سؤاله ظاهرًا حتى تُعرف قيمته.
+             */
+            if (str_starts_with((string) $key, 'project.') || $actual !== null) {
                 return false;
             }
         }
