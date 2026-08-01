@@ -73,14 +73,34 @@ class UserFacingQuestionCopyTest extends TestCase
         $edit = file_get_contents(resource_path('views/app/projects/edit.blade.php'));
 
         foreach ([$create, $edit] as $view) {
-            $this->assertStringContainsString('ما اسم مشروعك؟', $view);
-            // منتقي القطاع المغلق + وصف المجال الحر (مواصفة التخصص القطاعي).
-            $this->assertStringContainsString('في أي قطاع يعمل مشروعك؟', $view);
-            $this->assertStringContainsString('صف مجالك بكلمة أو كلمتين', $view);
-            $this->assertStringContainsString('Sector::options()', $view);
             $this->assertStringContainsString('class="form form--wide form-layout question-form"', $view);
-            $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $view);
         }
+
+        /*
+         * مصدران مختلفان لنفس النص: الإنشاء يكتب حقوله في القالب، والتعديل
+         * يقرؤها من `ProfileQuestions` المعلنة كبيانات. الفحص يتبع المصدر لا
+         * يفترض قالبًا واحدًا — وإلا صار كل تحسين بنيوي كسرًا للاختبار.
+         */
+        $this->assertStringContainsString('ما اسم مشروعك؟', $create);
+        $this->assertStringContainsString('في أي قطاع يعمل مشروعك؟', $create);
+        $this->assertStringContainsString('صف مجالك بكلمة أو كلمتين', $create);
+        $this->assertStringContainsString('Sector::options()', $create);
+        $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $create);
+
+        $declared = collect(\App\Modules\Intake\Assist\ProfileQuestions::fields())
+            ->keyBy('key');
+
+        $this->assertSame('ما اسم مشروعك؟', $declared['name']['label'] ?? null);
+        $this->assertSame('في أي قطاع يعمل مشروعك؟', $declared['sector']['label'] ?? null);
+        $this->assertSame('صف مجالك بكلمة أو كلمتين', $declared['industry']['label'] ?? null);
+
+        // لكل سؤال معلن سببُ طرحه — نفس عقد `question-reason` في القالب.
+        foreach ($declared as $key => $field) {
+            $this->assertNotEmpty($field['why'] ?? '', "سؤال ملف المشروع «{$key}» بلا سبب معلن.");
+        }
+
+        $partial = file_get_contents(resource_path('views/app/projects/_profile-field.blade.php'));
+        $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $partial);
     }
 
     public function test_agency_brief_questions_show_guidance_before_the_control_and_reason_after_it(): void

@@ -16,7 +16,7 @@ return [
     'status' => 'published',
 
     'version' => [
-        'number' => 2,
+        'number' => 3,
         'credit_cost' => 6,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -176,6 +176,30 @@ return [
                 ['value' => 'them', 'label' => 'في أنظمتهم'],
                 ['value' => 'shared', 'label' => 'مشتركة بيننا'],
                 ['value' => 'mine', 'label' => 'في نظام أملكه أنا'],
+            ]],
+
+        // التعليم: بيانات الطلاب وأولياء الأمور ليست بيانات تسويق عادية.
+        ['key' => 'student_data_privacy', 'label' => 'هل ستصل الجهة المنفذة إلى بيانات الطلاب أو أولياء الأمور؟', 'type' => 'select', 'step' => 3,
+            'visible_when' => ['project.sector' => 'education'],
+            'required' => false,
+            'why' => 'صور الطلاب وأرقام أولياء الأمور أمانة قبل أن تكون مادة تسويقية، وتسريبها أو استخدامها بلا إذن يكلفك ثقة لا تعود. تحديد حدود الوصول كتابةً يحمي الجهتين قبل أول حملة.',
+            'options' => [
+                ['value' => 'full', 'label' => 'نعم، وصول كامل'],
+                ['value' => 'limited', 'label' => 'وصول محدود بضوابط مكتوبة'],
+                ['value' => 'none', 'label' => 'لا وصول إطلاقًا'],
+                ['value' => 'undecided', 'label' => 'لم نحسمها بعد'],
+            ]],
+
+        // العقارات: صور الوحدات وأرقام المستفسرين أصل يبقى أو يضيع بانتهاء العقد.
+        ['key' => 're_asset_ownership', 'label' => 'من يملك صور الوحدات وأرقام المستفسرين عند انتهاء التعاقد؟', 'type' => 'select', 'step' => 3,
+            'visible_when' => ['project.sector' => 'real_estate'],
+            'required' => false,
+            'why' => 'التصوير الذي دفعت له وقائمة المستفسرين التي جمعتها حملاتك هما رأس مالك الحقيقي. تركهما بلا اتفاق مكتوب يعني أن انتهاء التعاقد يصفّر جهدك وتبدأ من جديد.',
+            'options' => [
+                ['value' => 'theirs', 'label' => 'تبقى عند الجهة المنفذة'],
+                ['value' => 'shared', 'label' => 'نسخة عند الطرفين'],
+                ['value' => 'mine', 'label' => 'تعود لي كاملة باتفاق مكتوب'],
+                ['value' => 'undecided', 'label' => 'لم نتفق عليها'],
             ]],
     ],
 

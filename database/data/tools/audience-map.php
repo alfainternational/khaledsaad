@@ -16,7 +16,7 @@ return [
     'status' => 'published',
 
     'version' => [
-        'number' => 2,
+        'number' => 3,
         'credit_cost' => 5,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -91,6 +91,30 @@ return [
                 ['value' => 'broad', 'label' => 'فئة واسعة تقريبية'],
                 ['value' => 'few', 'label' => 'شريحتان أو ثلاث محددة'],
                 ['value' => 'one', 'label' => 'شريحة واحدة فقط'],
+            ]],
+
+        // التعليم: المرحلة تحدد من يقرّر وأي لغة تصل — روضة غير جامعة.
+        ['key' => 'education_stages', 'label' => 'ما المراحل أو الفئات التي تخدمونها؟', 'type' => 'multiselect', 'step' => 1,
+            'visible_when' => ['project.sector' => 'education'],
+            'required' => false,
+            'why' => 'في رياض الأطفال تقنع الأم وحدها تقريبًا، وفي الجامعي تقنع الطالب نفسه، وفي التدريب المهني تقنع جهة العمل أحيانًا. كل مرحلة سوق مستقل برسالته وقنواته.',
+            'options' => [
+                ['value' => 'preschool', 'label' => 'رياض أطفال وحضانة'],
+                ['value' => 'k12', 'label' => 'مراحل الدراسة العامة'],
+                ['value' => 'university', 'label' => 'جامعي'],
+                ['value' => 'vocational', 'label' => 'تدريب مهني ودورات'],
+            ]],
+
+        // العقارات: مشتري السكن الأول والمستثمر لا يجمعهما إعلان واحد.
+        ['key' => 're_client_type', 'label' => 'من عملاؤك الأساسيون؟', 'type' => 'multiselect', 'step' => 1,
+            'visible_when' => ['project.sector' => 'real_estate'],
+            'required' => false,
+            'why' => 'مشتري السكن الأول يقوده القرب من المدارس والدفعة الأولى، والمستثمر يقوده العائد، والمستأجر يقوده السعر والسرعة. الرسالة التي تخاطبهم جميعًا لا تقنع أحدًا منهم.',
+            'options' => [
+                ['value' => 'first_home', 'label' => 'مشترو سكن أول'],
+                ['value' => 'investors', 'label' => 'مستثمرون'],
+                ['value' => 'tenants', 'label' => 'مستأجرون'],
+                ['value' => 'corporate', 'label' => 'شركات وجهات'],
             ]],
 
         ['key' => 'worst_customer', 'label' => 'من العميل الذي تتمنى ألا يأتيك؟', 'type' => 'textarea', 'step' => 1,

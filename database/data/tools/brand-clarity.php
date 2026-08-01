@@ -16,7 +16,7 @@ return [
     'status' => 'published',
 
     'version' => [
-        'number' => 2,
+        'number' => 3,
         'credit_cost' => 4,
         'output_schema' => PipelineSchemas::synthesis(),
 
@@ -98,6 +98,29 @@ return [
                 ['value' => 'none', 'label' => 'لا شيء موثق حتى الآن'],
                 ['value' => 'few', 'label' => 'حالة أو حالتان'],
                 ['value' => 'many', 'label' => 'عدة أمثلة وشهادات'],
+            ]],
+
+        // التعليم: النتائج المعلنة بأرقام أقوى برهان تملكه جهة تعليمية.
+        ['key' => 'results_evidence', 'label' => 'هل تعلنون نتائج طلابكم بأرقام؟', 'type' => 'select', 'step' => 2,
+            'visible_when' => ['project.sector' => 'education'],
+            'required' => false,
+            'help' => 'نسب نجاح، قبول جامعي، تحسّن مستوى، شهادات معتمدة.',
+            'why' => 'وليّ الأمر يشتري نتيجة لابنه لا مبنى ولا منهجًا. رقم واحد معلن ومحدث — «94٪ من خريجينا قُبلوا جامعيًّا» — يبيع أكثر من صفحة كاملة عن رؤيتكم ورسالتكم.',
+            'options' => [
+                ['value' => 'published', 'label' => 'نعم، بأرقام محدثة'],
+                ['value' => 'vague', 'label' => 'نذكرها عمومًا دون أرقام'],
+                ['value' => 'none', 'label' => 'لا نعلنها'],
+            ]],
+
+        // العقارات: سجل الصفقات المنجزة هو ما يفرّق الوسيط عن حساب إعلانات.
+        ['key' => 'track_record_display', 'label' => 'هل تعرضون صفقاتكم أو مشاريعكم المنجزة؟', 'type' => 'select', 'step' => 2,
+            'visible_when' => ['project.sector' => 'real_estate'],
+            'required' => false,
+            'why' => 'كل الحسابات العقارية تعرض وحدات؛ القليل يعرض «بيعت خلال ثلاثة أسابيع» بصورها وأرقامها. سجل الإنجاز المعلن هو الفرق بين وسيط يُوثق به وحساب يمرّ عليه المتصفح.',
+            'options' => [
+                ['value' => 'documented', 'label' => 'نعم، بصفقات موثقة'],
+                ['value' => 'some', 'label' => 'أحيانًا دون انتظام'],
+                ['value' => 'none', 'label' => 'لا نعرضها'],
             ]],
 
         ['key' => 'customer_words', 'label' => 'هل سمعت عميلًا يصف مشكلته بكلماته؟', 'type' => 'select', 'step' => 2,
