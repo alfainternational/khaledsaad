@@ -92,7 +92,7 @@
                             <p class="muted">لم يبدأ التشخيص بعد</p>
                         @endif
 
-                        <p class="muted">{{ $project['industry'] ?? 'قطاع غير محدد' }}</p>
+                        <p class="muted">{{ $project['sector_display'] }}</p>
                     </a>
                 @endforeach
             </div>

@@ -13,7 +13,9 @@
                 <nav class="crumbs" aria-label="مسار التنقل">
                     <a href="{{ route('home') }}">الرئيسية</a>
                     <span aria-hidden="true">/</span>
-                    <a href="{{ route('tools.index') }}">بماذا نساعدك</a>
+                    {{-- اسم المسار هو اسم الرابط في القائمة العلوية: مسمّى واحد
+                         للصفحة الواحدة، وإلا ظنّها الزائر صفحتين. --}}
+                    <a href="{{ route('tools.index') }}">التشخيصات</a>
                     <span aria-hidden="true">/</span>
                     <b>{{ $tool['title'] }}</b>
                 </nav>
@@ -38,7 +40,7 @@
                             <ul class="tool-hero__meta">
                                 <li><strong>{{ $tool['duration_minutes'] ?? 10 }} دقائق</strong><span>وقتك تقريبًا</span></li>
                                 <li><strong>{{ $tool['step_count'] }} خطوات</strong><span>تُحفظ أولًا بأول</span></li>
-                                <li><strong>ابدأ مباشرة</strong><span>من دون بطاقة دفع</span></li>
+                                <li><strong>ابدأ مباشرة</strong><span>بلا حساب وبلا بطاقة دفع</span></li>
                             </ul>
 
                             <div class="page-hero__actions">
@@ -62,10 +64,12 @@
                                 <p class="tool-hero__note">{{ $tool['audience'] }}</p>
                             @endif
                         @else
+                            {{-- الحالة تُقال كما هي بلا موعد لم يُحدَّد، ومعها مخرج
+                                 يمشي به الزائر الآن بدل زر ميت. --}}
                             <div class="notice">
                                 <strong>هذا التشخيص غير متاح حاليًا.</strong>
-                                <p>يمكنك اختيار تشخيص متاح الآن والبدء بالتحدي الأقرب إلى مشروعك.</p>
-                                <a class="button button--primary" href="{{ route('tools.index') }}">استكشف التشخيصات المتاحة</a>
+                                <p>لم يُفتح بعد. اختر تشخيصًا متاحًا الآن وابدأ من التحدي الأقرب إلى مشروعك.</p>
+                                <a class="button button--primary" href="{{ route('tools.index') }}">اعرض التشخيصات المتاحة</a>
                             </div>
                         @endif
                     </div>
@@ -81,15 +85,17 @@
                                     @foreach ($tool['outputs'] as $output)
                                         <li><span>✓</span> {{ $output }}</li>
                                     @endforeach
-                                    <li><span>✓</span> مهام لها مواعيد تتابعها بدل توصيات عامة</li>
+                                    <li><span>✓</span> مهام لها مواعيد تتابعها من لوحتك</li>
                                 </ul>
                             </div>
                             <div class="panel-block">
                                 <h2>ماذا نطلب منك؟</h2>
+                                {{-- ما نطلبه يُقال قبل البدء لا بعده، وحق ترك الفراغ
+                                     يُعلَن هنا لأن النقص المعلن أصدق من تقدير صامت. --}}
                                 <ul class="check-list">
-                                    <li><span>✓</span> إجابات من واقع مشروعك، من دون الحاجة إلى تجهيز ملف معقد</li>
-                                    <li><span>✓</span> يمكنك ترك ما لا تعرفه فارغًا، وسترى كيف تستكمل المعلومة لاحقًا</li>
-                                    <li><span>✓</span> ما تكتبه هنا لن نسألك عنه في أي خطوة أخرى</li>
+                                    <li><span>✓</span> إجابات من واقع مشروعك، بلا تجهيز ملف مسبق</li>
+                                    <li><span>✓</span> اترك ما لا تعرفه فارغًا — نعرض لك ما نقص وكيف تستكمله</li>
+                                    <li><span>✓</span> ما تكتبه يُحفظ في ملف مشروعك، ويقلّل أسئلة التشخيص التالي</li>
                                 </ul>
                             </div>
                         </aside>
@@ -103,8 +109,8 @@
                 <div class="container">
                     <x-section-heading
                         eyebrow="مثال توضيحي — ليس نتيجة عميل"
-                        title="هكذا تصلك النتيجة"
-                        description="مقطع بصيغة التقرير الحقيقية نفسها: خلاصة، ونتيجة بدليلها، وفرضية موسومة بصراحة."
+                        title="كيف تصلك النتيجة؟"
+                        description="مقطع بصيغة التقرير نفسها: خلاصة، ونتيجة معها دليلها، وفرضية موسومة بأنها فرضية."
                         id="sample-title"
                     />
 
@@ -140,9 +146,9 @@
             <section class="section steps-section">
                 <div class="container">
                     <x-section-heading
-                        eyebrow="اعرف ما ينتظرك"
+                        eyebrow="قبل أن تبدأ"
                         title="المعلومات التي ستحتاج إليها"
-                        description="راجعها قبل أن تبدأ. سترى بجانب كل سؤال سبب طلبه وكيف يؤثر في دقة النتيجة."
+                        description="راجعها الآن. وبجانب كل سؤال داخل التشخيص سبب طرحه وأثره في دقة النتيجة."
                     />
                     <div class="steps-grid public-step-grid">
                         @foreach ($tool['steps'] as $step)
@@ -173,8 +179,8 @@
             <section class="section catalog-section catalog-section--related">
                 <div class="container">
                     <div class="split-heading">
-                        <x-section-heading eyebrow="تكمل بعضها" title="مشاكل قريبة منها" align="start" />
-                        <a class="text-link" href="{{ route('tools.index') }}">كل الحالات <span aria-hidden="true">←</span></a>
+                        <x-section-heading eyebrow="تكمل بعضها" title="تشخيصات قريبة منه" align="start" />
+                        <a class="text-link" href="{{ route('tools.index') }}">كل التشخيصات <span aria-hidden="true">←</span></a>
                     </div>
                     <div class="catalog-grid catalog-grid--three public-card-grid">
                         @foreach ($related as $card)

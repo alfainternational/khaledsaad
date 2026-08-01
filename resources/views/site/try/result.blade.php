@@ -10,10 +10,11 @@
         <div class="container try-layout layout-page layout-page--form">
             <header class="try-head">
                 <p class="eyebrow">{{ $run['tool']['title'] }}</p>
-                <h1>اكتملت إجاباتك، وأصبحت جاهزة للتحليل.</h1>
+                {{-- عنوان يصف الحالة لا يبشّر بها: النتيجة الكاملة لم تُحسب بعد. --}}
+                <h1>اكتملت إجاباتك</h1>
                 <p class="page-hero__lead">
-                    راجع ما كتبته أدناه، ثم أنشئ حسابك لبدء التحليل وحفظ النتيجة
-                    والمهام المقترحة ضمن مشروعك.
+                    راجع ما كتبته أدناه. أنشئ حسابك ليبدأ التحليل، وتُحفظ النتيجة
+                    والمهام داخل مشروعك.
                 </p>
             </header>
 
@@ -34,15 +35,18 @@
 
                     @if ($peers !== null)
                         <p @class(['try-peers', 'try-peers--above' => $preview['score'] >= $peers['average'], 'try-peers--below' => $preview['score'] < $peers['average']])>
+                            {{-- الرقم ومعه أساسه دائمًا (§١٣): «من كم تشخيصًا» جزء من المقارنة لا زينة. --}}
                             @if ($preview['score'] >= $peers['average'])
-                                أنت أعلى من متوسط من أكملوا هذا التشخيص ({{ $peers['average'] }} من 100 — من {{ $peers['count'] }} تشخيصًا).
+                                متوسط من أكمل هذا التشخيص {{ $peers['average'] }} من 100، محسوبًا من {{ $peers['count'] }} تشخيصًا. أنت فوقه.
                             @else
-                                متوسط من أكملوا هذا التشخيص {{ $peers['average'] }} من 100 (من {{ $peers['count'] }} تشخيصًا) — الفجوات أدناه تريك أين يذهب الفرق.
+                                متوسط من أكمل هذا التشخيص {{ $peers['average'] }} من 100، محسوبًا من {{ $peers['count'] }} تشخيصًا. أنت دونه، والفجوات أدناه تريك أين يذهب الفرق.
                             @endif
                         </p>
                     @endif
 
                     @if ($preview['gaps'] !== [])
+                        {{-- النص مرساة حارس المستوى ٠ (LevelZeroBoundaryTest): تغييره
+                             يُسقط الحارس الذي يمنع تسرّب الحلّ إلى صفحة الزائر. --}}
                         <h3 class="review-step">أكبر ثلاث فجوات عندك</h3>
                         <ul class="check-list check-list--gaps">
                             @foreach ($preview['gaps'] as $gap)
@@ -58,10 +62,11 @@
 
             <section class="try-cta">
                 <div>
+                    {{-- سؤال يسأله الزائر لنفسه، وجوابه ثلاث فوائد ملموسة لا وعود. --}}
                     <h2>لماذا نطلب الحساب هنا تحديدًا؟</h2>
                     <ul class="check-list">
                         <li><span>✓</span> يصلك إشعار عند اكتمال التحليل</li>
-                        <li><span>✓</span> تبقى النتيجة والمهام محفوظة لتعود إليها وتقارن التقدم</li>
+                        <li><span>✓</span> تبقى نتيجتك ومهامك محفوظة، فتعود إليها وتقارن تقدّمك</li>
                         <li><span>✓</span> ما كتبته الآن ينتقل معك كما هو — لن نسألك عنه من جديد</li>
                     </ul>
                 </div>
@@ -69,7 +74,7 @@
                     <a class="button button--primary button--large" href="{{ route('register', ['tool' => $tool->key]) }}">
                         أنشئ حسابك واحفظ نتيجتك <span aria-hidden="true">←</span>
                     </a>
-                    <a class="text-link" href="{{ route('login', ['tool' => $tool->key]) }}">لدي حساب بالفعل ←</a>
+                    <a class="text-link" href="{{ route('login', ['tool' => $tool->key]) }}">لدي حساب — سجّل دخولي ←</a>
                 </div>
             </section>
 
@@ -96,8 +101,9 @@
             </section>
 
             @if ($preflight['missing'] !== [])
+                {{-- النقص يُعلن باسمه (§٤.٣) ولا يُملأ بتقدير صامت. --}}
                 <p class="alert alert--info" role="status">
-                    لتحسين دقة النتيجة، يمكنك استكمال: {{ implode('، ', $preflight['missing']) }}
+                    ما زال ناقصًا: {{ implode('، ', $preflight['missing']) }}. أكمله لتدقّ نتيجتك أكثر.
                 </p>
             @endif
         </div>

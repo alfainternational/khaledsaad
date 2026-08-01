@@ -12,7 +12,8 @@
     <h2 class="section-title">المشروع في سطور واضحة</h2>
     <p><b>المشروع:</b> {{ $brief['project']['name'] }}</p>
     <p>{{ $brief['project']['description'] }}</p>
-    <p><b>المجال:</b> {{ $brief['project']['industry'] ?: 'غير محدد' }}</p>
+    {{-- لقطة قديمة بلا مفتاح القطاع تبقى مقروءة: التقرير أثر لا يُعاد توليده. --}}
+    <p><b>المجال:</b> {{ $brief['project']['sector_display'] ?? ($brief['project']['industry'] ?: 'غير محدد') }}</p>
     <p><b>طريقة العمل:</b> {{ $brief['project']['business_model'] ?: 'غير محددة' }}</p>
     <p><b>السوق:</b> {{ $brief['project']['geography'] ?: 'غير محدد' }}</p>
     <p><b>المرحلة:</b> {{ $brief['project']['stage'] }}</p>

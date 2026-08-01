@@ -8,7 +8,7 @@
         <div>
             <p class="eyebrow">مشروع</p>
             <h1>{{ $project['name'] }}</h1>
-            <p class="muted">{{ $project['industry'] ?? 'قطاع غير محدد' }}</p>
+            <p class="muted">{{ $project['sector_display'] }}</p>
         </div>
         <div class="page-head__actions">
             <form method="POST" action="{{ route('app.consultations.start', $project['slug']) }}">
@@ -146,7 +146,12 @@
 
                 @foreach ($kpiTemplates as $group)
                     <div class="kpi-template-group">
-                        <span class="eyebrow">{{ $group['group'] }}</span>
+                        <span class="eyebrow">
+                            {{ $group['group'] }}
+                            @if (! empty($group['sector']))
+                                <span class="badge badge--sector">خاص بـ{{ \App\Modules\Shared\Sectors\Sector::label($group['sector']) }}</span>
+                            @endif
+                        </span>
                         <div class="kpi-template-chips">
                             @foreach ($group['items'] as $item)
                                 <button type="button" class="kpi-template"

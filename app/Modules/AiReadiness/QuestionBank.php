@@ -151,6 +151,25 @@ class QuestionBank
     public const MIN_QUESTIONS = 3;
 
     /**
+     * أسئلة القطاع بمثال محسوس — لصفحات التعريف بالقطاع.
+     *
+     * تقرأ القوالب نفسها التي يقيس بها المحرّك، فما يُعرض على الزائر هو ما
+     * سيُسأل عن نشاطه حرفيًّا لا نصٌّ تسويقي كُتب بجانبه. أي تعديل على البنك
+     * يظهر في الصفحة تلقائيًّا، فلا ينشأ وعدٌ يتخلّف عنه المنتج.
+     *
+     * @return array<int, string>
+     */
+    public static function samplesFor(string $sector, string $category, string $city, int $limit = 4): array
+    {
+        $templates = self::SECTOR_TEMPLATES[$sector] ?? self::TEMPLATES;
+
+        return array_map(
+            fn (array $template) => str_replace(['{category}', '{city}'], [$category, $city], $template['text']),
+            array_slice($templates, 0, $limit),
+        );
+    }
+
+    /**
      * أسئلة هذا النشاط.
      *
      * @return array<int, array<string, string>>

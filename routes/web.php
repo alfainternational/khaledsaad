@@ -57,6 +57,16 @@ Route::get('download/android', MobileAppController::class)->name('mobile.downloa
 Route::get('tools', [ToolShowcaseController::class, 'index'])->name('tools.index');
 Route::get('pricing', [\App\Http\Controllers\Site\PricingController::class, 'index'])->name('pricing');
 
+/*
+ * صفحات القطاعات الثلاثة: التخصص المعلن يحتاج صفحةً تُثبته، لا جملةً في
+ * الهيرو. المسار محصور بالقطاعات المتخصصة نفسها فلا تُخترع صفحة لقطاع
+ * لا عمق لنا فيه.
+ */
+Route::get('sectors', [\App\Http\Controllers\Site\SectorLandingController::class, 'index'])->name('sectors.index');
+Route::get('sectors/{sector}', [\App\Http\Controllers\Site\SectorLandingController::class, 'show'])
+    ->whereIn('sector', \App\Modules\Shared\Sectors\Sector::SPECIALIZED)
+    ->name('sectors.show');
+
 // خريطة الموقع (بند ١٦): الصفحات العامة + صفحات الأدوات — من قاعدة البيانات
 // لا من قائمة يدوية تنجرف. كاش ساعة لأنها لا تتغير إلا ببذر أو إصدار.
 Route::get('sitemap.xml', function () {
@@ -67,6 +77,12 @@ Route::get('sitemap.xml', function () {
             ['loc' => route('pricing'), 'priority' => '0.9'],
             ['loc' => route('mobile.download'), 'priority' => '0.6'],
         ])->merge(
+            // صفحات القطاعات في الخريطة: التخصص لا يُعثر عليه إن لم يُفهرس.
+            collect([['loc' => route('sectors.index'), 'priority' => '0.9']])->merge(
+                collect(\App\Modules\Shared\Sectors\Sector::SPECIALIZED)
+                    ->map(fn (string $sector) => ['loc' => route('sectors.show', $sector), 'priority' => '0.9']),
+            ),
+        )->merge(
             \App\Models\Tool::orderBy('sort_order')->get()
                 ->map(fn ($tool) => [
                     'loc' => route('tools.show', $tool->key),

@@ -57,6 +57,28 @@ class AccountSecurityTest extends TestCase
     }
 
     #[Test]
+    public function the_otp_screen_renders_its_form(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'password' => Hash::make('secret-password'),
+            'two_factor_email_enabled' => true,
+        ]);
+
+        $this->post(route('login'), ['email' => $user->email, 'password' => 'secret-password'])
+            ->assertRedirect(route('login.otp'));
+
+        // الشاشة تُطلب كما يطلبها المتصفح: من فقد النموذج هنا فقد الدخول كله.
+        $response = $this->get(route('login.otp'))->assertOk();
+
+        $response->assertSee('أدخل رمز الدخول');
+        $response->assertSee('>الرمز</label>', false);
+        $response->assertSee('name="code"', false);
+        $response->assertSee('action="'.route('login.otp.verify').'"', false);
+    }
+
+    #[Test]
     public function a_wrong_code_is_rejected(): void
     {
         Notification::fake();

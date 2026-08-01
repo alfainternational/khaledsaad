@@ -36,7 +36,7 @@
                         @foreach ($results['projects'] as $project)
                             <li>
                                 <a href="{{ route('app.projects.show', $project->slug) }}">{{ $project->name }}</a>
-                                @if ($project->industry)<span class="muted">— {{ $project->industry }}</span>@endif
+                                <span class="muted">— {{ \App\Modules\Shared\Sectors\Sector::describe($project->sector, $project->industry) }}</span>
                             </li>
                         @endforeach
                     </ul>

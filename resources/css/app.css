@@ -100,9 +100,19 @@ svg {
     outline-offset: 4px;
 }
 
+/* الهامش الجانبي ≤ 1 سم (~2.3rem) بطلب المالك — نفس قاعدة `panel__main`
+   في اللوحة. كان سقف 1200px يترك على شاشة 1920 نحو 9.5 سم فراغًا على كل
+   جانب، فيتكدّس المحتوى في نصف العرض بينما بقيته بيضاء.
+   العرض لا يُحدّ هنا بل عند كتل النص نفسها (`hero-lead`، `section-title`)،
+   فتستفيد الشبكات والبطاقات من المساحة دون أن يطول سطر القراءة. */
 .container {
-    width: min(calc(100% - 2.5rem), var(--container));
+    width: 100%;
+    /* `container` اسم أداة في Tailwind أيضًا، وهي تفرض سقوفًا متدرّجة تنتهي
+       بـ96rem. بلا هذا السطر يبقى المحتوى محبوسًا في 1536px مهما اتّسعت
+       الشاشة — وهو ما كان يترك ~5 سم فراغًا على كل جانب بعد إلغاء سقفنا. */
+    max-width: none;
     margin-inline: auto;
+    padding-inline: clamp(0.75rem, 1.5vw, 2.3rem);
 }
 
 .skip-link {
@@ -355,14 +365,18 @@ svg {
     padding-block: 5.5rem 4rem;
 }
 
+/* سقف العنوان كان 11 حرفًا بخط يصل 5rem، فتتكسّر «أين يتعطّل تسويق مشروعك؟»
+   إلى ثلاثة أسطر بكلمة واحدة في كل سطر، ويصير العنوان وحده سبعة أسطر.
+   السقف الآن يكفي الجملة الأولى في سطر واحد ويشطر الثانية إلى سطرين —
+   ثلاثة أسطر إجمالًا بطلب المالك. */
 .hero-copy h1 {
-    max-width: 11ch;
+    max-width: 26ch;
     margin: 0;
     color: var(--brand-navy);
-    font-size: clamp(2.65rem, 5.6vw, 5rem);
+    font-size: clamp(2rem, 3.2vw, 3.35rem);
     font-weight: 950;
-    letter-spacing: -0.055em;
-    line-height: 1.06;
+    letter-spacing: -0.045em;
+    line-height: 1.16;
 }
 
 .hero-copy h1 span {
@@ -2165,7 +2179,7 @@ svg {
     }
 
     .hero-copy h1 {
-        font-size: clamp(2.65rem, 5.4vw, 4.2rem);
+        font-size: clamp(1.9rem, 3.6vw, 2.9rem);
     }
 
     .tools-grid {
@@ -2227,7 +2241,7 @@ svg {
     .mobile-menu {
         display: grid;
         gap: 0.2rem;
-        padding: 0.7rem max(1.25rem, calc((100% - var(--container)) / 2));
+        padding: 0.7rem clamp(0.75rem, 1.5vw, 2.3rem);
         border-top: 1px solid var(--line);
         background: #fff;
         box-shadow: 0 18px 35px rgba(7, 31, 91, 0.09);
@@ -2362,7 +2376,7 @@ svg {
 
 @media (max-width: 760px) {
     .container {
-        width: min(calc(100% - 1.5rem), var(--container));
+        padding-inline: 0.75rem;
     }
 
     .brand-logo__image {
@@ -2381,9 +2395,11 @@ svg {
         padding-top: 4rem;
     }
 
+    /* على الجوال يبقى السقف الحرفي مرتفعًا: العرض هو الحدّ الفعلي هناك،
+       وسقف 12 حرفًا كان يشطر الجملة سطرًا لكل كلمة. */
     .hero-copy h1 {
-        max-width: 12ch;
-        font-size: clamp(2.5rem, 12vw, 3.7rem);
+        max-width: 24ch;
+        font-size: clamp(1.75rem, 7vw, 2.35rem);
     }
 
     .hero-lead {
@@ -3222,9 +3238,126 @@ svg {
     font-size: 0.85rem;
 }
 
+/* بعد رفع سقف الحاوية صار سطر النص يمتدّ عرض الشاشة كاملًا، وهو غير مقروء.
+   الشبكات والبطاقات تستفيد من المساحة، أما كتل النثر فتُحدّ بسقف القراءة
+   نفسه المعتمد في اللوحة (`--layout-reading-max` = 46rem) — الهامش الجانبي
+   يحدّ الصفحة، وسقف القراءة يحدّ السطر. */
+.section > .container > p,
+.section > .container > ul,
+.section > .container > ol,
+.hero--slim .container > p {
+    max-width: 46rem;
+}
+
+/* ==========================================================================
+   القطاعات الثلاثة
+   الثلاثة في شبكة متساوية بلا إبراز لواحد: أي تمييز بصري يُقرأ ترتيب
+   أفضلية، فيصير قطاعان حاشيةً لثالث — وهو نقيض ما تعلنه الصفحة.
+   ========================================================================== */
+.sector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+}
+
+.sector-card {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    padding: 1.9rem 1.6rem 1.6rem;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.sector-card::before {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    height: 3px;
+    background: var(--brand-gradient);
+    content: '';
+}
+
+.sector-card:hover {
+    border-color: rgba(37, 117, 255, 0.35);
+    box-shadow: var(--shadow-soft);
+    transform: translateY(-0.35rem);
+}
+
+.sector-card__mark {
+    display: grid;
+    width: 2.6rem;
+    height: 2.6rem;
+    margin-block-end: 0.9rem;
+    border-radius: 0.9rem;
+    background: var(--surface-soft);
+    color: var(--brand-blue);
+    font-size: 1.15rem;
+    font-weight: 800;
+    place-items: center;
+}
+
+.sector-card__name {
+    margin: 0 0 0.3rem;
+    color: var(--brand-navy);
+    font-size: 1.25rem;
+}
+
+.sector-card__audience {
+    margin: 0 0 0.9rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.7;
+}
+
+/* الوجع بخط أثقل: هو ما يتعرّف عليه الزائر من نفسه فيكمل القراءة. */
+.sector-card__pain {
+    margin: 0 0 1.1rem;
+    color: var(--ink);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.85;
+}
+
+.sector-card__facts {
+    margin: 0 0 1.3rem;
+    padding: 0;
+    border-block-start: 1px solid var(--line);
+    list-style: none;
+}
+
+.sector-card__facts li {
+    padding-block: 0.6rem;
+    border-block-end: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.7;
+}
+
+.sector-card__facts strong {
+    color: var(--brand-blue);
+    font-size: 1.05rem;
+}
+
+.sector-card__link {
+    margin-block-start: auto;
+    color: var(--brand-blue);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.sector-card__link:hover {
+    text-decoration: underline;
+}
+
 @media (max-width: 1080px) {
     .catalog-grid,
     .catalog-grid--three,
+    .sector-grid,
     .steps-grid,
     .journey-steps {
         grid-template-columns: repeat(2, 1fr);
@@ -3250,6 +3383,7 @@ svg {
 @media (max-width: 640px) {
     .catalog-grid,
     .catalog-grid--three,
+    .sector-grid,
     .steps-grid,
     .journey-steps {
         grid-template-columns: 1fr;
@@ -3538,6 +3672,20 @@ svg {
 
 :root[data-theme='dark'] .theme-toggle .theme-toggle__moon {
     display: block;
+}
+
+/* وسم «مبدئي» يلوّن بألوان ثابتة لا بمتغيّرات، فلا يرث الوضع الداكن وحده.
+   الخلفية تصير طبقة كهرمانية شفافة فوق السطح الداكن حتى يبقى التمييز قائمًا
+   دون كتلة فاتحة تحرق العين. */
+:root[data-theme='dark'] .badge--warn {
+    background: rgba(255, 155, 39, 0.16);
+    border-color: rgba(255, 155, 39, 0.45);
+    color: #ffb75e;
+}
+
+/* وسم القطاع خلفيته شفافة فترث السطح، لكن نصّه #1d5fd6 يغرق في الداكن. */
+:root[data-theme='dark'] .badge--sector {
+    color: #7fb0ff;
 }
 
 /* ==========================================================================

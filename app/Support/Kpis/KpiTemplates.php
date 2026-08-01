@@ -21,7 +21,9 @@ class KpiTemplates
         $sectorGroup = self::sectorGroup($sector);
 
         return [
-            ...($sectorGroup === null ? [] : [$sectorGroup]),
+            // `sector` تُمرَّر للقالب ليَسِم المجموعة: تصدُّرها بلا تفسير يبدو
+            // ترتيبًا اعتباطيًّا، ومعها يعرف صاحب النشاط أنها ظهرت لأجل قطاعه.
+            ...($sectorGroup === null ? [] : [[...$sectorGroup, 'sector' => $sector]]),
             [
                 'group' => 'مبيعات وإيراد',
                 'items' => [

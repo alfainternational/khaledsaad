@@ -1097,6 +1097,31 @@
     color: #40339c;
 }
 
+/* تحذير: مخرج ناقص أو مبدئي. نبرته كهرمانية لا بنفسجية حتى لا يُقرأ
+   كـ«فرضية» (تلك اجتهاد مكتمل)، ولا رماديًّا كالقاعدة المحايدة — فالفرق
+   بين قالب مأمون وصياغة على حالة النشاط هو ما يمنع ثقة لم تُكتسب (§٤.١). */
+.badge--warn {
+    background: #fff4e2;
+    border-color: #f0b96b;
+    color: #8a4b06;
+}
+
+/* «خاص بقطاعك»: وسم امتياز لا تنبيه. أزرق العلامة يقول «هذا لك خصوصًا»
+   بلا نبرة تحذير (الكهرماني) ولا تحفّظ (البنفسجي: فرضية) ولا حالة تشغيل
+   (الأخضر: حيّ). يجلس داخل .field__label بجانب نص العنوان، فحجمه أصغر
+   وحشوته أرفع وارتكازه في الوسط حتى لا يرفع سطر العنوان كما يفعل أي
+   inline-block ذو حشوة رأسية. */
+.badge--sector {
+    background: rgba(37, 117, 255, 0.12);
+    border-color: rgba(37, 117, 255, 0.35);
+    color: #1d5fd6;
+    font-size: 0.72rem;
+    padding: 0.05rem 0.5rem;
+    line-height: 1.7;
+    vertical-align: middle;
+    margin-inline-start: 0.35rem;
+}
+
 /* --- شريط التقدم والمراحل --- */
 
 .progress {
@@ -1335,7 +1360,7 @@
     padding-inline-start: 1.2rem;
     display: grid;
     gap: 0.3rem;
-    color: var(--body);
+    color: var(--ink);
     font-size: 0.93rem;
 }
 
@@ -1379,7 +1404,9 @@
 .worked-example__text {
     margin: 0;
     padding: 0.85rem 1rem;
-    background: #fff;
+    /* السطح من المتغيّر لا من #fff: الكتلة تُقرأ فوق خلفية الحاوية الأنعم،
+       ولونٌ ثابت هنا يعطي كتلة بيضاء بنصّ فاتح في الوضع الداكن. */
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     /* pre-wrap لا pre: نحفظ أسطر الرسالة ونلفّ الطويل بدل شريط تمرير أفقي. */
@@ -1388,7 +1415,7 @@
     font-family: inherit;
     font-size: 0.92rem;
     line-height: 1.9;
-    color: var(--body);
+    color: var(--ink);
     max-height: 26rem;
     overflow-y: auto;
 }
@@ -1452,7 +1479,7 @@
 
 .task-guide__facets dd {
     margin: 0 0 0.35rem;
-    color: var(--body);
+    color: var(--ink);
 }
 
 .task__guide-state {

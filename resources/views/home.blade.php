@@ -1,8 +1,13 @@
 @extends('layouts.public')
 @section('layout', 'marketing')
 
-@section('title', 'خالد سعد | شخّص تسويق مشروعك وحدد أولوياتك')
-@section('description', 'ابدأ بتشخيص واضح لتسويق مشروعك، واكتشف أهم الفجوات والخطوات التي تستحق التنفيذ قبل زيادة الوقت أو الميزانية.')
+{{--
+    العنوان يبدأ بالفعل الذي يطلبه الزائر من نفسه («شخّص… وحدد») ثم يسمّي
+    القطاعات الثلاثة. كلمة «متخصص» وحدها ادّعاء تفوّق بلا سند، والقطاعات
+    المسمّاة تقول الشيء نفسه بدليل يمكن التحقق منه في صفحاتها.
+--}}
+@section('title', 'خالد سعد | شخّص تسويق مشروعك وحدد أولوياتك — التعليم والتجارة الإلكترونية والعقارات')
+@section('description', 'تجيب عن أسئلة عن مشروعك، ونفحص ما يمكن فحصه من موقعك، فتخرج بدرجة وقائمة فجوات مرتّبة. الأسئلة والفحوصات والمعايير مبنية لقطاعات التعليم والتجارة الإلكترونية والعقارات، وبقية القطاعات تمرّ بالمسار الكامل نفسه.')
 
 @section('content')
     @php
@@ -22,31 +27,41 @@
 
             <div class="container hero-grid layout-hero">
                 <div class="hero-copy">
-                    <p class="eyebrow reveal">قبل أن تزيد الإنفاق · اعرف ما يحتاجه مشروعك أولًا</p>
+                    {{--
+                        العنوان كان حكمًا عامًّا على التسويق («كثرة التسويق لا تعني…»)،
+                        وهو وعظ لا يخصّ قارئه. صار سؤالًا يسأله صاحب النشاط لنفسه، كما
+                        في اللوحة بعد الدخول: «هل تظهر في إجابات النماذج؟».
+                    --}}
+                    <p class="eyebrow reveal">قبل أن تزيد الإنفاق · اعرف أين تقف الآن</p>
                     <h1 class="reveal">
-                        كثرة التسويق لا تعني نموًا أفضل.
-                        <span>ابدأ بتشخيص يوضح أولوياتك.</span>
+                        أين يتعطّل تسويق مشروعك؟
+                        <span>ابدأ بتشخيص يعطيك درجة وفجوات بالاسم.</span>
                     </h1>
                     <p class="hero-lead reveal">
-                        أجب عن أسئلة واضحة حول مشروعك، لتحصل على صورة أقرب إلى واقعك:
-                        أين تتعطل النتائج، وما الخطوات التي تستحق أن تبدأ بها الآن.
+                        تجيب عن أسئلة عن مشروعك، ونفحص ما يمكن فحصه من موقعك.
+                        تخرج بدرجة من 100، وبقائمة فجوات مرتّبة على الأثر والجهد.
                     </p>
                     <p class="hero-lead reveal" aria-label="قطاعات التخصص">
-                        نتعمّق أكثر في <strong>التعليم</strong> و<strong>التجارة الإلكترونية</strong>
-                        و<strong>العقارات</strong>: أسئلة وفحوصات بلسان قطاعك، ومقارنة بأنشطة مثلك —
-                        وبقية القطاعات نخدمها بالمسار الكامل نفسه.
+                        إن كنت في <strong>التعليم</strong> أو <strong>التجارة الإلكترونية</strong>
+                        أو <strong>العقارات</strong>، نسألك أسئلة ونفحص بنودًا تخص قطاعك وحده،
+                        ونقارن درجتك بأنشطة مثلك. وبقية القطاعات تمرّ بالمسار الكامل نفسه.
                     </p>
                     <div class="hero-actions reveal">
                         <a class="button button--primary button--large" href="{{ $startUrl }}">
                             {{ $startLabel }}
                             <span aria-hidden="true">←</span>
                         </a>
-                        <a class="button button--ghost button--large" href="{{ route('tools.index') }}">اختر ما تريد تحسينه</a>
+                        <a class="button button--ghost button--large" href="{{ route('tools.index') }}">اختر ما تريد تشخيصه</a>
                         <a class="button button--ghost button--large" href="{{ route('mobile.download') }}">تنزيل تطبيق أندرويد</a>
                     </div>
-                    <ul class="hero-trust reveal" aria-label="ما الذي يميّز الطريقة">
-                        <li><strong>+10</strong><span>سنوات من الخبرة العملية</span></li>
-                        <li><strong>نحو 10 دقائق</strong><span>للتشخيص الأولي</span></li>
+                    {{--
+                        الشريط كان معنونًا «ما الذي يميّز الطريقة» فيقرأ ادّعاء تفوّق
+                        على أحد. الأرقام نفسها ليست تمييزًا، بل ما يحتاج الزائر معرفته
+                        قبل أن ينقر: كم يستغرق، وهل يُطلب منه دفع.
+                    --}}
+                    <ul class="hero-trust reveal" aria-label="ما تحتاج معرفته قبل أن تبدأ">
+                        <li><strong>+10</strong><span>سنوات خبرة عملية</span></li>
+                        <li><strong>نحو 10 دقائق</strong><span>للتشخيص الأول</span></li>
                         <li><strong>ابدأ مباشرة</strong><span>من دون بطاقة دفع</span></li>
                     </ul>
                 </div>
@@ -55,7 +70,7 @@
                     <div class="result-window">
                         <div class="result-window__top">
                             <span>مثال لما ستستلمه</span>
-                            <span class="live-dot">مثال توضيحي</span>
+                            <span class="live-dot">مثال توضيحي — ليس نتيجة عميل</span>
                         </div>
                         <div class="score-panel">
                             <div class="score-ring" style="--score: 64">
@@ -63,8 +78,13 @@
                                 <span>من 100</span>
                             </div>
                             <div>
-                                <p class="status-label">وضع المشروع: يحتاج إلى ترتيب الأولويات</p>
-                                <h2>المشكلة ليست في قلة الجهد، بل في ترتيب ما يستحقه أولًا.</h2>
+                                {{--
+                                    كان هنا حكم عام على «المشكلة» في كل مشروع، وهو جملة
+                                    سببية بصيغة الجزم عن نشاط لم يُقَس بعد. صار وصفًا
+                                    لما تحويه البطاقة فعلًا، والرقم يتكفّل بالباقي.
+                                --}}
+                                <p class="status-label">مشروع تجارة إلكترونية · مثال</p>
+                                <h2>أعلى ثلاث فجوات، مرتّبة على الأثر والجهد.</h2>
                             </div>
                         </div>
                         <div class="mini-findings">
@@ -94,14 +114,14 @@
                             </article>
                         </div>
                         <div class="result-window__footer">
-                            <span>3 مشاكل واضحة</span>
+                            <span>3 فجوات بالاسم</span>
                             <span>قائمة إصلاح مرتّبة</span>
                             <span>خطوة تبدأ بها اليوم</span>
                         </div>
                     </div>
                     <div class="floating-note floating-note--top">
                         <span>ابدأ من هنا</span>
-                        <strong>وضّح سبب الشراء منك قبل زيادة الإعلان</strong>
+                        <strong>اكتب سبب الشراء منك قبل زيادة الإعلان</strong>
                     </div>
                     <div class="floating-note floating-note--bottom">
                         <span class="pulse-icon"></span>
@@ -110,16 +130,19 @@
                 </div>
             </div>
 
-            <div class="container hero-strip" aria-label="مجالات الخبرة">
-                <span>استراتيجية التسويق</span>
+            {{--
+                الشريط كان يعرض تخصصات مهنية («استراتيجية التسويق · تحليل
+                البيانات») ويسمّي قطاعًا واحدًا من الثلاثة، فينقض جملة التخصص
+                التي تسبقه بثمانين سطرًا. صار يحمل القطاعات نفسها موصولةً
+                بصفحاتها — ووعدٌ يتكرر مرتين متسقتين أقوى من وعد يناقض نفسه.
+            --}}
+            <div class="container hero-strip" aria-label="قطاعات التخصص">
+                @foreach (\App\Modules\Shared\Sectors\Sector::SPECIALIZED as $index => $sectorKey)
+                    @if ($index > 0)<i></i>@endif
+                    <a href="{{ route('sectors.show', $sectorKey) }}">{{ \App\Modules\Shared\Sectors\Sector::label($sectorKey) }}</a>
+                @endforeach
                 <i></i>
-                <span>التسويق التعليمي</span>
-                <i></i>
-                <span>تحليل البيانات</span>
-                <i></i>
-                <span>الذكاء الاصطناعي</span>
-                <i></i>
-                <span>إدارة المشروعات</span>
+                <span class="muted">وبقية القطاعات بالمسار الكامل نفسه</span>
             </div>
         </section>
 
@@ -141,10 +164,15 @@
 
         <section class="section problems-section" id="why">
             <div class="container">
+                {{--
+                    الوصف كان يحكم على سبب المشكلة قبل أي قياس («المشكلة ليست في حجم
+                    العمل، بل في…»)، وهذا استنتاج معروض كحقيقة. صار يقول ما يفعله
+                    التشخيص لا ما يفترضه عن القارئ.
+                --}}
                 <x-section-heading
-                    eyebrow="قبل أن تجرّب شيئًا جديدًا"
+                    eyebrow="ابدأ من هنا"
                     title="هل تصف إحدى هذه الحالات مشروعك؟"
-                    description="إذا كانت إحداها تصف حالتك، فالمشكلة غالبًا ليست في حجم العمل، بل في عدم وضوح موضع هدر المال والوقت."
+                    description="اختر الأقرب إلى حالتك. من هنا يبدأ التشخيص: نحدد أين يذهب المال والوقت قبل أن نقترح عليك شيئًا."
                 />
 
                 @php $problemArt = ['spend', 'content', 'scatter', 'guess']; @endphp
@@ -165,10 +193,10 @@
                 <div class="insight-banner reveal">
                     <div class="insight-banner__mark" aria-hidden="true">!</div>
                     <p>
-                        <strong>لن تحصل على توصيات عامة يصعب تطبيقها.</strong>
-                        سترى ما يستحق البدء به، وما يمكن تأجيله، حتى توجّه وقتك وميزانيتك إلى الأولوية الأوضح.
+                        <strong>كل فجوة تخرج لك بالاسم، ومعها ترتيبها على الأثر والجهد.</strong>
+                        تعرف ما تبدأ به هذا الأسبوع، وما يؤجَّل بلا ندم.
                     </p>
-                    <a href="{{ $startUrl }}">ابدأ التشخيص الأولي <span aria-hidden="true">←</span></a>
+                    <a href="{{ $startUrl }}">ابدأ التشخيص الأول <span aria-hidden="true">←</span></a>
                 </div>
             </div>
         </section>
@@ -176,13 +204,18 @@
         <section class="section services-section" id="services">
             <div class="container">
                 <div class="split-heading">
+                    {{--
+                        العنوان الفرعي كان يبيع الخبرة («عشر سنوات في خدمتك») في موضع
+                        يتكلّم عن مخرجات العميل. الخبرة لها قسمها أدناه بالتواريخ، وهنا
+                        يقرأ الزائر ما يخرج به هو.
+                    --}}
                     <x-section-heading
-                        eyebrow="خبرة عشر سنوات في خدمتك"
+                        eyebrow="ما تخرج به"
                         title="ما الذي سيساعدك على اتخاذ قرار أوضح؟"
                         description="لا نبدأ من إعلان ولا من منصة. نبدأ من سؤال: ما أهم شيء تحتاج حلّه الآن؟"
                         align="start"
                     />
-                    <p class="split-heading__aside">من سؤال «أين أبدأ؟» إلى أولويات يمكنك مناقشتها وتنفيذها بثقة.</p>
+                    <p class="split-heading__aside">تبدأ من سؤال «أين أبدأ؟»، وتخرج بأولويات مرتّبة يمكنك تنفيذها أو تسليمها لفريقك.</p>
                 </div>
 
                 <div class="services-grid">
@@ -203,13 +236,18 @@
                 <div class="method-copy">
                     <x-section-heading
                         eyebrow="كيف تصل إلى النتيجة"
-                        title="من واقع مشروعك إلى أولويات عملية"
-                        description="تقدّم معلومات مشروعك، ثم تحصل على تشخيص مرتب يوضح ما يحتاج إلى إجراء الآن."
+                        title="من إجاباتك إلى قائمة إصلاح مرتّبة"
+                        description="تعطينا معلومات مشروعك مرة واحدة، وتخرج بتشخيص يقول ما يحتاج إجراءً الآن وما ينتظر."
                         align="start"
                     />
+                    {{--
+                        الاقتباس كان حكمة عامة عن «أفضل تشخيص». استُبدل بقاعدة العرض
+                        التي تلتزم بها التقارير فعلًا (§٤.١ و§١٣): رقم بلا أساسه لا
+                        يُعرض. الوعد الذي يمكن التحقق منه أنفع من عبارة تُعجب.
+                    --}}
                     <div class="method-quote">
                         <span aria-hidden="true">“</span>
-                        <p>أفضل تشخيص ليس الأطول، بل الذي تعرف كيف قِيس ويمكنك التحرّك عليه غدًا.</p>
+                        <p>كل رقم في تقريرك يأتي معه أساسه: مِمَّ حُسب، وكم بندًا فُحص، وما وُسم منه فرضية.</p>
                     </div>
                 </div>
 
@@ -230,9 +268,9 @@
         <section class="section tools-section" id="tools">
             <div class="container">
                 <x-section-heading
-                    eyebrow="ابدأ من التحدي الأهم"
+                    eyebrow="اختر الأولوية"
                     title="ما الذي تريد فهمه أو تحسينه الآن؟"
-                    description="اختر الحالة الأقرب إلى مشروعك، وانتقل من الأسئلة إلى خطوات واضحة يمكنك تنفيذها أو مشاركتها مع فريقك."
+                    description="اختر التحدي الأقرب إلى مشروعك. كل بطاقة تقول ما تقيسه وكم تستغرق، ثم تنتقل من الأسئلة إلى خطوات تنفّذها أو تسلّمها لفريقك."
                 />
 
                 <div class="tools-grid">
@@ -262,7 +300,8 @@
                                 @if ($tool['duration_minutes'])
                                     <b>{{ $tool['duration_minutes'] }} دقائق</b>
                                 @endif
-                                <em>اطّلع على التفاصيل ←</em>
+                                {{-- نفس نداء اللوحة بعد الدخول، حتى لا يتبدّل اللسان عند التسجيل. --}}
+                                <em>اعرف التفاصيل وابدأ ←</em>
                             </span>
                         </a>
                     @endforeach
@@ -270,7 +309,7 @@
 
                 <div class="tools-more reveal">
                     <a class="button button--ghost button--large" href="{{ route('tools.index') }}">
-                        اطّلع على جميع الحالات
+                        اطّلع على كل التشخيصات
                         <span aria-hidden="true">←</span>
                     </a>
                     <a class="text-link" href="{{ $startUrl }}">{{ $startLabel }} <span aria-hidden="true">←</span></a>
@@ -281,16 +320,21 @@
         <section class="section sample-section" id="sample">
             <div class="container sample-layout">
                 <div class="sample-copy">
+                    {{--
+                        «مثال توضيحي» وحدها تُقرأ أحيانًا نتيجة عميل حقيقي، فأُلحق بها
+                        نفيها الصريح كما في صفحة الأداة. والبنود صارت تسمّي ما يظهر في
+                        التقرير فعلًا (وسم «مقيس» مقابل «فرضية») بدل وصف عام لجودته.
+                    --}}
                     <x-section-heading
-                        eyebrow="مثال توضيحي"
+                        eyebrow="مثال توضيحي — ليس نتيجة عميل"
                         title="هكذا تساعدك النتيجة على اتخاذ القرار"
-                        description="ترى وضعك الحالي، وأسباب الفجوات، والخطوة التالية بلغة واضحة بعيدًا عن المصطلحات المعقدة."
+                        description="ترى درجتك، والفجوات التي وراءها، والخطوة التالية. وكل مصطلح مشروح في موضعه."
                         align="start"
                     />
                     <ul class="check-list">
-                        <li><span>✓</span> رقم واضح تقارن به تقدمك بعد شهر</li>
-                        <li><span>✓</span> نفرّق بين ما هو أكيد وما يحتاج تأكيدًا منك</li>
-                        <li><span>✓</span> ترتيب واضح: ابدأ بهذه، وأجّل تلك</li>
+                        <li><span>✓</span> درجة من 100، ومعها عدد المحاور التي حُسبت منها</li>
+                        <li><span>✓</span> ما فُحص من موقعك موسوم «مقيس»، وما بُني على كلامك موسوم «فرضية»</li>
+                        <li><span>✓</span> الفجوات مرتّبة على الأثر والجهد: ابدأ بهذه، وأجّل تلك</li>
                         <li><span>✓</span> كل توصية تتحول إلى مهمة لها موعد</li>
                     </ul>
                     <a class="text-link" href="{{ $startUrl }}">أنشئ تشخيص مشروعك <span aria-hidden="true">←</span></a>
@@ -299,10 +343,10 @@
                 <div class="sample-report reveal">
                     <div class="sample-report__header">
                         <div>
-                            <small>التقرير التنفيذي</small>
+                            <small>تقرير التشخيص</small>
                             <strong>مشروع تجارة إلكترونية</strong>
                         </div>
-                        <span>نسخة تجريبية</span>
+                        <span>مثال توضيحي</span>
                     </div>
                     <div class="sample-report__score">
                         <strong>64<small>/100</small></strong>
@@ -311,14 +355,19 @@
                             <div class="report-bar"><i style="width: 64%"></i></div>
                         </div>
                     </div>
+                    {{--
+                        أسماء الفجوات كانت مصطلحات مهنية («وعد القيمة»، «رحلة التحويل»)
+                        يقرأها صاحب النشاط ولا يعرف ماذا يفعل بها. §١٣ يمنع المصطلح بلا
+                        شرح في جملته، وأقصر شرحٍ أن تُكتب الفجوة بلسان صاحبها.
+                    --}}
                     <div class="sample-report__grid">
-                        <article><span>الفجوة 01</span><strong>وعد القيمة غير محدد</strong><small>أثر مرتفع · جهد منخفض</small></article>
-                        <article><span>الفجوة 02</span><strong>لا توجد رحلة تحويل</strong><small>أثر مرتفع · جهد متوسط</small></article>
-                        <article><span>الفجوة 03</span><strong>القياس منفصل عن الهدف</strong><small>أثر متوسط · جهد منخفض</small></article>
+                        <article><span>الفجوة 01</span><strong>سبب الشراء منك غير مكتوب</strong><small>أثر مرتفع · جهد منخفض</small></article>
+                        <article><span>الفجوة 02</span><strong>لا توجد صفحة تنقل الزائر إلى الشراء</strong><small>أثر مرتفع · جهد متوسط</small></article>
+                        <article><span>الفجوة 03</span><strong>لا تعرف من أين جاءك العميل</strong><small>أثر متوسط · جهد منخفض</small></article>
                     </div>
                     <div class="sample-report__next">
                         <span>الخطوة التالية</span>
-                        <strong>إعادة صياغة العرض وبناء صفحة التحويل قبل زيادة ميزانية الحملة.</strong>
+                        <strong>اكتب سبب الشراء منك في صفحتك الأولى، وابنِ صفحة الشراء، قبل زيادة ميزانية الإعلان.</strong>
                     </div>
                 </div>
             </div>
@@ -331,9 +380,10 @@
                         <x-illustration name="experience" />
                     </div>
                     <div class="about-copy">
-                        <p class="eyebrow">الخبرة وراء المنهج</p>
+                        <p class="eyebrow">من يقف خلف المنهجية</p>
                         <h2>عن خالد سعد</h2>
-                        <p class="about-lead">خبرة تتجاوز 10 سنوات في بناء الحملات، قيادة الفرق، وتحويل البيانات إلى قرارات تسويقية قابلة للتنفيذ.</p>
+                        {{-- الجملة تقول مدة الخبرة ومجالها فقط، والتفصيل بالتواريخ تحتها يغني عن الوصف. --}}
+                        <p class="about-lead">أكثر من 10 سنوات في بناء الحملات وقيادة الفرق وقراءة البيانات. المسار كاملًا بالتواريخ أدناه.</p>
                         @foreach ($brand['about'] as $paragraph)
                             <p>{{ $paragraph }}</p>
                         @endforeach
@@ -347,7 +397,7 @@
                 <div class="profile-grid">
                     <section class="timeline-panel">
                         <div class="panel-heading">
-                            <div><span>المسار المهني</span><h3>خبرات تراكمت عبر قطاعات وأسواق مختلفة</h3></div>
+                            <div><span>المسار المهني</span><h3>المواقع والجهات بالتواريخ</h3></div>
                             <small>2011 — الآن</small>
                         </div>
                         <ol class="experience-timeline">
@@ -400,14 +450,18 @@
         <section class="section principles-section" id="principles">
             <div class="container principles-layout">
                 <div>
-                    <p class="eyebrow">وضوح قبل الوعود</p>
+                    <p class="eyebrow">ما نلتزم به</p>
                     <h2>ما الذي يمكنك أن تتوقعه؟</h2>
-                    <p>لا توجد وصفة واحدة تناسب كل المشاريع، ولا أرقام مضمونة قبل فهم وضعك. ما نقدمه هو فصل واضح بين ما تؤكده بياناتك وما يحتاج إلى تحقق إضافي.</p>
+                    {{--
+                        القسم كله وعد، فلا يصحّ أن يُكتب بلغة الوعد. صار كل بند جملة
+                        واحدة قابلة للتحقق من التقرير نفسه: الوسم، والمهمة، والموعد.
+                    --}}
+                    <p>لا نعدك برقم. نعدك بأن تعرف كيف حُسب كل رقم تراه، وما وُسم منه «فرضية» لأنه مبنيّ على كلامك لا على قياس.</p>
                 </div>
                 <div class="principles-grid">
-                    <article class="reveal"><span>01</span><h3>لا نصيحة من دون سبب</h3><p>كل خطوة مقترحة توضح سببها والأثر المتوقع منها.</p></article>
-                    <article class="reveal"><span>02</span><h3>التقنية تساعد ولا تستبدل قرارك</h3><p>يساعدك مسار التشخيص على تنظيم الصورة، وتبقى النتيجة مرتبطة بإجاباتك وما تؤكده بيانات المشروع.</p></article>
-                    <article class="reveal"><span>03</span><h3>لا تشخيص من دون متابعة</h3><p>ينتهي التشخيص بمهام ومواعيد ومؤشرات تساعدك على قياس التقدم.</p></article>
+                    <article class="reveal"><span>01</span><h3>لا توصية من دون سببها</h3><p>كل خطوة مقترحة معها الفجوة التي جاءت منها وأثرها المتوقع.</p></article>
+                    <article class="reveal"><span>02</span><h3>القرار يبقى قرارك</h3><p>التشخيص يرتّب لك الصورة، والدرجة مبنيّة على إجاباتك وعلى ما فُحص من موقعك.</p></article>
+                    <article class="reveal"><span>03</span><h3>لا تشخيص من دون متابعة</h3><p>ينتهي التشخيص بمهام لها مواعيد ومؤشرات تقيس بها تقدمك.</p></article>
                     <article class="reveal"><span>04</span><h3>معلوماتك تخصك أنت</h3><p>نستخدمها لتحليل مشروعك فقط، ولا نعرضها ولا نستخدمها كمثال أمام الناس.</p></article>
                 </div>
             </div>
@@ -417,7 +471,7 @@
             <div class="container">
                 <div class="split-heading">
                     <x-section-heading
-                        eyebrow="محتوى يفيدك"
+                        eyebrow="مقالات"
                         title="من «يلا نفهم تسويق»"
                         description="مقالات قصيرة أشرح فيها أشياء تحصل معك يوميًا في تسويق مشروعك."
                         align="start"
@@ -445,9 +499,9 @@
             <div class="container faq-layout">
                 <div class="faq-copy">
                     <x-section-heading
-                        eyebrow="أسئلة يسألها أصحاب مشاريع مثلك"
+                        eyebrow="قبل أن تبدأ"
                         title="الأسئلة الشائعة"
-                        description="إذا لم تجد سؤالك هنا، يمكنك التواصل مباشرة."
+                        description="إن لم تجد سؤالك هنا، تواصل مباشرة."
                         align="start"
                     />
                     <div class="faq-contact">
@@ -472,7 +526,7 @@
                     <div class="diagnosis-card__glow" aria-hidden="true"></div>
                     <div class="diagnosis-card__content">
                         <p class="eyebrow">أربع خطوات من السؤال إلى القرار</p>
-                        <h2>ابدأ بصورة أوضح عن مشروعك.</h2>
+                        <h2>ابدأ تشخيص مشروعك الآن.</h2>
                         <p>ابدأ من دون حساب، أجب عن الأسئلة، ثم أنشئ حسابك لحفظ النتيجة ومتابعة الخطوات المقترحة.</p>
 
                         <ol class="journey-strip">
@@ -498,7 +552,8 @@
                                 </a>
                             @endif
                             <a class="button button--outline button--large" href="{{ auth()->check() ? route('app.consultations.index') : route('register', ['intent' => 'consultation']) }}">
-                                الاستشارة التسويقية الذكية الشاملة
+                                {{-- نفس نصّ الزر في اللوحة، فمن يدخل يجد ما وُعد به بالاسم نفسه. --}}
+                                ابدأ التشخيص الذكي الشامل
                                 <span aria-hidden="true">←</span>
                             </a>
                             <span>من 7 إلى 10 دقائق · كل خطوة تُحفظ · يمكنك العودة في أي وقت</span>

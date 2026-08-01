@@ -24,6 +24,22 @@
         .print-section--long { break-inside: auto; page-break-inside: auto; }
         .print-report table, .print-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
         .print-report th, .print-report td, .print-table th, .print-table td { overflow-wrap: anywhere; word-break: break-word; }
+
+        /* المثال الجاهز مطبوعًا: mPDF لا يفهم details/summary ولا flex، فالمكوّن
+           يُخرج في وضع الطباعة وسومًا كتلية فقط، وهذه أنماطها. الكتلة النصّية
+           تبقى مميّزة بصريًا عمّا حولها لأن التمييز هو ما يقول للقارئ إن ما
+           أمامه شيء يُنقل حرفيًا لا فقرة تُقرأ. */
+        .worked-example { border: 1px solid #dfe8f5; background: #f5f9ff; padding: 7pt 9pt; margin: 7pt 0; page-break-inside: avoid; }
+        .worked-example__summary { color: #071f5b; font-weight: bold; font-size: 9.5pt; margin: 0 0 4pt; }
+        .worked-example__title { color: #5d6b82; font-weight: normal; }
+        .worked-example__lead { color: #5d6b82; font-size: 8.5pt; margin: 0 0 4pt; }
+        .worked-example__text { background: #ffffff; border: 1px solid #dfe8f5; padding: 6pt 8pt; margin: 0;
+            white-space: pre-wrap; font-family: hacentunisia; font-size: 9pt; line-height: 1.7;
+            overflow-wrap: anywhere; page-break-inside: avoid; }
+        .worked-example__text--ltr { direction: ltr; text-align: left; font-family: monospace; font-size: 7.5pt; line-height: 1.5; }
+        .worked-example__notes { margin: 5pt 0 0; font-size: 8.5pt; color: #5d6b82; }
+        .worked-example__source { margin: 5pt 0 0; font-size: 8.5pt; color: #5d6b82; }
+        .evidence-badge { font-size: 8pt; font-weight: normal; color: #b05c00; }
     </style>
 </head>
 <body class="print-report">
@@ -33,6 +49,6 @@
         <p>الإصدار {{ $agencyReport->version }} · {{ $agencyReport->generated_at?->format('Y-m-d H:i') }}</p>
     </div>
 
-    @include('agency-reports.partials.owner-document', ['snapshot' => $snapshot])
+    @include('agency-reports.partials.owner-document', ['snapshot' => $snapshot, 'print' => true])
 </body>
 </html>

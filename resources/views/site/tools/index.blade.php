@@ -1,8 +1,8 @@
 @extends('layouts.public')
 @section('layout', 'marketing')
 
-@section('title', 'اختر ما تريد تحسينه في مشروعك | خالد سعد')
-@section('description', 'اختر التحدي الأقرب إلى مشروعك، واحصل على تشخيص يوضح الفجوات والأولويات والخطوة التالية.')
+@section('title', 'ما الذي تريد تشخيصه الآن؟ | خالد سعد')
+@section('description', 'اختر التحدي الأقرب إلى مشروعك، وأجب عن أسئلة عن نشاطك، فتخرج بفجواتك وأولوياتك وخطوتك التالية.')
 
 @section('content')
     @include('partials.site-header')
@@ -10,18 +10,27 @@
     <main id="main-content">
         <section class="page-hero">
             <div class="container page-hero__inner">
-                <p class="eyebrow">ابدأ من التحدي الأهم</p>
+                <p class="eyebrow">اختر الأولوية</p>
                 <h1>ما الذي تريد فهمه أو تحسينه الآن؟</h1>
                 <p class="page-hero__lead">
-                    اختر الحالة الأقرب إلى وضع مشروعك. ستجيب عن أسئلة واضحة، ثم تحصل على أولويات
-                    وخطوات يمكنك تنفيذها أو مناقشتها مع فريقك ووكالتك.
+                    اختر الحالة الأقرب إلى وضع مشروعك. تجيب عن أسئلة عن نشاطك، ثم تخرج بفجواتك
+                    وأولوياتك وخطوة تالية تنفّذها أو تناقشها مع فريقك.
+                </p>
+                {{-- الإشارة القطاعية هنا لا في الهيرو وحده: من يصل من بحث عن أداة
+                     بعينها لا يمر على الرئيسة، فيفوته التخصص كله. --}}
+                <p class="page-hero__lead">
+                    وإن كان مشروعك في
+                    @foreach (\App\Modules\Shared\Sectors\Sector::SPECIALIZED as $sectorKey)
+                        <a href="{{ route('sectors.show', $sectorKey) }}">{{ \App\Modules\Shared\Sectors\Sector::label($sectorKey) }}</a>@if (! $loop->last)@if ($loop->remaining === 1) أو @else، @endif @endif
+                    @endforeach
+                    فداخل كل تشخيص أسئلة وبنود فحص تخص قطاعك وحده.
                 </p>
 
                 <div class="page-hero__actions">
                     @auth
-                        <a class="button button--primary button--large" href="{{ route('app.dashboard') }}">تابع من لوحة التحكم <span aria-hidden="true">←</span></a>
+                        <a class="button button--primary button--large" href="{{ route('app.dashboard') }}">تابع من لوحتك <span aria-hidden="true">←</span></a>
                     @else
-                        <a class="button button--primary button--large" href="#الحالات">اختر التحدي وابدأ <span aria-hidden="true">←</span></a>
+                        <a class="button button--primary button--large" href="#الحالات">اختر تشخيصك <span aria-hidden="true">←</span></a>
                         <a class="button button--ghost button--large" href="{{ route('login') }}">تسجيل الدخول</a>
                     @endauth
                 </div>
@@ -47,8 +56,10 @@
                             <h2>{{ $tool['title'] }}</h2>
                             <p class="catalog-card__desc">{{ $tool['promise'] ?: $tool['description'] }}</p>
 
+                            {{-- نفس صيغة بطاقة اللوحة: «اعرف التفاصيل وابدأ» — الزائر
+                                 والمشترك يقرآن الفعل نفسه فلا تتبدّل اللغة عند التسجيل. --}}
                             <span class="catalog-card__link">
-                                اعرف ما ستحصل عليه <b aria-hidden="true">←</b>
+                                اعرف التفاصيل وابدأ <b aria-hidden="true">←</b>
                                 @if ($tool['duration_minutes'])
                                     <em>{{ $tool['duration_minutes'] }} دقائق تقريبًا</em>
                                 @endif
@@ -62,21 +73,21 @@
         <section class="section how-section">
             <div class="container">
                 <x-section-heading
-                    eyebrow="رحلة واضحة"
+                    eyebrow="أربع خطوات"
                     title="كيف تصل من السؤال إلى الخطوة التالية؟"
                     description="تبدأ بالتحدي الأقرب إلى مشروعك، ثم تحفظ النتيجة وتتابع أولوياتك من مكان واحد."
                 />
                 <ol class="journey-steps">
-                    <li><span>01</span><h3>ابدأ مباشرة</h3><p>ابدأ التشخيص من دون إنشاء حساب أو إدخال بطاقة دفع.</p></li>
-                    <li><span>02</span><h3>صف واقع مشروعك</h3><p>أجب عن أسئلة مرتبطة بعملك، واعرف سبب كل سؤال وأثره في النتيجة.</p></li>
-                    <li><span>03</span><h3>احفظ ما أنجزته</h3><p>أنشئ حسابك بعد التجربة، وستنتقل إجاباتك معك كما هي.</p></li>
-                    <li><span>04</span><h3>رتّب أولوياتك</h3><p>راجع الفجوات والخطوات المقترحة، وحوّل ما تختاره إلى مهام قابلة للمتابعة.</p></li>
+                    <li><span>01</span><h3>ابدأ مباشرة</h3><p>ابدأ التشخيص من دون إنشاء حساب ومن دون بطاقة دفع.</p></li>
+                    <li><span>02</span><h3>صف واقع مشروعك</h3><p>أجب عن أسئلة عن نشاطك، وبجانب كل سؤال سبب طرحه وأثره في النتيجة.</p></li>
+                    <li><span>03</span><h3>احفظ ما أنجزته</h3><p>أنشئ حسابك بعد التجربة، وتنتقل إجاباتك معك كما هي.</p></li>
+                    <li><span>04</span><h3>رتّب أولوياتك</h3><p>راجع فجواتك وقائمة الإصلاح، وحوّل ما تختاره إلى مهام لها مواعيد.</p></li>
                 </ol>
 
                 <div class="cta-band">
-                        <p>ابدأ أولًا، ثم قرر إن كنت تريد حفظ النتيجة. ستنتقل إجاباتك إلى حسابك كما هي.</p>
+                        <p>ابدأ أولًا، ثم قرر إن كنت تريد حفظ النتيجة. إجاباتك تنتقل إلى حسابك كما هي.</p>
                     @auth
-                        <a class="button button--primary" href="{{ route('app.dashboard') }}">افتح لوحة مشروعك</a>
+                        <a class="button button--primary" href="{{ route('app.dashboard') }}">افتح لوحتك</a>
                     @else
                         <a class="button button--primary" href="{{ route('register') }}">أنشئ حسابك</a>
                     @endauth

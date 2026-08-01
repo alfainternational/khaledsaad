@@ -1,11 +1,17 @@
 import '../../core/widgets/worked_example.dart';
 
-/// تسميات القطاعات المعلَنة كما في الويب — مصدر واحد حتى لا تتكرر في الشاشات.
-const Map<String, String> sectorLabels = {
-  'education': 'التعليم',
-  'ecommerce': 'التجارة الإلكترونية',
-  'real_estate': 'العقارات',
-  'other': 'قطاع آخر',
+/// مرآة دفاعية لـ`Sector::label` — تُقرأ فقط حين تغيب `sector_label` عن الرد.
+///
+/// ليست مصدرًا ثانيًا للحقيقة بل احتياط لاستجابة خادم أقدم من الحقل: نصّها
+/// مطابق حرفيًّا لنصّ الخادم. النسخة السابقة كانت تعيد وصف المجال الحر لقطاع
+/// «آخر»، فيقرأ صاحب النشاط على الجوال غير ما يقوله الخادم عن الحقل نفسه —
+/// وتسميتان لحقل واحد تعني أن إحداهما خاطئة دائمًا.
+String _fallbackSectorLabel(String? sector) => switch (sector) {
+  'education' => 'التعليم',
+  'ecommerce' => 'التجارة الإلكترونية',
+  'real_estate' => 'العقارات',
+  'other' => 'قطاع آخر',
+  _ => 'غير محدد',
 };
 
 class ProjectCard {
@@ -14,6 +20,7 @@ class ProjectCard {
     required this.name,
     this.industry,
     this.sector,
+    this.sectorLabelFromApi,
     this.latestScore,
     this.scoreBand,
   });
@@ -23,6 +30,7 @@ class ProjectCard {
     name: json['name'] as String,
     industry: json['industry'] as String?,
     sector: json['sector'] as String?,
+    sectorLabelFromApi: json['sector_label'] as String?,
     latestScore: json['latest_score'] as int?,
     scoreBand: json['score_band'] as String?,
   );
@@ -34,15 +42,15 @@ class ProjectCard {
   final int? latestScore;
   final String? scoreBand;
 
-  /// التسمية المعروضة للقطاع: تسمية القطاع المعلَن إن كان أحد القطاعات
-  /// المتخصصة الثلاثة، وإلا وصف المجال الحر كما كتبه صاحب المشروع.
-  String? get sectorLabel {
-    final declared = sector;
-    if (declared != null && declared != 'other') {
-      return sectorLabels[declared] ?? industry;
-    }
-    return industry;
-  }
+  /// ما أرسله الخادم في `sector_label` — null في الردود الأقدم من الحقل وحدها.
+  /// لا تعرضه الشاشات مباشرة، بل تقرأ [sectorLabel].
+  final String? sectorLabelFromApi;
+
+  /// التسمية المعروضة للقطاع — يحسمها الخادم (`Sector::label`) وحده.
+  ///
+  /// لا تعود null: القطاع غير المعلن تسميته «غير محدد» عند الخادم، فلا تحتاج
+  /// الشاشات نصًّا بديلًا تخترعه لنفسها.
+  String get sectorLabel => sectorLabelFromApi ?? _fallbackSectorLabel(sector);
 }
 
 class ScoreComparison {

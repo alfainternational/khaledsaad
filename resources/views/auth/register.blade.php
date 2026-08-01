@@ -3,7 +3,8 @@
 
 @section('title', 'إنشاء حساب')
 @section('heading', $startTool !== null ? 'احفظ تقدمك في «'.$startTool['title'].'»' : 'أنشئ حسابك وابدأ تشخيص مشروعك')
-@section('lead', 'يجمع حسابك إجاباتك وتقاريرك ومهامك في مكان واحد، لتعود إليها وتتابع تقدم مشروعك.')
+{{-- نقول ما نفعله بالحساب بصيغة الحاضر، لا ما «يمنحه لك». --}}
+@section('lead', 'نحفظ في حسابك إجاباتك وتقاريرك ومهامك، فتعود إليها وتتابع تقدّم مشروعك.')
 
 @section('context')
     @if ($startTool !== null)
@@ -14,7 +15,7 @@
         </div>
     @endif
 
-    <ol class="auth-steps" aria-label="ما الذي سيحدث بعد ذلك">
+    <ol class="auth-steps" aria-label="ما يحدث بعد إنشاء الحساب">
         <li class="is-current"><b>1</b> إنشاء الحساب</li>
         <li><b>2</b> تعريف المشروع</li>
         <li><b>3</b> {{ $startTool !== null ? 'أسئلة التشخيص' : 'اختيار التشخيص' }}</li>
@@ -54,5 +55,5 @@
 @section('alt')
     لديك حساب؟ <a href="{{ route('login', $startTool !== null ? ['tool' => $startTool['key']] : []) }}">سجّل الدخول</a>
     <span class="auth-card__sep" aria-hidden="true">·</span>
-    <a href="{{ route('tools.index') }}">استكشف التشخيصات أولًا</a>
+    <a href="{{ route('tools.index') }}">اطّلع على التشخيصات أولًا</a>
 @endsection

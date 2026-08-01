@@ -28,6 +28,8 @@ class ProjectPresenter
             'industry' => $project->industry,
             'sector' => $project->sector,
             'sector_label' => Sector::label($project->sector),
+            // الوصف الجاهز للعرض: القالب لا يركّب نصًّا من حقلين بنفسه.
+            'sector_display' => Sector::describe($project->sector, $project->industry),
             'stage' => $project->stage,
             'latest_score' => $project->latest_score,
             'score_band' => $project->latest_score !== null

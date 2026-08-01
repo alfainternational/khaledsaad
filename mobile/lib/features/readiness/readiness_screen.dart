@@ -2,15 +2,14 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/worked_example.dart';
 import 'models.dart';
 
 /// الجاهزية للذكاء الاصطناعي: نظير شاشة الويب حرفيًّا.
@@ -495,61 +494,29 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
     );
   }
 
+  /// القصاصة تُعاد استخدام مكوّن المثال نفسه، كما في الويب حرفيًّا.
+  ///
+  /// كانت هنا نسخة ثانية مكتوبة باليد لأن المكوّن المشترك كان يفرض وسم
+  /// «فرضية» ويعجز عن قلب اتجاه الكود. صار يقبلهما وسيطين، والنسخة الثانية
+  /// تُحذف: سطحان يعرضان القصاصة نفسها بشكلين يجعل من رآهما يشكّ في أيّهما.
   Widget _snippet(Map<String, dynamic> snippet) {
     final code = snippet['code']?.toString() ?? '';
-    final where = snippet['where']?.toString() ?? '';
-    // الكود يُقرأ من اليسار: عرضه بـRTL يقلب الأقواس فيصير غير صالح للصق.
-    final isCode = snippet['language']?.toString() != 'text';
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (where.isNotEmpty)
-            Text(
-              where,
-              style: const TextStyle(color: BrandColors.muted, fontSize: 12),
-            ),
-          const SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: BrandColors.surfaceSoft,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: BrandColors.line),
-            ),
-            child: Directionality(
-              textDirection: isCode ? TextDirection.ltr : TextDirection.rtl,
-              child: SelectableText(
-                code,
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.6,
-                  fontFamily: isCode ? 'monospace' : null,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          OutlinedButton.icon(
-            onPressed: () async {
-              // المُرسِل يُلتقط قبل الانتظار: استعمال context بعد await داخل
-              // State يفتح فجوة قد تكون الشاشة أُغلقت خلالها.
-              final messenger = ScaffoldMessenger.of(context);
+    if (code.isEmpty) return const SizedBox.shrink();
 
-              await Clipboard.setData(ClipboardData(text: code));
-
-              messenger.showSnackBar(
-                const SnackBar(content: Text('نُسخت القصاصة.')),
-              );
-            },
-            icon: const Icon(Icons.copy_all, size: 18),
-            label: const Text('انسخ القصاصة'),
-          ),
+    return WorkedExampleCard(
+      example: WorkedExampleModel(
+        title: snippet['where']?.toString() ?? '',
+        body: code,
+        kindLabel: 'قصاصة جاهزة',
+        notes: const [
+          'غيّر ما بين الأقواس المربعة ببياناتك قبل النشر، ثم تحقق من الصفحة بعد الرفع.',
         ],
       ),
+      // القصاصة معيار تقني ثابت لا اجتهاد على حالة النشاط، والكود يُقرأ من
+      // اليسار: عرضه بـRTL يقلب الأقواس فيصير غير صالح للصق.
+      inferred: false,
+      ltr: snippet['language']?.toString() != 'text',
     );
   }
 

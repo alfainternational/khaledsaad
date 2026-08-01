@@ -36,9 +36,14 @@
                     </article>
                 @endforeach
 
+                {{--
+                    نصوص البنود نفسها تأتي من config/legal.php ولم تُمَسّ: أي
+                    إعادة صياغة فيها تغيّر معنًى ملزمًا. المعدَّل هنا نداء
+                    التواصل وحده، وهو خطابنا لا بند قانوني.
+                --}}
                 <div class="cta-band">
-                    <p>هل لديك سؤال عن أي بند؟ تواصل معنا للحصول على توضيح مباشر.</p>
-                    <a class="button button--primary" href="{{ $brand['contact']['whatsapp'] }}" target="_blank" rel="noopener noreferrer">تواصل عبر واتساب</a>
+                    <p>بند غير واضح؟ اسألنا عنه وسنشرحه لك مباشرة.</p>
+                    <a class="button button--primary" href="{{ $brand['contact']['whatsapp'] }}" target="_blank" rel="noopener noreferrer">اسأل عبر واتساب</a>
                 </div>
             </div>
         </section>

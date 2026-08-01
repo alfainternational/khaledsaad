@@ -2,25 +2,27 @@
 @section('layout', 'auth')
 
 @section('title', 'رمز الدخول')
+@section('heading', 'أدخل رمز الدخول')
 
-@section('content')
-    <h1>أدخل رمز الدخول</h1>
-    <p class="muted">
-        أرسلنا رمزًا من ستة أرقام إلى بريدك — يصلح لعشر دقائق.
-        هذه الخطوة الإضافية فعّلتها أنت من صفحة أمان الحساب.
-    </p>
+{{-- سبب ظهور الخطوة يُذكر هنا: من نسي أنه فعّلها يظنّها عطلًا فيتوقف. --}}
+@section('lead')
+    أرسلنا رمزًا من ستة أرقام إلى بريدك، صالحًا لعشر دقائق.
+    هذه الخطوة الإضافية فعّلتها أنت من صفحة أمان الحساب.
+@endsection
 
+@section('form')
     <form method="POST" action="{{ route('login.otp.verify') }}" class="form">
         @csrf
         <div class="field">
             <label class="field__label" for="code">الرمز</label>
             <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9]{6}"
                 maxlength="6" required autofocus autocomplete="one-time-code" class="otp-input">
-            @error('code')<p class="field__error">{{ $message }}</p>@enderror
         </div>
 
-        <button type="submit" class="btn btn--primary btn--block">ادخل</button>
+        <button type="submit" class="btn btn--primary btn--block">تحقّق وادخل</button>
     </form>
+@endsection
 
-    <p class="muted"><a href="{{ route('login') }}">ارجع لتسجيل الدخول</a></p>
+@section('alt')
+    <a href="{{ route('login') }}">ارجع لتسجيل الدخول</a>
 @endsection

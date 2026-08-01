@@ -1,4 +1,7 @@
 @php
+    // نفس المستند يخدم الشاشة وملف PDF. $print يفرّق بينهما كما في بقية
+    // جزئيات التقرير (decision-card وoperations وappendix).
+    $print = $print ?? false;
     $owner = $snapshot['owner_report'];
     $details = $owner['private_details'];
     $highlightedProblemTitles = collect($owner['problems'])->pluck('title');
@@ -31,7 +34,9 @@
 <section class="card">
     <h2 class="section-title">صورة مشروعك الكاملة</h2>
     <p><b>المشروع:</b> {{ $details['project']['name'] }}</p>
-    <p><b>المجال:</b> {{ $details['project']['industry'] ?: 'لم تحدده بعد' }}</p>
+    {{-- اللقطة محفوظة: تقرير وُلّد قبل إضافة القطاع لا يحمل المفتاح، ولا
+         يُعاد توليده لأنه أثر تاريخي. الاحتياط يبقيه مقروءًا كما وُلّد. --}}
+    <p><b>المجال:</b> {{ $details['project']['sector_display'] ?? ($details['project']['industry'] ?: 'لم تحدده بعد') }}</p>
     <p><b>مرحلتك الآن:</b> {{ $details['project']['stage'] ?: 'لم تحددها بعد' }}</p>
     <p><b>السوق الذي تعمل فيه:</b> {{ $details['project']['geography'] ?: 'لم تحدده بعد' }}</p>
     <p><b>طريقة تحقيق الدخل:</b> {{ $details['project']['business_model'] ?: 'لم تحددها بعد' }}</p>
@@ -244,7 +249,7 @@
                     </ol>
                 @endif
 
-                <x-worked-example :example="$item['worked_example'] ?? null" />
+                <x-worked-example :example="$item['worked_example'] ?? null" :print="$print" />
             </article>
         @empty
             <p class="muted">لا توجد خطوة موثقة بعد. ارجع إلى قسم المعلومات الناقصة وابدأ بأول بند.</p>

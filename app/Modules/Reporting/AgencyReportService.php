@@ -407,6 +407,8 @@ class AgencyReportService
             'project' => [
                 'name' => $project->name,
                 'industry' => $project->industry,
+                // القطاع المعلن يتقدّم النص الحرّ في كل مستند يقرأه بشر أو نموذج.
+                'sector_display' => \App\Modules\Shared\Sectors\Sector::describe($project->sector, $project->industry),
                 'stage' => $project->stage,
                 'stage_label' => $this->stageLabel($project->stage),
                 'description' => $project->profile?->description,
@@ -614,6 +616,7 @@ class AgencyReportService
                     'name' => $project->name,
                     'description' => $project->profile?->description,
                     'industry' => $project->industry,
+                    'sector_display' => \App\Modules\Shared\Sectors\Sector::describe($project->sector, $project->industry),
                     'stage' => $this->stageLabel($project->stage),
                     'geography' => $project->profile?->geography,
                     'website' => $project->profile?->website,

@@ -77,13 +77,46 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     'scale': 'توسّع',
   };
 
-  /// شرح كل قطاع معلَن — يظهر تحت القائمة عند الاختيار.
-  static const Map<String, String> _sectorHints = {
-    'education': 'مدرسة، جامعة، معهد، مركز تدريب، أو منصة تعليمية',
-    'ecommerce': 'متجر إلكتروني أو بيع عبر المنصات الوسيطة',
-    'real_estate': 'وساطة، تطوير، تسويق عقاري، أو إدارة أملاك',
-    'other': 'أي نشاط آخر — تصلك كل القدرات بالمسار العام',
-  };
+  /// خيارات منتقي القطاع — نظير `Sector::options()` بترتيبها نفسه.
+  ///
+  /// تبقى محليّة عمدًا لأنها مدخل لا مخرج: المنتقي يعمل قبل وجود مشروع، فلا
+  /// بطاقة تحمل `sector_label` ولا نقطة نهاية تخدم الخيارات وشروحها. أما تسمية
+  /// العرض بعد الحفظ فتأتي من الخادم وحده (`ProjectCard.sectorLabel`).
+  ///
+  /// الشرح جزء من الخيار لا زخرفة: «التعليم» وحدها لا تخبر مركز تدريب أنه
+  /// المقصود أيضًا، والاختيار الخاطئ يقين خاطئ يُبنى عليه تشخيص كامل.
+  static const List<({String value, String label, String hint})>
+  _sectorOptions = [
+    (
+      value: 'education',
+      label: 'التعليم',
+      hint: 'مدرسة، جامعة، معهد، مركز تدريب، أو منصة تعليمية',
+    ),
+    (
+      value: 'ecommerce',
+      label: 'التجارة الإلكترونية',
+      hint: 'متجر إلكتروني أو بيع عبر المنصات الوسيطة',
+    ),
+    (
+      value: 'real_estate',
+      label: 'العقارات',
+      hint: 'وساطة، تطوير، تسويق عقاري، أو إدارة أملاك',
+    ),
+    (
+      value: 'other',
+      label: 'قطاع آخر',
+      hint: 'أي نشاط آخر — تصلك كل القدرات بالمسار العام',
+    ),
+  ];
+
+  /// شرح القطاع المختار — يظهر تحت القائمة، وnull إن لم يُختر شيء.
+  String? get _sectorHint {
+    for (final option in _sectorOptions) {
+      if (option.value == _sector) return option.hint;
+    }
+
+    return null;
+  }
 
   @override
   void dispose() {
@@ -223,20 +256,20 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
               initialValue: _sector,
               decoration: InputDecoration(
                 labelText: 'القطاع',
-                helperText: _sector == null ? null : _sectorHints[_sector],
+                helperText: _sectorHint,
               ),
-              items: sectorLabels.entries
+              items: _sectorOptions
                   .map(
-                    (entry) => DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
+                    (option) => DropdownMenuItem(
+                      value: option.value,
+                      child: Text(option.label),
                     ),
                   )
                   .toList(),
               onChanged: (value) => setState(() => _sector = value),
             ),
             _assist('sector', 'select', () => _sector ?? '', (value) {
-              if (sectorLabels.containsKey(value)) {
+              if (_sectorOptions.any((option) => option.value == value)) {
                 setState(() => _sector = value);
               }
             }),

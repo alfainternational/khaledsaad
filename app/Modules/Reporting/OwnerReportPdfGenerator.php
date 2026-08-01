@@ -10,7 +10,9 @@ class OwnerReportPdfGenerator
 {
     private const DISK = 'local';
 
-    private const TEMPLATE_VERSION = 2;
+    // ٣: المثال الجاهز صار يُطبع كتلةً مفتوحة بلا زر نسخ ميت. الملفات
+    // المخزّنة بالإصدار السابق تحمل العطل، فرفع الرقم هو ما يجدّدها.
+    private const TEMPLATE_VERSION = 3;
 
     public function __construct(
         private readonly AgencyReportDocumentAdapter $documents,

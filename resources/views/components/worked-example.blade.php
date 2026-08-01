@@ -1,4 +1,4 @@
-@props(['example' => null, 'source' => null, 'open' => false, 'inferred' => true, 'ltr' => false])
+@props(['example' => null, 'source' => null, 'open' => false, 'inferred' => true, 'ltr' => false, 'print' => false])
 
 @php
     // المثال التطبيقي: النص الجاهز للنسخ. مكوّن واحد لكل الأسطح — التقرير
@@ -10,8 +10,16 @@
 @endphp
 
 @if ($body !== '')
+    {{-- وضع الطباعة: لا أحد يطوي <details> في ورقة PDF، ولا أحد يضغط زر نسخ
+         مطبوعًا. لذلك يُطبع المثال مفتوحًا بوسوم كتلية يفهمها mPDF، ويُحذف
+         الزر بدل أن يظهر ميتًا. نفس المكوّن ونفس النص — الاختلاف في السطح. --}}
+    @if ($print)
+    <div class="worked-example">
+        <p class="worked-example__summary">
+    @else
     <details class="worked-example" @if ($open) open @endif>
         <summary class="worked-example__summary">
+    @endif
             <span class="worked-example__kind">{{ $example['kind_label'] ?? 'مثال جاهز' }}</span>
             <span class="worked-example__title">{{ $example['title'] ?? 'مثال تطبيقي' }}</span>
             {{-- مثالُ التوصية اجتهاد منهجي مهما كان مصدره (§٤.١). أما القصاصة
@@ -20,11 +28,19 @@
             @if ($inferred)
                 <x-evidence-badge level="inferred" compact />
             @endif
+    @if ($print)
+        </p>
+    @else
         </summary>
+    @endif
 
         <div class="worked-example__body">
             <p class="worked-example__lead">
-                هذا نصّ جاهز للنسخ. املأ ما بين الأقواس المربعة ببياناتك قبل استعماله.
+                @if ($print)
+                    هذا نصّ جاهز. املأ ما بين الأقواس المربعة ببياناتك قبل استعماله.
+                @else
+                    هذا نصّ جاهز للنسخ. املأ ما بين الأقواس المربعة ببياناتك قبل استعماله.
+                @endif
             </p>
 
             {{-- الكود يُقرأ من اليسار: عرض JSON-LD بـRTL يقلب الأقواس فيصير
@@ -33,10 +49,12 @@
                 @if ($ltr) dir="ltr" @endif
                 data-copy-source>{{ $body }}</pre>
 
-            <div class="worked-example__actions">
-                <button type="button" class="btn btn--ghost btn--sm" data-copy-example>انسخ النص</button>
-                <span class="worked-example__copied" data-copy-feedback hidden>نُسخ</span>
-            </div>
+            @unless ($print)
+                <div class="worked-example__actions">
+                    <button type="button" class="btn btn--ghost btn--sm" data-copy-example>انسخ النص</button>
+                    <span class="worked-example__copied" data-copy-feedback hidden>نُسخ</span>
+                </div>
+            @endunless
 
             @if ($notes !== [])
                 <ul class="worked-example__notes">
@@ -55,5 +73,9 @@
                 </p>
             @endif
         </div>
+    @if ($print)
+    </div>
+    @else
     </details>
+    @endif
 @endif

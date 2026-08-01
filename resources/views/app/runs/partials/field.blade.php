@@ -16,6 +16,11 @@
         @unless ($field['required'])
             <small class="muted">(اختياري)</small>
         @endunless
+        @if (! empty($field['sector']))
+            {{-- السؤال الذي جاء من القطاع يُعلن مصدره: وعدناه بأن اختياره
+                 يفتح أسئلة خاصة به، ووعدٌ لا يُرى كأنه لم يكن. --}}
+            <span class="badge badge--sector">خاص بـ{{ \App\Modules\Shared\Sectors\Sector::label($field['sector']) }}</span>
+        @endif
     </span>
 
     @if ($field['help'])

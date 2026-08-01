@@ -55,9 +55,7 @@
                     <tr>
                         <td>
                             <a href="{{ route('app.readiness.show', $row['project']['id']) }}">{{ $row['project']['name'] }}</a>
-                            @if ($row['industry'])
-                                <div class="muted">{{ $row['industry'] }}</div>
-                            @endif
+                            <div class="muted">{{ $row['sector_display'] }}</div>
                         </td>
                         <td>
                             {{-- غير المقيس لا يُعرض صفرًا: الصفر حكم، والغياب إقرار (§٤.٣). --}}

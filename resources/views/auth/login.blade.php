@@ -2,8 +2,9 @@
 @section('layout', 'auth')
 
 @section('title', 'تسجيل الدخول')
-@section('heading', 'أهلًا بعودتك')
-@section('lead', 'سجّل الدخول للمتابعة من حيث توقفت والوصول إلى تقاريرك ومهامك المحفوظة.')
+{{-- العنوان يقول ما تكسبه من الدخول، لا تحية عامة تصلح لأي موقع. --}}
+@section('heading', 'أكمل من حيث توقفت')
+@section('lead', 'سجّل دخولك لتفتح مشاريعك وتقاريرك ومهامك كما تركتها.')
 
 @section('context')
     @if ($startTool !== null)
@@ -35,7 +36,8 @@
 
         <label class="field field--inline">
             <input type="checkbox" name="remember" value="1">
-            <span>أبقني مسجلًا</span>
+            {{-- «على هذا الجهاز» تحدّد نطاق الخيار: بدونها يُفهم أنه يسري على كل جهاز. --}}
+            <span>أبقني مسجّلًا على هذا الجهاز</span>
         </label>
 
         <button type="submit" class="btn btn--primary btn--block">سجّل الدخول</button>
@@ -45,5 +47,5 @@
 @section('alt')
     ليس لديك حساب؟ <a href="{{ route('register', $startTool !== null ? ['tool' => $startTool['key']] : []) }}">أنشئ حسابًا</a>
     <span class="auth-card__sep" aria-hidden="true">·</span>
-    <a href="{{ route('tools.index') }}">استكشف التشخيصات المتاحة</a>
+    <a href="{{ route('tools.index') }}">اطّلع على التشخيصات</a>
 @endsection

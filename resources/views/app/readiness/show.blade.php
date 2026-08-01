@@ -9,10 +9,29 @@
     <header class="page-head">
         <p class="eyebrow">{{ $project->name }}</p>
         <h1>هل تظهر في إجابات النماذج؟</h1>
+        @php
+            // القطاع المعلن يقرّر بنود الفحص ونصوصها (SiteAuditResult::offerItem).
+            // عرضه هنا يفسّر للقارئ لماذا يرى «البرامج الدراسية» لا «المنتجات» —
+            // وبدونه يبدو تبدّل التسميات عشوائيًّا ويفقد التقرير مصداقيته.
+            $sectorDeclared = \App\Modules\Shared\Sectors\Sector::isSpecialized($project->sector);
+        @endphp
         <p class="lede">
-            نفحص موقعك كما تقرأه النماذج: بياناته المنظَّمة، أسعاره، سياساته، وبنيته العربية.
-            ثم نقرأ سجل خادمك لنعرف أي بوت زارك فعلًا.
+            نفحص موقعك كما تقرأه النماذج: بياناته المنظَّمة،
+            {{ $project->sector === \App\Modules\Shared\Sectors\Sector::EDUCATION ? 'رسومه' : 'أسعاره' }}،
+            سياساته، وبنيته العربية. ثم نقرأ سجل خادمك لنعرف أي بوت زارك فعلًا.
         </p>
+        @if ($sectorDeclared)
+            <p class="muted">
+                البنود مضبوطة على قطاع <strong>{{ \App\Modules\Shared\Sectors\Sector::label($project->sector) }}</strong>.
+                <a href="{{ route('app.projects.edit', $project) }}">غيّر القطاع</a>
+            </p>
+        @else
+            <p class="muted">
+                لم تحدّد قطاعك بعد، فالفحص يجري بالبنود العامة.
+                <a href="{{ route('app.projects.edit', $project) }}">حدّد قطاعك</a>
+                لتتغيّر البنود إلى ما يخص نشاطك.
+            </p>
+        @endif
     </header>
 
     @if (session('status'))

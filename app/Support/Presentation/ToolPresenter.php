@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Tool;
 use App\Models\ToolField;
 use App\Models\ToolVersion;
+use App\Modules\Shared\Sectors\Sector;
 use App\Services\Tools\AdLibraries;
 use App\Services\Tools\MarketBenchmarks;
 
@@ -141,7 +142,31 @@ class ToolPresenter
             'benchmark' => $this->benchmarks->forField($field->key, $this->context),
             // رؤية المنافسين: أين يرى إعلاناتهم على كل منصة اختارها أو يستطيع اختيارها.
             'competitor_view' => $this->competitorView($field),
+
+            /*
+             * القطاع الذي استدعى هذا السؤال، أو null إن كان عامًّا.
+             *
+             * وعدناه عند اختيار قطاعه بأن اختياره «يفتح أسئلة وفحوصات خاصة
+             * بقطاعك»، ثم كانت الأسئلة القطاعية تظهر مختلطةً بالعامة بلا أي
+             * وسم — فالوعد يُنفَّذ ولا يُرى. الوسم هو ما يحوّل التخصص من حقيقة
+             * في المحرّك إلى تجربة عند المستخدم.
+             */
+            'sector' => $this->sectorOf($field),
         ];
+    }
+
+    /**
+     * القطاع المشروط في `visible_when`، إن كان الشرط قطاعيًّا.
+     *
+     * نقرأ الشرط نفسه لا نستنتج: الحقل الذي ظهر بشرط `project.sector` ظهر
+     * لأجل هذا القطاع تحديدًا، وأي استنتاج آخر تخمين.
+     */
+    private function sectorOf(ToolField $field): ?string
+    {
+        $declared = $field->visible_when['project.sector'] ?? null;
+        $sector = is_array($declared) ? ($declared[0] ?? null) : $declared;
+
+        return Sector::isSpecialized($sector) ? $sector : null;
     }
 
     /**

@@ -28,7 +28,7 @@
                     @else
                         <p class="muted">لم يُشخَّص بعد</p>
                     @endif
-                    <p class="muted">{{ $project['industry'] ?? 'قطاع غير محدد' }}</p>
+                    <p class="muted">{{ $project['sector_display'] }}</p>
                 </a>
             @endforeach
         </div>

@@ -61,6 +61,9 @@
 <div class="cover">
     <h1>بطاقة الجاهزية للذكاء الاصطناعي</h1>
     <div class="cover-sub">{{ $project->name }}</div>
+    {{-- القطاع على الغلاف: بنود البطاقة تتبدّل بتبدّله، فقارئان يقارنان
+         بطاقتيهما يجب أن يعرفا سبب اختلاف التسميات لا أن يظنّاه خللًا. --}}
+    <div class="cover-sub" style="font-size: 10pt;">{{ \App\Modules\Shared\Sectors\Sector::describe($project->sector, $project->industry) }}</div>
     <div class="cover-date">{{ $generatedAt->locale('ar')->translatedFormat('j F Y') }} — {{ $audit->url }}</div>
 </div>
 

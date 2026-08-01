@@ -293,7 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             const SizedBox(height: 6),
                             Text(
-                              project.sectorLabel ?? 'قطاع غير محدد',
+                              project.sectorLabel,
                               style: const TextStyle(
                                 color: BrandColors.muted,
                                 fontSize: 13,

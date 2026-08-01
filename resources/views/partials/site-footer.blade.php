@@ -14,7 +14,16 @@
                 <a href="{{ $anchorBase }}#method">المنهجية</a>
                 <a href="{{ route('tools.index') }}">التشخيصات</a>
                 <a href="{{ $anchorBase }}#about">عن خالد</a>
-                <a href="{{ $anchorBase }}#knowledge">المعرفة</a>
+                {{-- تسمية تصف الوجهة: الرابط المجرّد لا يُنقر في التذييل. --}}
+                <a href="{{ $anchorBase }}#knowledge">مقالات</a>
+            </div>
+            <div>
+                {{-- كل قطاع برابطه: صفحة لا يصلها رابط لا تُفهرس ولا تُزار. --}}
+                <strong>قطاعاتنا</strong>
+                @foreach (\App\Modules\Shared\Sectors\Sector::SPECIALIZED as $sectorKey)
+                    <a href="{{ route('sectors.show', $sectorKey) }}">{{ \App\Modules\Shared\Sectors\Sector::label($sectorKey) }}</a>
+                @endforeach
+                <a href="{{ route('sectors.index') }}">القطاعات الثلاثة</a>
             </div>
             <div>
                 <strong>ابدأ</strong>
@@ -25,7 +34,7 @@
                     <a href="{{ route('register') }}">إنشاء حساب</a>
                     <a href="{{ route('login') }}">تسجيل الدخول</a>
                 @endauth
-                <a href="{{ $anchorBase }}#faq">قبل أن تبدأ</a>
+                <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>
             </div>
             <div>
                 <strong>تواصل</strong>
@@ -35,7 +44,8 @@
                 <a href="{{ $brand['contact']['x'] }}" target="_blank" rel="noopener noreferrer">X / Twitter</a>
             </div>
             <div>
-                <strong>الموقع</strong>
+                {{-- «الموقع» كانت تُقرأ «موقع الويب» والعمود يحمل مدينة وسياستين. --}}
+                <strong>المقر والسياسات</strong>
                 <span>{{ $brand['location'] }}</span>
                 <a href="{{ route('privacy') }}">معلوماتك وخصوصيتك</a>
                 <a href="{{ route('terms') }}">شروط الاستخدام</a>
@@ -44,6 +54,7 @@
     </div>
     <div class="container footer-bottom">
         <span>© {{ date('Y') }} خالد سعد. جميع الحقوق محفوظة.</span>
-        <span>وضوح يساعدك على اتخاذ الخطوة التالية بثقة.</span>
+        {{-- شعار مجرّد بلا معنى قابل للتحقّق، استُبدل بوصف ما نفعله فعلًا. --}}
+        <span>نقيس نشاطك، ونعرض الفجوات ومعها دليلها.</span>
     </div>
 </footer>

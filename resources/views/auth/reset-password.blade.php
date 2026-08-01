@@ -3,7 +3,8 @@
 
 @section('title', 'كلمة مرور جديدة')
 @section('heading', 'اختر كلمة مرور جديدة')
-@section('lead', 'بعد حفظ كلمة المرور الجديدة، يمكنك تسجيل الدخول والمتابعة من حيث توقفت.')
+{{-- أفعال أمر بترتيب التنفيذ: احفظ ثم ادخل ثم أكمل. --}}
+@section('lead', 'احفظ كلمة المرور الجديدة، ثم سجّل دخولك وأكمل من حيث توقفت.')
 
 @section('form')
     <form method="POST" action="{{ route('password.update') }}" class="form">
@@ -31,5 +32,5 @@
 @endsection
 
 @section('alt')
-    <a href="{{ route('login') }}">العودة إلى تسجيل الدخول</a>
+    <a href="{{ route('login') }}">ارجع لتسجيل الدخول</a>
 @endsection

@@ -50,10 +50,23 @@ class WorkedExampleCard extends StatelessWidget {
     super.key,
     required this.example,
     this.initiallyExpanded = false,
+    this.inferred = true,
+    this.ltr = false,
   });
 
   final WorkedExampleModel example;
   final bool initiallyExpanded;
+
+  /// هل المتن اجتهاد منهجي؟ افتراضه نعم لأن مثال التوصية كذلك مهما كان مصدره.
+  ///
+  /// يُطفأ للقصاصة التقنية: JSON-LD معيار ثابت لا ادعاء عن النشاط، ووسمه
+  /// «فرضية» يُفقد الوسم معناه حين يظهر على ما ليس بفرضية (§٤.١).
+  final bool inferred;
+
+  /// هل يُقرأ المتن من اليسار؟
+  ///
+  /// عرض الكود بـRTL يقلب الأقواس فيصير غير صالح للصق، وهو كل الغرض منه.
+  final bool ltr;
 
   @override
   Widget build(BuildContext context) {
@@ -84,8 +97,8 @@ class WorkedExampleCard extends StatelessWidget {
                   color: BrandColors.navy,
                 ),
               ),
-              // المثال اجتهاد منهجي دائمًا مهما كان مصدره (§٤.١).
-              const SeverityBadge(label: 'فرضية', severity: 'assumption'),
+              if (inferred)
+                const SeverityBadge(label: 'فرضية', severity: 'assumption'),
             ],
           ),
           subtitle: Text(
@@ -106,10 +119,7 @@ class WorkedExampleCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: BrandColors.line),
               ),
-              child: SelectableText(
-                example.body,
-                style: const TextStyle(fontSize: 13, height: 1.9),
-              ),
+              child: _body(),
             ),
             const SizedBox(height: 8),
             Align(
@@ -148,6 +158,26 @@ class WorkedExampleCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// المتن نفسه: نظير `.worked-example__text` وصيغتها `--ltr` في الويب.
+  ///
+  /// اتجاه النصّ لا يكفي وحده — المحاذاة تتبع الاتجاه المحيط ما لم تُصرَّح،
+  /// فيُلصق السطر الأول يمينًا ويبدو الكود مبعثرًا.
+  Widget _body() {
+    final text = SelectableText(
+      example.body,
+      textAlign: ltr ? TextAlign.left : TextAlign.start,
+      style: TextStyle(
+        fontSize: ltr ? 12 : 13,
+        height: ltr ? 1.7 : 1.9,
+        fontFamily: ltr ? 'monospace' : null,
+      ),
+    );
+
+    if (!ltr) return text;
+
+    return Directionality(textDirection: TextDirection.ltr, child: text);
   }
 
   Future<void> _copy(BuildContext context) async {

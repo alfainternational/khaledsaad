@@ -39,6 +39,9 @@ class AgencyPortfolio
             $rows[] = [
                 'project' => ['id' => $project->id, 'slug' => $project->slug, 'name' => $project->name],
                 'industry' => $project->industry,
+                'sector' => $project->sector,
+                // الوكالة تفرز محفظتها بالقطاع: نصٌّ حرّ لا يُفرز به.
+                'sector_display' => \App\Modules\Shared\Sectors\Sector::describe($project->sector, $project->industry),
 
                 /*
                  * المحسوب من صفر محاور لا يُعرض رقمًا: صفٌّ بدرجة صفر في جدول
