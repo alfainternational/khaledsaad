@@ -7,6 +7,7 @@ use App\Models\PaymentGateway;
 use App\Models\User;
 use App\Services\Payments\MoyasarProvider;
 use App\Services\Payments\PaymentGatewayManager;
+use App\Services\Payments\PayPalProvider;
 use App\Services\Payments\TapProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -93,6 +94,53 @@ class PaymentProviderContractTest extends TestCase
         $payment->forceFill(['external_id' => $session->externalId])->save();
         $this->assertTrue($provider->verify($payment, []));
         $this->assertSame('chg-1', $payment->fresh()->external_capture_id);
+    }
+
+    /**
+     * PayPal يرفض الطلب كله بـ400 إن خالف حقل واحد صيغته، فلا تصل العميل صفحة
+     * دفع أصلًا. المؤكَّد هنا شكل الحمولة كما تقبله Orders API v2:
+     * locale بصيغة BCP 47 (شرطة لا شرطة سفلية) — كسر شراءً حيًّا فعلًا —
+     * والمبلغ محوَّلًا لعملة البوابة بمنزلتين، لأن PayPal لا يقبل SAR.
+     */
+    #[Test]
+    public function paypal_sends_an_order_payload_that_the_orders_api_accepts(): void
+    {
+        $gateway = PaymentGateway::create([
+            'provider' => 'paypal', 'label' => 'PayPal', 'mode' => 'live', 'is_active' => true,
+            'currency' => 'USD', 'fx_rate' => 0.2667, 'credentials' => ['client_id' => 'cid', 'secret' => 'sec'],
+        ]);
+        $payment = $this->payment('paypal', $gateway);
+
+        Http::fake([
+            'https://api-m.paypal.com/v1/oauth2/token' => Http::response(['access_token' => 'tok']),
+            'https://api-m.paypal.com/v2/checkout/orders' => Http::response([
+                'id' => 'ORDER-1',
+                'links' => [['rel' => 'approve', 'href' => 'https://www.paypal.com/checkoutnow?token=ORDER-1']],
+            ], 201),
+        ]);
+
+        $session = (new PayPalProvider($gateway))
+            ->createCheckout($payment, 'https://example.test/return', 'https://example.test/cancel');
+
+        $this->assertSame('ORDER-1', $session->externalId);
+        $this->assertSame('https://www.paypal.com/checkoutnow?token=ORDER-1', $session->redirectUrl);
+
+        Http::assertSent(function ($request) use ($payment) {
+            if ($request->url() !== 'https://api-m.paypal.com/v2/checkout/orders') {
+                return true;
+            }
+
+            $unit = $request['purchase_units'][0];
+
+            return $request['application_context']['locale'] === 'ar-SA'
+                && $unit['custom_id'] === (string) $payment->id
+                && $unit['amount']['currency_code'] === 'USD'
+                && $unit['amount']['value'] === '13.07';
+        });
+
+        // 49 ريالًا × 0.2667 = 13.07 دولارًا — وهو ما يُطابَق عند العودة.
+        $this->assertSame(13.07, (float) $payment->fresh()->charged_amount);
+        $this->assertSame('USD', $payment->fresh()->charged_currency);
     }
 
     private function payment(string $provider, PaymentGateway $gateway): Payment

@@ -65,7 +65,9 @@ class PayPalProvider implements PaymentProvider
                     'user_action' => 'PAY_NOW',
                     'shipping_preference' => 'NO_SHIPPING',
                     'brand_name' => config('app.name'),
-                    'locale' => 'ar_SA',
+                    // BCP 47 بشرطة لا بشرطة سفلية: ar_SA يرفضه PayPal بـ400
+                    // INVALID_PARAMETER_SYNTAX فينكسر الشراء عند أول عميل.
+                    'locale' => 'ar-SA',
                 ],
             ])
             ->throw()
