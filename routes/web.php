@@ -22,6 +22,7 @@ use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\FeedbackController;
 use App\Http\Controllers\App\GeoPackController;
 use App\Http\Controllers\App\KpiController;
+use App\Http\Controllers\App\MessageStudioController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\PortfolioController;
 use App\Http\Controllers\App\PresenceController;
@@ -299,13 +300,29 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
         Route::get('projects/{project}/geo/llms.txt', [GeoPackController::class, 'llms'])->name('geo.llms');
     });
 
-    // مختبر الجمهور الاصطناعي.
+    // مختبر الجمهور الاصطناعي واستوديو الرسائل — خلف الميزة نفسها.
     Route::middleware('feature:'.FeatureKey::AUDIENCE_LAB)->group(function (): void {
         Route::get('projects/{project}/audience-lab', [AudienceLabController::class, 'show'])->name('audience.show');
         Route::post('projects/{project}/audience-lab/panel', [AudienceLabController::class, 'buildPanel'])
             ->middleware('throttle:6,60')->name('audience.panel');
         Route::post('projects/{project}/audience-lab/tests', [AudienceLabController::class, 'test'])
             ->middleware('throttle:10,60')->name('audience.test');
+
+        // الاستوديو: الشخصية وحدة العمل — تبويب ومسودة وإصدارات لكل واحدة.
+        Route::get('projects/{project}/message-studio', [MessageStudioController::class, 'show'])
+            ->name('messages.studio');
+        Route::post('projects/{project}/message-studio/panel', [MessageStudioController::class, 'buildPanel'])
+            ->middleware('throttle:6,60')->name('messages.panel');
+        Route::post('projects/{project}/message-studio/suggest', [MessageStudioController::class, 'suggest'])
+            ->middleware('throttle:10,60')->name('messages.suggest');
+        Route::post('projects/{project}/message-studio/variants', [MessageStudioController::class, 'store'])
+            ->name('messages.store');
+        Route::post('projects/{project}/message-studio/tests', [MessageStudioController::class, 'test'])
+            ->middleware('throttle:10,60')->name('messages.test');
+        Route::post('projects/{project}/message-studio/results/{result}/revise', [MessageStudioController::class, 'revise'])
+            ->name('messages.revise');
+        Route::patch('projects/{project}/message-studio/variants/{variant}', [MessageStudioController::class, 'updateStatus'])
+            ->name('messages.status');
     });
 
     // إدارة المنافسين من التقرير: تأكيد مرشّح، استبعاده، أو إضافة محلي.

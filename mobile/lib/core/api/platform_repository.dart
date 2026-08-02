@@ -1005,6 +1005,90 @@ class PlatformRepository {
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
+  // استوديو الرسائل: التطبيق يعرض ويرسل فقط — لا منطق اقتراح أو تقييم محليًّا.
+  Future<Map<String, dynamic>> messageStudio(String projectSlug) async {
+    final response = await _api.get('/projects/$projectSlug/message-studio');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> suggestMessages(
+    String projectSlug, {
+    required String channel,
+    required String objective,
+    String? personaKey,
+  }) async {
+    final response = await _api
+        .post('/projects/$projectSlug/message-studio/suggest', {
+          'channel': channel,
+          'objective': objective,
+          'persona_key': ?personaKey,
+        });
+
+    return Map<String, dynamic>.from(response as Map);
+  }
+
+  Future<Map<String, dynamic>> saveMessageVariant(
+    String projectSlug, {
+    required String personaKey,
+    required String channel,
+    required String objective,
+    required String content,
+    int? parentId,
+  }) async {
+    final response = await _api
+        .post('/projects/$projectSlug/message-studio/variants', {
+          'persona_key': personaKey,
+          'channel': channel,
+          'objective': objective,
+          'content': content,
+          'parent_id': ?parentId,
+        });
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> testMessages(
+    String projectSlug, {
+    int? variantId,
+    String? channel,
+    String? objective,
+  }) async {
+    final response = await _api
+        .post('/projects/$projectSlug/message-studio/tests', {
+          'variant_id': ?variantId,
+          'channel': ?channel,
+          'objective': ?objective,
+        });
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> reviseMessage(
+    String projectSlug,
+    int resultId,
+  ) async {
+    final response = await _api.post(
+      '/projects/$projectSlug/message-studio/results/$resultId/revise',
+      const <String, dynamic>{},
+    );
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> setMessageStatus(
+    String projectSlug,
+    int variantId,
+    String status,
+  ) async {
+    final response = await _api
+        .patch('/projects/$projectSlug/message-studio/variants/$variantId', {
+          'status': status,
+        });
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
   Future<Map<String, dynamic>> runFullDiagnosis(
     String projectSlug, {
     String mode = 'auto',

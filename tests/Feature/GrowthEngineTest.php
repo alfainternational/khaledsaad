@@ -190,9 +190,21 @@ class GrowthEngineTest extends TestCase
             'model' => 'deepseek-v4-flash',
             'choices' => [['message' => ['content' => json_encode([
                 'personas' => [
-                    ['name' => 'سارة', 'age_range' => '25-34', 'role' => 'صاحبة مشروع منزلي', 'pains' => ['ضيق الوقت'], 'buying_style' => 'تقارن ثم تقرر', 'quote' => 'أريد نتيجة لا وعودًا.'],
-                    ['name' => 'ماجد', 'age_range' => '35-44', 'role' => 'مدير تسويق', 'pains' => ['ضغط النتائج'], 'buying_style' => 'يطلب دليلًا', 'quote' => 'أرني الأرقام.'],
-                    ['name' => 'هند', 'age_range' => '22-30', 'role' => 'مستقلة', 'pains' => ['الميزانية'], 'buying_style' => 'حساسة للسعر', 'quote' => 'كل ريال محسوب.'],
+                    ['name' => 'سارة', 'age_range' => '25-34', 'gender' => 'أنثى', 'role' => 'صاحبة مشروع منزلي',
+                        'locations' => ['الرياض'], 'interests' => ['التجارة الإلكترونية', 'المنتجات اليدوية'],
+                        'platforms' => ['إنستغرام'], 'spending_level' => 'متوسط', 'pains' => ['ضيق الوقت'],
+                        'motivation' => 'تريد نتيجة سريعة دون بحث طويل.', 'objection' => 'ماذا لو لم ينفع معي؟',
+                        'buying_style' => 'تقارن ثم تقرر', 'tone' => 'مباشرة ومطمئنة', 'quote' => 'أريد نتيجة لا وعودًا.'],
+                    ['name' => 'ماجد', 'age_range' => '35-44', 'gender' => 'ذكر', 'role' => 'مدير تسويق',
+                        'locations' => ['جدة'], 'interests' => ['تحليلات التسويق', 'الإعلانات المدفوعة'],
+                        'platforms' => ['إكس', 'لينكدإن'], 'spending_level' => 'مرتفع', 'pains' => ['ضغط النتائج'],
+                        'motivation' => 'يحتاج رقمًا يعرضه على مديره.', 'objection' => 'أين الدليل؟',
+                        'buying_style' => 'يطلب دليلًا', 'tone' => 'مهنية بالأرقام', 'quote' => 'أرني الأرقام.'],
+                    ['name' => 'هند', 'age_range' => '22-30', 'gender' => 'أنثى', 'role' => 'مستقلة',
+                        'locations' => ['الدمام'], 'interests' => ['العمل الحر', 'التوفير'],
+                        'platforms' => ['تيك توك'], 'spending_level' => 'منخفض', 'pains' => ['الميزانية'],
+                        'motivation' => 'تريد أعلى قيمة بأقل مبلغ.', 'objection' => 'أجد أرخص منه.',
+                        'buying_style' => 'حساسة للسعر', 'tone' => 'صريحة بالأرقام', 'quote' => 'كل ريال محسوب.'],
                 ],
                 'reactions' => [
                     [

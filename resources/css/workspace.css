@@ -2739,6 +2739,99 @@ button.competitor-list__x:hover {
     word-break: break-word;
 }
 
+/* حقائق الاستهداف: تُقرأ كسطور متقابلة لتُنقل إلى لوحة الإعلان بلا لبس. */
+.persona-facts {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0.75rem 0 0;
+    font-size: 0.88rem;
+}
+
+.persona-facts > div {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 0.5rem;
+    align-items: start;
+}
+
+.persona-facts dt {
+    color: var(--muted);
+}
+
+.persona-facts dd {
+    margin: 0;
+    color: var(--brand-navy);
+}
+
+.studio-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block-end: 1rem;
+}
+
+.studio-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--brand-navy);
+    font: inherit;
+    cursor: pointer;
+}
+
+.studio-tab.is-active {
+    border-color: var(--brand-blue);
+    background: #f2f7ff;
+}
+
+.is-hidden {
+    display: none;
+}
+
+/* الشخصية يسارًا ومساحة الكتابة يمينًا؛ وعلى الجوال الشخصية هي الشاشة. */
+.studio-grid {
+    display: grid;
+    grid-template-columns: minmax(16rem, 22rem) 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+.studio-grid__side,
+.studio-grid__main {
+    display: grid;
+    gap: 1rem;
+}
+
+.studio-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-block-start: 0.75rem;
+}
+
+.studio-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@media (max-width: 60rem) {
+    .studio-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .persona-facts > div {
+        grid-template-columns: 6rem 1fr;
+    }
+}
+
 .stack {
     display: grid;
     gap: 0.75rem;

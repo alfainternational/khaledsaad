@@ -34,7 +34,7 @@
                 <h3>مختبر الجمهور</h3>
                 <p class="muted">اختبر رسالتك على جمهور اصطناعي مبني من بياناتك — درجة واعتراض لكل شخصية.</p>
                 @feature(\App\Support\Billing\FeatureKey::AUDIENCE_LAB)
-                    <a href="{{ route('app.audience.show', $project['slug']) }}" class="btn btn--ghost btn--sm">اختبر رسالتك</a>
+                    <a href="{{ route('app.messages.studio', $project['slug']) }}" class="btn btn--ghost btn--sm">استوديو الرسائل</a>
                 @else
                     <a href="{{ route('app.billing') }}" class="btn btn--ghost btn--sm">متاح في خطة أعلى</a>
                 @endfeature

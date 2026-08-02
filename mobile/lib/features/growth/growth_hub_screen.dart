@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../projects/models.dart';
+import 'message_studio_screen.dart';
 
 class GrowthHubScreen extends StatefulWidget {
   const GrowthHubScreen({
@@ -218,6 +219,21 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
     );
   }
 
+  /// الاستوديو شاشة مستقلة: الشخصية تحتاج المساحة كاملة لا بطاقة داخل مركز.
+  Future<void> _openStudio() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MessageStudioScreen(
+          repository: widget.repository,
+          projectSlug: widget.projectSlug,
+          projectName: widget.projectName,
+        ),
+      ),
+    );
+
+    if (mounted) setState(_reload);
+  }
+
   Future<void> _testAudience() async {
     final message = TextEditingController();
     final run = await showDialog<bool>(
@@ -366,6 +382,10 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
                     TextButton(
                       onPressed: _busy ? null : _testAudience,
                       child: const Text('اختبار رسالة'),
+                    ),
+                    TextButton(
+                      onPressed: _busy ? null : _openStudio,
+                      child: const Text('استوديو الرسائل'),
                     ),
                   ],
                 ),

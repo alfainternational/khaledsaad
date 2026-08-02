@@ -37,27 +37,7 @@
             <h2 id="panel-heading" class="section-title">لوحة جمهورك</h2>
             <div class="card-grid">
                 @foreach ($panel->personas as $persona)
-                    <article class="card persona-card">
-                        <p class="eyebrow">{{ $persona['age_range'] ?? '' }}</p>
-                        <h3>{{ $persona['name'] }}</h3>
-                        <p class="muted">{{ $persona['role'] }}</p>
-
-                        @if (! empty($persona['quote']))
-                            <blockquote class="persona-quote">«{{ $persona['quote'] }}»</blockquote>
-                        @endif
-
-                        @if (! empty($persona['pains']))
-                            <ul class="bullets">
-                                @foreach (array_slice((array) $persona['pains'], 0, 3) as $pain)
-                                    <li>{{ $pain }}</li>
-                                @endforeach
-                            </ul>
-                        @endif
-
-                        @if (! empty($persona['buying_style']))
-                            <p class="muted"><strong>أسلوب الشراء:</strong> {{ $persona['buying_style'] }}</p>
-                        @endif
-                    </article>
+                    @include('app.partials.persona-card', ['persona' => $persona])
                 @endforeach
             </div>
         </section>

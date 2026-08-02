@@ -46,6 +46,11 @@ class GrowthSchemas
     /**
      * لوحة الشخصيات الاصطناعية.
      *
+     * الحقول مقسومة قصدًا إلى نصفين: نصفٌ يُدخَل حرفيًّا في لوحة الاستهداف
+     * (العمر، الجنس، المدن، الاهتمامات، المنصات، مستوى الإنفاق)، ونصفٌ يكتب
+     * الرسالة (الدافع، الاعتراض، النبرة، أسلوب الشراء). حقلٌ لا يخدم أحدهما
+     * حشوٌ يُطيل البطاقة ولا يقود قرارًا — فلا يدخل هنا.
+     *
      * @return array<string, mixed>
      */
     public static function personaPanel(): array
@@ -60,18 +65,41 @@ class GrowthSchemas
                     'maxItems' => 4,
                     'items' => [
                         'type' => 'object',
-                        'required' => ['name', 'age_range', 'role', 'pains', 'buying_style', 'quote'],
+                        'required' => [
+                            'name', 'age_range', 'gender', 'role', 'locations',
+                            'interests', 'platforms', 'spending_level',
+                            'pains', 'motivation', 'objection', 'buying_style', 'tone', 'quote',
+                        ],
                         'properties' => [
                             'name' => ['type' => 'string'],
+                            // مدى لا رقمًا: لوحات الإعلان تستهدف مدى عمريًّا.
                             'age_range' => ['type' => 'string'],
+                            'gender' => ['type' => 'string', 'enum' => ['ذكر', 'أنثى', 'الجنسان']],
                             'role' => ['type' => 'string'],
+                            'locations' => [
+                                'type' => 'array', 'minItems' => 1, 'maxItems' => 4,
+                                'items' => ['type' => 'string'],
+                            ],
+                            'interests' => [
+                                'type' => 'array', 'minItems' => 2, 'maxItems' => 6,
+                                'items' => ['type' => 'string'],
+                            ],
+                            'platforms' => [
+                                'type' => 'array', 'minItems' => 1, 'maxItems' => 4,
+                                'items' => ['type' => 'string'],
+                            ],
+                            'spending_level' => ['type' => 'string', 'enum' => ['منخفض', 'متوسط', 'مرتفع']],
                             'pains' => [
                                 'type' => 'array',
                                 'minItems' => 1,
                                 'maxItems' => 4,
                                 'items' => ['type' => 'string'],
                             ],
+                            // دافع واحد واعتراض واحد: هما ما تُبنى عليه رسالتها.
+                            'motivation' => ['type' => 'string', 'minLength' => 10],
+                            'objection' => ['type' => 'string', 'minLength' => 10],
                             'buying_style' => ['type' => 'string'],
+                            'tone' => ['type' => 'string', 'minLength' => 5],
                             'quote' => ['type' => 'string'],
                         ],
                     ],

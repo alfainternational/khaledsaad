@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\EngagementController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\GuestRunController;
+use App\Http\Controllers\Api\V1\MessageStudioController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\PresenceController as ApiPresenceController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -184,6 +185,20 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 ->middleware('throttle:6,60')->name('personas.build');
             Route::post('projects/{project}/personas/tests', [GrowthController::class, 'personaTest'])
                 ->middleware('throttle:10,60')->name('personas.test');
+
+            // استوديو الرسائل — نفس عقود الويب وحالاته.
+            Route::get('projects/{project}/message-studio', [MessageStudioController::class, 'show'])
+                ->name('messages.studio');
+            Route::post('projects/{project}/message-studio/suggest', [MessageStudioController::class, 'suggest'])
+                ->middleware('throttle:10,60')->name('messages.suggest');
+            Route::post('projects/{project}/message-studio/variants', [MessageStudioController::class, 'store'])
+                ->name('messages.store');
+            Route::post('projects/{project}/message-studio/tests', [MessageStudioController::class, 'test'])
+                ->middleware('throttle:10,60')->name('messages.test');
+            Route::post('projects/{project}/message-studio/results/{result}/revise', [MessageStudioController::class, 'revise'])
+                ->name('messages.revise');
+            Route::patch('projects/{project}/message-studio/variants/{variant}', [MessageStudioController::class, 'updateStatus'])
+                ->name('messages.status');
         });
 
         // الأرصدة والإشعارات — نظير صفحات الويب.
