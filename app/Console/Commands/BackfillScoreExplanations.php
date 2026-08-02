@@ -23,7 +23,10 @@ use Throwable;
  */
 class BackfillScoreExplanations extends Command
 {
-    protected $signature = 'reports:backfill-score-explanation {--dry-run : اعرض ما سيتغير بلا كتابة}';
+    protected $signature = 'reports:backfill-score-explanation
+        {--dry-run : اعرض ما سيتغير بلا كتابة}
+        {--rescore : صحّح درجة التقارير التي حُسبت على قواعد لم تُطرح أسئلتها}
+        {--only= : أرقام تقارير بعينها مفصولة بفاصلة — يُستعمل مع rescore}';
 
     protected $description = 'يضيف السؤال والإجابة والحصة وسلّم التقدير إلى تفصيل درجة التقارير القديمة';
 
@@ -34,11 +37,14 @@ class BackfillScoreExplanations extends Command
         ProjectContextResolver $context,
     ): int {
         $dry = (bool) $this->option('dry-run');
+        $rescore = (bool) $this->option('rescore');
+        $only = array_filter(array_map('intval', explode(',', (string) $this->option('only'))));
         $updated = $skipped = $drifted = $failed = 0;
 
         Report::with('toolRun.toolVersion.fields', 'toolRun.answers', 'toolRun.project')
+            ->when($only !== [], fn ($query) => $query->whereIn('id', $only))
             ->chunkById(100, function ($reports) use (
-                $scorer, $explainer, $completeness, $context, $dry,
+                $scorer, $explainer, $completeness, $context, $dry, $rescore,
                 &$updated, &$skipped, &$drifted, &$failed
             ) {
                 foreach ($reports as $report) {
@@ -79,10 +85,30 @@ class BackfillScoreExplanations extends Command
                     }
 
                     if ((int) $fresh['score'] !== (int) $report->score) {
-                        $this->warn("تقرير {$report->id}: الدرجة المعاد حسابها {$fresh['score']} تخالف المحفوظة {$report->score} — تُرك كما هو.");
-                        $drifted++;
+                        /*
+                         * الانحراف هنا ليس اختلاف رأي بين مُصحِّحين، بل أثر عطل:
+                         * المُصحِّح القديم كان يقسم على أوزان القواعد كلها، ومنها
+                         * قواعدُ أخفى سياقُ المشروع أسئلتها — فتُحتسب أصفارًا.
+                         * أي أن المستخدم عوقب على ما لم يُسأل عنه، وكل الانحرافات
+                         * المرصودة كانت لصالح رفع الدرجة لا خفضها.
+                         *
+                         * ومع ذلك لا يُصحَّح تلقائيًّا: تغيير رقم صدر لعميل قرارٌ
+                         * لا يُتخذ نيابة عنه في أمر صيانة. `--rescore` يجعله فعلًا
+                         * واعيًا يُطلب صراحةً، ويظل الافتراض هو الترك والإبلاغ.
+                         */
+                        if (! $rescore) {
+                            $this->warn("تقرير {$report->id}: الدرجة المعاد حسابها {$fresh['score']} تخالف المحفوظة {$report->score} — تُرك كما هو.");
+                            $drifted++;
 
-                        continue;
+                            continue;
+                        }
+
+                        $this->line("تقرير {$report->id}: تصحيح الدرجة {$report->score} ← {$fresh['score']}.");
+
+                        if (! $dry) {
+                            $report->forceFill(['score' => $fresh['score']])->save();
+                            $run->forceFill(['base_score' => $fresh['score']])->save();
+                        }
                     }
 
                     $updated++;

@@ -61,6 +61,30 @@ class BackfillScoreExplanationTest extends TestCase
         $this->assertSame($report->score, $report->fresh()->score);
     }
 
+    /**
+     * `--rescore` فعلٌ واعٍ يُطلب صراحةً: يصحّح الدرجة ويشرحها معًا.
+     *
+     * الحارس هنا مزدوج — يتحقق أن الخيار يعمل، وأن غيابه يبقي السلوك على
+     * الترك. أي انزلاق يجعل أمر صيانة يغيّر أرقامًا رآها عملاء.
+     */
+    #[Test]
+    public function rescore_corrects_the_drifted_score_only_when_asked(): void
+    {
+        $report = $this->legacyReport();
+        $original = $report->score;
+        $report->forceFill(['score' => $original + 7])->save();
+
+        $this->artisan('reports:backfill-score-explanation', [
+            '--rescore' => true,
+            '--only' => (string) $report->id,
+        ])->assertSuccessful();
+
+        $report->refresh();
+
+        $this->assertSame($original, $report->score, 'الدرجة تعود إلى ما تنتجه القواعد المنطبقة.');
+        $this->assertArrayHasKey('share', $report->sections()->where('key', 'score')->firstOrFail()->content_json['breakdown'][0]);
+    }
+
     #[Test]
     public function the_dry_run_writes_nothing(): void
     {
