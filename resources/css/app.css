@@ -1,15 +1,6 @@
 @import 'tailwindcss';
 @import './workspace.css';
 @import './site-pages.css';
-@import './content-dashboard.css';
-
-.content-dashboard {
-    min-width: 0;
-}
-
-@media (max-width: 760px) {
-    .content-dashboard { overflow: clip; }
-}
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
