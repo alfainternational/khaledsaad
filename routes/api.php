@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\MessageStudioController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\PresenceController as ApiPresenceController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\ProspectController as ApiProspectController;
 use App\Http\Controllers\Api\V1\PublicContentController;
 use App\Http\Controllers\Api\V1\ReadinessController as ApiReadinessController;
 use App\Http\Controllers\Api\V1\ReportController;
@@ -199,6 +200,18 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 ->name('messages.revise');
             Route::patch('projects/{project}/message-studio/variants/{variant}', [MessageStudioController::class, 'updateStatus'])
                 ->name('messages.status');
+
+            // العملاء المتوقعون — نفس الخدمة والسقف في الويب والتطبيق.
+            Route::get('projects/{project}/prospects', [ApiProspectController::class, 'index'])
+                ->name('prospects.index');
+            Route::post('projects/{project}/prospects', [ApiProspectController::class, 'store'])
+                ->name('prospects.store');
+            Route::post('projects/{project}/prospects/messages', [ApiProspectController::class, 'generate'])
+                ->middleware('throttle:10,60')->name('prospects.generate');
+            Route::patch('projects/{project}/prospects/{prospect}', [ApiProspectController::class, 'update'])
+                ->name('prospects.update');
+            Route::patch('projects/{project}/prospect-messages/{message}', [ApiProspectController::class, 'markSent'])
+                ->name('prospects.messages.sent');
         });
 
         // الأرصدة والإشعارات — نظير صفحات الويب.

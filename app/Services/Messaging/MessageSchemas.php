@@ -42,6 +42,39 @@ class MessageSchemas
     }
 
     /**
+     * رسالة لكل عميل متوقع بالاسم.
+     *
+     * بلا score ولا reaction: رقمٌ بجانب اسم إنسان حقيقي يُقرأ كأنه استُطلع،
+     * والمنصة لا تملك رأيه ولا تدّعيه.
+     *
+     * @param  array<int, string>  $prospectKeys
+     * @return array<string, mixed>
+     */
+    public static function prospectMessages(array $prospectKeys, int $maxLength): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['messages'],
+            'properties' => [
+                'messages' => [
+                    'type' => 'array',
+                    'minItems' => count($prospectKeys),
+                    'maxItems' => count($prospectKeys),
+                    'items' => [
+                        'type' => 'object',
+                        'required' => ['prospect_key', 'content', 'why'],
+                        'properties' => [
+                            'prospect_key' => ['type' => 'string', 'enum' => array_values($prospectKeys)],
+                            'content' => ['type' => 'string', 'minLength' => 20, 'maxLength' => $maxLength],
+                            'why' => ['type' => 'string', 'minLength' => 10, 'maxLength' => 240],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * @param  array<int, string>  $personaKeys
      * @return array<string, mixed>
      */

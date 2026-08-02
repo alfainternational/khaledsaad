@@ -27,6 +27,7 @@ use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\PortfolioController;
 use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\ProjectController;
+use App\Http\Controllers\App\ProspectController;
 use App\Http\Controllers\App\PulseController;
 use App\Http\Controllers\App\QuestionAssistController;
 use App\Http\Controllers\App\ReadinessController;
@@ -323,6 +324,18 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
             ->name('messages.revise');
         Route::patch('projects/{project}/message-studio/variants/{variant}', [MessageStudioController::class, 'updateStatus'])
             ->name('messages.status');
+
+        // العملاء المتوقعون: رسالة باسم كل واحد منهم.
+        Route::get('projects/{project}/prospects', [ProspectController::class, 'index'])->name('prospects.index');
+        Route::post('projects/{project}/prospects', [ProspectController::class, 'store'])->name('prospects.store');
+        Route::post('projects/{project}/prospects/messages', [ProspectController::class, 'generate'])
+            ->middleware('throttle:10,60')->name('prospects.generate');
+        Route::post('projects/{project}/prospects/{prospect}/messages', [ProspectController::class, 'storeMessage'])
+            ->name('prospects.messages.store');
+        Route::patch('projects/{project}/prospects/{prospect}', [ProspectController::class, 'updateProspect'])
+            ->name('prospects.update');
+        Route::patch('projects/{project}/prospect-messages/{message}', [ProspectController::class, 'markSent'])
+            ->name('prospects.messages.sent');
     });
 
     // إدارة المنافسين من التقرير: تأكيد مرشّح، استبعاده، أو إضافة محلي.

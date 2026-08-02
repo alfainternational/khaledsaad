@@ -85,6 +85,38 @@ class PersonaMessageProfileService
     }
 
     /**
+     * أقرب شخصية إلى عميل متوقع: تطابق المدينة أولًا ثم الاهتمامات.
+     *
+     * تُقترح ولا تُفرض — صاحب المشروع يعرف عميله أكثر من أي مطابقة. وحين
+     * لا يتطابق شيء نعيد null بدل «أقرب واحدة على أي حال»: شخصية خاطئة
+     * تعطي نبرة خاطئة، والفراغ أصدق من مطابقة بلا أساس.
+     *
+     * @param  array<int, string>  $interests
+     */
+    public function bestMatch(PersonaPanel $panel, ?string $city, array $interests): ?string
+    {
+        $best = null;
+        $bestScore = 0;
+
+        foreach ($panel->personas ?? [] as $persona) {
+            $score = 0;
+
+            if (filled($city) && in_array($city, (array) ($persona['locations'] ?? []), true)) {
+                $score += 2;
+            }
+
+            $score += count(array_intersect($interests, (array) ($persona['interests'] ?? [])));
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $this->keyFor($persona);
+            }
+        }
+
+        return $best;
+    }
+
+    /**
      * @param  array<string, mixed>  $persona
      */
     private function avoid(array $persona): string

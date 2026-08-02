@@ -12,6 +12,7 @@ import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import '../projects/models.dart';
 import 'message_studio_screen.dart';
+import 'prospects_screen.dart';
 
 class GrowthHubScreen extends StatefulWidget {
   const GrowthHubScreen({
@@ -234,6 +235,20 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
     if (mounted) setState(_reload);
   }
 
+  Future<void> _openProspects() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ProspectsScreen(
+          repository: widget.repository,
+          projectSlug: widget.projectSlug,
+          projectName: widget.projectName,
+        ),
+      ),
+    );
+
+    if (mounted) setState(_reload);
+  }
+
   Future<void> _testAudience() async {
     final message = TextEditingController();
     final run = await showDialog<bool>(
@@ -386,6 +401,10 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
                     TextButton(
                       onPressed: _busy ? null : _openStudio,
                       child: const Text('استوديو الرسائل'),
+                    ),
+                    TextButton(
+                      onPressed: _busy ? null : _openProspects,
+                      child: const Text('عملاؤك المتوقعون'),
                     ),
                   ],
                 ),

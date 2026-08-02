@@ -1089,6 +1089,79 @@ class PlatformRepository {
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
+  // العملاء المتوقعون: التطبيق يعرض ويرسل، والتوليد والسقف على الخادم.
+  Future<Map<String, dynamic>> prospects(String projectSlug) async {
+    final response = await _api.get('/projects/$projectSlug/prospects');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> addProspect(
+    String projectSlug, {
+    required String name,
+    required String temperature,
+    required String preferredChannel,
+    String? organization,
+    String? role,
+    String? city,
+    String? notes,
+    List<String>? interests,
+  }) async {
+    final response = await _api.post('/projects/$projectSlug/prospects', {
+      'name': name,
+      'temperature': temperature,
+      'preferred_channel': preferredChannel,
+      'organization': ?organization,
+      'role': ?role,
+      'city': ?city,
+      'notes': ?notes,
+      'interests': ?interests,
+    });
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> generateProspectMessages(
+    String projectSlug, {
+    required String channel,
+    required String objective,
+    int? prospectId,
+  }) async {
+    final response = await _api
+        .post('/projects/$projectSlug/prospects/messages', {
+          'channel': channel,
+          'objective': objective,
+          'prospect_id': ?prospectId,
+        });
+
+    return Map<String, dynamic>.from(response as Map);
+  }
+
+  Future<Map<String, dynamic>> markProspectMessageSent(
+    String projectSlug,
+    int messageId,
+  ) async {
+    final response = await _api.patch(
+      '/projects/$projectSlug/prospect-messages/$messageId',
+      const <String, dynamic>{},
+    );
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> updateProspectStatus(
+    String projectSlug,
+    int prospectId,
+    String status,
+  ) async {
+    final response = await _api
+        .patch('/projects/$projectSlug/prospects/$prospectId', {
+          'status': status,
+        });
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
   Future<Map<String, dynamic>> runFullDiagnosis(
     String projectSlug, {
     String mode = 'auto',
