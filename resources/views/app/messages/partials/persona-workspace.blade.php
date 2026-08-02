@@ -43,6 +43,10 @@
                     <input type="hidden" name="persona_key" value="{{ $tab['key'] }}">
                     <input type="hidden" name="channel" value="{{ $channel->value }}">
                     <input type="hidden" name="objective" value="{{ $objective->value }}">
+                    @if (! empty($source))
+                        <input type="hidden" name="source" value="report">
+                        <input type="hidden" name="source_id" value="{{ $source['report']->id }}">
+                    @endif
                     <button type="submit" class="btn btn--ghost btn--sm" data-once>اقترح لي</button>
                 </form>
             </div>

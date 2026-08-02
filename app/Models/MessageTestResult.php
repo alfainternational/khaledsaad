@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Shared\Evidence\EvidenceLevel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,7 +16,8 @@ class MessageTestResult extends Model
 {
     protected $fillable = [
         'message_test_batch_id', 'message_variant_id', 'persona_key',
-        'score', 'reaction', 'strength', 'objection', 'revised_content', 'model_metadata',
+        'score', 'evidence_level', 'reaction', 'strength', 'objection',
+        'revised_content', 'model_metadata',
     ];
 
     protected function casts(): array
@@ -23,7 +25,17 @@ class MessageTestResult extends Model
         return [
             'score' => 'integer',
             'model_metadata' => 'array',
+            'evidence_level' => EvidenceLevel::class,
         ];
+    }
+
+    /**
+     * رد الشخصية الاصطناعية فرضية دائمًا: لا مشترٍ حقيقي قرأ هذه الرسالة.
+     * الدرجة مؤشر ترتيب بين الصياغات، لا قياس أداء متوقَّع.
+     */
+    public function evidenceLevel(): EvidenceLevel
+    {
+        return $this->evidence_level ?? EvidenceLevel::Inferred;
     }
 
     public function batch(): BelongsTo

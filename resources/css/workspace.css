@@ -2763,6 +2763,12 @@ button.competitor-list__x:hover {
     color: var(--brand-navy);
 }
 
+/* شرح الفرضية بجانب وسمها لا تحته: الوسم وحده يُقرأ زينةً بلا سببه. */
+.evidence-note {
+    font-size: 0.86rem;
+    line-height: 1.7;
+}
+
 .studio-tabs {
     display: flex;
     flex-wrap: wrap;

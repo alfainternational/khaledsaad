@@ -9,10 +9,12 @@ use App\Models\MessageTestResult;
 use App\Models\MessageVariant;
 use App\Models\PersonaPanel;
 use App\Models\Project;
+use App\Models\Report;
 use App\Services\Growth\SyntheticAudience;
 use App\Services\Messaging\MessageSuggestionService;
 use App\Services\Messaging\MessageTestService;
 use App\Services\Messaging\PersonaMessageProfileService;
+use App\Services\Messaging\ToolMessageContextService;
 use App\Support\Messaging\MessageChannel;
 use App\Support\Messaging\MessageObjective;
 use Illuminate\Http\RedirectResponse;
@@ -35,6 +37,7 @@ class MessageStudioController extends Controller
         private readonly PersonaMessageProfileService $profiles,
         private readonly MessageSuggestionService $suggestions,
         private readonly MessageTestService $tests,
+        private readonly ToolMessageContextService $toolContext,
     ) {}
 
     public function show(Request $request, Project $project): View
@@ -44,10 +47,12 @@ class MessageStudioController extends Controller
         $panel = $project->personaPanel;
         $channel = $this->channel($request);
         $objective = $this->objective($request);
+        $source = $this->source($project, $request->query('source'), $request->query('source_id'));
 
         return view('app.messages.studio', [
             'project' => $project,
             'panel' => $panel,
+            'source' => $source,
             'personas' => $panel ? $this->personaTabs($panel, $channel, $objective) : [],
             'channel' => $channel,
             'objective' => $objective,
@@ -87,11 +92,19 @@ class MessageStudioController extends Controller
             'persona_key' => 'nullable|string|max:64',
             'channel' => 'required|string|in:'.implode(',', array_keys(MessageChannel::options())),
             'objective' => 'required|string|in:'.implode(',', array_keys(MessageObjective::options())),
+            'source' => 'nullable|string|in:report',
+            'source_id' => 'nullable|integer',
         ]);
 
-        $keys = $validated['persona_key'] !== null && $validated['persona_key'] !== ''
+        // filled لا !== null: المفتاح الغائب عن الطلب لا يظهر في نتيجة
+        // validate أصلًا، فمقارنته بـ null ترمي «مفتاح غير معرّف».
+        $keys = filled($validated['persona_key'] ?? null)
             ? [$validated['persona_key']]
             : array_keys($this->profiles->profiles($panel));
+
+        // الحقائق تُستخرج على الخادم من معرّف التقرير، ولا تُقبل من النموذج
+        // المرسَل: لو وثقنا بسياق يأتي مع الطلب لأمكن حقن «دليل» ملفَّق.
+        $source = $this->source($project, $validated['source'] ?? null, $validated['source_id'] ?? null);
 
         $outcome = $this->suggestions->suggest(
             $panel,
@@ -99,6 +112,11 @@ class MessageStudioController extends Controller
             MessageChannel::from($validated['channel']),
             MessageObjective::from($validated['objective']),
             $request->user(),
+            $source === null ? [] : [
+                'type' => 'report',
+                'id' => $source['report']->id,
+                'context' => $source['context'],
+            ],
         );
 
         $redirect = redirect()->route('app.messages.studio', [
@@ -150,7 +168,7 @@ class MessageStudioController extends Controller
         }
 
         // الأب من مشروع آخر لا يُقبل مهما مُرّر معرّفه.
-        $parent = $validated['parent_id'] !== null
+        $parent = filled($validated['parent_id'] ?? null)
             ? MessageVariant::where('id', $validated['parent_id'])
                 ->where('persona_panel_id', $panel->id)->first()
             : null;
@@ -191,7 +209,7 @@ class MessageStudioController extends Controller
             'objective' => 'nullable|string|in:'.implode(',', array_keys(MessageObjective::options())),
         ]);
 
-        [$variants, $mode] = $validated['variant_id'] !== null
+        [$variants, $mode] = filled($validated['variant_id'] ?? null)
             ? [$this->singleVariant($panel, (int) $validated['variant_id']), MessageTestBatch::MODE_SINGLE]
             : [$this->latestPerPersona($panel, $validated['channel'] ?? null, $validated['objective'] ?? null),
                 MessageTestBatch::MODE_BATCH];
@@ -307,6 +325,29 @@ class MessageStudioController extends Controller
             ->when($objective !== null, fn ($query) => $query->where('objective', $objective))
             ->latest('id')->get()
             ->unique('persona_key')->values();
+    }
+
+    /**
+     * التقرير المصدر بعد التحقق من ملكيته وتأهيل أداته.
+     *
+     * تقرير من مشروع آخر يُهمَل بصمت لا يُرفع خطأً: الرابط قد يكون قديمًا،
+     * وإسقاط السياق أهون من منع المستخدم من فتح استوديوه.
+     *
+     * @return array{report: Report, context: array<string, mixed>|null}|null
+     */
+    private function source(Project $project, mixed $type, mixed $id): ?array
+    {
+        if ($type !== 'report' || ! is_numeric($id)) {
+            return null;
+        }
+
+        $report = Report::where('id', (int) $id)->where('project_id', $project->id)->first();
+
+        if ($report === null || ! $this->toolContext->qualifies($report)) {
+            return null;
+        }
+
+        return ['report' => $report, 'context' => $this->toolContext->contextFor($report)];
     }
 
     private function channel(Request $request): MessageChannel

@@ -35,6 +35,12 @@
     @else
         <section aria-labelledby="panel-heading">
             <h2 id="panel-heading" class="section-title">لوحة جمهورك</h2>
+            <p class="alert alert--info">
+                @include('app.partials.evidence-badge', [
+                    'level' => $panel->evidenceLevel(),
+                    'note' => 'شخصيات مبنية على وصف مشروعك لا عملاء حقيقيين — الدرجات ترتّب الصياغات ولا تتنبأ بالأداء.',
+                ])
+            </p>
             <div class="card-grid">
                 @foreach ($panel->personas as $persona)
                     @include('app.partials.persona-card', ['persona' => $persona])
@@ -68,6 +74,7 @@
                             <strong>
                                 {{ $reaction['persona'] }}
                                 <span class="score-chip">{{ $reaction['score'] }}/100</span>
+                                @include('app.partials.evidence-badge', ['level' => $test->evidenceLevel()])
                             </strong>
                             <p class="muted">{{ $reaction['reaction'] }}</p>
                             @if (! empty($reaction['objection']))

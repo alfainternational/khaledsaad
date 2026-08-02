@@ -7,6 +7,7 @@ use App\Models\MessageTestResult;
 use App\Models\MessageVariant;
 use App\Models\PersonaPanel;
 use App\Models\User;
+use App\Modules\Shared\Evidence\EvidenceLevel;
 use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;
 use Illuminate\Support\Collection;
@@ -89,6 +90,8 @@ class MessageTestService
                     'message_variant_id' => $variant->id,
                     'persona_key' => $variant->persona_key,
                     'score' => (int) $result['score'],
+                    // فرضية دائمًا: لا مشترٍ حقيقي قرأ هذه الرسالة (§٤.١).
+                    'evidence_level' => EvidenceLevel::Inferred,
                     'reaction' => $result['reaction'],
                     'strength' => $result['strength'] ?? null,
                     'objection' => $result['objection'] ?? null,

@@ -8,10 +8,12 @@ use App\Models\MessageVariant;
 use App\Models\PersonaPanel;
 use App\Models\Project;
 use App\Models\User;
+use App\Modules\Shared\Evidence\EvidenceLevel;
 use App\Services\Messaging\MessageSchemas;
 use App\Services\Messaging\MessageSuggestionService;
 use App\Services\Messaging\MessageTestService;
 use App\Services\Messaging\PersonaMessageProfileService;
+use App\Services\Messaging\ToolMessageContextService;
 use App\Services\Projects\ProjectService;
 use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;
@@ -31,6 +33,13 @@ use Tests\TestCase;
 class MessageStudioTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(\Database\Seeders\ToolCatalogSeeder::class);
+    }
 
     #[Test]
     public function the_suggestion_contract_forbids_a_shared_message(): void
@@ -249,6 +258,176 @@ class MessageStudioTest extends TestCase
 
         $response->assertSee('اقترح رسائل للجميع', false);
         $response->assertSee('اختبر جميع الرسائل', false);
+    }
+
+    #[Test]
+    public function persona_output_is_labelled_as_a_hypothesis_everywhere(): void
+    {
+        [$user, $panel] = $this->panel();
+        $variants = $this->draftsFor($panel, $user);
+
+        $this->fakeRunner(fn () => [
+            'results' => $variants->map(fn (MessageVariant $variant) => [
+                'persona_key' => $variant->persona_key, 'score' => 70,
+                'reaction' => 'قرأتها ووجدتها قريبة مني لكنها تحتاج دليلًا أوضح.',
+                'strength' => 'الوضوح.', 'objection' => 'أين الدليل؟',
+                'revised_content' => 'تعديل خاص بهذه الشخصية وحدها دون سواها.',
+            ])->all(),
+            'summary' => ['comparison' => 'الفروق واضحة بين الشخصيتين هنا.', 'next_experiment' => 'جرّب رقمًا.'],
+        ]);
+
+        app(MessageTestService::class)->test($panel, $variants, $user, MessageTestBatch::MODE_BATCH);
+
+        // §٤.١: اللوحة والرد كلاهما inferred — لا مشترٍ حقيقي وراءهما.
+        $this->assertSame(EvidenceLevel::Inferred, $panel->fresh()->evidenceLevel());
+        $this->assertSame(EvidenceLevel::Inferred, MessageTestResult::first()->evidenceLevel());
+
+        $this->actingAs($user)
+            ->get(route('app.messages.studio', $panel->project))
+            ->assertOk()
+            ->assertSee('فرضية', false)
+            ->assertSee('لا عملاء حقيقيين', false);
+
+        $this->actingAs($user)
+            ->getJson(route('api.v1.messages.studio', $panel->project))
+            ->assertOk()
+            ->assertJsonPath('data.evidence.level', 'inferred')
+            ->assertJsonPath('data.evidence.label', 'فرضية')
+            ->assertJsonPath('data.batches.0.results.0.evidence_label', 'فرضية');
+    }
+
+    #[Test]
+    public function only_qualified_tools_offer_the_studio_entry_point(): void
+    {
+        $service = app(ToolMessageContextService::class);
+
+        $this->assertSame(
+            ['brand-clarity', 'audience-map', 'offer-builder', 'content-engine', 'campaign-planner'],
+            ToolMessageContextService::qualifiedTools(),
+        );
+
+        [$user, $panel] = $this->panel();
+
+        $qualified = $this->report($panel->project, 'offer-builder');
+        $unqualified = $this->report($panel->project, 'seo-compass');
+
+        $this->assertTrue($service->qualifies($qualified));
+        $this->assertFalse($service->qualifies($unqualified));
+
+        $this->actingAs($user)->get(route('app.reports.show', $qualified))
+            ->assertOk()->assertSee('حوّل النتيجة إلى رسائل مخصصة', false);
+
+        $this->actingAs($user)->get(route('app.reports.show', $unqualified))
+            ->assertOk()->assertDontSee('حوّل النتيجة إلى رسائل مخصصة', false);
+    }
+
+    #[Test]
+    public function only_evidenced_findings_reach_the_message_prompt(): void
+    {
+        [$user, $panel] = $this->panel();
+        $report = $this->report($panel->project, 'offer-builder');
+
+        $report->findings()->create([
+            'title' => 'الشحن خلال ٤٨ ساعة داخل الرياض',
+            'description' => 'مؤكد من بيانات الطلبات.',
+            'category' => 'العرض', 'severity' => 'high',
+            'evidence' => 'سجل الطلبات الأخير', 'is_assumption' => false,
+        ]);
+        $report->findings()->create([
+            'title' => 'العملاء غالبًا يفضّلون الدفع عند الاستلام',
+            'description' => 'انطباع بلا قياس.',
+            'category' => 'العرض', 'severity' => 'medium',
+            'evidence' => 'انطباع', 'is_assumption' => true,
+        ]);
+
+        $context = app(ToolMessageContextService::class)->contextFor($report->fresh());
+
+        // الافتراض لا يُمرَّر: إعلانٌ يَعِد بما لم يثبت أسوأ من إعلان بلا دليل.
+        $claims = array_column($context['evidence'], 'claim');
+        $this->assertContains('الشحن خلال ٤٨ ساعة داخل الرياض', $claims);
+        $this->assertNotContains('العملاء غالبًا يفضّلون الدفع عند الاستلام', $claims);
+
+        $captured = null;
+        $this->fakeRunner(function (AIRequest $request) use (&$captured, $panel) {
+            $captured = json_encode($request->messages, JSON_UNESCAPED_UNICODE);
+
+            return ['messages' => array_map(fn (string $key) => [
+                'persona_key' => $key,
+                'content' => 'نصٌّ مستقل لهذه الشخصية مبني على دليل التقرير وحده.',
+                'teaching_note' => 'يستعمل الدليل المؤكد لا الانطباع.',
+                'reusable_formula' => '[الدليل] + [الإجراء]',
+            ], array_keys(app(PersonaMessageProfileService::class)->profiles($panel)))];
+        });
+
+        $this->actingAs($user)->post(route('app.messages.suggest', $panel->project), [
+            'channel' => 'ad', 'objective' => 'action',
+            'source' => 'report', 'source_id' => $report->id,
+        ])->assertRedirect();
+
+        $this->assertStringContainsString('الشحن خلال ٤٨ ساعة داخل الرياض', $captured);
+        $this->assertStringNotContainsString('العملاء غالبًا يفضّلون الدفع عند الاستلام', $captured);
+        $this->assertSame('report', MessageVariant::first()->source_type);
+        $this->assertSame($report->id, MessageVariant::first()->source_id);
+    }
+
+    #[Test]
+    public function a_report_from_another_project_never_leaks_into_the_prompt(): void
+    {
+        [$user, $panel] = $this->panel();
+        [, $otherPanel] = $this->panel('مشروع آخر');
+        $foreign = $this->report($otherPanel->project, 'offer-builder');
+        $foreign->findings()->create([
+            'title' => 'سرٌّ من مشروع آخر لا يجوز تسريبه',
+            'description' => 'لا يخص هذا المشروع.',
+            'category' => 'العرض', 'severity' => 'high',
+            'evidence' => 'مصدر داخلي', 'is_assumption' => false,
+        ]);
+
+        $captured = null;
+        $this->fakeRunner(function (AIRequest $request) use (&$captured, $panel) {
+            $captured = json_encode($request->messages, JSON_UNESCAPED_UNICODE);
+
+            return ['messages' => array_map(fn (string $key) => [
+                'persona_key' => $key,
+                'content' => 'نصٌّ مستقل لهذه الشخصية بلا أي سياق خارجي مسرَّب.',
+                'teaching_note' => 'مبني على ملف المشروع نفسه.',
+                'reusable_formula' => '[الوجع] + [الإجراء]',
+            ], array_keys(app(PersonaMessageProfileService::class)->profiles($panel)))];
+        });
+
+        $this->actingAs($user)->post(route('app.messages.suggest', $panel->project), [
+            'channel' => 'ad', 'objective' => 'action',
+            'source' => 'report', 'source_id' => $foreign->id,
+        ])->assertRedirect();
+
+        $this->assertStringNotContainsString('سرٌّ من مشروع آخر', $captured);
+        $this->assertNull(MessageVariant::first()->source_type);
+    }
+
+    private function report(Project $project, string $toolKey): \App\Models\Report
+    {
+        // أدوات حقيقية من الفهرس لا مصطنعة: التأهيل يُقاس بمفتاح الأداة كما هو.
+        $tool = \App\Models\Tool::where('key', $toolKey)->firstOrFail();
+        $version = $tool->versions()->latest('version')->firstOrFail();
+        $run = \App\Models\ToolRun::create([
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'project_id' => $project->id,
+            'user_id' => $project->workspace->owner_id ?? User::first()->id,
+            'tool_version_id' => $version->id,
+            'status' => 'completed',
+            'answers' => [],
+        ]);
+
+        return \App\Models\Report::create([
+            'tool_run_id' => $run->id,
+            'project_id' => $project->id,
+            'title' => 'تقرير '.$toolKey,
+            'status' => 'published',
+            'score' => 60,
+            'score_band' => 'متوسط',
+            'summary' => 'ملخص التقرير التجريبي لهذه الأداة.',
+            'published_at' => now(),
+        ]);
     }
 
     /**

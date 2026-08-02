@@ -1236,6 +1236,46 @@
       "status": "verified"
     },
     {
+      "id": "customer.message_studio.manage",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.messages.studio",
+        "method": "GET|POST|PATCH"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.messages.studio",
+        "method": "GET|POST|PATCH"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "MessageStudioScreen",
+        "action": "persona_tabs_suggest_test_approve"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "validation",
+        "entitlement_denied",
+        "partial",
+        "error",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\MessageStudioTest"
+        ],
+        "api": [
+          "Tests\\Feature\\MessageStudioTest"
+        ],
+        "mobile": [
+          "mobile/test/widget_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
       "id": "customer.audience_lab.manage",
       "role": "customer",
       "web": {

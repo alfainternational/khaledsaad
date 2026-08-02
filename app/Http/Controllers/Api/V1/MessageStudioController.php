@@ -9,6 +9,7 @@ use App\Models\MessageTestResult;
 use App\Models\MessageVariant;
 use App\Models\PersonaPanel;
 use App\Models\Project;
+use App\Modules\Shared\Evidence\EvidenceLevel;
 use App\Services\Messaging\MessageSuggestionService;
 use App\Services\Messaging\MessageTestService;
 use App\Services\Messaging\PersonaMessageProfileService;
@@ -52,6 +53,14 @@ class MessageStudioController extends Controller
                     [],
                 ),
                 'panel' => $panel?->only(['id', 'personas', 'source', 'generated_at']),
+                // تصنيف الدليل يسافر مع البيانات لا مع الواجهة: التطبيق لا
+                // يعيد استنتاجه، فلا تختلف تسمية الفرضية بين سطحين.
+                'evidence' => [
+                    'level' => $panel?->evidenceLevel()->value ?? EvidenceLevel::Inferred->value,
+                    'label' => ($panel?->evidenceLevel() ?? EvidenceLevel::Inferred)->label(),
+                    'note' => 'شخصيات مبنية على وصف مشروعك لا عملاء حقيقيين — '
+                        .'الدرجات ترتّب الصياغات بينها ولا تتنبأ بأداء إعلان.',
+                ],
                 'personas' => $panel === null ? [] : $this->personas($panel),
                 'batches' => $panel === null ? [] : MessageTestBatch::where('project_id', $project->id)
                     ->with('results')->latest('id')->limit(5)->get()
@@ -66,6 +75,8 @@ class MessageStudioController extends Controller
                             'persona_key' => $result->persona_key,
                             'message_variant_id' => $result->message_variant_id,
                             'score' => $result->score,
+                            'evidence_level' => $result->evidenceLevel()->value,
+                            'evidence_label' => $result->evidenceLevel()->label(),
                             'reaction' => $result->reaction,
                             'strength' => $result->strength,
                             'objection' => $result->objection,
@@ -215,6 +226,8 @@ class MessageStudioController extends Controller
                     'persona_key' => $result->persona_key,
                     'message_variant_id' => $result->message_variant_id,
                     'score' => $result->score,
+                    'evidence_level' => $result->evidenceLevel()->value,
+                    'evidence_label' => $result->evidenceLevel()->label(),
                     'reaction' => $result->reaction,
                     'strength' => $result->strength,
                     'objection' => $result->objection,

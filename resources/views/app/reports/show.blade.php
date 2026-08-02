@@ -252,6 +252,53 @@
         @endforelse
     </section>
 
+    {{--
+        نقطة دخول الاستوديو: معاينة قصيرة وزر واحد، ولا تتكرر هنا واجهة
+        التحرير والاختبار. التقرير يقول «ماذا وجدنا»، والاستوديو يقول
+        «ماذا تقول لكل واحد منهم» — خلطهما يُنتج صفحة لا تُقرأ.
+    --}}
+    @if ($messageEntry)
+        <section class="card" aria-labelledby="message-entry-heading">
+            <h2 id="message-entry-heading" class="section-title">حوّل النتيجة إلى رسائل مخصصة</h2>
+
+            @if (! $messageEntry['has_panel'])
+                <p class="muted">
+                    ابنِ لوحة جمهورك أولًا، ثم تُكتب لكل شخصية رسالتها المبنية على هذا التقرير.
+                </p>
+            @else
+                <p class="muted">
+                    رسالة مستقلة لكل شخصية، مبنية على
+                    {{ $messageEntry['has_context'] ? 'الأدلة المؤكدة في هذا التقرير' : 'ملف مشروعك' }}
+                    — لا نسخة واحدة للجميع.
+                </p>
+
+                <ul class="pulse-items">
+                    @foreach ($messageEntry['preview'] as $item)
+                        <li class="pulse-item">
+                            <strong>{{ $item['name'] }}</strong>
+                            <p class="muted">{{ $item['angle'] }}</p>
+                        </li>
+                    @endforeach
+                </ul>
+
+                @unless ($messageEntry['has_context'])
+                    {{-- التغطية تُعلن ولا تُملأ بتقدير صامت (§٤.٣). --}}
+                    <p class="muted">
+                        لا نتيجة مدعومة بدليل في هذا التقرير بعد، فلن تُمرَّر منه حقائق إلى الرسائل.
+                    </p>
+                @endunless
+            @endif
+
+            <a class="btn btn--primary btn--sm" href="{{ route('app.messages.studio', [
+                $report['project']['slug'],
+                'channel' => $messageEntry['channel'],
+                'objective' => $messageEntry['objective'],
+                'source' => 'report',
+                'source_id' => $report['id'],
+            ]) }}">افتح الاستوديو بهذا السياق</a>
+        </section>
+    @endif
+
     <section aria-labelledby="sections-heading">
         <h2 id="sections-heading" class="section-title">تفاصيل التحليل</h2>
 

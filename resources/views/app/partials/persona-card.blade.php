@@ -10,7 +10,12 @@
 @php($compact = $compact ?? false)
 
 <article class="card persona-card">
-    <p class="eyebrow">{{ $persona['age_range'] ?? 'غير محدد' }} · {{ $persona['gender'] ?? 'الجنسان' }}</p>
+    <p class="eyebrow">
+        {{ $persona['age_range'] ?? 'غير محدد' }} · {{ $persona['gender'] ?? 'الجنسان' }}
+        @include('app.partials.evidence-badge', [
+            'level' => \App\Modules\Shared\Evidence\EvidenceLevel::Inferred,
+        ])
+    </p>
     <h3>{{ $persona['name'] }}</h3>
     <p class="muted">{{ $persona['role'] ?? '' }}</p>
 

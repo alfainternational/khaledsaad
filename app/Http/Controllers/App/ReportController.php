@@ -9,6 +9,7 @@ use App\Models\Report;
 use App\Modules\Reporting\ReportPdfGenerator;
 use App\Services\Billing\Entitlements;
 use App\Services\Growth\NextToolSuggester;
+use App\Services\Messaging\ToolMessageContextService;
 use App\Services\Tools\ToolRunService;
 use App\Support\Billing\FeatureKey;
 use App\Support\Presentation\ReportPresenter;
@@ -26,6 +27,7 @@ class ReportController extends Controller
         private readonly ToolRunService $runs,
         private readonly ReportPdfGenerator $pdf,
         private readonly NextToolSuggester $suggester,
+        private readonly ToolMessageContextService $messageContext,
     ) {}
 
     public function show(Request $request, Report $report): View
@@ -41,7 +43,41 @@ class ReportController extends Controller
                 ->where('user_id', $request->user()->id)
                 ->value('verdict'),
             'suggestion' => $this->suggester->suggest($report->project),
+            // نقطة دخول الاستوديو: للأدوات المؤهلة وحدها، ولا تكرّر واجهة
+            // التحرير والاختبار داخل التقرير.
+            'messageEntry' => $this->messageEntry($report),
         ]);
+    }
+
+    /**
+     * معاينة قصيرة + رابط يفتح الاستوديو بسياق هذا التقرير.
+     *
+     * تُبنى بلا استدعاء نموذج: المعاينة تصف ما ستعالجه كل رسالة، ولا تكتبها.
+     * الكتابة تُطلب صراحةً داخل الاستوديو حتى لا يُنفَق استعلام على تقرير
+     * فُتح للقراءة فقط.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function messageEntry(Report $report): ?array
+    {
+        if (! $this->messageContext->qualifies($report)) {
+            return null;
+        }
+
+        $panel = $report->project->personaPanel;
+
+        return [
+            'channel' => $this->messageContext->channelFor($report)->value,
+            'objective' => $this->messageContext->objectiveFor($report)->value,
+            'has_panel' => $panel !== null,
+            'has_context' => $this->messageContext->contextFor($report) !== null,
+            'preview' => $panel === null
+                ? []
+                : $this->messageContext->preview(
+                    $panel->personas ?? [],
+                    $this->messageContext->contextFor($report),
+                ),
+        ];
     }
 
     public function convert(Request $request, Report $report): RedirectResponse

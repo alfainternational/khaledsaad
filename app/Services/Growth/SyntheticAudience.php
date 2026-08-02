@@ -6,6 +6,7 @@ use App\Models\PersonaPanel;
 use App\Models\PersonaTest;
 use App\Models\Project;
 use App\Models\User;
+use App\Modules\Shared\Evidence\EvidenceLevel;
 use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;
 use Throwable;
@@ -33,6 +34,9 @@ class SyntheticAudience
             [
                 'personas' => $personas,
                 'source' => $source,
+                // فرضية أيًّا كان المصدر: النموذج يستنتجها، والبديل يشتقها
+                // من وصف صاحب المشروع نفسه. لا رصد لمشترٍ حقيقي في الحالتين.
+                'evidence_level' => EvidenceLevel::Inferred,
                 'generated_at' => now(),
             ],
         );
@@ -75,6 +79,7 @@ class SyntheticAudience
             'user_id' => $user->id,
             'message' => $message,
             'results' => $results,
+            'evidence_level' => EvidenceLevel::Inferred,
         ]);
     }
 

@@ -27,6 +27,19 @@
         <p class="alert alert--error">{{ $errors->first('studio') }}</p>
     @endif
 
+    @if ($source)
+        {{-- ما يُمرَّر من التقرير يُسمّى صراحةً: المستخدم يعرف ما يعرفه النموذج عنه. --}}
+        <p class="alert alert--info">
+            الاقتراحات ستُبنى على تقرير <strong>{{ $source['report']->title }}</strong>.
+            @if ($source['context'])
+                يُمرَّر منه ما له دليل فقط ({{ count($source['context']['evidence'] ?? []) }} نتيجة مؤكدة)
+                — والاستنتاجات لا تُمرَّر.
+            @else
+                لا نتيجة مدعومة بدليل فيه بعد، فلن تُمرَّر منه حقائق.
+            @endif
+        </p>
+    @endif
+
     @if ($panel === null)
         <section class="empty">
             <h2>لوحة جمهورك لم تُبنَ بعد</h2>
@@ -65,6 +78,10 @@
                     @csrf
                     <input type="hidden" name="channel" value="{{ $channel->value }}">
                     <input type="hidden" name="objective" value="{{ $objective->value }}">
+                    @if ($source)
+                        <input type="hidden" name="source" value="report">
+                        <input type="hidden" name="source_id" value="{{ $source['report']->id }}">
+                    @endif
                     <button type="submit" class="btn btn--primary btn--sm" data-once>اقترح رسائل للجميع</button>
                 </form>
 
@@ -86,6 +103,14 @@
 
         <section aria-labelledby="personas-heading">
             <h2 id="personas-heading" class="section-title">الشخصيات</h2>
+            {{-- الفرضية تُعلن مرة في رأس القسم وعلى كل بطاقة، لا مرة واحدة يمر عليها البصر. --}}
+            <p class="alert alert--info">
+                @include('app.partials.evidence-badge', [
+                    'level' => $panel->evidenceLevel(),
+                    'note' => 'هؤلاء شخصيات مبنية على وصف مشروعك، لا عملاء حقيقيين.
+                        درجاتهم ترتّب الصياغات بينها ولا تتنبأ بأداء إعلان.',
+                ])
+            </p>
 
             <div class="studio-tabs" role="tablist">
                 @foreach ($personas as $index => $tab)
@@ -124,8 +149,9 @@
                             @foreach ($batch->results as $result)
                                 <li class="pulse-item">
                                     <strong>
-                                        {{ $result->variant?->persona_key ? collect($personas)->firstWhere('key', $result->persona_key)['persona']['name'] ?? 'شخصية' : 'شخصية' }}
+                                        {{ collect($personas)->firstWhere('key', $result->persona_key)['persona']['name'] ?? 'شخصية' }}
                                         <span class="score-chip">{{ $result->score }}/100</span>
+                                        @include('app.partials.evidence-badge', ['level' => $result->evidenceLevel()])
                                     </strong>
                                     <p class="muted">{{ $result->reaction }}</p>
                                     @if ($result->strength)

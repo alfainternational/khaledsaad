@@ -113,6 +113,10 @@ class _MessageStudioScreenState extends State<MessageStudioScreen> {
         );
         final results = _resultsByVariant(data);
 
+        final evidence = Map<String, dynamic>.from(
+          data['evidence'] as Map? ?? const {},
+        );
+
         return DefaultTabController(
           length: personas.length,
           child: Scaffold(
@@ -132,6 +136,8 @@ class _MessageStudioScreenState extends State<MessageStudioScreen> {
             ),
             body: Column(
               children: [
+                // الفرضية تُعلن قبل أي رقم: الدرجة ترتيب لا تنبؤ.
+                _EvidenceBanner(evidence: evidence),
                 _ScopePicker(
                   channels: channels,
                   objectives: objectives,
@@ -218,6 +224,48 @@ class _MessageStudioScreenState extends State<MessageStudioScreen> {
     }
 
     return map;
+  }
+}
+
+class _EvidenceBanner extends StatelessWidget {
+  const _EvidenceBanner({required this.evidence});
+
+  final Map<String, dynamic> evidence;
+
+  @override
+  Widget build(BuildContext context) {
+    // الوسم على inferred وحده — المقيس يعرض أساسه لا وسمه.
+    if (evidence['level'] != 'inferred') {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Chip(
+            label: Text(evidence['label']?.toString() ?? 'فرضية'),
+            visualDensity: VisualDensity.compact,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              evidence['note']?.toString() ?? '',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -497,9 +545,21 @@ class _PersonaTabState extends State<_PersonaTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'رأيها: ${result['score']}/100',
-                  style: Theme.of(context).textTheme.titleSmall,
+                Row(
+                  children: [
+                    Text(
+                      'رأيها: ${result['score']}/100',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(width: 8),
+                    if (result['evidence_level'] == 'inferred')
+                      Chip(
+                        label: Text(
+                          result['evidence_label']?.toString() ?? 'فرضية',
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Text(result['reaction'].toString()),
