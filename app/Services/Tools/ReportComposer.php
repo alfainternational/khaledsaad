@@ -7,6 +7,7 @@ use App\Models\Recommendation;
 use App\Models\Report;
 use App\Models\ToolRun;
 use App\Modules\Competitors\CompetitorRegistry;
+use App\Modules\Diagnosis\ScoreExplainer;
 use App\Modules\Execution\ExampleContext;
 use App\Modules\Execution\RecommendationEnricher;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ class ReportComposer
         private readonly AdLibraries $adLibraries,
         private readonly CompetitorRegistry $competitors,
         private readonly RecommendationEnricher $enricher,
+        private readonly ScoreExplainer $explainer,
     ) {}
 
     /**
@@ -82,7 +84,7 @@ class ReportComposer
             $report->sections()->delete();
             $report->findings()->delete();
 
-            $this->writeScoreSection($report, $baseline);
+            $this->writeScoreSection($report, $run, $baseline);
             $this->writeSections($report, $sections);
             $this->writeCompetitorSection($report, $run, $competitorView);
             $this->writeFindings($report, $findings, ExampleContext::fromProject($run->project));
@@ -142,17 +144,25 @@ class ReportComposer
     /**
      * @param  array{score: int, band: string, breakdown: array<int, array<string, mixed>>}  $baseline
      */
-    private function writeScoreSection(Report $report, array $baseline): void
+    private function writeScoreSection(Report $report, ToolRun $run, array $baseline): void
     {
+        $explained = $this->explainer->explain($run->toolVersion, $baseline);
+
         $report->sections()->create([
             'key' => 'score',
             'title' => 'درجتك وسبب كل نقطة فيها',
             'sort_order' => 0,
             'content_json' => [
-                'score' => $baseline['score'],
-                'band' => $baseline['band'],
-                'breakdown' => $baseline['breakdown'],
+                'score' => $explained['score'],
+                'band' => $explained['band'],
+                'breakdown' => $explained['breakdown'],
+                'excluded' => $explained['excluded'] ?? [],
+                'total_weight' => $explained['total_weight'] ?? 0,
                 'method' => 'هذه الدرجة محسوبة من إجاباتك أنت بقواعد ثابتة — نفس الإجابات تعطي نفس الدرجة دائمًا.',
+                // أمانة القياس (§٤.١): الأوزان تقدير منهجي لا معايرة على بيانات،
+                // وإخفاء ذلك يحوّل فرضية إلى حقيقة في عين القارئ.
+                'weights_basis' => 'الأوزان أدناه ترتيب أهمية وضعناه نحن بحكم منهجي، لا معايرة على بيانات حملات. هي تعكس أي بند نراه أخطر على نتيجتك، وتظل قابلة للمراجعة.',
+                'weights_scale' => ScoreExplainer::SCALE_NOTE,
             ],
         ]);
     }

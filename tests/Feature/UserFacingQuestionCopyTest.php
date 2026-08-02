@@ -117,9 +117,18 @@ class UserFacingQuestionCopyTest extends TestCase
     {
         $questions = collect(config('brand.faqs'))->pluck('question')->all();
 
-        $this->assertContains('هل تناسبني المنصة إذا لم أكن خبيرًا في التسويق؟', $questions);
-        $this->assertContains('كم يستغرق إكمال التشخيص؟', $questions);
-        $this->assertContains('ما الفرق بين التشخيص في المنصة والاستشارة المباشرة مع خالد سعد؟', $questions);
+        /*
+         * المراسي نصٌّ يتطوّر، والمحروس هو الصيغة: سؤال يسأله العميل عن نفسه
+         * بضمير المخاطب، لا عنوانٌ داخلي («سياسة الاستخدام»، «آلية التشغيل»).
+         * لذلك يلي التثبيتَ فحصٌ بنيويّ يبقى صحيحًا مهما أُعيدت الصياغة.
+         */
+        $this->assertContains('هل تناسبني المنصة إن لم أكن خبير تسويق؟', $questions);
+        $this->assertContains('كم يستغرق التشخيص؟', $questions);
+        $this->assertContains('ما الفرق بين التشخيص هنا والاستشارة المباشرة؟', $questions);
+
+        foreach ($questions as $question) {
+            $this->assertStringEndsWith('؟', $question, "سؤال شائع لا ينتهي بعلامة استفهام: {$question}");
+        }
 
         $this->assertStringContainsString(
             'هل تريد حذف هذه الخطة؟ لن يتمكن العملاء من الاشتراك بها بعد الحذف.',

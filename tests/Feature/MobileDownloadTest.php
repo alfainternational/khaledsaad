@@ -21,7 +21,16 @@ class MobileDownloadTest extends TestCase
         $this->assertSame(config('mobile.build'), $manifest['build']);
         $this->assertSame('/download/android', $manifest['apk']['download_path']);
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $manifest['apk']['sha256']);
-        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $manifest['aab']['sha256']);
+
+        /*
+         * الحزمة (AAB) لا تُبنى مع كل إصدار — إصدار 1.0.7 شُحن كـAPK وحده،
+         * فحذف قسمها من المانيفست كان صوابًا لا نقصًا. لذلك تُفحص إن أُعلنت
+         * فقط: اشتراطها دائمًا يدفع إلى إعلان بصمة حزمة قديمة لتمرير الاختبار،
+         * وهي أسوأ من غيابها لأن من يتحقّق قبل التثبيت يجدها لا تطابق.
+         */
+        if (isset($manifest['aab'])) {
+            $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $manifest['aab']['sha256']);
+        }
     }
 
     /**

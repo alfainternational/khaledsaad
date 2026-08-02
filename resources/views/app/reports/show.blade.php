@@ -261,11 +261,80 @@
 
                 @if ($section['key'] === 'score')
                     <p class="muted">{{ $section['content']['method'] }}</p>
-                    <ul class="kv">
+
+                    {{-- الوزن تقدير منهجي لا معايرة: عرضه بلا هذا الوسم يحوّله إلى حقيقة في عين القارئ (§٤.١). --}}
+                    @if (! empty($section['content']['weights_basis']))
+                        <p class="score-basis">
+                            <span class="score-basis__tag">فرضية منهجية</span>
+                            {{ $section['content']['weights_basis'] }}
+                            @if (! empty($section['content']['weights_scale']))
+                                <span class="score-basis__scale">{{ $section['content']['weights_scale'] }}</span>
+                            @endif
+                        </p>
+                    @endif
+
+                    <ul class="score-rows">
                         @foreach ($section['content']['breakdown'] as $row)
-                            <li><span>{{ $row['label'] }}</span><strong>{{ $row['points'] }} / {{ $row['weight'] }}</strong></li>
+                            <li class="score-row">
+                                <div class="score-row__head">
+                                    <span class="score-row__label">{{ $row['label'] }}</span>
+                                    <strong>{{ $row['points'] }} / {{ $row['weight'] }}</strong>
+                                </div>
+
+                                @isset($row['share'])
+                                    {{-- الوزن وحده مضلل: نصيبه من الدرجة يتغير بتغير البنود المنطبقة. --}}
+                                    <p class="score-row__share">
+                                        هذا البند يساوي {{ $row['share'] }}٪ من درجتك
+                                        @if (! empty($row['weight_tier']))
+                                            — بند <b>{{ $row['weight_tier'] }}</b> عندنا،
+                                            الأثقل رقم {{ $row['weight_rank'] }} من {{ $row['weight_rank_of'] }} بندًا انطبقت عليك
+                                        @endif
+                                    </p>
+                                @endisset
+
+                                @if (! empty($row['question']))
+                                    <p class="score-row__line"><span class="muted">السؤال:</span> {{ $row['question'] }}</p>
+                                @endif
+
+                                @if (! empty($row['answer_label']))
+                                    <p class="score-row__line">
+                                        <span class="muted">إجابتك:</span> <b>{{ $row['answer_label'] }}</b>
+                                        <span class="muted">— تعطي معامل {{ $row['factor'] }} من 1</span>
+                                    </p>
+                                @endif
+
+                                @if (! empty($row['scale']))
+                                    <p class="score-row__line muted">
+                                        سلّم التقدير:
+                                        @foreach ($row['scale'] as $step)
+                                            {{ $step['label'] ?? $step['key'] }} = {{ $step['factor'] }}@if (! $loop->last) · @endif
+                                        @endforeach
+                                    </p>
+                                @endif
+
+                                @if (! empty($row['why']))
+                                    <p class="score-row__line muted">لماذا نسأله: {{ $row['why'] }}</p>
+                                @endif
+                            </li>
                         @endforeach
                     </ul>
+
+                    @if (! empty($section['content']['total_weight']))
+                        <p class="score-row__line muted">
+                            مجموع أوزان البنود المنطبقة على مشروعك {{ $section['content']['total_weight'] }}،
+                            والدرجة = مجموع نقاطك ÷ هذا المجموع × 100.
+                        </p>
+                    @endif
+
+                    {{-- الفجوة تُعلن: من لا يرى ما استُبعد يظن القاسم واحدًا للجميع (§٤.٣). --}}
+                    @if (! empty($section['content']['excluded']))
+                        <p class="score-row__line muted">
+                            بنود لم تدخل الحساب لأن أسئلتها لا تنطبق على مشروعك، فلم تُحسب لك ولا عليك:
+                            @foreach ($section['content']['excluded'] as $row)
+                                {{ $row['label'] }} ({{ $row['weight'] }})@if (! $loop->last) · @endif
+                            @endforeach
+                        </p>
+                    @endif
                 @elseif ($section['key'] === 'competitors')
                     <p>{{ $section['content']['intro'] }}</p>
 

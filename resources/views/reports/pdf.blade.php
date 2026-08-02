@@ -429,14 +429,37 @@
             @if (! empty($content['method']))
                 <p class="muted" style="font-size: 9pt;">{{ $content['method'] }}</p>
             @endif
+            @if (! empty($content['weights_basis']))
+                <p class="muted" style="font-size: 9pt;">فرضية منهجية — {{ $content['weights_basis'] }}</p>
+            @endif
+            @if (! empty($content['weights_scale']))
+                <p class="muted" style="font-size: 8.5pt;">{{ $content['weights_scale'] }}</p>
+            @endif
             <table width="100%" cellpadding="0" cellspacing="0" class="kv">
                 @foreach ($content['breakdown'] ?? [] as $row)
                     <tr>
                         <td class="muted">{{ $row['label'] ?? '' }}</td>
                         <td class="kv-value">{{ $row['points'] ?? 0 }} / {{ $row['weight'] ?? 0 }}</td>
                     </tr>
+                    @if (! empty($row['answer_label']) || isset($row['share']))
+                        <tr>
+                            <td colspan="2" class="muted" style="font-size: 8.5pt; padding-bottom: 4pt;">
+                                @isset($row['share'])({{ $row['share'] }}٪ من الدرجة@if (! empty($row['weight_tier'])) · بند {{ $row['weight_tier'] }}، الأثقل رقم {{ $row['weight_rank'] }} من {{ $row['weight_rank_of'] }}@endif)@endisset
+                                @if (! empty($row['answer_label']))
+                                    — إجابتك: {{ $row['answer_label'] }} (معامل {{ $row['factor'] ?? 0 }} من 1)
+                                @endif
+                            </td>
+                        </tr>
+                    @endif
                 @endforeach
             </table>
+
+            @if (! empty($content['excluded']))
+                <p class="muted" style="font-size: 8.5pt;">
+                    بنود لا تنطبق على المشروع فلم تدخل الحساب:
+                    @foreach ($content['excluded'] as $row){{ $row['label'] ?? '' }}@if (! $loop->last) · @endif @endforeach
+                </p>
+            @endif
 
         @elseif ($section['key'] === 'competitors')
             @if (! empty($content['intro']))
