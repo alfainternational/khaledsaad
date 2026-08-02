@@ -97,8 +97,8 @@
                 @endif
                 <textarea name="content" rows="4" required minlength="20"
                     maxlength="{{ $channel->maxLength() }}"
-                    aria-label="رسالة {{ $persona['name'] }}"
-                    placeholder="اكتب رسالة {{ $persona['name'] }} — {{ $channel->hint() }}">{{ old('content') }}</textarea>
+                    aria-label="رسالة {{ \App\Support\Messaging\PersonaName::display($persona['name'] ?? null) }}"
+                    placeholder="اكتب رسالة {{ \App\Support\Messaging\PersonaName::display($persona['name'] ?? null) }} — {{ $channel->hint() }}">{{ old('content') }}</textarea>
                 <button type="submit" class="btn btn--ghost btn--sm">احفظ الإصدار</button>
             </form>
         </div>

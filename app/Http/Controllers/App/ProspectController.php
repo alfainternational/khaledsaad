@@ -11,6 +11,7 @@ use App\Services\Messaging\PersonaMessageProfileService;
 use App\Services\Messaging\ProspectMessageService;
 use App\Support\Messaging\MessageChannel;
 use App\Support\Messaging\MessageObjective;
+use App\Support\Messaging\PersonaName;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -41,7 +42,7 @@ class ProspectController extends Controller
             'panel' => $panel,
             'personas' => $panel === null ? [] : collect($panel->personas ?? [])
                 ->mapWithKeys(fn (array $persona) => [
-                    $this->profiles->keyFor($persona) => $persona['name'] ?? 'شخصية',
+                    $this->profiles->keyFor($persona) => PersonaName::display($persona['name'] ?? null),
                 ])->all(),
             'prospects' => Prospect::where('project_id', $project->id)
                 ->where('status', '!=', Prospect::STATUS_ARCHIVED)

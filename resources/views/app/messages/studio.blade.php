@@ -117,7 +117,7 @@
                     <button type="button" role="tab" class="studio-tab @if ($index === 0) is-active @endif"
                         data-studio-tab="{{ $tab['key'] }}"
                         aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
-                        {{ $tab['persona']['name'] }}
+                        {{ \App\Support\Messaging\PersonaName::display($tab['persona']['name'] ?? null) }}
                         <span class="badge">{{ \App\Support\Messaging\MessageStatus::label($tab['current']?->status) }}</span>
                     </button>
                 @endforeach
@@ -149,7 +149,7 @@
                             @foreach ($batch->results as $result)
                                 <li class="pulse-item">
                                     <strong>
-                                        {{ collect($personas)->firstWhere('key', $result->persona_key)['persona']['name'] ?? 'شخصية' }}
+                                        {{ \App\Support\Messaging\PersonaName::display(collect($personas)->firstWhere('key', $result->persona_key)['persona']['name'] ?? null) }}
                                         <span class="score-chip">{{ $result->score }}/100</span>
                                         @include('app.partials.evidence-badge', ['level' => $result->evidenceLevel()])
                                     </strong>

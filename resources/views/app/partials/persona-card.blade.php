@@ -4,10 +4,13 @@
     مقسومة كما تُستعمل: كتلة استهداف تُنقل حرفيًّا إلى لوحة الإعلان،
     وكتلة رسالة تُبنى عليها الصياغة. ما لم يُحدَّد يظهر «غير محدد» ولا يُخفى.
 
-    @param array $persona
-    @param bool  $compact  يخفي الاقتباس والأوجاع في السياقات الضيقة
+    @param array  $persona
+    @param bool   $compact      يخفي الاقتباس والأوجاع في السياقات الضيقة
+    @param mixed  $suggestFor   المشروع — يُمرَّر ليظهر زر توليد الرسالة
+    @param string $personaKey   مفتاح الشخصية، إلزامي مع suggestFor
 --}}
 @php($compact = $compact ?? false)
+@php($suggestFor = $suggestFor ?? null)
 
 <article class="card persona-card">
     <p class="eyebrow">
@@ -16,7 +19,7 @@
             'level' => \App\Modules\Shared\Evidence\EvidenceLevel::Inferred,
         ])
     </p>
-    <h3>{{ $persona['name'] }}</h3>
+    <h3>{{ \App\Support\Messaging\PersonaName::display($persona['name'] ?? null) }}</h3>
     <p class="muted">{{ $persona['role'] ?? '' }}</p>
 
     @if (! $compact && ! empty($persona['quote']))
@@ -57,5 +60,16 @@
     @endif
     @if (! empty($persona['tone']))
         <p class="muted"><strong>النبرة التي تصله:</strong> {{ $persona['tone'] }}</p>
+    @endif
+
+    {{-- الزر هنا لأن القرار يُتخذ أمام البطاقة: من قرأ اعتراضها يريد ردًّا عليه الآن. --}}
+    @if ($suggestFor && ! empty($personaKey))
+        <form method="POST" action="{{ route('app.messages.suggest', $suggestFor) }}">
+            @csrf
+            <input type="hidden" name="persona_key" value="{{ $personaKey }}">
+            <input type="hidden" name="channel" value="ad">
+            <input type="hidden" name="objective" value="attention">
+            <button type="submit" class="btn btn--ghost btn--sm" data-once>ولّد رسالتها المقترحة</button>
+        </form>
     @endif
 </article>

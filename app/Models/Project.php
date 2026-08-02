@@ -108,6 +108,11 @@ class Project extends Model
         return $this->hasOne(PersonaPanel::class);
     }
 
+    public function contentPlans(): HasMany
+    {
+        return $this->hasMany(ContentPlan::class);
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';

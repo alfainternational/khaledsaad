@@ -1,4 +1,6 @@
 import './bootstrap';
+import './content-dashboard';
+/* Dashboard contract: [data-content-view] [data-content-search] [data-copy-content] */
 
 document.documentElement.classList.add('js');
 

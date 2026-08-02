@@ -42,8 +42,12 @@
                 ])
             </p>
             <div class="card-grid">
-                @foreach ($panel->personas as $persona)
-                    @include('app.partials.persona-card', ['persona' => $persona])
+                @foreach ($panel->personas as $index => $persona)
+                    @include('app.partials.persona-card', [
+                        'persona' => $persona,
+                        'suggestFor' => $project,
+                        'personaKey' => $personaKeys[$index] ?? null,
+                    ])
                 @endforeach
             </div>
         </section>
@@ -117,6 +121,16 @@
         @endforeach
 
         <script>
+            // منع النقر المتكرر أثناء التوليد: نقرتان تعنيان استعلامين.
+            document.querySelectorAll('form').forEach(function (form) {
+                form.addEventListener('submit', function () {
+                    form.querySelectorAll('[data-once]').forEach(function (button) {
+                        button.disabled = true;
+                        button.textContent = 'جارٍ التوليد…';
+                    });
+                });
+            });
+
             document.querySelectorAll('[data-copy-message]').forEach(function (button) {
                 button.addEventListener('click', function () {
                     var source = document.getElementById(button.dataset.copyMessage);

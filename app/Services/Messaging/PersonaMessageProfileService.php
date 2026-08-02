@@ -3,6 +3,7 @@
 namespace App\Services\Messaging;
 
 use App\Models\PersonaPanel;
+use App\Support\Messaging\PersonaName;
 
 /**
  * يحوّل كل شخصية إلى ملف مراسلة ثابت المفتاح.
@@ -50,7 +51,9 @@ class PersonaMessageProfileService
     {
         return [
             'persona_key' => $key,
-            'name' => $persona['name'] ?? 'شخصية',
+            // الاسم الأول وحده: يذهب إلى النموذج والواجهة معًا، ولقب العائلة
+            // في رسالة تسويقية يبدو تنقيبًا عن الشخص لا مخاطبةً له.
+            'name' => PersonaName::display($persona['name'] ?? null),
             'role' => $persona['role'] ?? null,
             'age_range' => $persona['age_range'] ?? null,
             'gender' => $persona['gender'] ?? null,

@@ -5,6 +5,7 @@ namespace App\Services\Messaging;
 use App\Models\Report;
 use App\Support\Messaging\MessageChannel;
 use App\Support\Messaging\MessageObjective;
+use App\Support\Messaging\PersonaName;
 
 /**
  * يستخرج من التقرير سياقًا محدودًا وموثقًا لكتابة الرسائل.
@@ -62,8 +63,8 @@ class ToolMessageContextService
     /**
      * السياق المحدود: عرض، أدلة، اعتراضات — كلها من مصدر مذكور.
      *
-     * @return array<string, mixed>|null  null إن لم تكن الأداة مؤهلة أو لم
-     *                                    يبقَ بعد استبعاد الافتراضات شيء
+     * @return array<string, mixed>|null null إن لم تكن الأداة مؤهلة أو لم
+     *                                   يبقَ بعد استبعاد الافتراضات شيء
      */
     public function contextFor(Report $report): ?array
     {
@@ -107,7 +108,7 @@ class ToolMessageContextService
         $offer = $context['offer'] ?? null;
 
         return array_map(fn (array $persona) => [
-            'name' => $persona['name'] ?? 'شخصية',
+            'name' => PersonaName::display($persona['name'] ?? null),
             'angle' => $this->angle($persona, $offer),
         ], array_slice($personas, 0, 4));
     }

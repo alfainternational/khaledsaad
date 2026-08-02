@@ -90,6 +90,11 @@
             <span>المشاريع</span>
         </a>
 
+        <a href="{{ route('app.content-plans.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.content-plans.*') || request()->routeIs('app.content-posts.*')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18M8 13h3M8 17h7"/></svg>
+            <span>خطط المحتوى</span>
+        </a>
+
         <a href="{{ route('app.tools.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.tools.*') || request()->routeIs('app.runs.*')])>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
             <span>التشخيصات</span>

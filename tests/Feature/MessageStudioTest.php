@@ -19,6 +19,7 @@ use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;
 use App\Support\Messaging\MessageChannel;
 use App\Support\Messaging\MessageObjective;
+use App\Support\Messaging\PersonaName;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -252,7 +253,9 @@ class MessageStudioTest extends TestCase
             ->assertOk();
 
         foreach ($panel->personas as $persona) {
-            $response->assertSee($persona['name'], false);
+            // الاسم الأول وحده يُعرض، واللقب المخزَّن يبقى كما حُفظ.
+            $response->assertSee(PersonaName::display($persona['name']), false);
+            $response->assertDontSee($persona['name'], false);
             $response->assertSee($persona['locations'][0], false);
         }
 
@@ -294,6 +297,40 @@ class MessageStudioTest extends TestCase
             ->assertJsonPath('data.evidence.level', 'inferred')
             ->assertJsonPath('data.evidence.label', 'فرضية')
             ->assertJsonPath('data.batches.0.results.0.evidence_label', 'فرضية');
+    }
+
+    #[Test]
+    public function only_the_first_name_is_shown_without_mangling_kunyas_or_archetypes(): void
+    {
+        // اسم عائلة يُقطع، وكنية ووصف نمط لا يُقطعان.
+        $this->assertSame('سارة', PersonaName::display('سارة العتيبي'));
+        $this->assertSame('ماجد', PersonaName::display('ماجد بن سعد الدوسري'));
+        $this->assertSame('أبو خالد', PersonaName::display('أبو خالد الشمري'));
+        $this->assertSame('عبد الله', PersonaName::display('عبد الله القحطاني'));
+        $this->assertSame('المتحمس المستعجل', PersonaName::display('المتحمس المستعجل'));
+        $this->assertSame('هند', PersonaName::display('هند'));
+        $this->assertSame('شخصية', PersonaName::display(null));
+
+        // المخزَّن لا يُعاد كتابته: الاسم الكامل يبقى في اللوحة كما بُنيت.
+        [, $panel] = $this->panel();
+        $this->assertSame('سارة المترددة', $panel->personas[0]['name']);
+    }
+
+    #[Test]
+    public function the_lab_offers_a_generate_button_for_each_persona(): void
+    {
+        [$user, $panel] = $this->panel();
+        $keys = array_keys(app(PersonaMessageProfileService::class)->profiles($panel));
+
+        $response = $this->actingAs($user)
+            ->get(route('app.audience.show', $panel->project))
+            ->assertOk()
+            ->assertSee('ولّد رسالتها المقترحة', false);
+
+        // زر لكل شخصية، وكلٌّ يحمل مفتاحها هي.
+        foreach ($keys as $key) {
+            $response->assertSee($key, false);
+        }
     }
 
     #[Test]

@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Services\Growth\SyntheticAudience;
+use App\Services\Messaging\PersonaMessageProfileService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,7 +19,10 @@ class AudienceLabController extends Controller
 {
     use ResolvesWorkspace;
 
-    public function __construct(private readonly SyntheticAudience $audience) {}
+    public function __construct(
+        private readonly SyntheticAudience $audience,
+        private readonly PersonaMessageProfileService $profiles,
+    ) {}
 
     public function show(Request $request, Project $project): View
     {
@@ -29,6 +33,9 @@ class AudienceLabController extends Controller
         return view('app.audience.lab', [
             'project' => $project,
             'panel' => $panel,
+            // المفتاح يُحسب هنا لا في القالب: العرض لا يستدعي خدمات.
+            'personaKeys' => collect($panel?->personas ?? [])
+                ->map(fn (array $persona) => $this->profiles->keyFor($persona))->all(),
             'tests' => $panel?->tests()->with('user:id,name')->limit(10)->get() ?? collect(),
         ]);
     }
