@@ -2717,6 +2717,28 @@ button.competitor-list__x:hover {
     border: 1px dashed var(--line);
 }
 
+/* رسالة الشخصية هي المخرج القابل للنسخ، فتُميَّز عن الاعتراض والتحليل. */
+.persona-message {
+    display: grid;
+    gap: 0.5rem;
+    justify-items: start;
+    margin-block-start: 0.85rem;
+    padding: 0.85rem 1rem;
+    background: var(--surface-soft);
+    border: 1px solid var(--line);
+    border-inline-start: 3px solid var(--brand-blue);
+    border-radius: var(--radius-sm);
+}
+
+.persona-message blockquote {
+    margin: 0;
+    color: var(--brand-navy);
+    font-size: 0.95rem;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 .stack {
     display: grid;
     gap: 0.75rem;

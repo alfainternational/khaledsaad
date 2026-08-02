@@ -9,8 +9,8 @@
             <p class="eyebrow">اختبار الرسائل · {{ $project->name }}</p>
             <h1>مختبر الجمهور</h1>
             <p class="muted">
-                اختبر رسالتك على جمهور اصطناعي مبني من بيانات مشروعك —
-                قبل أن تدفع ريالًا واحدًا في إعلانها.
+                اكتب رسالتك مرة، فيقرأها جمهور اصطناعي مبني من بيانات مشروعك،
+                ويخرج كلٌّ منهم بنسخته هو — رسالة لكل شخصية لا رسالة واحدة للجميع.
             </p>
         </div>
         <div class="page-head__actions">
@@ -28,7 +28,8 @@
             <h2>جمهورك الاصطناعي لم يُبنَ بعد</h2>
             <p class="muted">
                 نبني من ملف مشروعك وشرائح جمهورك 3–4 شخصيات واقعية: المتحمس،
-                المتردد، الحساس للسعر — ثم تختبر عليهم أي رسالة قبل نشرها.
+                المتردد، الحساس للسعر — ثم تعرض عليهم أي رسالة، فيعيدها كلٌّ
+                منهم مكتوبة بلسانه.
             </p>
         </section>
     @else
@@ -69,7 +70,10 @@
                     placeholder="الصق نص إعلانك أو منشورك أو رسالتك كما ستنشرها فعلًا…"
                     aria-label="الرسالة المطلوب اختبارها">{{ old('message') }}</textarea>
                 <button type="submit" class="btn btn--primary">اعرضها على الجمهور</button>
-                <span class="field__help">الاختبار يستغرق نحو دقيقة — كل شخصية تعطيك درجة واعتراضها الصريح.</span>
+                <span class="field__help">
+                    الاختبار يستغرق نحو دقيقة — تخرج بدرجة واعتراض صريح
+                    <strong>ورسالة مخصّصة</strong> لكل شخصية، جاهزة للنسخ.
+                </span>
             </form>
         </section>
 
@@ -79,7 +83,7 @@
                 <blockquote class="persona-test__message">{{ $test->message }}</blockquote>
 
                 <ul class="pulse-items">
-                    @foreach ($test->results['reactions'] ?? [] as $reaction)
+                    @foreach ($test->results['reactions'] ?? [] as $index => $reaction)
                         <li class="pulse-item">
                             <strong>
                                 {{ $reaction['persona'] }}
@@ -88,6 +92,19 @@
                             <p class="muted">{{ $reaction['reaction'] }}</p>
                             @if (! empty($reaction['objection']))
                                 <p class="persona-objection">الاعتراض: {{ $reaction['objection'] }}</p>
+                            @endif
+
+                            @if (! empty($reaction['tailored_message']))
+                                @php($messageId = 'msg-'.$test->id.'-'.$index)
+                                <div class="persona-message">
+                                    <p class="eyebrow">رسالتها هي</p>
+                                    <blockquote id="{{ $messageId }}">{{ $reaction['tailored_message'] }}</blockquote>
+                                    @if (! empty($reaction['angle']))
+                                        <p class="muted"><strong>لماذا تناسبها:</strong> {{ $reaction['angle'] }}</p>
+                                    @endif
+                                    <button type="button" class="btn btn--ghost btn--sm"
+                                        data-copy-message="{{ $messageId }}">انسخ رسالتها</button>
+                                </div>
                             @endif
                         </li>
                     @endforeach
@@ -100,12 +117,35 @@
                         @if (! empty($test->results['overall']['biggest_risk']))
                             <p class="muted"><strong>أكبر خطر:</strong> {{ $test->results['overall']['biggest_risk'] }}</p>
                         @endif
+                        {{-- اختبارات سابقة كانت تنتج نصًّا موحّدًا: تُعرض كما حُفظت ولا تُعاد كتابتها. --}}
                         @if (! empty($test->results['overall']['improved_version']))
-                            <p><strong>نسخة محسّنة:</strong> {{ $test->results['overall']['improved_version'] }}</p>
+                            <p class="muted">
+                                <strong>نسخة موحّدة (اختبار قديم):</strong>
+                                {{ $test->results['overall']['improved_version'] }}
+                            </p>
                         @endif
                     </div>
                 @endif
             </article>
         @endforeach
+
+        <script>
+            document.querySelectorAll('[data-copy-message]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var source = document.getElementById(button.dataset.copyMessage);
+
+                    if (! source) {
+                        return;
+                    }
+
+                    // الزاوية التعليمية خارج الاقتباس عمدًا، فما يُنسخ نصُّ الرسالة وحده.
+                    navigator.clipboard.writeText(source.textContent.trim()).then(function () {
+                        var original = button.textContent;
+                        button.textContent = 'نُسخت';
+                        setTimeout(function () { button.textContent = original; }, 2000);
+                    });
+                });
+            });
+        </script>
     @endif
 @endsection

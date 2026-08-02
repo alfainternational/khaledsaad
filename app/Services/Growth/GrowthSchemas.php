@@ -81,7 +81,11 @@ class GrowthSchemas
     }
 
     /**
-     * نتيجة اختبار رسالة على اللوحة: رد كل شخصية + خلاصة عامة.
+     * نتيجة اختبار رسالة على اللوحة: لكل شخصية ردّها ورسالتها هي.
+     *
+     * الشخصية وحدة التجربة لا الرسالة: اعتراض المتردد نقيض اعتراض الحسّاس
+     * للسعر، فنصٌّ واحد يرضيهما معًا لا يُقنع أيًّا منهما. لذلك المخرج نصٌّ
+     * مستقل لكل شخصية، والخلاصة تصف الفروق ولا تُنتج نسخة موحّدة.
      *
      * @return array<string, mixed>
      */
@@ -97,22 +101,26 @@ class GrowthSchemas
                     'maxItems' => 4,
                     'items' => [
                         'type' => 'object',
-                        'required' => ['persona', 'score', 'reaction', 'objection'],
+                        'required' => ['persona', 'score', 'reaction', 'objection', 'angle', 'tailored_message'],
                         'properties' => [
                             'persona' => ['type' => 'string'],
                             'score' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 100],
                             'reaction' => ['type' => 'string', 'minLength' => 20],
                             'objection' => ['type' => 'string'],
+                            // الزاوية منفصلة عن النص حتى لا تُنسخ معه إلى الإعلان.
+                            'angle' => ['type' => 'string', 'minLength' => 10],
+                            'tailored_message' => ['type' => 'string', 'minLength' => 20, 'maxLength' => 600],
                         ],
                     ],
                 ],
+                // بلا improved_version: نسخة واحدة «محسّنة للجميع» هي عين ما
+                // يكسر التخصيص — تجمع اعتراضات متناقضة في نص لا يخاطب أحدًا.
                 'overall' => [
                     'type' => 'object',
-                    'required' => ['verdict', 'biggest_risk', 'improved_version'],
+                    'required' => ['verdict', 'biggest_risk'],
                     'properties' => [
                         'verdict' => ['type' => 'string', 'minLength' => 20],
                         'biggest_risk' => ['type' => 'string'],
-                        'improved_version' => ['type' => 'string', 'minLength' => 20],
                     ],
                 ],
             ],

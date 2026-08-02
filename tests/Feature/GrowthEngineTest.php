@@ -195,13 +195,24 @@ class GrowthEngineTest extends TestCase
                     ['name' => 'هند', 'age_range' => '22-30', 'role' => 'مستقلة', 'pains' => ['الميزانية'], 'buying_style' => 'حساسة للسعر', 'quote' => 'كل ريال محسوب.'],
                 ],
                 'reactions' => [
-                    ['persona' => 'سارة', 'score' => 74, 'reaction' => 'العرض واضح لكنها تريد ضمانًا صريحًا قبل الدفع.', 'objection' => 'ماذا لو لم ينفع معي؟'],
-                    ['persona' => 'ماجد', 'score' => 55, 'reaction' => 'الرسالة عامة ولا تحمل رقمًا واحدًا يقنع مديره.', 'objection' => 'أين الدليل؟'],
+                    [
+                        'persona' => 'سارة', 'score' => 74,
+                        'reaction' => 'العرض واضح لكنها تريد ضمانًا صريحًا قبل الدفع.',
+                        'objection' => 'ماذا لو لم ينفع معي؟',
+                        'angle' => 'الضمان يزيل خوفها من الخسارة قبل أن تجرّب.',
+                        'tailored_message' => 'خطة تسويق كاملة خلال 48 ساعة — وإن لم تنفعك نعيد مبلغك كاملًا.',
+                    ],
+                    [
+                        'persona' => 'ماجد', 'score' => 55,
+                        'reaction' => 'الرسالة عامة ولا تحمل رقمًا واحدًا يقنع مديره.',
+                        'objection' => 'أين الدليل؟',
+                        'angle' => 'الرقم القابل للعرض على مديره هو ما يحسم قراره.',
+                        'tailored_message' => 'أربع شركات رفعت عائد إنفاقها 32٪ خلال ربع واحد. الأرقام كاملة في التقرير.',
+                    ],
                 ],
                 'overall' => [
                     'verdict' => 'الرسالة مفهومة لكنها تفتقد الدليل الملموس الذي يحسم التردد.',
                     'biggest_risk' => 'تجاهل الحساسين للدليل والسعر.',
-                    'improved_version' => 'خلال 48 ساعة نسلّمك خطة قابلة للتنفيذ — وإن لم تنفعك نعيد المبلغ.',
                 ],
             ], JSON_UNESCAPED_UNICODE)]]],
             'usage' => ['prompt_tokens' => 80, 'completion_tokens' => 60],
@@ -219,7 +230,14 @@ class GrowthEngineTest extends TestCase
         $test = $panel->tests()->first();
         $this->assertNotNull($test);
         $this->assertSame(74, $test->results['reactions'][0]['score']);
-        $this->assertNotEmpty($test->results['overall']['improved_version']);
+
+        // كل شخصية تخرج بنصّها هي، ولا نسخة موحّدة في الخلاصة.
+        $this->assertNotEmpty($test->results['reactions'][0]['tailored_message']);
+        $this->assertNotSame(
+            $test->results['reactions'][0]['tailored_message'],
+            $test->results['reactions'][1]['tailored_message'],
+        );
+        $this->assertArrayNotHasKey('improved_version', $test->results['overall']);
     }
 
     #[Test]
