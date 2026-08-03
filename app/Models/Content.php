@@ -40,6 +40,7 @@ class Content extends Model
 
     protected $fillable = [
         'type',
+        'category_id',
         'title',
         'slug',
         'excerpt',
@@ -116,6 +117,11 @@ class Content extends Model
     public function resources(): HasMany
     {
         return $this->hasMany(ContentResource::class)->orderBy('position');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ContentCategory::class, 'category_id');
     }
 
     public function creator(): BelongsTo
