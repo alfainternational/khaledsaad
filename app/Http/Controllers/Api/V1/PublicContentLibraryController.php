@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Content;
+use App\Models\ContentCategory;
 use App\Services\Content\ContentAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,10 +19,16 @@ class PublicContentLibraryController extends Controller
         $type = in_array($request->query('type'), Content::types(), true)
             ? $request->query('type')
             : null;
+        $category = ContentCategory::query()
+            ->active()
+            ->where('slug', $request->query('category'))
+            ->first();
 
         $contents = Content::query()
+            ->with('category')
             ->published()
             ->when($type, fn ($query) => $query->where('type', $type))
+            ->when($category, fn ($query) => $query->where('category_id', $category->id))
             ->orderByDesc('published_at')
             ->paginate(12)
             ->withQueryString()
@@ -50,7 +57,7 @@ class PublicContentLibraryController extends Controller
     {
         abort_unless($content->isPublished(), 404);
 
-        $content->load('sections.items');
+        $content->load(['category', 'sections.items.category']);
         $unlocked = $this->access->canView($content, $this->access->tokenFrom($request));
 
         return response()->json(['data' => [
@@ -88,6 +95,12 @@ class PublicContentLibraryController extends Controller
                     ? $content->cover_image_path
                     : Storage::disk('public')->url($content->cover_image_path))
                 : null,
+            'category' => $content->category ? [
+                'name' => $content->category->name,
+                'slug' => $content->category->slug,
+                'icon' => $content->category->icon,
+                'color' => $content->category->color,
+            ] : null,
             'duration_minutes' => $content->duration_minutes,
             'published_at' => $content->published_at?->toAtomString(),
             'locked' => $content->isSubscriberOnly(),

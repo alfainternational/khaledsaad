@@ -97,6 +97,10 @@
     backdrop-filter: blur(16px);
 }
 
+.content-type-tabs::-webkit-scrollbar {
+    display: none;
+}
+
 .content-type-tabs a {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -882,6 +886,7 @@
     .content-type-tabs {
         overflow-x: auto;
         grid-template-columns: repeat(5, minmax(9.5rem, 1fr));
+        scrollbar-width: none;
     }
 
     .content-discovery__layout,

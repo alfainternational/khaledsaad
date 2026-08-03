@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Content;
+use App\Models\ContentCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -28,6 +29,32 @@ class PublicContentApiTest extends TestCase
             ->assertJsonPath('data.0.title', 'دورة منشورة')
             ->assertJsonPath('data.0.locked', false)
             ->assertJsonStructure(['data', 'links', 'meta']);
+    }
+
+    public function test_api_filters_by_category_and_exposes_category_metadata(): void
+    {
+        $author = User::factory()->create();
+        $marketing = ContentCategory::query()->create([
+            'name' => 'التسويق',
+            'slug' => 'marketing',
+            'icon' => 'megaphone',
+            'color' => '#2575ff',
+        ]);
+        $sales = ContentCategory::query()->create(['name' => 'المبيعات', 'slug' => 'sales']);
+        $marketingItem = $this->content($author, 'مادة التسويق', 'marketing-api-item', Content::TYPE_LESSON);
+        $marketingItem->update(['category_id' => $marketing->id, 'cover_image_path' => '/blog/media/9']);
+        $salesItem = $this->content($author, 'مادة المبيعات', 'sales-api-item', Content::TYPE_ARTICLE);
+        $salesItem->update(['category_id' => $sales->id]);
+
+        $this->getJson('/api/v1/public/content?category=marketing')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.title', 'مادة التسويق')
+            ->assertJsonPath('data.0.cover_image_url', '/blog/media/9')
+            ->assertJsonPath('data.0.category.name', 'التسويق')
+            ->assertJsonPath('data.0.category.slug', 'marketing')
+            ->assertJsonPath('data.0.category.icon', 'megaphone')
+            ->assertJsonPath('data.0.category.color', '#2575ff');
     }
 
     public function test_api_redacts_gated_body_until_email_subscription_token_is_sent(): void

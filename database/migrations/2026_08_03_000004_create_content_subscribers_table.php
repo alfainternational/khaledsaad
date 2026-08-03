@@ -13,9 +13,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('status', 24)->default('active')->index();
             $table->char('access_token_hash', 64)->nullable()->unique();
-            $table->timestamp('consented_at');
-            $table->timestamp('subscribed_at');
-            $table->timestamp('last_access_at')->nullable();
+            $table->dateTime('consented_at');
+            $table->dateTime('subscribed_at');
+            $table->dateTime('last_access_at')->nullable();
             $table->timestamps();
         });
     }
