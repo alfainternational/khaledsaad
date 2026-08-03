@@ -34,12 +34,15 @@
 - Modify: `app/Http/Requests/Admin/ContentRequest.php`
 - Modify: `app/Http/Controllers/Admin/AdminContentController.php`
 - Modify: `resources/views/admin/content/form.blade.php`
+- Create: `resources/js/content-cover.js`
+- Modify: `resources/js/app.js`
 - Modify: `resources/views/admin/content/index.blade.php`
 - Test: `tests/Feature/AdminContentCategoryTest.php`
 
 - [ ] Write failing admin tests for CRUD, assignment, filtering, validation, and protected deletion.
 - [ ] Run the focused test and confirm category routes/fields are missing.
 - [ ] Implement admin routes, request validation, controller operations, views, and content assignment/filtering.
+- [ ] Add a main-image uploader with preview, replace, and remove controls backed by the existing secure media endpoint.
 - [ ] Rerun the focused tests and commit.
 
 ### Task 3: Public discovery and reading experience
@@ -82,4 +85,3 @@
 - [ ] Commit and push `codex/internal-content-hub`.
 - [ ] Deploy the migration, PHP/Blade/CSS/JS sources, and built manifest/assets with the existing cPanel script.
 - [ ] Run migrations and cache clearing, then verify `/blog`, a content page, admin categories, and editor assets on production.
-
