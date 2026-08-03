@@ -48,6 +48,9 @@ class AdminContentManagementTest extends TestCase
             ->assertSee('data-cover-file', false)
             ->assertSee('data-cover-preview', false)
             ->assertSee('name="cover_image_path"', false)
+            ->assertSee('name="learning_order"', false)
+            ->assertSee('name="learning_meta"', false)
+            ->assertSee('name="source_key"', false)
             ->assertSee('الصورة الرئيسية');
     }
 
@@ -163,6 +166,21 @@ class AdminContentManagementTest extends TestCase
         ])->assertSessionHasErrors('slug');
 
         $this->assertSame(1, Content::query()->count());
+    }
+
+    public function test_learning_metadata_rejects_malformed_faq_items(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->post(route('admin.content.store'), [
+            'type' => Content::TYPE_ARTICLE,
+            'title' => 'درس ببيانات تالفة',
+            'slug' => 'invalid-learning-meta',
+            'learning_meta' => json_encode(['faq' => ['broken']], JSON_UNESCAPED_UNICODE),
+            'status' => Content::STATUS_DRAFT,
+        ])->assertSessionHasErrors('learning_meta_payload.faq.0');
+
+        $this->assertDatabaseCount('contents', 0);
     }
 
     public function test_scheduled_content_requires_a_future_publish_time(): void

@@ -106,11 +106,13 @@ class AdminContentController extends Controller
     private function payload(ContentRequest $request): array
     {
         $data = $request->validated();
-        unset($data['resources'], $data['resources_json']);
+        $learningMeta = $data['learning_meta_payload'] ?? null;
+        unset($data['resources'], $data['resources_json'], $data['learning_meta_payload']);
         $data['body_html'] = $this->sanitizer->sanitize($data['body_html'] ?? '');
         $data['body_json'] = filled($data['body_json'] ?? null)
             ? json_decode((string) $data['body_json'], true, flags: JSON_THROW_ON_ERROR)
             : null;
+        $data['learning_meta'] = $learningMeta;
 
         if ($data['status'] === Content::STATUS_PUBLISHED
             && blank($data['published_at'] ?? null)) {

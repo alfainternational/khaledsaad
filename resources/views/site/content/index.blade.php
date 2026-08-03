@@ -50,10 +50,11 @@
                         @if ($featured)
                             <article class="content-library-featured">
                                 <a class="content-library-featured__visual" href="{{ route('content.show', $featured) }}">
-                                    @include('site.content._visual', ['item' => $featured, 'eager' => true])
+                                    @include('site.content._visual', ['item' => $featured, 'eager' => true, 'variant' => 'card'])
                                 </a>
                                 <div class="content-library-featured__body">
                                     <div class="content-card__meta">
+                                        @if ($featured->learning_order)<span class="content-card__lesson-order">الدرس {{ $featured->learning_order }}</span>@endif
                                         <span>{{ $typeLabels[$featured->type] }}</span>
                                         @if ($featured->category)<span style="--category-color: {{ $featured->category->color }}">{{ $featured->category->name }}</span>@endif
                                         @if ($featured->duration_minutes)<span>{{ $featured->duration_minutes }} دقيقة</span>@endif
@@ -77,9 +78,10 @@
                         <div class="content-library-grid">
                             @forelse ($contents->skip(1) as $item)
                                 <article class="content-library-card">
-                                    <a href="{{ route('content.show', $item) }}">@include('site.content._visual', ['item' => $item])</a>
+                                    <a href="{{ route('content.show', $item) }}">@include('site.content._visual', ['item' => $item, 'variant' => 'card'])</a>
                                     <div class="content-library-card__body">
                                         <div class="content-card__meta">
+                                            @if ($item->learning_order)<span class="content-card__lesson-order">الدرس {{ $item->learning_order }}</span>@endif
                                             <span>{{ $typeLabels[$item->type] }}</span>
                                             @if ($item->category)<span style="--category-color: {{ $item->category->color }}">{{ $item->category->name }}</span>@endif
                                             @if ($item->duration_minutes)<span>{{ $item->duration_minutes }} دقيقة</span>@endif

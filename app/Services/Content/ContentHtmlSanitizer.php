@@ -10,11 +10,14 @@ class ContentHtmlSanitizer
 {
     /** @var array<string, list<string>> */
     private const ALLOWED = [
-        'p' => ['dir', 'style'],
+        'div' => ['class', 'id'],
+        'section' => ['class', 'id'],
+        'span' => ['class', 'id', 'aria-hidden'],
+        'p' => ['dir', 'style', 'class'],
         'br' => [],
         'h1' => ['dir', 'style'],
-        'h2' => ['dir', 'style'],
-        'h3' => ['dir', 'style'],
+        'h2' => ['dir', 'style', 'id', 'class'],
+        'h3' => ['dir', 'style', 'id', 'class'],
         'h4' => ['dir', 'style'],
         'strong' => [],
         'b' => [],
@@ -32,7 +35,7 @@ class ContentHtmlSanitizer
         'li' => ['data-checked'],
         'a' => ['href', 'target', 'rel'],
         'img' => ['src', 'alt', 'title', 'width', 'height', 'loading'],
-        'table' => [],
+        'table' => ['class'],
         'thead' => [],
         'tbody' => [],
         'tr' => [],
@@ -132,6 +135,18 @@ class ContentHtmlSanitizer
                 } else {
                     $node->setAttribute('style', 'text-align: '.$alignment);
                 }
+            }
+
+            if ($name === 'class' && ! preg_match('/^[A-Za-z0-9 _-]{1,200}$/', $attribute->value)) {
+                $node->removeAttribute('class');
+            }
+
+            if ($name === 'id' && ! preg_match('/^[A-Za-z][A-Za-z0-9_-]{0,100}$/', $attribute->value)) {
+                $node->removeAttribute('id');
+            }
+
+            if ($name === 'aria-hidden' && ! in_array($attribute->value, ['true', 'false'], true)) {
+                $node->removeAttribute('aria-hidden');
             }
         }
 

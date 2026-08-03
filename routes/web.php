@@ -82,6 +82,17 @@ Route::post('blog/{content}/subscribe', [ContentSubscriptionController::class, '
 // واجهة الأدوات العامة: يراها الزائر قبل التسجيل ليعرف ما الذي سيدخل إليه.
 Route::get('tools', [ToolShowcaseController::class, 'index'])->name('tools.index');
 Route::get('pricing', [PricingController::class, 'index'])->name('pricing');
+Route::get('llms.txt', function () {
+    $lessons = Content::query()
+        ->published()
+        ->where('source_key', 'like', 'marketing-course-%')
+        ->orderBy('learning_order')
+        ->get();
+
+    return response()
+        ->view('site.content.llms', compact('lessons'))
+        ->header('Content-Type', 'text/plain; charset=UTF-8');
+})->name('llms');
 
 /*
  * صفحات القطاعات الثلاثة: التخصص المعلن يحتاج صفحةً تُثبته، لا جملةً في

@@ -1,17 +1,30 @@
 @extends('layouts.public')
 @section('layout', 'marketing')
-@section('title', ($content->seo_title ?: $content->title).' | خالد سعد')
+@section('title', $content->seo_title ?: ($content->title.' | خالد سعد'))
 @section('description', $content->seo_description ?: $content->excerpt)
+@section('og_type', 'article')
+@section('twitter_card', 'summary_large_image')
+@section('og_image_width', '1200')
+@section('og_image_height', '630')
 @php
     $coverUrl = $content->cover_image_path
         ? (str_starts_with($content->cover_image_path, 'http') || str_starts_with($content->cover_image_path, '/')
             ? $content->cover_image_path
             : \Illuminate\Support\Facades\Storage::disk('public')->url($content->cover_image_path))
         : null;
+    $ogImagePath = $content->learning_meta['cover']['og'] ?? $content->cover_image_path;
+    $ogImageUrl = $ogImagePath
+        ? (str_starts_with($ogImagePath, 'http') ? $ogImagePath : url($ogImagePath))
+        : null;
 @endphp
-@if ($coverUrl)
-    @section('og_image', $coverUrl)
+@if ($ogImageUrl)
+    @section('og_image', $ogImageUrl)
 @endif
+@push('head')
+    @if ($content->published_at)<meta property="article:published_time" content="{{ $content->published_at->toAtomString() }}">@endif
+    @if ($content->updated_at)<meta property="article:modified_time" content="{{ $content->updated_at->toAtomString() }}">@endif
+    @if ($content->category)<meta property="article:section" content="{{ $content->category->name }}">@endif
+@endpush
 
 @php($typeLabels = ['article' => 'مقال', 'lesson' => 'درس', 'lecture' => 'محاضرة', 'course' => 'دورة'])
 
@@ -19,7 +32,11 @@
     @include('partials.site-header')
 
     <main id="main-content">
-        <article class="content-page">
+        @if ($learning['enabled'])
+            <div class="learning-progress" data-reading-progress aria-hidden="true"><span></span></div>
+        @endif
+        <article @class(['content-page', 'content-page--learning' => $learning['enabled']])
+            @if ($learning['enabled']) data-learning-article data-progress-key="{{ $learning['progress_key'] }}" @endif>
             <header class="content-page__hero">
                 @if ($coverUrl)
                     <img class="content-page__hero-backdrop" src="{{ $coverUrl }}" alt="" aria-hidden="true" loading="eager">
@@ -36,6 +53,7 @@
                         <div class="content-page__hero-copy">
                             <div class="content-page__meta">
                                 <span>{{ $typeLabels[$content->type] }}</span>
+                                @if ($learning['enabled'])<span>الدرس {{ $learning['order'] }} من {{ $learning['total'] }}</span>@endif
                                 @if ($content->category)<span>{{ $content->category->name }}</span>@endif
                                 @if ($content->isSubscriberOnly())<span>بعد تسجيل البريد</span>@else<span>مجاني</span>@endif
                             </div>
@@ -56,6 +74,15 @@
                 <div class="content-reading-grid">
                     <div class="content-reading-main">
                         @if ($unlocked)
+                            @include('site.content._learning-outline', ['variant' => 'mobile'])
+                            @if ($learning['enabled'])
+                                <div class="learning-tools" aria-label="أدوات القراءة">
+                                    <button type="button" data-learning-save><span aria-hidden="true">✓</span> حفظ التقدم</button>
+                                    <button type="button" data-learning-print><span aria-hidden="true">▣</span> طباعة</button>
+                                    <button type="button" data-learning-copy><span aria-hidden="true">⌁</span> نسخ رابط الصفحة</button>
+                                    <span data-learning-feedback role="status" aria-live="polite"></span>
+                                </div>
+                            @endif
                             <div class="content-prose">
                                 @if ($content->video_url)
                                     <div class="content-video"><a href="{{ $content->video_url }}" target="_blank" rel="noopener noreferrer">مشاهدة الفيديو التعليمي <span>↗</span></a></div>
@@ -93,12 +120,14 @@
                                     </aside>
                                 @endif
                             </div>
+                            @include('site.content._learning-navigation')
                         @else
                             @include('site.content._gate')
                         @endif
                     </div>
 
                     <aside class="content-reading-sidebar">
+                        @include('site.content._learning-outline')
                         <section class="content-info-card">
                             <p class="eyebrow">عن هذه المادة</p>
                             <h2>تفاصيل المادة</h2>
@@ -106,6 +135,7 @@
                                 <div><dt>النوع</dt><dd>{{ $typeLabels[$content->type] }}</dd></div>
                                 @if ($content->category)<div><dt>القسم</dt><dd><a href="{{ route('content.index', ['category' => $content->category->slug]) }}">{{ $content->category->name }}</a></dd></div>@endif
                                 @if ($content->duration_minutes)<div><dt>المدة</dt><dd>{{ $content->duration_minutes }} دقيقة</dd></div>@endif
+                                @if ($learning['enabled'])<div><dt>التقدّم</dt><dd><span data-learning-percent>0%</span></dd></div>@endif
                                 <div><dt>الوصول</dt><dd>{{ $content->isSubscriberOnly() ? 'بعد تسجيل البريد' : 'مجاني' }}</dd></div>
                             </dl>
                         </section>

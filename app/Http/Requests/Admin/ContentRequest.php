@@ -18,11 +18,16 @@ class ContentRequest extends FormRequest
     {
         $resourcesJson = $this->input('resources_json', '[]');
         $resources = is_string($resourcesJson) ? json_decode($resourcesJson, true) : null;
+        $learningMetaJson = $this->input('learning_meta');
+        $learningMeta = is_string($learningMetaJson) && $learningMetaJson !== ''
+            ? json_decode($learningMetaJson, true)
+            : null;
 
         $this->merge([
             'access_level' => $this->input('access_level', Content::ACCESS_PUBLIC),
             'sort_order' => $this->input('sort_order', 0),
             'resources' => is_array($resources) ? $resources : null,
+            'learning_meta_payload' => is_array($learningMeta) ? $learningMeta : null,
         ]);
     }
 
@@ -35,6 +40,27 @@ class ContentRequest extends FormRequest
             'category_id' => ['nullable', 'integer', Rule::exists('content_categories', 'id')],
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'regex:/^[\pL\pN]+(?:-[\pL\pN]+)*$/u', Rule::unique('contents', 'slug')->ignore($contentId)],
+            'source_key' => ['nullable', 'string', 'max:255', Rule::unique('contents', 'source_key')->ignore($contentId)],
+            'source_filename' => ['nullable', 'string', 'max:255'],
+            'source_text_hash' => ['nullable', 'string', 'size:64'],
+            'learning_order' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'learning_meta' => ['nullable', 'json'],
+            'learning_meta_payload' => ['nullable', 'array'],
+            'learning_meta_payload.series' => ['nullable', 'string', 'max:255'],
+            'learning_meta_payload.word_count' => ['nullable', 'integer', 'min:0'],
+            'learning_meta_payload.outline' => ['nullable', 'array', 'max:100'],
+            'learning_meta_payload.outline.*' => ['array'],
+            'learning_meta_payload.outline.*.id' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z][A-Za-z0-9_-]*$/'],
+            'learning_meta_payload.outline.*.title' => ['required', 'string', 'max:500'],
+            'learning_meta_payload.faq' => ['nullable', 'array', 'max:20'],
+            'learning_meta_payload.faq.*' => ['array'],
+            'learning_meta_payload.faq.*.question' => ['required', 'string', 'max:1000'],
+            'learning_meta_payload.faq.*.answer' => ['required', 'string', 'max:5000'],
+            'learning_meta_payload.cover' => ['nullable', 'array'],
+            'learning_meta_payload.cover.hero' => ['nullable', 'string', 'max:255'],
+            'learning_meta_payload.cover.card' => ['nullable', 'string', 'max:255'],
+            'learning_meta_payload.cover.og' => ['nullable', 'string', 'max:255'],
+            'learning_meta_payload.cover.alt' => ['nullable', 'string', 'max:500'],
             'excerpt' => ['nullable', 'string', 'max:2000'],
             'body_html' => ['nullable', 'string'],
             'body_json' => ['nullable', 'json'],

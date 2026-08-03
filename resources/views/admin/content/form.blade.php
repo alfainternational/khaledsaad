@@ -187,6 +187,21 @@
             <label class="field"><span class="field__label">وصف SEO</span><textarea name="seo_description" rows="2">{{ old('seo_description', $content->seo_description) }}</textarea></label>
         </fieldset>
 
+        <fieldset class="form-section">
+            <legend>بيانات السلسلة التعليمية</legend>
+            <p class="muted">هذه الحقول تربط المادة بمصدرها وترتيبها. يمكنك تعديل الترتيب والفهرس من هنا، بينما يبقى متن الدرس في المحرر أعلاه.</p>
+            <div class="field-row">
+                <label class="field"><span class="field__label">ترتيب الدرس</span><input type="number" name="learning_order" min="1" value="{{ old('learning_order', $content->learning_order) }}"></label>
+                <label class="field"><span class="field__label">اسم ملف المصدر</span><input type="text" name="source_filename" value="{{ old('source_filename', $content->source_filename) }}" dir="ltr"></label>
+                <label class="field"><span class="field__label">مفتاح المصدر</span><input type="text" name="source_key" value="{{ old('source_key', $content->source_key) }}" dir="ltr"></label>
+            </div>
+            <label class="field">
+                <span class="field__label">بيانات الفهرس والأدوات (JSON)</span>
+                <textarea name="learning_meta" rows="8" dir="ltr">{{ old('learning_meta', $content->learning_meta ? json_encode($content->learning_meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) : '') }}</textarea>
+            </label>
+            <input type="hidden" name="source_text_hash" value="{{ old('source_text_hash', $content->source_text_hash) }}">
+        </fieldset>
+
         <input type="hidden" name="sort_order" value="{{ old('sort_order', $content->sort_order ?? 0) }}">
         <div class="form-actions">
             <button type="submit" class="btn btn--primary">حفظ المحتوى</button>

@@ -43,6 +43,11 @@ class Content extends Model
         'category_id',
         'title',
         'slug',
+        'source_key',
+        'source_filename',
+        'source_text_hash',
+        'learning_order',
+        'learning_meta',
         'excerpt',
         'body_json',
         'body_html',
@@ -63,8 +68,10 @@ class Content extends Model
     {
         return [
             'body_json' => 'array',
+            'learning_meta' => 'array',
             'published_at' => 'datetime',
             'duration_minutes' => 'integer',
+            'learning_order' => 'integer',
             'sort_order' => 'integer',
         ];
     }
