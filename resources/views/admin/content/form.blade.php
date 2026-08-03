@@ -53,15 +53,62 @@
         </label>
 
         <section class="content-editor-shell" data-content-editor data-upload-url="{{ route('admin.content.media.store') }}">
-            <div class="content-editor-toolbar" data-editor-toolbar></div>
+            <div class="content-editor-intro">
+                <div><strong>محرر المحتوى</strong><span>حدّد النص ثم اختر الأيقونة المناسبة. مرّر المؤشر فوق أي أداة لمعرفة وظيفتها.</span></div>
+                <span class="content-editor-intro__hint">يدعم الصور والفيديو والجداول والمهام</span>
+            </div>
+            <div class="content-editor-toolbar" data-editor-toolbar role="toolbar" aria-label="أدوات تحرير المحتوى"></div>
             <div class="content-editor-area" data-editor-area></div>
-            <div class="content-editor-status"><span data-editor-count>0 كلمة</span><button type="button" class="btn btn--ghost btn--sm" data-editor-preview>معاينة</button></div>
+            <div class="content-editor-status">
+                <span data-editor-count>0 كلمة</span>
+                <button type="button" class="btn btn--ghost btn--sm content-editor-preview-button" data-editor-preview>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                    <span>معاينة</span>
+                </button>
+            </div>
         </section>
         <textarea name="body_html" data-editor-html hidden>{{ old('body_html', $content->body_html) }}</textarea>
         <input type="hidden" name="body_json" data-editor-json value="{{ old('body_json', $content->body_json ? json_encode($content->body_json, JSON_UNESCAPED_UNICODE) : '') }}">
 
+        @php
+            $coverValue = old('cover_image_path', $content->cover_image_path);
+            $coverPreview = $coverValue
+                ? (str_starts_with($coverValue, 'http') || str_starts_with($coverValue, '/')
+                    ? $coverValue
+                    : \Illuminate\Support\Facades\Storage::disk('public')->url($coverValue))
+                : '';
+        @endphp
+
+        <section class="content-cover" data-content-cover data-upload-url="{{ route('admin.content.media.store') }}" data-preview-url="{{ $coverPreview }}">
+            <div class="content-cover__head">
+                <div>
+                    <h2>الصورة الرئيسية</h2>
+                    <p class="muted">تظهر في بطاقة المادة ورأس صفحة القراءة وعند مشاركة الرابط. المقاس المقترح 1200 × 675 بكسل.</p>
+                </div>
+                <span class="content-cover__badge">16:9</span>
+            </div>
+            <div class="content-cover__layout">
+                <div class="content-cover__preview">
+                    <img src="{{ $coverPreview }}" alt="معاينة الصورة الرئيسية" data-cover-preview @if(! $coverPreview) hidden @endif>
+                    <div class="content-cover__empty" data-cover-empty @if($coverPreview) hidden @endif>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m5 18 4-4 3 3 3-4 4 5"/></svg>
+                        <strong>أضف صورة تجذب القارئ</strong>
+                        <span>JPG أو PNG أو WebP أو GIF</span>
+                    </div>
+                </div>
+                <div class="content-cover__controls">
+                    <label class="btn btn--primary">
+                        <span>رفع صورة من الجهاز</span>
+                        <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-cover-file hidden>
+                    </label>
+                    <button type="button" class="btn btn--ghost" data-cover-remove @if(! $coverValue) hidden @endif>حذف الصورة</button>
+                    <p class="content-cover__status" data-cover-status role="status" aria-live="polite"></p>
+                    <input type="hidden" name="cover_image_path" value="{{ $coverValue }}" data-cover-input>
+                </div>
+            </div>
+        </section>
+
         <div class="field-row">
-            <label class="field"><span class="field__label">صورة الغلاف</span><input type="text" name="cover_image_path" value="{{ old('cover_image_path', $content->cover_image_path) }}" dir="ltr"></label>
             <label class="field"><span class="field__label">رابط الفيديو</span><input type="url" name="video_url" value="{{ old('video_url', $content->video_url) }}" dir="ltr"></label>
             <label class="field"><span class="field__label">المدة بالدقائق</span><input type="number" name="duration_minutes" min="1" value="{{ old('duration_minutes', $content->duration_minutes) }}"></label>
         </div>

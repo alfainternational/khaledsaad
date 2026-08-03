@@ -62,7 +62,11 @@ class AdminContentMediaController extends Controller
     public function destroy(ContentMedia $media): RedirectResponse
     {
         $isReferenced = Content::query()
-            ->where('cover_image_path', $media->path)
+            ->where(function ($query) use ($media): void {
+                $query->where('cover_image_path', $media->path)
+                    ->orWhere('cover_image_path', $media->url())
+                    ->orWhere('cover_image_path', 'like', '%/blog/media/'.$media->id);
+            })
             ->orWhere('body_html', 'like', '%'.addcslashes($media->path, '%_').'%')
             ->exists();
 

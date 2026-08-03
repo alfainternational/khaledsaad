@@ -35,6 +35,40 @@ class AdminContentManagementTest extends TestCase
             ->assertSee('content-form--fluid', false);
     }
 
+    public function test_content_editor_exposes_grouped_icon_toolbar_and_main_image_uploader(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.content.create'))
+            ->assertOk()
+            ->assertSee('data-editor-toolbar', false)
+            ->assertSee('aria-label="أدوات تحرير المحتوى"', false)
+            ->assertSee('data-content-cover', false)
+            ->assertSee('data-cover-file', false)
+            ->assertSee('data-cover-preview', false)
+            ->assertSee('name="cover_image_path"', false)
+            ->assertSee('الصورة الرئيسية');
+    }
+
+    public function test_admin_can_save_uploaded_main_image_url(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->post(route('admin.content.store'), [
+            'type' => Content::TYPE_ARTICLE,
+            'title' => 'مقال بصورة',
+            'slug' => 'article-with-cover',
+            'cover_image_path' => '/blog/media/42',
+            'status' => Content::STATUS_DRAFT,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('contents', [
+            'slug' => 'article-with-cover',
+            'cover_image_path' => '/blog/media/42',
+        ]);
+    }
+
     public function test_content_editor_includes_uploadable_files_and_external_links_component(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

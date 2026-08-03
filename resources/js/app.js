@@ -1,5 +1,6 @@
 import './bootstrap';
 import './content-editor';
+import './content-cover';
 import './content-resources';
 
 document.documentElement.classList.add('js');
