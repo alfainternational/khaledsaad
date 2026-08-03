@@ -502,11 +502,37 @@
 }
 
 .content-page__hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     padding-block: clamp(7rem, 11vw, 9rem) clamp(2.5rem, 6vw, 4.5rem);
     color: #fff;
     background:
         radial-gradient(circle at 10% 35%, rgba(9, 215, 229, 0.18), transparent 28%),
         linear-gradient(135deg, #061947, var(--brand-navy) 62%, #123c92);
+}
+
+.content-page__hero::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    background:
+        radial-gradient(circle at 12% 35%, rgba(9, 215, 229, 0.2), transparent 30%),
+        linear-gradient(100deg, rgba(6, 25, 71, 0.97) 0%, rgba(7, 31, 91, 0.9) 48%, rgba(18, 60, 146, 0.72) 100%);
+}
+
+.content-page__hero-backdrop {
+    position: absolute;
+    z-index: -2;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.72;
+    filter: saturate(0.85) contrast(1.06);
+    transform: scale(1.015);
 }
 
 .content-breadcrumbs {

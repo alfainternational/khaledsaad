@@ -2,11 +2,47 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AdaptiveInterfaceLayoutTest extends TestCase
 {
+    #[Test]
+    public function content_admin_surfaces_use_the_shared_responsive_filter_and_table_contract(): void
+    {
+        $css = file_get_contents(resource_path('css/workspace.css'));
+
+        foreach (['.filter-bar', '.filter-bar__field', '.filter-bar__label', '[data-filter-bar]'] as $hook) {
+            $this->assertStringContainsString($hook, $css, $hook);
+        }
+
+        foreach (['admin/content/index', 'admin/content/subscribers', 'admin/content/media'] as $view) {
+            $contents = file_get_contents(resource_path("views/{$view}.blade.php"));
+
+            $this->assertStringContainsString('data-filter-bar', $contents, $view);
+            $this->assertStringContainsString('filter-bar__field', $contents, $view);
+            $this->assertStringContainsString('filter-bar__label', $contents, $view);
+        }
+
+        foreach (['admin/content/index', 'admin/content/subscribers', 'admin/content/categories/index'] as $view) {
+            $contents = file_get_contents(resource_path("views/{$view}.blade.php"));
+
+            $this->assertStringContainsString('data-table="entity"', $contents, $view);
+            $this->assertStringContainsString('data-label=', $contents, $view);
+        }
+    }
+
+    #[Test]
+    public function relative_times_are_localized_for_the_arabic_interface(): void
+    {
+        $earlier = Carbon::parse('2026-08-03 12:00:00');
+        $later = Carbon::parse('2026-08-03 17:00:00');
+
+        $this->assertSame('ar', Carbon::getLocale());
+        $this->assertSame('قبل 5 ساعات', $earlier->diffForHumans($later));
+    }
+
     #[Test]
     public function workspace_css_defines_the_approved_semantic_layout_contract(): void
     {

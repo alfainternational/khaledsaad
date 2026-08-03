@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** إصلاح انهيار تنسيق مرشحات إدارة المحتوى وتعميم نفس العقد على الشاشات المشابهة والجداول والتواريخ النسبية.
+**Goal:** إصلاح انهيار تنسيق مرشحات إدارة المحتوى وتعميم نفس العقد على الشاشات المشابهة، مع تحسين رفع الصور والمرفقات ودمج الصورة الرئيسية في خلفية عنوان المادة.
 
 **Architecture:** يحتفظ النظام بالقوالب الحالية ويضيف عقد عرض مشتركًا في `workspace.css`. تُوسم القوالب بعناصر دلالية قابلة للاختبار، ويُضبط تعريب Carbon مرة واحدة في مزود التطبيق.
 
@@ -93,3 +93,27 @@ Expected: لا أخطاء؛ يسمح بتحذير حجم الحزمة الحال
 - [ ] **Step 3: Commit, push, deploy, and smoke-test**
 
 ادفع فرع `codex/internal-content-hub`، وانشر الملفات مع `--build`، ثم تحقق أن مسارات الإدارة تعيد 200 للمسؤول وأن الأصول الجديدة محملة بلا أخطاء.
+
+### Task 5: أحجام الوسائط وخلفية العنوان
+
+**Files:**
+- Modify: `app/Http/Requests/Admin/ContentMediaRequest.php`
+- Modify: `app/Models/ContentMedia.php`
+- Modify: `resources/views/admin/content/form.blade.php`
+- Modify: `resources/views/site/content/show.blade.php`
+- Modify: `resources/js/content-cover.js`
+- Modify: `resources/js/content-resources.js`
+- Modify: `resources/js/content-editor.js`
+- Modify: `resources/css/content-library.css`
+
+- [ ] **Step 1: Lock the upload contract with tests**
+
+تحقق من قبول الصور ذات الأبعاد غير المعتادة، ورفض ما يزيد على 256 ميجابايت برسالة عربية، وإظهار الحد في المحرر.
+
+- [ ] **Step 2: Surface useful file metadata**
+
+اعرض حجم الصور والمرفقات بوحدات عربية، واعرض أبعاد الصورة الفعلية في حالة رفع الصورة الرئيسية من دون رفض أي نسبة أبعاد.
+
+- [ ] **Step 3: Blend the cover into the reading hero**
+
+أضف نسخة خلفية من الصورة الرئيسية داخل رأس صفحة القراءة، ثم طبقة أزرق متدرجة تحفظ هوية الصفحة وتباين العنوان، مع إبقاء الصورة الأصلية في موضعها الحالي.

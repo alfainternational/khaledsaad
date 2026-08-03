@@ -13,6 +13,7 @@ use App\Modules\Intake\HttpSpeechToText;
 use App\Services\Billing\Entitlements;
 use App\Services\Settings\MailConfigurator;
 use App\Support\Settings\SettingsConfig;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -53,6 +54,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Carbon::setLocale('ar');
+
         /*
          * @feature('reports.pdf') في القوالب: يخفي ما لا تسمح به الخطة بدل أن
          * يعرض زرًّا يُرفض عند الضغط. المنع الحقيقي يبقى في المسار/الخدمة —

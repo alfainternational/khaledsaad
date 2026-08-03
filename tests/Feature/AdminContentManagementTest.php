@@ -89,6 +89,9 @@ class AdminContentManagementTest extends TestCase
             ->get(route('admin.content.edit', $content))
             ->assertOk()
             ->assertSee('data-content-resources', false)
+            ->assertSee('data-media-max-bytes="268435456"', false)
+            ->assertSee('تُقبل كل الأبعاد')
+            ->assertSee('256 ميجابايت')
             ->assertSee(route('admin.content.media.store'), false)
             ->assertSee('name="resources_json"', false)
             ->assertSee('مرجع محفوظ');

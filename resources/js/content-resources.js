@@ -12,6 +12,7 @@ function initializeResources(shell) {
     const titleInput = shell.querySelector('[data-resource-link-title]');
     const urlInput = shell.querySelector('[data-resource-link-url]');
     const addLink = shell.querySelector('[data-resource-add-link]');
+    const maxBytes = Number(shell.dataset.mediaMaxBytes) || 256 * 1024 * 1024;
     let resources = parseInitial(shell.querySelector('[data-resources-initial]')?.textContent);
 
     if (!uploadUrl || !fileInput || !list || !empty || !status || !hidden) return;
@@ -24,7 +25,13 @@ function initializeResources(shell) {
         status.classList.remove('is-error');
 
         for (const [index, file] of files.entries()) {
-            status.textContent = `جارٍ رفع ${file.name} (${index + 1} من ${files.length})…`;
+            if (file.size > maxBytes) {
+                status.classList.add('is-error');
+                status.textContent = `حجم ${file.name} هو ${formatBytes(file.size)}، والحد الأقصى ${formatBytes(maxBytes)}.`;
+                return;
+            }
+
+            status.textContent = `جارٍ رفع ${file.name} · ${formatBytes(file.size)} (${index + 1} من ${files.length})…`;
 
             try {
                 const uploaded = await uploadFile(uploadUrl, file);
@@ -170,8 +177,12 @@ function isSafeHttpUrl(value) {
 }
 
 function formatBytes(bytes) {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024) return `${bytes} بايت`;
+    if (bytes < 1024 * 1024) return `${formatNumber(bytes / 1024)} كيلوبايت`;
 
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    return `${formatNumber(bytes / 1024 / 1024)} ميجابايت`;
+}
+
+function formatNumber(value) {
+    return value.toLocaleString('ar', { maximumFractionDigits: 1 });
 }

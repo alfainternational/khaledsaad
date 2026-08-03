@@ -2,8 +2,15 @@
 @section('layout', 'marketing')
 @section('title', ($content->seo_title ?: $content->title).' | خالد سعد')
 @section('description', $content->seo_description ?: $content->excerpt)
-@if ($content->cover_image_path)
-    @section('og_image', str_starts_with($content->cover_image_path, 'http') || str_starts_with($content->cover_image_path, '/') ? $content->cover_image_path : \Illuminate\Support\Facades\Storage::disk('public')->url($content->cover_image_path))
+@php
+    $coverUrl = $content->cover_image_path
+        ? (str_starts_with($content->cover_image_path, 'http') || str_starts_with($content->cover_image_path, '/')
+            ? $content->cover_image_path
+            : \Illuminate\Support\Facades\Storage::disk('public')->url($content->cover_image_path))
+        : null;
+@endphp
+@if ($coverUrl)
+    @section('og_image', $coverUrl)
 @endif
 
 @php($typeLabels = ['article' => 'مقال', 'lesson' => 'درس', 'lecture' => 'محاضرة', 'course' => 'دورة'])
@@ -14,6 +21,9 @@
     <main id="main-content">
         <article class="content-page">
             <header class="content-page__hero">
+                @if ($coverUrl)
+                    <img class="content-page__hero-backdrop" src="{{ $coverUrl }}" alt="" aria-hidden="true" loading="eager">
+                @endif
                 <div class="container">
                     <nav class="content-breadcrumbs" aria-label="مسار الصفحة">
                         <a href="{{ route('content.index') }}">المكتبة</a><span>←</span>
@@ -68,7 +78,7 @@
                                                 <li>
                                                     @if ($resource->type === 'file' && $resource->media)
                                                         <a href="{{ route('content.resources.download', [$content, $resource]) }}" class="content-downloads__item">
-                                                            <span><strong>{{ $resource->title }}</strong><small>{{ $resource->media->original_name }} · {{ number_format($resource->media->size_bytes / 1024, 1) }} KB</small></span>
+                                                            <span><strong>{{ $resource->title }}</strong><small>{{ $resource->media->original_name }} · {{ $resource->media->humanReadableSize() }}</small></span>
                                                             <span aria-hidden="true">تنزيل ↓</span>
                                                         </a>
                                                     @elseif ($resource->type === 'link')

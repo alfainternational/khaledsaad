@@ -52,7 +52,7 @@
             <textarea name="excerpt" rows="3">{{ old('excerpt', $content->excerpt) }}</textarea>
         </label>
 
-        <section class="content-editor-shell" data-content-editor data-upload-url="{{ route('admin.content.media.store') }}">
+        <section class="content-editor-shell" data-content-editor data-upload-url="{{ route('admin.content.media.store') }}" data-media-max-bytes="{{ config('content.media.max_bytes', 268435456) }}">
             <div class="content-editor-intro">
                 <div><strong>محرر المحتوى</strong><span>حدّد النص ثم اختر الأيقونة المناسبة. مرّر المؤشر فوق أي أداة لمعرفة وظيفتها.</span></div>
                 <span class="content-editor-intro__hint">يدعم الصور والفيديو والجداول والمهام</span>
@@ -79,11 +79,11 @@
                 : '';
         @endphp
 
-        <section class="content-cover" data-content-cover data-upload-url="{{ route('admin.content.media.store') }}" data-preview-url="{{ $coverPreview }}">
+        <section class="content-cover" data-content-cover data-upload-url="{{ route('admin.content.media.store') }}" data-preview-url="{{ $coverPreview }}" data-media-max-bytes="{{ config('content.media.max_bytes', 268435456) }}">
             <div class="content-cover__head">
                 <div>
                     <h2>الصورة الرئيسية</h2>
-                    <p class="muted">تظهر في بطاقة المادة ورأس صفحة القراءة وعند مشاركة الرابط. المقاس المقترح 1200 × 675 بكسل.</p>
+                    <p class="muted">تظهر في بطاقة المادة ورأس صفحة القراءة وخلفية العنوان. أفضل ظهور عند 1600 × 900 بكسل، وتُقبل كل الأبعاد حتى 256 ميجابايت.</p>
                 </div>
                 <span class="content-cover__badge">16:9</span>
             </div>
@@ -93,7 +93,7 @@
                     <div class="content-cover__empty" data-cover-empty @if($coverPreview) hidden @endif>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m5 18 4-4 3 3 3-4 4 5"/></svg>
                         <strong>أضف صورة تجذب القارئ</strong>
-                        <span>JPG أو PNG أو WebP أو GIF</span>
+                        <span>JPG أو PNG أو WebP أو GIF · حتى 256 ميجابايت</span>
                     </div>
                 </div>
                 <div class="content-cover__controls">
@@ -131,11 +131,11 @@
                 : $savedResources;
         @endphp
 
-        <section class="content-resources" data-content-resources data-upload-url="{{ route('admin.content.media.store') }}">
+        <section class="content-resources" data-content-resources data-upload-url="{{ route('admin.content.media.store') }}" data-media-max-bytes="{{ config('content.media.max_bytes', 268435456) }}">
             <div class="content-resources__head">
                 <div>
                     <h2>المواد المصاحبة</h2>
-                    <p class="muted">ارفع ملفات الدرس أو أضف روابط خارجية. يمكنك إضافة أكثر من مادة وترتيبها.</p>
+                    <p class="muted">ارفع ملفات الدرس أو أضف روابط خارجية. يمكنك إضافة أكثر من مادة وترتيبها، حتى 256 ميجابايت لكل ملف.</p>
                 </div>
                 <label class="btn btn--ghost content-resources__upload">
                     <span>رفع ملفات من الجهاز</span>

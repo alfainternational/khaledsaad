@@ -165,6 +165,7 @@ class PublicContentLibraryTest extends TestCase
         Storage::fake('local');
         $author = User::factory()->create();
         $content = $this->content($author, 'درس الموارد', 'public-resources', Content::TYPE_LESSON);
+        $content->update(['cover_image_path' => 'https://example.com/portrait-cover.jpg']);
         Storage::disk('local')->put('content/resources/worksheet.pdf', 'worksheet-content');
         $media = ContentMedia::query()->create([
             'disk' => 'local',
@@ -189,8 +190,11 @@ class PublicContentLibraryTest extends TestCase
 
         $this->get(route('content.show', $content))
             ->assertOk()
+            ->assertSee('content-page__hero-backdrop', false)
+            ->assertSee('https://example.com/portrait-cover.jpg', false)
             ->assertSee('المواد المصاحبة')
             ->assertSee('ورقة العمل')
+            ->assertSee('17 بايت')
             ->assertSee('المرجع الخارجي')
             ->assertSee('https://example.com/reference', false);
 

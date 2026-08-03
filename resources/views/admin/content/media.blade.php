@@ -14,9 +14,12 @@
 
     @if (session('success')) <div class="alert alert--success">{{ session('success') }}</div> @endif
 
-    <form method="GET" class="form filter-bar">
-        <input type="search" name="q" value="{{ request('q') }}" placeholder="ابحث باسم الملف">
-        <button class="btn btn--ghost">بحث</button>
+    <form method="GET" class="form filter-bar filter-bar--search" data-filter-bar>
+        <label class="filter-bar__field filter-bar__field--search">
+            <span class="filter-bar__label">البحث باسم الملف</span>
+            <input type="search" name="q" value="{{ request('q') }}" placeholder="اسم الصورة أو الملف">
+        </label>
+        <button type="submit" class="btn btn--primary">بحث</button>
     </form>
 
     <div class="content-media-grid">
@@ -27,8 +30,8 @@
                 @endif
                 <div class="card__body">
                     <h2>{{ $item->original_name }}</h2>
-                    <p class="muted">{{ $item->mime_type }} · {{ number_format($item->size_bytes / 1024, 1) }} KB</p>
-                    <input value="{{ $item->url() }}" readonly dir="ltr" onclick="this.select()">
+                    <p class="muted">{{ $item->mime_type }} · {{ $item->humanReadableSize() }}</p>
+                    <input class="form-control" value="{{ $item->url() }}" readonly dir="ltr" onclick="this.select()" aria-label="رابط الملف">
                     <form method="POST" action="{{ route('admin.content-media.destroy', $item) }}" data-confirm="هل تريد حذف هذا الملف نهائيًا؟">
                         @csrf @method('DELETE')
                         <button class="btn btn--ghost btn--sm">حذف الملف</button>

@@ -151,7 +151,7 @@ function initializeEditor(shell) {
         redo: () => editor.chain().focus().redo().run(),
         table: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
         link: () => setLink(editor),
-        image: () => selectImage(editor, shell.dataset.uploadUrl),
+        image: () => selectImage(editor, shell.dataset.uploadUrl, Number(shell.dataset.mediaMaxBytes) || 256 * 1024 * 1024),
         youtube: () => addYoutube(editor),
         fullscreen: () => {
             shell.classList.toggle('is-fullscreen');
@@ -239,7 +239,7 @@ function setLink(editor) {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url.trim(), target: '_blank' }).run();
 }
 
-function selectImage(editor, uploadUrl) {
+function selectImage(editor, uploadUrl, maxBytes) {
     if (!uploadUrl) return;
 
     const input = document.createElement('input');
@@ -250,6 +250,12 @@ function selectImage(editor, uploadUrl) {
     input.addEventListener('change', async () => {
         const file = input.files?.[0];
         if (!file) return;
+
+        if (file.size > maxBytes) {
+            window.alert(`حجم الصورة ${formatMediaBytes(file.size)}، والحد الأقصى ${formatMediaBytes(maxBytes)}.`);
+            input.remove();
+            return;
+        }
 
         const alt = window.prompt('وصف الصورة البديل:', '') || '';
         const body = new FormData();
@@ -266,11 +272,11 @@ function selectImage(editor, uploadUrl) {
                 body,
             });
 
-            if (!response.ok) throw new Error('upload-failed');
-            const payload = await response.json();
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.errors?.file?.[0] || 'تعذر رفع الصورة.');
             editor.chain().focus().setImage({ src: payload.data.url, alt }).run();
-        } catch {
-            window.alert('تعذر رفع الصورة. تحقق من نوع الملف أو حجمه وحاول مجددًا.');
+        } catch (error) {
+            window.alert(error.message || 'تعذر رفع الصورة. تحقق من نوع الملف أو حجمه وحاول مجددًا.');
         } finally {
             input.remove();
         }
@@ -278,6 +284,13 @@ function selectImage(editor, uploadUrl) {
 
     document.body.appendChild(input);
     input.click();
+}
+
+function formatMediaBytes(bytes) {
+    if (bytes < 1024) return `${bytes} بايت`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toLocaleString('ar', { maximumFractionDigits: 1 })} كيلوبايت`;
+
+    return `${(bytes / 1024 / 1024).toLocaleString('ar', { maximumFractionDigits: 1 })} ميجابايت`;
 }
 
 function addYoutube(editor) {

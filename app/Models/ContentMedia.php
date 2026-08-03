@@ -33,4 +33,24 @@ class ContentMedia extends Model
     {
         return route('content.media.show', $this);
     }
+
+    public function humanReadableSize(): string
+    {
+        $bytes = max(0, (int) $this->size_bytes);
+
+        if ($bytes < 1024) {
+            return $bytes.' بايت';
+        }
+
+        if ($bytes < 1024 * 1024) {
+            return $this->formatSize($bytes / 1024).' كيلوبايت';
+        }
+
+        return $this->formatSize($bytes / 1024 / 1024).' ميجابايت';
+    }
+
+    private function formatSize(float $size): string
+    {
+        return rtrim(rtrim(number_format($size, 1, '.', ''), '0'), '.');
+    }
 }

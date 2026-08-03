@@ -15,6 +15,14 @@ class AdminContentMediaTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_web_runtime_is_configured_for_256_megabyte_media_uploads(): void
+    {
+        $configuration = file_get_contents(public_path('.user.ini'));
+
+        $this->assertStringContainsString('upload_max_filesize=256M', $configuration);
+        $this->assertStringContainsString('post_max_size=272M', $configuration);
+    }
+
     public function test_admin_uploads_a_safe_image_to_the_local_public_library(): void
     {
         Storage::fake('local');
@@ -35,6 +43,28 @@ class AdminContentMediaTest extends TestCase
         $this->assertSame($admin->id, $media->uploaded_by);
         $this->assertStringStartsWith('content/', $media->path);
         $this->assertNotSame('cover.jpg', basename($media->path));
+    }
+
+    public function test_images_with_unusual_dimensions_are_accepted_up_to_256_megabytes(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->postJson(route('admin.content.media.store'), [
+            'file' => UploadedFile::fake()->image('portrait.jpg', 333, 1777),
+        ])->assertCreated();
+
+        $this->actingAs($admin)->postJson(route('admin.content.media.store'), [
+            'file' => UploadedFile::fake()->create('too-large.jpg', 256 * 1024 + 1, 'image/jpeg'),
+        ])->assertUnprocessable()
+            ->assertJsonPath('errors.file.0', 'الحد الأقصى لحجم الصورة أو المرفق هو 256 ميجابايت.');
+    }
+
+    public function test_media_size_is_formatted_for_the_arabic_interface(): void
+    {
+        $media = new ContentMedia(['size_bytes' => 1572864]);
+
+        $this->assertSame('1.5 ميجابايت', $media->humanReadableSize());
     }
 
     public function test_svg_and_non_admin_uploads_are_rejected(): void
