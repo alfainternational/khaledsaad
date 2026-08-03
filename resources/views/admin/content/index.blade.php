@@ -9,7 +9,10 @@
             <h1>إدارة المحتوى</h1>
             <p class="muted">أنشئ المقالات والدروس والمحاضرات والدورات وانشرها من مكان واحد.</p>
         </div>
-        <a href="{{ route('admin.content.create') }}" class="btn btn--primary">محتوى جديد</a>
+        <div class="table__actions">
+            <a href="{{ route('admin.content-categories.index') }}" class="btn btn--ghost">إدارة الأقسام</a>
+            <a href="{{ route('admin.content.create') }}" class="btn btn--primary">محتوى جديد</a>
+        </div>
     </header>
 
     @if (session('success')) <div class="alert alert--success">{{ session('success') }}</div> @endif
@@ -20,6 +23,12 @@
             <option value="">كل الأنواع</option>
             @foreach (['article' => 'مقال', 'lesson' => 'درس', 'lecture' => 'محاضرة', 'course' => 'دورة'] as $value => $label)
                 <option value="{{ $value }}" @selected(request('type') === $value)>{{ $label }}</option>
+            @endforeach
+        </select>
+        <select name="category_id">
+            <option value="">كل الأقسام</option>
+            @foreach ($categories as $category)
+                <option value="{{ $category->id }}" @selected((string) request('category_id') === (string) $category->id)>{{ $category->name }}</option>
             @endforeach
         </select>
         <select name="status">
@@ -38,12 +47,13 @@
 
     <div class="table-wrap">
         <table class="table">
-            <thead><tr><th>المحتوى</th><th>النوع</th><th>الحالة</th><th>الوصول</th><th>آخر تحديث</th><th></th></tr></thead>
+            <thead><tr><th>المحتوى</th><th>النوع</th><th>القسم</th><th>الحالة</th><th>الوصول</th><th>آخر تحديث</th><th></th></tr></thead>
             <tbody>
                 @forelse ($contents as $item)
                     <tr>
                         <td><strong>{{ $item->title }}</strong><p class="muted">/{{ $item->slug }}</p></td>
                         <td>{{ ['article' => 'مقال', 'lesson' => 'درس', 'lecture' => 'محاضرة', 'course' => 'دورة'][$item->type] ?? $item->type }}</td>
+                        <td>{{ $item->category?->name ?: 'غير مصنف' }}</td>
                         <td><span class="badge">{{ ['draft' => 'مسودة', 'scheduled' => 'مجدول', 'published' => 'منشور', 'archived' => 'مؤرشف'][$item->status] ?? $item->status }}</span></td>
                         <td>{{ $item->isSubscriberOnly() ? 'بعد تسجيل البريد' : 'مجاني' }}</td>
                         <td>{{ $item->updated_at?->diffForHumans() }}</td>
@@ -57,7 +67,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6">لا يوجد محتوى بعد. أنشئ أول عنصر من هنا.</td></tr>
+                    <tr><td colspan="7">لا يوجد محتوى بعد. أنشئ أول عنصر من هنا.</td></tr>
                 @endforelse
             </tbody>
         </table>

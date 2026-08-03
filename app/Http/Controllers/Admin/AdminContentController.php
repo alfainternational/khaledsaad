@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ContentRequest;
 use App\Models\Content;
+use App\Models\ContentCategory;
 use App\Models\ContentResource;
 use App\Services\Content\ContentHtmlSanitizer;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +20,7 @@ class AdminContentController extends Controller
     public function index(Request $request): View
     {
         $contents = Content::query()
+            ->with('category')
             ->when($request->filled('q'), fn ($query) => $query->where(function ($nested) use ($request): void {
                 $term = '%'.addcslashes((string) $request->input('q'), '%_').'%';
                 $nested->where('title', 'like', $term)->orWhere('excerpt', 'like', $term);
@@ -26,17 +28,21 @@ class AdminContentController extends Controller
             ->when($request->filled('type'), fn ($query) => $query->where('type', $request->input('type')))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
             ->when($request->filled('access_level'), fn ($query) => $query->where('access_level', $request->input('access_level')))
+            ->when($request->filled('category_id'), fn ($query) => $query->where('category_id', $request->integer('category_id')))
             ->latest('updated_at')
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.content.index', compact('contents'));
+        $categories = ContentCategory::query()->ordered()->get();
+
+        return view('admin.content.index', compact('contents', 'categories'));
     }
 
     public function create(): View
     {
         return view('admin.content.form', [
             'content' => new Content,
+            'categories' => ContentCategory::query()->active()->ordered()->get(),
         ]);
     }
 
@@ -59,7 +65,12 @@ class AdminContentController extends Controller
 
     public function edit(Content $content): View
     {
-        return view('admin.content.form', compact('content'));
+        $categories = ContentCategory::query()
+            ->where(fn ($query) => $query->active()->orWhere('id', $content->category_id))
+            ->ordered()
+            ->get();
+
+        return view('admin.content.form', compact('content', 'categories'));
     }
 
     public function update(ContentRequest $request, Content $content): RedirectResponse

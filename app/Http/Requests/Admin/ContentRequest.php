@@ -32,6 +32,7 @@ class ContentRequest extends FormRequest
 
         return [
             'type' => ['required', Rule::in(Content::types())],
+            'category_id' => ['nullable', 'integer', Rule::exists('content_categories', 'id')],
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'regex:/^[\pL\pN]+(?:-[\pL\pN]+)*$/u', Rule::unique('contents', 'slug')->ignore($contentId)],
             'excerpt' => ['nullable', 'string', 'max:2000'],

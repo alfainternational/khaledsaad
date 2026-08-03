@@ -29,6 +29,15 @@
                 </select>
             </label>
             <label class="field">
+                <span class="field__label">القسم</span>
+                <select name="category_id">
+                    <option value="">غير مصنف</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category->id }}" @selected((string) old('category_id', $content->category_id) === (string) $category->id)>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="field">
                 <span class="field__label">العنوان</span>
                 <input type="text" name="title" value="{{ old('title', $content->title) }}" required>
             </label>

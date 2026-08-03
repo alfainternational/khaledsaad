@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminConsultationController;
+use App\Http\Controllers\Admin\AdminContentCategoryController;
 use App\Http\Controllers\Admin\AdminContentController;
 use App\Http\Controllers\Admin\AdminContentMediaController;
 use App\Http\Controllers\Admin\AdminContentSubscriberController;
@@ -412,6 +413,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('content-media', [AdminContentMediaController::class, 'index'])->name('content-media.index');
     Route::delete('content-media/{media}', [AdminContentMediaController::class, 'destroy'])->name('content-media.destroy');
     Route::post('content/media', [AdminContentMediaController::class, 'store'])->name('content.media.store');
+    Route::resource('content-categories', AdminContentCategoryController::class)->except('show');
     Route::resource('content', AdminContentController::class)->except(['show', 'destroy']);
     Route::get('content/{course}/curriculum', [AdminCourseCurriculumController::class, 'show'])->name('content.curriculum');
     Route::post('content/{course}/curriculum/sections', [AdminCourseCurriculumController::class, 'storeSection'])->name('content.sections.store');

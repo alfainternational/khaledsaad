@@ -8,6 +8,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ContentCategory extends Model
 {
+    public static function icons(): array
+    {
+        return [
+            'folder',
+            'megaphone',
+            'book-open',
+            'graduation-cap',
+            'presentation',
+            'chart',
+            'lightbulb',
+            'target',
+        ];
+    }
+
     protected $fillable = [
         'name',
         'slug',
