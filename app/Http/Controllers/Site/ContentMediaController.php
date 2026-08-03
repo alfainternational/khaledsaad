@@ -22,8 +22,10 @@ class ContentMediaController extends Controller
                 ->where(function ($query) use ($media): void {
                     $query->where('cover_image_path', $media->url())
                         ->orWhere('cover_image_path', 'like', '%/blog/media/'.$media->id)
-                        ->orWhere('body_html', 'like', '%/blog/media/'.$media->id.'%');
+                        ->orWhere('body_html', 'like', '%/blog/media/'.$media->id.'%')
+                        ->orWhereHas('resources', fn ($resources) => $resources->where('content_media_id', $media->id));
                 })
+                ->with('resources')
                 ->get()
                 ->filter(fn (Content $content) => $this->referencesMedia($content, $media));
 
@@ -52,7 +54,8 @@ class ContentMediaController extends Controller
     private function referencesMedia(Content $content, ContentMedia $media): bool
     {
         return $this->containsMediaUrl((string) $content->cover_image_path, $media)
-            || $this->containsMediaUrl((string) $content->body_html, $media);
+            || $this->containsMediaUrl((string) $content->body_html, $media)
+            || $content->resources->contains('content_media_id', $media->id);
     }
 
     private function containsMediaUrl(string $value, ContentMedia $media): bool

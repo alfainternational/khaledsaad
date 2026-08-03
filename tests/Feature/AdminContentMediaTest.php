@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Content;
 use App\Models\ContentMedia;
+use App\Models\ContentResource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -82,5 +84,55 @@ class AdminContentMediaTest extends TestCase
 
         Storage::disk('local')->assertMissing('content/test/image.jpg');
         $this->assertDatabaseMissing('content_media', ['id' => $media->id]);
+    }
+
+    public function test_admin_uploads_office_and_archive_materials(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        foreach ([
+            ['worksheet.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            ['materials.zip', 'application/zip'],
+        ] as [$name, $mime]) {
+            $this->actingAs($admin)->postJson(route('admin.content.media.store'), [
+                'file' => UploadedFile::fake()->create($name, 24, $mime),
+            ])->assertCreated();
+        }
+
+        $this->assertDatabaseCount('content_media', 2);
+    }
+
+    public function test_media_attached_to_content_cannot_be_deleted(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->create(['is_admin' => true]);
+        $content = Content::query()->create([
+            'title' => 'درس',
+            'slug' => 'protected-media',
+            'created_by' => $admin->id,
+        ]);
+        Storage::disk('local')->put('content/test/guide.pdf', 'pdf');
+        $media = ContentMedia::query()->create([
+            'disk' => 'local',
+            'path' => 'content/test/guide.pdf',
+            'original_name' => 'guide.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 3,
+            'uploaded_by' => $admin->id,
+        ]);
+        ContentResource::query()->create([
+            'content_id' => $content->id,
+            'type' => ContentResource::TYPE_FILE,
+            'title' => 'الدليل',
+            'content_media_id' => $media->id,
+        ]);
+
+        $this->actingAs($admin)->delete(route('admin.content-media.destroy', $media))
+            ->assertRedirect()
+            ->assertSessionHasErrors('media');
+
+        Storage::disk('local')->assertExists($media->path);
+        $this->assertDatabaseHas('content_media', ['id' => $media->id]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\Content;
+use App\Models\ContentResource;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,9 +16,13 @@ class ContentRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $resourcesJson = $this->input('resources_json', '[]');
+        $resources = is_string($resourcesJson) ? json_decode($resourcesJson, true) : null;
+
         $this->merge([
             'access_level' => $this->input('access_level', Content::ACCESS_PUBLIC),
             'sort_order' => $this->input('sort_order', 0),
+            'resources' => is_array($resources) ? $resources : null,
         ]);
     }
 
@@ -54,6 +59,22 @@ class ContentRequest extends FormRequest
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:500'],
             'sort_order' => ['required', 'integer', 'min:0'],
+            'resources_json' => ['nullable', 'json'],
+            'resources' => ['nullable', 'array', 'max:50'],
+            'resources.*.type' => ['required', Rule::in([ContentResource::TYPE_FILE, ContentResource::TYPE_LINK])],
+            'resources.*.title' => ['required', 'string', 'max:255'],
+            'resources.*.media_id' => [
+                'nullable',
+                'integer',
+                'required_if:resources.*.type,'.ContentResource::TYPE_FILE,
+                'exists:content_media,id',
+            ],
+            'resources.*.url' => [
+                'nullable',
+                'required_if:resources.*.type,'.ContentResource::TYPE_LINK,
+                'url:http,https',
+                'max:2048',
+            ],
         ];
     }
 }

@@ -50,6 +50,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Site\ContentLibraryController;
 use App\Http\Controllers\Site\ContentMediaController;
+use App\Http\Controllers\Site\ContentResourceController;
 use App\Http\Controllers\Site\ContentSubscriptionController;
 use App\Http\Controllers\Site\GuestRunController;
 use App\Http\Controllers\Site\HomeController;
@@ -73,6 +74,7 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('download/android', MobileAppController::class)->name('mobile.download');
 Route::get('blog', [ContentLibraryController::class, 'index'])->name('content.index');
 Route::get('blog/media/{media}', ContentMediaController::class)->name('content.media.show');
+Route::get('blog/{content}/resources/{resource}', ContentResourceController::class)->name('content.resources.download');
 Route::get('blog/{content}', [ContentLibraryController::class, 'show'])->name('content.show');
 Route::post('blog/{content}/subscribe', [ContentSubscriptionController::class, 'store'])->middleware('throttle:8,1')->name('content.subscribe');
 

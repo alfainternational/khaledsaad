@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Content;
+use App\Models\ContentMedia;
+use App\Models\ContentResource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -31,6 +33,31 @@ class AdminContentManagementTest extends TestCase
             ->get(route('admin.content.create'))
             ->assertOk()
             ->assertSee('content-form--fluid', false);
+    }
+
+    public function test_content_editor_includes_uploadable_files_and_external_links_component(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $content = Content::query()->create([
+            'title' => 'درس الموارد',
+            'slug' => 'resource-editor',
+            'type' => Content::TYPE_LESSON,
+            'created_by' => $admin->id,
+        ]);
+        $content->resources()->create([
+            'type' => ContentResource::TYPE_LINK,
+            'title' => 'مرجع محفوظ',
+            'url' => 'https://example.com/saved',
+            'position' => 0,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.content.edit', $content))
+            ->assertOk()
+            ->assertSee('data-content-resources', false)
+            ->assertSee(route('admin.content.media.store'), false)
+            ->assertSee('name="resources_json"', false)
+            ->assertSee('مرجع محفوظ');
     }
 
     public function test_admin_creates_free_content_by_default_and_html_is_sanitized(): void
@@ -126,5 +153,79 @@ class AdminContentManagementTest extends TestCase
             'slug' => 'scheduled-article',
             'status' => Content::STATUS_SCHEDULED,
         ]);
+    }
+
+    public function test_admin_synchronizes_uploaded_files_and_links_with_content(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $media = ContentMedia::query()->create([
+            'disk' => 'local',
+            'path' => 'content/test/worksheet.pdf',
+            'original_name' => 'worksheet.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 2048,
+            'uploaded_by' => $admin->id,
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.content.store'), [
+            'type' => Content::TYPE_LESSON,
+            'title' => 'درس مع مواد',
+            'slug' => 'lesson-with-resources',
+            'status' => Content::STATUS_DRAFT,
+            'resources_json' => json_encode([
+                ['type' => 'file', 'title' => 'ورقة العمل', 'media_id' => $media->id],
+                ['type' => 'link', 'title' => 'مرجع خارجي', 'url' => 'https://example.com/reference'],
+            ]),
+        ]);
+
+        $content = Content::query()->sole();
+        $response->assertRedirect(route('admin.content.edit', $content));
+        $this->assertSame(['ورقة العمل', 'مرجع خارجي'], $content->resources->pluck('title')->all());
+        $this->assertSame([0, 1], $content->resources->pluck('position')->all());
+        $this->assertSame($media->id, $content->resources->first()->content_media_id);
+
+        $this->actingAs($admin)->put(route('admin.content.update', $content), [
+            'type' => Content::TYPE_LESSON,
+            'title' => 'درس مع مواد',
+            'slug' => 'lesson-with-resources',
+            'status' => Content::STATUS_DRAFT,
+            'resources_json' => json_encode([
+                ['type' => 'link', 'title' => 'مرجع محدث', 'url' => 'https://example.org/updated'],
+            ]),
+        ])->assertRedirect(route('admin.content.edit', $content));
+
+        $this->assertDatabaseCount('content_resources', 1);
+        $this->assertDatabaseHas('content_resources', [
+            'content_id' => $content->id,
+            'type' => ContentResource::TYPE_LINK,
+            'title' => 'مرجع محدث',
+            'url' => 'https://example.org/updated',
+            'position' => 0,
+        ]);
+    }
+
+    public function test_content_resources_reject_forged_files_and_unsafe_links(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $base = [
+            'type' => Content::TYPE_ARTICLE,
+            'title' => 'محتوى غير صالح',
+            'slug' => 'invalid-resources',
+            'status' => Content::STATUS_DRAFT,
+        ];
+
+        $this->actingAs($admin)->post(route('admin.content.store'), $base + [
+            'resources_json' => json_encode([
+                ['type' => 'file', 'title' => 'ملف مزور', 'media_id' => 999999],
+            ]),
+        ])->assertSessionHasErrors('resources.0.media_id');
+
+        $this->actingAs($admin)->post(route('admin.content.store'), $base + [
+            'resources_json' => json_encode([
+                ['type' => 'link', 'title' => 'رابط غير آمن', 'url' => 'javascript:alert(1)'],
+            ]),
+        ])->assertSessionHasErrors('resources.0.url');
+
+        $this->assertDatabaseCount('contents', 0);
     }
 }

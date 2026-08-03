@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ContentMediaRequest;
 use App\Models\Content;
 use App\Models\ContentMedia;
+use App\Models\ContentResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,6 +53,8 @@ class AdminContentMediaController extends Controller
                 'path' => $media->path,
                 'alt_text' => $media->alt_text,
                 'mime_type' => $media->mime_type,
+                'original_name' => $media->original_name,
+                'size_bytes' => $media->size_bytes,
             ],
         ], 201);
     }
@@ -61,6 +64,10 @@ class AdminContentMediaController extends Controller
         $isReferenced = Content::query()
             ->where('cover_image_path', $media->path)
             ->orWhere('body_html', 'like', '%'.addcslashes($media->path, '%_').'%')
+            ->exists();
+
+        $isReferenced = $isReferenced || ContentResource::query()
+            ->where('content_media_id', $media->id)
             ->exists();
 
         if ($isReferenced) {

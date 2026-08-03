@@ -57,6 +57,55 @@
             <label class="field"><span class="field__label">المدة بالدقائق</span><input type="number" name="duration_minutes" min="1" value="{{ old('duration_minutes', $content->duration_minutes) }}"></label>
         </div>
 
+        @php
+            $savedResources = $content->exists
+                ? $content->resources()->with('media')->get()->map(fn ($resource) => [
+                    'type' => $resource->type,
+                    'title' => $resource->title,
+                    'media_id' => $resource->content_media_id,
+                    'url' => $resource->type === 'file' ? $resource->media?->url() : $resource->url,
+                    'original_name' => $resource->media?->original_name,
+                    'size_bytes' => $resource->media?->size_bytes,
+                    'mime_type' => $resource->media?->mime_type,
+                ])->values()->all()
+                : [];
+            $oldResourcesJson = old('resources_json');
+            $initialResources = is_string($oldResourcesJson)
+                ? (json_decode($oldResourcesJson, true) ?: [])
+                : $savedResources;
+        @endphp
+
+        <section class="content-resources" data-content-resources data-upload-url="{{ route('admin.content.media.store') }}">
+            <div class="content-resources__head">
+                <div>
+                    <h2>المواد المصاحبة</h2>
+                    <p class="muted">ارفع ملفات الدرس أو أضف روابط خارجية. يمكنك إضافة أكثر من مادة وترتيبها.</p>
+                </div>
+                <label class="btn btn--ghost content-resources__upload">
+                    <span>رفع ملفات من الجهاز</span>
+                    <input type="file" multiple data-resource-files accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip,.jpg,.jpeg,.png,.webp,.gif,.mp3,.wav,.m4a,.ogg,.mp4,.webm" hidden>
+                </label>
+            </div>
+
+            <div class="content-resources__link" data-resource-link-form>
+                <label class="field">
+                    <span class="field__label">اسم الرابط</span>
+                    <input type="text" data-resource-link-title maxlength="255" placeholder="مثال: المرجع الإضافي">
+                </label>
+                <label class="field">
+                    <span class="field__label">الرابط</span>
+                    <input type="url" data-resource-link-url dir="ltr" placeholder="https://example.com">
+                </label>
+                <button type="button" class="btn btn--ghost" data-resource-add-link>إضافة الرابط</button>
+            </div>
+
+            <p class="content-resources__status" data-resource-status role="status" aria-live="polite"></p>
+            <ol class="content-resources__list" data-resource-list></ol>
+            <p class="empty-state content-resources__empty" data-resource-empty>لا توجد مواد مصاحبة بعد.</p>
+            <input type="hidden" name="resources_json" data-resources-json value="{{ old('resources_json', json_encode($savedResources, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) }}">
+            <script type="application/json" data-resources-initial>{!! json_encode($initialResources, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+        </section>
+
         <div class="field-row">
             <label class="field">
                 <span class="field__label">الحالة</span>

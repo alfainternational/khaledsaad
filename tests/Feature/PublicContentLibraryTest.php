@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Content;
 use App\Models\ContentMedia;
+use App\Models\ContentResource;
 use App\Models\CourseSection;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -157,6 +158,84 @@ class PublicContentLibraryTest extends TestCase
         $response = $this->get($media->url());
         $response->assertOk();
         $this->assertStringContainsString('private-file', $response->streamedContent());
+    }
+
+    public function test_unlocked_content_shows_downloadable_files_and_external_links(): void
+    {
+        Storage::fake('local');
+        $author = User::factory()->create();
+        $content = $this->content($author, 'درس الموارد', 'public-resources', Content::TYPE_LESSON);
+        Storage::disk('local')->put('content/resources/worksheet.pdf', 'worksheet-content');
+        $media = ContentMedia::query()->create([
+            'disk' => 'local',
+            'path' => 'content/resources/worksheet.pdf',
+            'original_name' => 'worksheet.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 17,
+            'uploaded_by' => $author->id,
+        ]);
+        $file = $content->resources()->create([
+            'type' => ContentResource::TYPE_FILE,
+            'title' => 'ورقة العمل',
+            'content_media_id' => $media->id,
+            'position' => 0,
+        ]);
+        $content->resources()->create([
+            'type' => ContentResource::TYPE_LINK,
+            'title' => 'المرجع الخارجي',
+            'url' => 'https://example.com/reference',
+            'position' => 1,
+        ]);
+
+        $this->get(route('content.show', $content))
+            ->assertOk()
+            ->assertSee('المواد المصاحبة')
+            ->assertSee('ورقة العمل')
+            ->assertSee('المرجع الخارجي')
+            ->assertSee('https://example.com/reference', false);
+
+        $download = $this->get(route('content.resources.download', [$content, $file]));
+        $download->assertOk()->assertDownload('worksheet.pdf');
+        $this->assertStringContainsString('worksheet-content', $download->streamedContent());
+    }
+
+    public function test_subscriber_resources_stay_hidden_and_protected_until_email_unlock(): void
+    {
+        Storage::fake('local');
+        $author = User::factory()->create();
+        $content = $this->content(
+            $author,
+            'درس خاص بمواد',
+            'private-resources',
+            Content::TYPE_LESSON,
+            '<p>المحتوى الخاص</p>',
+            Content::ACCESS_SUBSCRIBERS,
+        );
+        Storage::disk('local')->put('content/resources/private.pdf', 'private-resource');
+        $media = ContentMedia::query()->create([
+            'disk' => 'local',
+            'path' => 'content/resources/private.pdf',
+            'original_name' => 'private.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 16,
+            'uploaded_by' => $author->id,
+        ]);
+        $resource = $content->resources()->create([
+            'type' => ContentResource::TYPE_FILE,
+            'title' => 'المادة السرية',
+            'content_media_id' => $media->id,
+        ]);
+
+        $this->get(route('content.show', $content))->assertDontSee('المادة السرية');
+        $this->get(route('content.resources.download', [$content, $resource]))->assertNotFound();
+
+        $this->post(route('content.subscribe', $content), [
+            'email' => 'resource-reader@example.com',
+            'consent' => '1',
+        ])->assertRedirect();
+
+        $this->get(route('content.show', $content))->assertSee('المادة السرية');
+        $this->get(route('content.resources.download', [$content, $resource]))->assertOk();
     }
 
     private function content(

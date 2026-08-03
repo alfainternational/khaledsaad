@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ContentRequest;
 use App\Models\Content;
+use App\Models\ContentResource;
 use App\Services\Content\ContentHtmlSanitizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AdminContentController extends Controller
@@ -40,10 +42,15 @@ class AdminContentController extends Controller
 
     public function store(ContentRequest $request): RedirectResponse
     {
-        $content = Content::query()->create($this->payload($request) + [
-            'created_by' => $request->user()->id,
-            'updated_by' => $request->user()->id,
-        ]);
+        $content = DB::transaction(function () use ($request): Content {
+            $content = Content::query()->create($this->payload($request) + [
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ]);
+            $this->syncResources($content, $request->validated('resources', []));
+
+            return $content;
+        });
 
         cache()->forget('sitemap.xml');
 
@@ -57,9 +64,12 @@ class AdminContentController extends Controller
 
     public function update(ContentRequest $request, Content $content): RedirectResponse
     {
-        $content->update($this->payload($request) + [
-            'updated_by' => $request->user()->id,
-        ]);
+        DB::transaction(function () use ($request, $content): void {
+            $content->update($this->payload($request) + [
+                'updated_by' => $request->user()->id,
+            ]);
+            $this->syncResources($content, $request->validated('resources', []));
+        });
 
         cache()->forget('sitemap.xml');
 
@@ -85,6 +95,7 @@ class AdminContentController extends Controller
     private function payload(ContentRequest $request): array
     {
         $data = $request->validated();
+        unset($data['resources'], $data['resources_json']);
         $data['body_html'] = $this->sanitizer->sanitize($data['body_html'] ?? '');
         $data['body_json'] = filled($data['body_json'] ?? null)
             ? json_decode((string) $data['body_json'], true, flags: JSON_THROW_ON_ERROR)
@@ -96,5 +107,24 @@ class AdminContentController extends Controller
         }
 
         return $data;
+    }
+
+    private function syncResources(Content $content, array $resources): void
+    {
+        $content->resources()->delete();
+
+        foreach (array_values($resources) as $position => $resource) {
+            $isFile = $resource['type'] === ContentResource::TYPE_FILE;
+
+            $content->resources()->create([
+                'type' => $resource['type'],
+                'title' => $resource['title'],
+                'content_media_id' => $isFile ? $resource['media_id'] : null,
+                'url' => $isFile ? null : $resource['url'],
+                'position' => $position,
+            ]);
+        }
+
+        $content->unsetRelation('resources');
     }
 }

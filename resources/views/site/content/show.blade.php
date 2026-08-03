@@ -42,6 +42,38 @@
                         @if ($content->type === 'course')
                             @include('site.content._curriculum')
                         @endif
+
+                        @if ($content->resources->isNotEmpty())
+                            <aside class="content-downloads" aria-labelledby="content-downloads-title">
+                                <div class="content-downloads__head">
+                                    <p class="eyebrow">للتطبيق والمتابعة</p>
+                                    <h2 id="content-downloads-title">المواد المصاحبة</h2>
+                                </div>
+                                <ul class="content-downloads__list">
+                                    @foreach ($content->resources as $resource)
+                                        <li>
+                                            @if ($resource->type === 'file' && $resource->media)
+                                                <a href="{{ route('content.resources.download', [$content, $resource]) }}" class="content-downloads__item">
+                                                    <span>
+                                                        <strong>{{ $resource->title }}</strong>
+                                                        <small>{{ $resource->media->original_name }} · {{ number_format($resource->media->size_bytes / 1024, 1) }} KB</small>
+                                                    </span>
+                                                    <span aria-hidden="true">تنزيل ↓</span>
+                                                </a>
+                                            @elseif ($resource->type === 'link')
+                                                <a href="{{ $resource->url }}" target="_blank" rel="noopener noreferrer" class="content-downloads__item">
+                                                    <span>
+                                                        <strong>{{ $resource->title }}</strong>
+                                                        <small>{{ parse_url($resource->url, PHP_URL_HOST) }}</small>
+                                                    </span>
+                                                    <span aria-hidden="true">فتح ↗</span>
+                                                </a>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </aside>
+                        @endif
                     </div>
                 @else
                     @include('site.content._gate')

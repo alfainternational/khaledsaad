@@ -13,16 +13,23 @@ class Content extends Model
     use HasFactory;
 
     public const TYPE_ARTICLE = 'article';
+
     public const TYPE_LESSON = 'lesson';
+
     public const TYPE_LECTURE = 'lecture';
+
     public const TYPE_COURSE = 'course';
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_SCHEDULED = 'scheduled';
+
     public const STATUS_PUBLISHED = 'published';
+
     public const STATUS_ARCHIVED = 'archived';
 
     public const ACCESS_PUBLIC = 'public';
+
     public const ACCESS_SUBSCRIBERS = 'subscribers';
 
     protected $attributes = [
@@ -104,6 +111,11 @@ class Content extends Model
     public function sections(): HasMany
     {
         return $this->hasMany(CourseSection::class, 'course_id')->orderBy('position');
+    }
+
+    public function resources(): HasMany
+    {
+        return $this->hasMany(ContentResource::class)->orderBy('position');
     }
 
     public function creator(): BelongsTo

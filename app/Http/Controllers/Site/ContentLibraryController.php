@@ -34,7 +34,7 @@ class ContentLibraryController extends Controller
     {
         abort_unless($content->isPublished(), 404);
 
-        $content->load('sections.items');
+        $content->load(['sections.items', 'resources.media']);
         $unlocked = $this->access->canView($content, $this->access->tokenFrom($request));
 
         $brand = config('brand');
