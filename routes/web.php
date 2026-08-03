@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminConsultationController;
+use App\Http\Controllers\Admin\AdminContentController;
+use App\Http\Controllers\Admin\AdminContentMediaController;
+use App\Http\Controllers\Admin\AdminCourseCurriculumController;
 use App\Http\Controllers\Admin\AdminCreditPackController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminFeatureController;
@@ -375,6 +378,17 @@ Route::post('webhooks/tap', TapWebhookController::class)->name('webhooks.tap');
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('usage', UsageController::class)->name('usage');
+    Route::post('content/media', [AdminContentMediaController::class, 'store'])->name('content.media.store');
+    Route::resource('content', AdminContentController::class)->except(['show', 'destroy']);
+    Route::get('content/{course}/curriculum', [AdminCourseCurriculumController::class, 'show'])->name('content.curriculum');
+    Route::post('content/{course}/curriculum/sections', [AdminCourseCurriculumController::class, 'storeSection'])->name('content.sections.store');
+    Route::put('content/{course}/curriculum/sections/{section}', [AdminCourseCurriculumController::class, 'updateSection'])->name('content.sections.update');
+    Route::delete('content/{course}/curriculum/sections/{section}', [AdminCourseCurriculumController::class, 'destroySection'])->name('content.sections.destroy');
+    Route::post('content/{course}/curriculum/sections/{section}/items', [AdminCourseCurriculumController::class, 'storeItem'])->name('content.sections.items.store');
+    Route::delete('content/{course}/curriculum/sections/{section}/items/{item}', [AdminCourseCurriculumController::class, 'destroyItem'])->name('content.sections.items.destroy');
+    Route::patch('content/{content}/archive', [AdminContentController::class, 'archive'])->name('content.archive');
+    Route::patch('content/{content}/restore', [AdminContentController::class, 'restore'])->name('content.restore');
+
     Route::get('consultations', [AdminConsultationController::class, 'index'])->name('consultations.index');
     Route::get('consultations/versions/{version}', [AdminConsultationController::class, 'show'])->name('consultations.show');
     Route::post('consultations/{blueprint}/drafts', [AdminConsultationController::class, 'createDraft'])->name('consultations.drafts.store');

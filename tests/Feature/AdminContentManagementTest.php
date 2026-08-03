@@ -1,0 +1,93 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Content;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class AdminContentManagementTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_only_admins_can_open_content_management(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.content.index'))
+            ->assertNotFound();
+
+        $this->actingAs(User::factory()->create(['is_admin' => true]))
+            ->get(route('admin.content.index'))
+            ->assertOk()
+            ->assertSee('????? ???????');
+    }
+
+    public function test_admin_creates_free_content_by_default_and_html_is_sanitized(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $response = $this->actingAs($admin)->post(route('admin.content.store'), [
+            'type' => Content::TYPE_ARTICLE,
+            'title' => '???? ???????',
+            'slug' => 'marketing-guide',
+            'excerpt' => '???? ????',
+            'body_html' => '<h2 onclick="bad()">?????</h2><script>alert(1)</script>',
+            'body_json' => json_encode(['type' => 'doc', 'content' => []]),
+            'status' => Content::STATUS_PUBLISHED,
+            'published_at' => now()->subMinute()->format('Y-m-d H:i:s'),
+        ]);
+
+        $content = Content::query()->sole();
+
+        $response->assertRedirect(route('admin.content.edit', $content));
+        $this->assertSame(Content::ACCESS_PUBLIC, $content->access_level);
+        $this->assertSame($admin->id, $content->created_by);
+        $this->assertStringContainsString('<h2>?????</h2>', $content->body_html);
+        $this->assertStringNotContainsString('script', $content->body_html);
+        $this->assertSame('doc', $content->body_json['type']);
+    }
+
+    public function test_admin_can_gate_archive_and_restore_content(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $content = Content::query()->create([
+            'title' => '??????',
+            'slug' => 'lecture',
+            'type' => Content::TYPE_LECTURE,
+            'created_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.content.update', $content), [
+            'type' => Content::TYPE_LECTURE,
+            'title' => '?????? ?????',
+            'slug' => 'lecture',
+            'body_html' => '<p>???????</p>',
+            'status' => Content::STATUS_DRAFT,
+            'access_level' => Content::ACCESS_SUBSCRIBERS,
+        ])->assertRedirect(route('admin.content.edit', $content));
+
+        $this->assertSame(Content::ACCESS_SUBSCRIBERS, $content->fresh()->access_level);
+
+        $this->actingAs($admin)->patch(route('admin.content.archive', $content))->assertRedirect();
+        $this->assertSame(Content::STATUS_ARCHIVED, $content->fresh()->status);
+
+        $this->actingAs($admin)->patch(route('admin.content.restore', $content))->assertRedirect();
+        $this->assertSame(Content::STATUS_DRAFT, $content->fresh()->status);
+    }
+
+    public function test_slug_must_be_unique(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        Content::query()->create(['title' => '????', 'slug' => 'same', 'created_by' => $admin->id]);
+
+        $this->actingAs($admin)->post(route('admin.content.store'), [
+            'type' => Content::TYPE_ARTICLE,
+            'title' => '????',
+            'slug' => 'same',
+            'status' => Content::STATUS_DRAFT,
+        ])->assertSessionHasErrors('slug');
+
+        $this->assertSame(1, Content::query()->count());
+    }
+}

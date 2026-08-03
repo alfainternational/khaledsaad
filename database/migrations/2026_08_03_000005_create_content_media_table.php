@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('content_media', function (Blueprint $table): void {
+            $table->id();
+            $table->string('disk', 32)->default('public');
+            $table->string('path')->unique();
+            $table->string('original_name');
+            $table->string('mime_type', 120);
+            $table->unsignedBigInteger('size_bytes');
+            $table->string('alt_text')->nullable();
+            $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('content_media');
+    }
+};

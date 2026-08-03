@@ -27,6 +27,11 @@
             <span>الأدوات</span>
         </a>
 
+        <a href="{{ route('admin.content.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.content.*')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+            <span>???????</span>
+        </a>
+
         <a href="{{ route('admin.consultations.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.consultations.*')])>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 8h8M8 12h5"/></svg>
             <span>الاستشارة الذكية</span>

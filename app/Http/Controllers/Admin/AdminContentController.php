@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ContentRequest;
+use App\Models\Content;
+use App\Services\Content\ContentHtmlSanitizer;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class AdminContentController extends Controller
+{
+    public function __construct(private readonly ContentHtmlSanitizer $sanitizer) {}
+
+    public function index(Request $request): View
+    {
+        $contents = Content::query()
+            ->when($request->filled('q'), fn ($query) => $query->where(function ($nested) use ($request): void {
+                $term = '%'.addcslashes((string) $request->input('q'), '%_').'%';
+                $nested->where('title', 'like', $term)->orWhere('excerpt', 'like', $term);
+            }))
+            ->when($request->filled('type'), fn ($query) => $query->where('type', $request->input('type')))
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('access_level'), fn ($query) => $query->where('access_level', $request->input('access_level')))
+            ->latest('updated_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.content.index', compact('contents'));
+    }
+
+    public function create(): View
+    {
+        return view('admin.content.form', [
+            'content' => new Content,
+        ]);
+    }
+
+    public function store(ContentRequest $request): RedirectResponse
+    {
+        $content = Content::query()->create($this->payload($request) + [
+            'created_by' => $request->user()->id,
+            'updated_by' => $request->user()->id,
+        ]);
+
+        cache()->forget('sitemap.xml');
+
+        return redirect()->route('admin.content.edit', $content)->with('success', '???? ???????.');
+    }
+
+    public function edit(Content $content): View
+    {
+        return view('admin.content.form', compact('content'));
+    }
+
+    public function update(ContentRequest $request, Content $content): RedirectResponse
+    {
+        $content->update($this->payload($request) + [
+            'updated_by' => $request->user()->id,
+        ]);
+
+        cache()->forget('sitemap.xml');
+
+        return redirect()->route('admin.content.edit', $content)->with('success', '????? ?????????.');
+    }
+
+    public function archive(Content $content): RedirectResponse
+    {
+        $content->update(['status' => Content::STATUS_ARCHIVED]);
+        cache()->forget('sitemap.xml');
+
+        return back()->with('success', '????? ??????? ????? ????????.');
+    }
+
+    public function restore(Content $content): RedirectResponse
+    {
+        $content->update(['status' => Content::STATUS_DRAFT]);
+        cache()->forget('sitemap.xml');
+
+        return back()->with('success', '??? ??????? ??? ????????.');
+    }
+
+    private function payload(ContentRequest $request): array
+    {
+        $data = $request->validated();
+        $data['body_html'] = $this->sanitizer->sanitize($data['body_html'] ?? '');
+        $data['body_json'] = filled($data['body_json'] ?? null)
+            ? json_decode((string) $data['body_json'], true, flags: JSON_THROW_ON_ERROR)
+            : null;
+
+        if (in_array($data['status'], [Content::STATUS_PUBLISHED, Content::STATUS_SCHEDULED], true)
+            && blank($data['published_at'] ?? null)) {
+            $data['published_at'] = now();
+        }
+
+        return $data;
+    }
+}
