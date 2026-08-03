@@ -15,7 +15,7 @@
     @if ($errors->any()) <div class="alert alert--error">{{ $errors->first() }}</div> @endif
     @if (session('success')) <div class="alert alert--success">{{ session('success') }}</div> @endif
 
-    <form method="POST" action="{{ $content->exists ? route('admin.content.update', $content) : route('admin.content.store') }}" class="form form--wide content-form" data-content-form>
+    <form method="POST" action="{{ $content->exists ? route('admin.content.update', $content) : route('admin.content.store') }}" class="form content-form content-form--fluid" data-content-form>
         @csrf
         @if ($content->exists) @method('PUT') @endif
 

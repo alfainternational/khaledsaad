@@ -24,6 +24,13 @@
     width: 100%;
 }
 
+/* محرر المحتوى مساحة عمل، لا نموذج قراءة ضيق. يمتد بعرض اللوحة المتاح
+   بينما تحافظ field-row على توزيع الحقول واستجابتها للشاشات الأصغر. */
+.content-form--fluid {
+    inline-size: 100%;
+    max-inline-size: none;
+}
+
 .content-editor-shell {
     overflow: hidden;
     border: 1px solid var(--line);

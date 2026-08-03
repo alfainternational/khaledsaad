@@ -23,6 +23,16 @@ class AdminContentManagementTest extends TestCase
             ->assertSee('إدارة المحتوى');
     }
 
+    public function test_content_editor_uses_the_available_panel_width(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.content.create'))
+            ->assertOk()
+            ->assertSee('content-form--fluid', false);
+    }
+
     public function test_admin_creates_free_content_by_default_and_html_is_sanitized(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
