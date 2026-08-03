@@ -9,6 +9,7 @@ use App\Models\CourseSection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -32,11 +33,14 @@ class AdminCourseCurriculumController extends Controller
     {
         $this->ensureCourse($course);
 
-        $course->sections()->create($request->validated() + [
-            'position' => ((int) $course->sections()->max('position')) + 1,
-        ]);
+        DB::transaction(function () use ($course, $request): void {
+            $lockedCourse = Content::query()->whereKey($course->id)->lockForUpdate()->firstOrFail();
+            $lockedCourse->sections()->create($request->validated() + [
+                'position' => ((int) $lockedCourse->sections()->max('position')) + 1,
+            ]);
+        });
 
-        return back()->with('success', '????? ??? ??????.');
+        return back()->with('success', 'أُضيف قسم الدورة.');
     }
 
     public function updateSection(CourseSectionRequest $request, Content $course, CourseSection $section): RedirectResponse
@@ -44,7 +48,7 @@ class AdminCourseCurriculumController extends Controller
         $this->ensureSection($course, $section);
         $section->update($request->validated());
 
-        return back()->with('success', '???? ?????.');
+        return back()->with('success', 'حُدّث القسم.');
     }
 
     public function destroySection(Content $course, CourseSection $section): RedirectResponse
@@ -52,7 +56,7 @@ class AdminCourseCurriculumController extends Controller
         $this->ensureSection($course, $section);
         $section->delete();
 
-        return back()->with('success', '???? ????? ?? ??????.');
+        return back()->with('success', 'حُذف القسم من الدورة.');
     }
 
     public function storeItem(Request $request, Content $course, CourseSection $section): RedirectResponse
@@ -70,11 +74,14 @@ class AdminCourseCurriculumController extends Controller
             ],
         ]);
 
-        $section->items()->attach($data['content_id'], [
-            'position' => ((int) $section->items()->max('course_section_items.position')) + 1,
-        ]);
+        DB::transaction(function () use ($section, $data): void {
+            $lockedSection = CourseSection::query()->whereKey($section->id)->lockForUpdate()->firstOrFail();
+            $lockedSection->items()->attach($data['content_id'], [
+                'position' => ((int) $lockedSection->items()->max('course_section_items.position')) + 1,
+            ]);
+        });
 
-        return back()->with('success', '????? ?????? ??? ?????.');
+        return back()->with('success', 'أُضيف المحتوى إلى القسم.');
     }
 
     public function destroyItem(Content $course, CourseSection $section, Content $item): RedirectResponse
@@ -82,7 +89,7 @@ class AdminCourseCurriculumController extends Controller
         $this->ensureSection($course, $section);
         $section->items()->detach($item->id);
 
-        return back()->with('success', '????? ?????? ?? ?????.');
+        return back()->with('success', 'أُزيل المحتوى من القسم.');
     }
 
     private function ensureCourse(Content $course): void

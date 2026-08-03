@@ -62,7 +62,7 @@
 - [ ] Add an admin resource and archive/restore actions behind the existing `auth,admin` group.
 - [ ] Implement validated persistence through `ContentRequest`; sanitize HTML server-side and never trust the hidden HTML input directly.
 - [ ] Build Arabic RTL list/form views with type, status, access, publish date, SEO, media, and preview controls.
-- [ ] Add ????????? to the unified admin navigation and re-run the test.
+- [ ] Add content management to the unified admin navigation and re-run the test.
 
 ### Task 4: Local advanced editor and media
 

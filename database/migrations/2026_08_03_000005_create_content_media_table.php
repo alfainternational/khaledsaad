@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('content_media', function (Blueprint $table): void {
             $table->id();
-            $table->string('disk', 32)->default('public');
+            $table->string('disk', 32)->default('local');
             $table->string('path')->unique();
             $table->string('original_name');
             $table->string('mime_type', 120);

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class ContentMedia extends Model
 {
@@ -32,6 +31,6 @@ class ContentMedia extends Model
 
     public function url(): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+        return route('content.media.show', $this);
     }
 }

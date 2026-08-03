@@ -23,7 +23,7 @@
             <a href="{{ $anchorBase }}#about">عن خالد</a>
             {{-- «مقالات» تصف ما خلف الرابط؛ «المعرفة» تسمية مجرّدة لا يعرف
                  القارئ ماذا يجد تحتها فلا ينقر. --}}
-            <a href="{{ $anchorBase }}#knowledge">مقالات</a>
+            <a href="{{ route('content.index') }}">مقالات</a>
             <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>
         </nav>
 
@@ -46,7 +46,7 @@
         <a href="{{ $anchorBase }}#method">المنهجية</a>
         <a href="{{ route('tools.index') }}">التشخيصات</a>
         <a href="{{ $anchorBase }}#about">عن خالد</a>
-        <a href="{{ $anchorBase }}#knowledge">مقالات</a>
+        <a href="{{ route('content.index') }}">مقالات</a>
         <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>
         @guest
             <a href="{{ route('login') }}">تسجيل الدخول</a>

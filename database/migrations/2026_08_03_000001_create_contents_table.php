@@ -17,7 +17,7 @@ return new class extends Migration
             $table->json('body_json')->nullable();
             $table->longText('body_html')->nullable();
             $table->string('cover_image_path')->nullable();
-            $table->string('video_url')->nullable();
+            $table->text('video_url')->nullable();
             $table->unsignedSmallInteger('duration_minutes')->nullable();
             $table->string('status', 24)->default('draft')->index();
             $table->string('access_level', 24)->default('public')->index();

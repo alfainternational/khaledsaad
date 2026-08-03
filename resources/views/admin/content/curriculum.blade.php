@@ -1,15 +1,15 @@
 @extends('layouts.app')
 @section('layout', 'form')
-@section('title', '???? ??????')
+@section('title', 'منهج الدورة')
 
 @section('content')
     <header class="page-head">
         <div>
-            <p class="eyebrow">??????? ? ???????</p>
-            <h1>???? ??????: {{ $course->title }}</h1>
-            <p class="muted">???? ?????? ??? ????? ?? ??? ?????? ?????????? ????????.</p>
+            <p class="eyebrow">المحتوى · الدورات</p>
+            <h1>منهج الدورة: {{ $course->title }}</h1>
+            <p class="muted">قسّم الدورة إلى أقسام ثم أضف الدروس والمحاضرات بالترتيب.</p>
         </div>
-        <a href="{{ route('admin.content.edit', $course) }}" class="btn btn--ghost">???? ??? ??????</a>
+        <a href="{{ route('admin.content.edit', $course) }}" class="btn btn--ghost">عودة إلى الدورة</a>
     </header>
 
     @if ($errors->any()) <div class="alert alert--error">{{ $errors->first() }}</div> @endif
@@ -18,9 +18,9 @@
     <form method="POST" action="{{ route('admin.content.sections.store', $course) }}" class="form form--wide">
         @csrf
         <div class="field-row">
-            <label class="field"><span class="field__label">??? ?????</span><input name="title" required></label>
-            <label class="field"><span class="field__label">?????</span><input name="description"></label>
-            <button class="btn btn--primary">????? ???</button>
+            <label class="field"><span class="field__label">اسم القسم</span><input name="title" required></label>
+            <label class="field"><span class="field__label">الوصف</span><input name="description"></label>
+            <button class="btn btn--primary">إضافة قسم</button>
         </div>
     </form>
 
@@ -32,17 +32,17 @@
                     <div class="field-row">
                         <input name="title" value="{{ $section->title }}" required>
                         <input name="description" value="{{ $section->description }}">
-                        <button class="btn btn--ghost btn--sm">??? ?????</button>
+                        <button class="btn btn--ghost btn--sm">حفظ القسم</button>
                     </div>
                 </form>
 
                 <ol class="curriculum-list">
                     @foreach ($section->items as $item)
                         <li>
-                            <span>{{ $item->title }} ? {{ $item->type === 'lesson' ? '???' : '??????' }}</span>
+                            <span>{{ $item->title }} · {{ $item->type === 'lesson' ? 'درس' : 'محاضرة' }}</span>
                             <form method="POST" action="{{ route('admin.content.sections.items.destroy', [$course, $section, $item]) }}">
                                 @csrf @method('DELETE')
-                                <button class="btn btn--ghost btn--sm">?????</button>
+                                <button class="btn btn--ghost btn--sm">إزالة</button>
                             </form>
                         </li>
                     @endforeach
@@ -52,22 +52,22 @@
                     @csrf
                     <div class="field-row">
                         <select name="content_id" required>
-                            <option value="">???? ????? ?? ??????</option>
+                            <option value="">اختر محتوى من المكتبة</option>
                             @foreach ($eligibleItems as $item)
                                 <option value="{{ $item->id }}">{{ $item->title }}</option>
                             @endforeach
                         </select>
-                        <button class="btn btn--ghost btn--sm">????? ??????</button>
+                        <button class="btn btn--ghost btn--sm">إضافة للقسم</button>
                     </div>
                 </form>
 
-                <form method="POST" action="{{ route('admin.content.sections.destroy', [$course, $section]) }}" data-confirm="??? ????? ?????? ?????? ?? ??? ???????">
+                <form method="POST" action="{{ route('admin.content.sections.destroy', [$course, $section]) }}" data-confirm="هل تريد حذف القسم وإزالته من هذه الدورة؟">
                     @csrf @method('DELETE')
-                    <button class="btn btn--ghost btn--sm">??? ?????</button>
+                    <button class="btn btn--ghost btn--sm">حذف القسم</button>
                 </form>
             </section>
         @empty
-            <p class="empty-state">?? ???? ???? ???.</p>
+            <p class="empty-state">لا توجد أقسام بعد.</p>
         @endforelse
     </div>
 @endsection

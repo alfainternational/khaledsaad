@@ -170,26 +170,6 @@ return [
         'هندسة التوجيه',
         'نماذج اللغة الكبيرة',
     ],
-    'knowledge' => [
-        [
-            'type' => 'نشرة أسبوعية',
-            'title' => 'يلا نفهم تسويق',
-            'description' => 'شرح عملي ومبسّط للاستراتيجية والمحتوى والقياس.',
-            'url' => 'https://www.linkedin.com/newsletters/7350465354889867264/',
-        ],
-        [
-            'type' => 'موضوع معرفي',
-            'title' => 'مستقبل التسويق بالذكاء الاصطناعي',
-            'description' => 'كيف نعيد تصميم العمل التسويقي بدل إضافة أدوات جديدة فقط.',
-            'url' => 'https://www.linkedin.com/in/khaledaasaad/recent-activity/all/',
-        ],
-        [
-            'type' => 'دليل تطبيقي',
-            'title' => 'محتوى يجذب ويقنع ويبيع',
-            'description' => 'ربط المحتوى بالرحلة الشرائية والقرار التجاري.',
-            'url' => 'https://www.linkedin.com/in/khaledaasaad/recent-activity/all/',
-        ],
-    ],
     'faqs' => [
         [
             'question' => 'هل تناسبني المنصة إن لم أكن خبير تسويق؟',

@@ -37,7 +37,20 @@ class ContentRequest extends FormRequest
             'duration_minutes' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'status' => ['required', Rule::in(Content::statuses())],
             'access_level' => ['required', Rule::in([Content::ACCESS_PUBLIC, Content::ACCESS_SUBSCRIBERS])],
-            'published_at' => ['nullable', 'date'],
+            'published_at' => [
+                'nullable',
+                'date',
+                'required_if:status,'.Content::STATUS_SCHEDULED,
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $timestamp = strtotime((string) $value);
+
+                    if ($this->input('status') === Content::STATUS_SCHEDULED
+                        && $timestamp !== false
+                        && $timestamp <= now()->timestamp) {
+                        $fail('يجب أن يكون موعد النشر المجدول في المستقبل.');
+                    }
+                },
+            ],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:500'],
             'sort_order' => ['required', 'integer', 'min:0'],

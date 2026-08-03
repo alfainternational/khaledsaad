@@ -15,7 +15,7 @@
                 <a href="{{ route('tools.index') }}">التشخيصات</a>
                 <a href="{{ $anchorBase }}#about">عن خالد</a>
                 {{-- تسمية تصف الوجهة: الرابط المجرّد لا يُنقر في التذييل. --}}
-                <a href="{{ $anchorBase }}#knowledge">مقالات</a>
+                <a href="{{ route('content.index') }}">مقالات</a>
             </div>
             <div>
                 {{-- كل قطاع برابطه: صفحة لا يصلها رابط لا تُفهرس ولا تُزار. --}}

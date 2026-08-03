@@ -10,12 +10,12 @@ class ContentHtmlSanitizer
 {
     /** @var array<string, list<string>> */
     private const ALLOWED = [
-        'p' => ['dir', 'text-align'],
+        'p' => ['dir', 'style'],
         'br' => [],
-        'h1' => ['dir', 'text-align'],
-        'h2' => ['dir', 'text-align'],
-        'h3' => ['dir', 'text-align'],
-        'h4' => ['dir', 'text-align'],
+        'h1' => ['dir', 'style'],
+        'h2' => ['dir', 'style'],
+        'h3' => ['dir', 'style'],
+        'h4' => ['dir', 'style'],
         'strong' => [],
         'b' => [],
         'em' => [],
@@ -124,8 +124,14 @@ class ContentHtmlSanitizer
                 $node->removeAttribute('dir');
             }
 
-            if ($name === 'text-align' && ! in_array($attribute->value, ['right', 'left', 'center', 'justify'], true)) {
-                $node->removeAttribute('text-align');
+            if ($name === 'style') {
+                $alignment = $this->safeTextAlignment($attribute->value);
+
+                if ($alignment === null) {
+                    $node->removeAttribute('style');
+                } else {
+                    $node->setAttribute('style', 'text-align: '.$alignment);
+                }
             }
         }
 
@@ -182,5 +188,14 @@ class ContentHtmlSanitizer
 
         return in_array($host, ['www.youtube-nocookie.com', 'youtube-nocookie.com'], true)
             && str_starts_with($path, '/embed/');
+    }
+
+    private function safeTextAlignment(string $style): ?string
+    {
+        if (! preg_match('/(?:^|;)\s*text-align\s*:\s*(right|left|center|justify)\s*(?:;|$)/i', $style, $matches)) {
+            return null;
+        }
+
+        return strtolower($matches[1]);
     }
 }

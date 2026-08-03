@@ -47,7 +47,7 @@ class AdminContentController extends Controller
 
         cache()->forget('sitemap.xml');
 
-        return redirect()->route('admin.content.edit', $content)->with('success', '???? ???????.');
+        return redirect()->route('admin.content.edit', $content)->with('success', 'حُفظ المحتوى.');
     }
 
     public function edit(Content $content): View
@@ -63,7 +63,7 @@ class AdminContentController extends Controller
 
         cache()->forget('sitemap.xml');
 
-        return redirect()->route('admin.content.edit', $content)->with('success', '????? ?????????.');
+        return redirect()->route('admin.content.edit', $content)->with('success', 'حُدّث المحتوى.');
     }
 
     public function archive(Content $content): RedirectResponse
@@ -71,7 +71,7 @@ class AdminContentController extends Controller
         $content->update(['status' => Content::STATUS_ARCHIVED]);
         cache()->forget('sitemap.xml');
 
-        return back()->with('success', '????? ??????? ????? ????????.');
+        return back()->with('success', 'نُقل المحتوى إلى الأرشيف.');
     }
 
     public function restore(Content $content): RedirectResponse
@@ -79,7 +79,7 @@ class AdminContentController extends Controller
         $content->update(['status' => Content::STATUS_DRAFT]);
         cache()->forget('sitemap.xml');
 
-        return back()->with('success', '??? ??????? ??? ????????.');
+        return back()->with('success', 'أُعيد المحتوى من الأرشيف.');
     }
 
     private function payload(ContentRequest $request): array
@@ -90,7 +90,7 @@ class AdminContentController extends Controller
             ? json_decode((string) $data['body_json'], true, flags: JSON_THROW_ON_ERROR)
             : null;
 
-        if (in_array($data['status'], [Content::STATUS_PUBLISHED, Content::STATUS_SCHEDULED], true)
+        if ($data['status'] === Content::STATUS_PUBLISHED
             && blank($data['published_at'] ?? null)) {
             $data['published_at'] = now();
         }

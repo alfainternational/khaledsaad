@@ -17,20 +17,20 @@ class AdminCourseCurriculumTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
         $course = Content::query()->create([
             'type' => Content::TYPE_COURSE,
-            'title' => '???? ???????',
+            'title' => 'دورة التسويق',
             'slug' => 'marketing-course',
             'created_by' => $admin->id,
         ]);
         $lesson = Content::query()->create([
             'type' => Content::TYPE_LESSON,
-            'title' => '????? ?????',
+            'title' => 'الدرس الأول',
             'slug' => 'lesson-one',
             'created_by' => $admin->id,
         ]);
 
         $this->actingAs($admin)->post(route('admin.content.sections.store', $course), [
-            'title' => '?????????',
-            'description' => '???? ?? ???',
+            'title' => 'الانطلاقة',
+            'description' => 'ابدأ من هنا',
         ])->assertRedirect();
 
         $section = CourseSection::query()->sole();
@@ -46,33 +46,33 @@ class AdminCourseCurriculumTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.content.curriculum', $course))
             ->assertOk()
-            ->assertSee('???? ??????')
-            ->assertSee('?????????')
-            ->assertSee('????? ?????');
+            ->assertSee('منهج الدورة')
+            ->assertSee('الانطلاقة')
+            ->assertSee('الدرس الأول');
     }
 
     public function test_sections_belong_only_to_courses_and_items_must_be_lessons_or_lectures(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
         $article = Content::query()->create([
-            'title' => '????',
+            'title' => 'مقال',
             'slug' => 'article',
             'created_by' => $admin->id,
         ]);
 
         $this->actingAs($admin)->post(route('admin.content.sections.store', $article), [
-            'title' => '??? ????',
+            'title' => 'درس آخر',
         ])->assertNotFound();
 
         $course = Content::query()->create([
             'type' => Content::TYPE_COURSE,
-            'title' => '????',
+            'title' => 'دورة',
             'slug' => 'course',
             'created_by' => $admin->id,
         ]);
         $section = CourseSection::query()->create([
             'course_id' => $course->id,
-            'title' => '???',
+            'title' => 'قسم',
             'position' => 1,
         ]);
 

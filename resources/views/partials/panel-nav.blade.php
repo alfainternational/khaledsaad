@@ -29,7 +29,17 @@
 
         <a href="{{ route('admin.content.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.content.*')])>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-            <span>???????</span>
+            <span>المحتوى</span>
+        </a>
+
+        <a href="{{ route('admin.content-subscribers.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.content-subscribers.*')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>
+            <span>مشتركو المحتوى</span>
+        </a>
+
+        <a href="{{ route('admin.content-media.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.content-media.*')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m5 18 4-4 3 3 3-4 4 5"/></svg>
+            <span>مكتبة الوسائط</span>
         </a>
 
         <a href="{{ route('admin.consultations.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.consultations.*')])>

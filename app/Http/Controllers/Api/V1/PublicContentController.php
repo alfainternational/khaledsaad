@@ -25,7 +25,6 @@ class PublicContentController extends Controller
         'education',
         'credentials',
         'skills',
-        'knowledge',
         'faqs',
     ];
 

@@ -28,8 +28,11 @@ class ContentAccessService
 
     public function tokenFrom(Request $request): ?string
     {
-        $token = $request->header('X-Content-Token')
-            ?: $request->session()->get(self::SESSION_KEY);
+        $token = $request->header('X-Content-Token');
+
+        if (blank($token) && $request->hasSession()) {
+            $token = $request->session()->get(self::SESSION_KEY);
+        }
 
         return is_string($token) && $token !== '' ? $token : null;
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
+use App\Models\Content;
 use App\Models\ToolRun;
 use App\Services\Tools\ToolShowcase;
 use Illuminate\Support\Facades\Cache;
@@ -20,6 +21,11 @@ class HomeController extends Controller
             'toolStats' => $this->showcase->stats(),
             'entryTool' => $this->showcase->entryTool(),
             'proof' => $this->proof(),
+            'knowledge' => Content::query()
+                ->published()
+                ->orderByDesc('published_at')
+                ->limit(3)
+                ->get(),
         ]);
     }
 

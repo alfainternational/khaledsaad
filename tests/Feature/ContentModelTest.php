@@ -14,9 +14,9 @@ class ContentModelTest extends TestCase
     public function test_new_content_defaults_to_a_free_article_draft(): void
     {
         $content = Content::query()->create([
-            'title' => '???? ?????',
+            'title' => 'مقال مجاني',
             'slug' => 'internal-article',
-            'excerpt' => '???? ??????',
+            'excerpt' => 'ملخص المقال',
             'created_by' => User::factory()->create()->id,
         ]);
 
@@ -31,7 +31,7 @@ class ContentModelTest extends TestCase
         $author = User::factory()->create();
 
         $published = Content::query()->create([
-            'title' => '?????',
+            'title' => 'مجدول',
             'slug' => 'published',
             'status' => Content::STATUS_PUBLISHED,
             'published_at' => now()->subMinute(),

@@ -471,26 +471,32 @@
             <div class="container">
                 <div class="split-heading">
                     <x-section-heading
-                        eyebrow="مقالات"
-                        title="من «يلا نفهم تسويق»"
-                        description="مقالات قصيرة أشرح فيها أشياء تحصل معك يوميًا في تسويق مشروعك."
+                        eyebrow="المكتبة المعرفية"
+                        title="مقالات ودروس من داخل المنصة"
+                        description="محتوى عملي أكتبه وأنشره هنا مباشرة، مع دروس ومحاضرات ودورات متكاملة."
                         align="start"
                     />
-                    <a class="text-link" href="{{ $brand['contact']['linkedin'] }}" target="_blank" rel="noopener noreferrer">تابع المزيد <span>↗</span></a>
+                    <a class="text-link" href="{{ route('content.index') }}">استعرض المكتبة <span>←</span></a>
                 </div>
                 <div class="knowledge-grid">
-                    @foreach ($brand['knowledge'] as $index => $item)
-                        <a class="knowledge-card reveal" href="{{ $item['url'] }}" target="_blank" rel="noopener noreferrer">
+                    @forelse ($knowledge as $index => $item)
+                        <a class="knowledge-card reveal" href="{{ route('content.show', $item) }}">
                             <div class="knowledge-card__visual knowledge-card__visual--{{ $index + 1 }}">
                                 <span>{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</span>
                                 <i></i>
                             </div>
-                            <small>{{ $item['type'] }}</small>
-                            <h3>{{ $item['title'] }}</h3>
-                            <p>{{ $item['description'] }}</p>
-                            <span class="knowledge-card__link">اقرأ على LinkedIn <b>↗</b></span>
+                            <small>{{ ['article' => 'مقال', 'lesson' => 'درس', 'lecture' => 'محاضرة', 'course' => 'دورة'][$item->type] }}</small>
+                            <h3>{{ $item->title }}</h3>
+                            <p>{{ $item->excerpt }}</p>
+                            <span class="knowledge-card__link">عرض المحتوى <b>←</b></span>
                         </a>
-                    @endforeach
+                    @empty
+                        <div class="knowledge-card reveal">
+                            <small>قريبًا</small>
+                            <h3>المكتبة قيد التجهيز</h3>
+                            <p>سيظهر هنا أحدث محتوى فور نشره من لوحة الإدارة.</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
         </section>

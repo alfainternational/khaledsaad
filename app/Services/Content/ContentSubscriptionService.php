@@ -4,6 +4,7 @@ namespace App\Services\Content;
 
 use App\Models\ContentSubscriber;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 class ContentSubscriptionService
@@ -14,16 +15,24 @@ class ContentSubscriptionService
     public function subscribe(string $email, bool $consent): array
     {
         if (! $consent) {
-            throw new InvalidArgumentException('???????? ??? ??? ?????? ??????.');
+            throw new InvalidArgumentException('الموافقة على حفظ البريد مطلوبة.');
         }
 
         $normalized = Str::lower(trim($email));
 
         if (filter_var($normalized, FILTER_VALIDATE_EMAIL) === false) {
-            throw new InvalidArgumentException('?????? ?????????? ??? ????.');
+            throw new InvalidArgumentException('البريد الإلكتروني غير صالح.');
         }
 
         $token = Str::random(64);
+
+        $existing = ContentSubscriber::query()->where('email', $normalized)->first();
+
+        if ($existing?->status === ContentSubscriber::STATUS_DISABLED) {
+            throw ValidationException::withMessages([
+                'email' => 'هذا البريد موقوف من إدارة المحتوى.',
+            ]);
+        }
 
         $subscriber = ContentSubscriber::query()->updateOrCreate(
             ['email' => $normalized],

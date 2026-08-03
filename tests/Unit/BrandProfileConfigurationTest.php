@@ -18,6 +18,7 @@ class BrandProfileConfigurationTest extends TestCase
         $this->assertSame('+966533052074', $brand['contact']['phone']);
         $this->assertSame('https://www.linkedin.com/in/khaledaasaad/', $brand['contact']['linkedin']);
         $this->assertSame('https://x.com/KhaledAASaad', $brand['contact']['x']);
+        $this->assertArrayNotHasKey('knowledge', $brand);
         $this->assertCount(7, $brand['experience']);
         $this->assertSame('جامعة النيلين', $brand['education'][0]['institution']);
         $this->assertContains('إدارة المشاريع الاحترافية PMP', $brand['credentials']);

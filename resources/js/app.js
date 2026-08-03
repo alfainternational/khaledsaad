@@ -1,4 +1,5 @@
 import './bootstrap';
+import './content-editor';
 
 document.documentElement.classList.add('js');
 
