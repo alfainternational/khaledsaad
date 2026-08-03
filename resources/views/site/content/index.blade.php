@@ -10,8 +10,8 @@
         <section class="page-hero content-library-hero">
             <div class="container page-hero__inner">
                 <p class="eyebrow">المكتبة المعرفية</p>
-                <h1>محتوى عملي ينمو معك</h1>
-                <p class="page-hero__lead">مقالات ودروس ومحاضرات ودورات منشورة هنا مباشرة، من دون الاعتماد على LinkedIn أو أي منصة خارجية.</p>
+                <h1>محتوى يساعدك على الفهم والتطبيق</h1>
+                <p class="page-hero__lead">استكشف مقالات ودروسًا ومحاضرات ودورات عملية تساعدك على اتخاذ قرار أوضح وتحويل المعرفة إلى خطوات قابلة للتنفيذ.</p>
             </div>
         </section>
 
@@ -43,8 +43,9 @@
                         </article>
                     @empty
                         <div class="empty-state content-library-empty">
-                            <h2>المكتبة قيد التجهيز</h2>
-                            <p>سيظهر هنا أول محتوى فور نشره من لوحة الإدارة.</p>
+                            <h2>لم تجد مادة مناسبة بعد؟</h2>
+                            <p>ابدأ التشخيص المجاني لتتعرف على فجوات مشروعك والخطوة التي تستحق الأولوية.</p>
+                            <a class="button button--primary" href="{{ route('tools.index') }}">ابدأ التشخيص المجاني</a>
                         </div>
                     @endforelse
                 </div>

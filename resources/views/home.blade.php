@@ -472,8 +472,8 @@
                 <div class="split-heading">
                     <x-section-heading
                         eyebrow="المكتبة المعرفية"
-                        title="مقالات ودروس من داخل المنصة"
-                        description="محتوى عملي أكتبه وأنشره هنا مباشرة، مع دروس ومحاضرات ودورات متكاملة."
+                        title="محتوى يحول المعرفة إلى خطوات"
+                        description="مقالات ودروس ومحاضرات ودورات عملية: افهم المشكلة وطبّق خطوة واضحة يمكنك قياس أثرها."
                         align="start"
                     />
                     <a class="text-link" href="{{ route('content.index') }}">استعرض المكتبة <span>←</span></a>
@@ -492,9 +492,10 @@
                         </a>
                     @empty
                         <div class="knowledge-card reveal">
-                            <small>قريبًا</small>
-                            <h3>المكتبة قيد التجهيز</h3>
-                            <p>سيظهر هنا أحدث محتوى فور نشره من لوحة الإدارة.</p>
+                            <small>ابدأ الآن</small>
+                            <h3>لم تجد المادة المناسبة بعد؟</h3>
+                            <p>ابدأ التشخيص المجاني لتتعرف على فجوات مشروعك والخطوة التي تستحق الأولوية.</p>
+                            <a class="text-link" href="{{ route('tools.index') }}">ابدأ التشخيص المجاني <span>←</span></a>
                         </div>
                     @endforelse
                 </div>
