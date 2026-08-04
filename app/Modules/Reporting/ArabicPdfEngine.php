@@ -37,6 +37,7 @@ class ArabicPdfEngine
             'mode' => 'utf-8',
             'format' => 'A4',
             'directionality' => 'rtl',
+            'mirrorMargins' => true,
             /*
              * إيقاف التبديل التلقائي للخط حاسم: mPDF كان يستبدل خط المنصة
              * بخط عربي مدمج عنده (XBRiyaz) فور رؤيته نصًا عربيًا، فيخرج
@@ -67,13 +68,30 @@ class ArabicPdfEngine
 
         $mpdf->SetDirectionality('rtl');
 
+        $logo = str_replace('\\', '/', public_path('assets/brand/khaled-saad-light.png'));
+        $siteUrl = rtrim((string) config('app.url'), '/');
+
+        /*
+         * هذا الرأس هو إطار الهوية المشترك لكل ملف يولده الموقع. يوضع في
+         * المحرك نفسه حتى لا يستطيع قالب تقرير جديد أن يخرج بلا الشعار أو
+         * ألوان المنصة أو عنوانها، وحتى تبقى الهوية موحدة في كل الصفحات.
+         */
+        $header = '<div style="padding:5px 8px 7px;border-bottom:3px solid #2575ff;background:#071f5b;">'
+            .'<table width="100%" cellspacing="0" cellpadding="0"><tr>'
+            .'<td width="55%" style="color:#dce8ff;font-size:8.5pt;text-align:right;">'.e($footerNote ?: config('brand.tagline')).'</td>'
+            .'<td width="45%" style="text-align:left;"><img src="'.e($logo).'" style="width:96px;"></td>'
+            .'</tr></table></div>';
+
+        $mpdf->SetHTMLHeader($header);
+        $mpdf->SetHTMLHeader($header, 'E');
+
         // فاصل واحد لكل المخرجات: كانت التقارير تستعمل شرطة والموجزات نقطة،
         // فيبدو ملفان من المنصة نفسها كأنهما من نظامين.
-        $parts = array_filter([e(config('brand.name', 'خالد سعد')), e($footerNote)]);
+        $parts = array_filter([e(config('brand.name', 'خالد سعد')), e($footerNote), e($siteUrl)]);
         $parts[] = 'صفحة {PAGENO} من {nbpg}';
 
         $mpdf->SetHTMLFooter(
-            '<div style="border-top:1px solid #dfe8f5;padding-top:6px;font-size:8pt;color:#5d6b82;text-align:center;">'
+            '<div style="border-top:3px solid #2575ff;padding-top:6px;font-size:8pt;color:#5d6b82;text-align:center;">'
             .implode(' · ', $parts).'</div>'
         );
 

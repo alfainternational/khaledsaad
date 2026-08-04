@@ -43,15 +43,21 @@
     </div>
 
     <nav id="mobile-menu" class="mobile-menu" aria-label="تنقل الجوال" data-mobile-menu hidden>
-        <a href="{{ route('methodology') }}">المنهجية</a>
-        <a href="{{ route('tools.index') }}">التشخيصات</a>
-        <a href="{{ route('services') }}">الخدمات والمخرجات</a>
-        <a href="{{ route('profile') }}">السيرة</a>
-        <a href="{{ route('knowledge') }}">المعرفة</a>
-        <a href="{{ route('faq') }}">الأسئلة الشائعة</a>
-        @guest
-            <a href="{{ route('login') }}">تسجيل الدخول</a>
-        @endguest
-        <a class="button button--primary" href="{{ $startUrl }}">{{ $startLabel }}</a>
+        <div class="container mobile-menu__inner">
+            <div class="mobile-menu__utilities">
+                <span>مظهر الموقع</span>
+                @include('partials.theme-toggle')
+            </div>
+            <a href="{{ route('methodology') }}">المنهجية</a>
+            <a href="{{ route('tools.index') }}">التشخيصات</a>
+            <a href="{{ route('services') }}">الخدمات والمخرجات</a>
+            <a href="{{ route('profile') }}">السيرة</a>
+            <a href="{{ route('knowledge') }}">المعرفة</a>
+            <a href="{{ route('faq') }}">الأسئلة الشائعة</a>
+            @guest
+                <a href="{{ route('login') }}">تسجيل الدخول</a>
+            @endguest
+            <a class="button button--primary" href="{{ $startUrl }}">{{ $startLabel }}</a>
+        </div>
     </nav>
 </header>
