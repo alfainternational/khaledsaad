@@ -13,6 +13,11 @@ class PublicResponsiveLayoutTest extends TestCase
         $mobileQuery = strpos($css, '@media (max-width: 900px)');
 
         $this->assertNotFalse($mobileQuery);
+        $this->assertLessThan(
+            $mobileQuery,
+            strrpos($css, "\n.nav-actions {"),
+            'The desktop nav-actions rule must be declared before the mobile override.',
+        );
 
         $mobileRules = substr($css, $mobileQuery, 2600);
 

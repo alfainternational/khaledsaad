@@ -300,6 +300,24 @@ svg {
     width: 100%;
 }
 
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-login {
+    color: var(--brand-navy);
+    font-size: 0.85rem;
+    font-weight: 800;
+    white-space: nowrap;
+    transition: color 180ms ease;
+}
+
+.nav-login:hover {
+    color: var(--brand-blue);
+}
+
 .menu-toggle,
 .mobile-menu {
     display: none;
@@ -3161,24 +3179,6 @@ svg {
 /* ==========================================================================
    الربط بالأدوات: رأس الصفحة، بطاقات الأدوات الحية، والصفحات العامة الداخلية
    ========================================================================== */
-
-.nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.nav-login {
-    color: var(--brand-navy);
-    font-size: 0.85rem;
-    font-weight: 800;
-    white-space: nowrap;
-    transition: color 180ms ease;
-}
-
-.nav-login:hover {
-    color: var(--brand-blue);
-}
 
 .desktop-nav a.is-active {
     color: var(--brand-navy);
