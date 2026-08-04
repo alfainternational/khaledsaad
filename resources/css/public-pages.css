@@ -242,6 +242,21 @@ a.public-page-card:hover {
     margin-block: 0.4rem;
 }
 
+.profile-summary__number {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--brand-blue);
+    font-size: 2.2rem;
+    line-height: 1;
+}
+
+.profile-summary section > p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
 .profile-summary ul,
 .profile-job ul {
     margin: 0;
@@ -313,6 +328,62 @@ a.public-page-card:hover {
     display: block;
 }
 
+.profile-credentials {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+}
+
+.profile-credential-card {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-soft);
+}
+
+.profile-credential-card__icon {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--brand-blue);
+    font-weight: 900;
+}
+
+.profile-credential-card h3,
+.profile-credential-card p {
+    margin: 0;
+}
+
+.profile-credential-card h3 {
+    color: var(--brand-navy);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.profile-credential-card p,
+.profile-credential-card small {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--muted);
+}
+
+.profile-credential-card__link {
+    display: inline-flex;
+    gap: 0.3rem;
+    margin-top: 0.55rem;
+    color: var(--brand-blue);
+    font-size: 0.85rem;
+    font-weight: 900;
+}
+
 .profile-tags {
     display: flex;
     flex-wrap: wrap;
@@ -376,6 +447,10 @@ a.public-page-card:hover {
 
     .public-sample-report .public-page-grid {
         grid-template-columns: 1fr;
+    }
+
+    .profile-credentials {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 

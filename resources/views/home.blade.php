@@ -384,7 +384,7 @@
                     </div>
                     <div class="about-copy">
                         <p class="eyebrow">من يقف خلف المنهجية</p>
-                        <h2>عن خالد سعد</h2>
+                        <h2>عني</h2>
                         {{-- الجملة تقول مدة الخبرة ومجالها فقط، والتفصيل بالتواريخ تحتها يغني عن الوصف. --}}
                         <p class="about-lead">أكثر من 10 سنوات في بناء الحملات وقيادة الفرق وقراءة البيانات. المسار كاملًا بالتواريخ أدناه.</p>
                         @foreach ($brand['about'] as $paragraph)
@@ -430,12 +430,13 @@
 
                         <section class="profile-card reveal">
                             <span class="profile-card__label">اعتمادات وتعلّم</span>
-                            @foreach ($brand['credentials'] as $credential)
+                            @foreach (array_slice($brand['credentials'], 0, 4) as $credential)
                                 <div class="credential">
                                     <span aria-hidden="true">✓</span>
-                                    <strong>{{ $credential }}</strong>
+                                    <strong>{{ $credential['name'] }}</strong>
                                 </div>
                             @endforeach
+                            <a class="text-link" href="{{ route('profile') }}#profile-credentials">استعرض الشهادات الـ{{ count($brand['credentials']) }} <span aria-hidden="true">←</span></a>
                         </section>
 
                         <section class="profile-card reveal">

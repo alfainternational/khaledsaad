@@ -20,7 +20,7 @@ class PublicProfileScreen extends StatelessWidget {
     final about = _strings(brand['about']);
     final experience = _maps(brand['experience']);
     final education = _maps(brand['education']);
-    final credentials = _strings(brand['credentials']);
+    final credentials = _maps(brand['credentials']);
     final skills = _strings(brand['skills']);
     final services = _strings(brand['professional_services']);
     final contact = brand['contact'] is Map
@@ -186,7 +186,7 @@ class PublicProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _ChipSection(title: 'الشهادات', items: credentials),
+          _CredentialSection(items: credentials),
           const SizedBox(height: 14),
           _ChipSection(title: 'الخدمات المهنية', items: services),
           const SizedBox(height: 14),
@@ -274,6 +274,92 @@ class _ChipSection extends StatelessWidget {
     ),
   );
 }
+
+class _CredentialSection extends StatelessWidget {
+  const _CredentialSection({required this.items});
+
+  final List<Map<String, dynamic>> items;
+
+  @override
+  Widget build(BuildContext context) => _Section(
+    title: 'الشهادات والتراخيص',
+    child: Column(
+      children: [
+        for (final item in items)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: BrandColors.surfaceSoft,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: BrandColors.line),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.verified_outlined, color: BrandColors.blue),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['name']?.toString() ?? '',
+                          style: const TextStyle(
+                            color: BrandColors.navy,
+                            fontWeight: FontWeight.w800,
+                            height: 1.5,
+                          ),
+                        ),
+                        if (_credentialMeta(item).isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            _credentialMeta(item),
+                            style: const TextStyle(color: BrandColors.muted),
+                          ),
+                        ],
+                        if (item['credential_id'] != null) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            'مُعرّف الاعتماد: ${item['credential_id']}',
+                            textDirection: TextDirection.rtl,
+                            style: const TextStyle(
+                              color: BrandColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                        if (item['url'] != null) ...[
+                          const SizedBox(height: 4),
+                          TextButton.icon(
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () =>
+                                _openExternal(item['url'].toString()),
+                            icon: const Icon(Icons.open_in_new, size: 16),
+                            label: const Text('عرض الاعتماد'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+String _credentialMeta(Map<String, dynamic> item) => [
+  item['issuer']?.toString(),
+  item['issued']?.toString(),
+].whereType<String>().where((value) => value.isNotEmpty).join(' · ');
 
 List<Map<String, dynamic>> _maps(dynamic value) => (value as List? ?? const [])
     .whereType<Map>()

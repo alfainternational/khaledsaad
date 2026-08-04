@@ -47,12 +47,21 @@
             <h2>التعليم</h2>
             @foreach ($brand['education'] as $education)<h3>{{ $education['degree'] }}</h3><p>{{ $education['institution'] }}<br>{{ $education['period'] }}</p>@endforeach
         </td><td>
-            <h2>الشهادات</h2>
-            <ul>@foreach ($brand['credentials'] as $credential)<li>{{ $credential }}</li>@endforeach</ul>
+            <h2>الخدمات المهنية</h2>
+            <div class="tags">@foreach ($brand['professional_services'] as $service)<span>{{ $service }}</span>@endforeach</div>
         </td></tr></table>
 
-        <h2>الخدمات المهنية</h2>
-        <div class="tags">@foreach ($brand['professional_services'] as $service)<span>{{ $service }}</span>@endforeach</div>
+        <h2>الشهادات والتراخيص</h2>
+        @foreach ($brand['credentials'] as $credential)
+            <section class="job">
+                <h3>{{ $credential['name'] }}</h3>
+                @if (! empty($credential['issuer']) || ! empty($credential['issued']))
+                    <div class="job-meta">{{ $credential['issuer'] ?? '' }}@if (! empty($credential['issuer']) && ! empty($credential['issued'])) · @endif{{ $credential['issued'] ?? '' }}</div>
+                @endif
+                @if (! empty($credential['credential_id']))<small>مُعرّف الاعتماد: {{ $credential['credential_id'] }}</small>@endif
+            </section>
+        @endforeach
+
         <h2>المهارات</h2>
         <div class="tags">@foreach ($brand['skills'] as $skill)<span>{{ $skill }}</span>@endforeach</div>
     </div>

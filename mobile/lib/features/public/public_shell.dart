@@ -149,7 +149,7 @@ const _fallbackBrand = <String, dynamic>{
   'about': <String>[],
   'experience': <Map<String, dynamic>>[],
   'education': <Map<String, dynamic>>[],
-  'credentials': <String>[],
+  'credentials': <Map<String, dynamic>>[],
   'skills': <String>[],
   'professional_services': <String>[],
   'problems': <Map<String, dynamic>>[],
@@ -284,7 +284,7 @@ class _PublicOverview extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Eyebrow('عن خالد سعد'),
+                const Eyebrow('عني'),
                 const SizedBox(height: 6),
                 Text(
                   brand['professional_headline']?.toString() ?? '',

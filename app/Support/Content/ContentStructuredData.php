@@ -136,6 +136,19 @@ class ContentStructuredData
                 config('brand.contact.x'),
             ])),
             'knowsAbout' => config('brand.skills'),
+            'hasCredential' => collect(config('brand.credentials', []))
+                ->map(fn (array $credential): array => array_filter([
+                    '@type' => 'EducationalOccupationalCredential',
+                    'name' => $credential['name'],
+                    'credentialCategory' => 'Professional certificate',
+                    'url' => $credential['url'] ?? null,
+                    'recognizedBy' => empty($credential['issuer']) ? null : [
+                        '@type' => 'Organization',
+                        'name' => $credential['issuer'],
+                    ],
+                ]))
+                ->values()
+                ->all(),
         ];
     }
 

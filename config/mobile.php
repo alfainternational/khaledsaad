@@ -10,8 +10,8 @@ return [
      *
      * نسخة البناء القادم مكانها `mobile/pubspec.yaml`.
      */
-    'version' => env('MOBILE_APP_VERSION', '1.1.0'),
-    'build' => (int) env('MOBILE_APP_BUILD', 14),
+    'version' => env('MOBILE_APP_VERSION', '1.1.1'),
+    'build' => (int) env('MOBILE_APP_BUILD', 15),
 
     /*
      * أقل بناء مسموح له باستهلاك api/v1.

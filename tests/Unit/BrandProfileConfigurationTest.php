@@ -31,6 +31,17 @@ class BrandProfileConfigurationTest extends TestCase
         $this->assertArrayHasKey('responsibilities', $brand['experience'][2]);
         $this->assertCount(5, $brand['experience'][2]['responsibilities']);
         $this->assertSame('جامعة النيلين', $brand['education'][0]['institution']);
-        $this->assertContains('إدارة المشاريع الاحترافية PMP', $brand['credentials']);
+        $this->assertStringStartsWith('أمتلك', $brand['about'][0]);
+        $this->assertStringStartsWith('أطوّر', $brand['experience'][2]['responsibilities'][0]);
+        $this->assertCount(16, $brand['credentials']);
+        $this->assertSame('إدارة المشاريع الاحترافية PMP', $brand['credentials'][0]['name']);
+        $this->assertContains(
+            'Claude Code in Action',
+            array_column($brand['credentials'], 'name'),
+        );
+        $this->assertContains(
+            'التسويق الرقمي - إدارة الحملات الرقمية المدفوعة',
+            array_column($brand['credentials'], 'name'),
+        );
     }
 }

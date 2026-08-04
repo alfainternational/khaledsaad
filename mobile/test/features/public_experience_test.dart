@@ -106,14 +106,14 @@ void main() {
       'professional_headline': 'مدير التسويق',
       'location': 'عرعر، المملكة العربية السعودية',
       'experience_years': 'أكثر من 10 سنوات',
-      'about': ['نبذة مهنية موثقة'],
+      'about': ['أمتلك خبرة مهنية موثقة'],
       'experience': [
         {
           'role': 'مدير التسويق',
           'company': 'شركة الشمال التعليمية',
           'period': 'نوفمبر 2024 — حتى الآن',
           'location': 'السعودية',
-          'responsibilities': ['إدارة الحملات الاستراتيجية'],
+          'responsibilities': ['أدير الحملات الاستراتيجية'],
         },
       ],
       'education': [
@@ -123,7 +123,15 @@ void main() {
           'period': '2006 — 2010',
         },
       ],
-      'credentials': ['إدارة المشاريع الاحترافية PMP'],
+      'credentials': [
+        {'name': 'إدارة المشاريع الاحترافية PMP'},
+        {
+          'name': 'Claude Code in Action',
+          'issuer': 'Anthropic',
+          'issued': 'أبريل 2026',
+          'credential_id': 'dp3a6ruyi8z3',
+        },
+      ],
       'skills': ['تحليل البيانات'],
       'professional_services': ['استراتيجية المحتوى'],
       'contact': {
@@ -149,7 +157,7 @@ void main() {
     expect(find.text('السيرة المهنية'), findsOneWidget);
     expect(find.text('تنزيل السيرة PDF'), findsOneWidget);
     expect(find.text('شركة الشمال التعليمية'), findsOneWidget);
-    expect(find.text('إدارة الحملات الاستراتيجية'), findsOneWidget);
+    expect(find.text('أدير الحملات الاستراتيجية'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('جامعة النيلين'),
       300,
@@ -162,6 +170,12 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('إدارة المشاريع الاحترافية PMP'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Claude Code in Action'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Anthropic · أبريل 2026'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('LinkedIn'),
       300,

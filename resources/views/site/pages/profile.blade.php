@@ -44,12 +44,9 @@
                     </ul>
                 </section>
                 <section>
-                    <h2>الشهادات</h2>
-                    <ul>
-                        @foreach ($brand['credentials'] as $credential)
-                            <li>{{ $credential }}</li>
-                        @endforeach
-                    </ul>
+                    <h2>الشهادات والتعلّم</h2>
+                    <strong class="profile-summary__number">{{ count($brand['credentials']) }}</strong>
+                    <p>شهادة واعتماد مهني موثّق أعرض تفاصيلها كاملة في هذه الصفحة.</p>
                 </section>
             </aside>
 
@@ -112,6 +109,34 @@
                         </ul>
                     </section>
                 </div>
+
+                <section class="profile-section" aria-labelledby="profile-credentials">
+                    <p class="eyebrow">التعلّم المستمر</p>
+                    <h2 id="profile-credentials">الشهادات والتراخيص</h2>
+                    <div class="profile-credentials">
+                        @foreach ($brand['credentials'] as $credential)
+                            <article class="profile-credential-card">
+                                <span class="profile-credential-card__icon" aria-hidden="true">✓</span>
+                                <div>
+                                    <h3>{{ $credential['name'] }}</h3>
+                                    @if (! empty($credential['issuer']) || ! empty($credential['issued']))
+                                        <p>
+                                            @if (! empty($credential['issuer']))<strong>{{ $credential['issuer'] }}</strong>@endif
+                                            @if (! empty($credential['issuer']) && ! empty($credential['issued']))<span aria-hidden="true"> · </span>@endif
+                                            @if (! empty($credential['issued']))<span>{{ $credential['issued'] }}</span>@endif
+                                        </p>
+                                    @endif
+                                    @if (! empty($credential['credential_id']))
+                                        <small>مُعرّف الاعتماد: <bdi>{{ $credential['credential_id'] }}</bdi></small>
+                                    @endif
+                                    @if (! empty($credential['url']))
+                                        <a class="profile-credential-card__link" href="{{ $credential['url'] }}" target="_blank" rel="noopener noreferrer">عرض الاعتماد <span aria-hidden="true">↗</span></a>
+                                    @endif
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
 
                 <section class="profile-section" aria-labelledby="profile-knowledge">
                     <p class="eyebrow">المحتوى المهني</p>
