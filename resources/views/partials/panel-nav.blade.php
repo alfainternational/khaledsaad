@@ -85,6 +85,11 @@
             <span>النظرة العامة</span>
         </a>
 
+        <a href="{{ route('app.learning.marketing.home') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.learning.marketing.*')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"/><path d="m7.5 10 1.2 1.2 2.3-2.7"/></svg>
+            <span>تطبيق الدروس</span>
+        </a>
+
         <a href="{{ route('app.projects.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.projects.*') || request()->routeIs('app.tasks.*')])>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
             <span>المشاريع</span>

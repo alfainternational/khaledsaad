@@ -5,10 +5,12 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Concerns\CarriesStartIntent;
 use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
+use App\Models\MarketingLearningRun;
 use App\Models\Project;
 use App\Models\Tool;
 use App\Models\ToolField;
 use App\Models\ToolVersion;
+use App\Modules\Learning\MarketingLearningRecommender;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ProjectAnswerMemory;
 use App\Services\Tools\ToolEngagement;
@@ -36,6 +38,7 @@ class ProjectController extends Controller
         private readonly ProjectAnswerMemory $memory,
         private readonly ToolEngagement $engagement,
         private readonly EngagementPresenter $engagements,
+        private readonly MarketingLearningRecommender $learning,
     ) {}
 
     public function index(Request $request): View
@@ -83,6 +86,7 @@ class ProjectController extends Controller
         $this->authorizeProject($request, $project);
 
         $tools = Tool::with('currentVersion')->orderBy('sort_order')->get();
+        $learningRun = MarketingLearningRun::startFor($project, $request->user());
 
         return view('app.projects.show', [
             'project' => $this->presenter->overview($project),
@@ -98,6 +102,7 @@ class ProjectController extends Controller
                     ),
                 ])
                 ->all(),
+            'learningNext' => $this->learning->next($learningRun),
         ]);
     }
 

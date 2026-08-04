@@ -25,6 +25,25 @@
 
     <div class="layout-main-aside">
     <div class="layout-flow">
+    <section class="learning-project-card" aria-labelledby="learning-project-heading">
+        <div>
+            <p class="eyebrow">خطوتك التسويقية التالية</p>
+            @if ($learningNext['exercise'])
+                <h2 id="learning-project-heading">{{ $learningNext['exercise']['title'] }}</h2>
+                <p>{{ $learningNext['reason'] }}</p>
+                <p><strong>ستحصل على:</strong> {{ $learningNext['exercise']['deliverable'] }}</p>
+            @else
+                <h2 id="learning-project-heading">أكملت جميع مهام الدروس</h2>
+                <p>يمكنك مراجعة نتائجك وتحسين أي إجابة تريد رفع درجتها.</p>
+            @endif
+        </div>
+        <a href="{{ $learningNext['exercise']
+            ? route('app.learning.marketing.exercise', [$project['slug'], $learningNext['exercise']['key']])
+            : route('app.learning.marketing.index', $project['slug']) }}" class="btn btn--primary">
+            {{ $learningNext['exercise'] ? 'ابدأ المهمة' : 'راجع النتائج' }}
+        </a>
+    </section>
+
     {{-- محرك النمو: القدرات المستمرة فوق أدوات التشغيل الاعتيادية --}}
     <section aria-labelledby="growth-heading">
         <h2 id="growth-heading" class="section-title">فرص إضافية لتحسين المشروع</h2>
