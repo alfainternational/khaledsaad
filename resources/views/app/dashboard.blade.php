@@ -101,6 +101,16 @@
         </div>
 
         <aside class="layout-aside layout-flow" aria-label="الخطوة التالية">
+            @if (($learningNext['exercise'] ?? null) !== null)
+                <section class="card consultation-entry" aria-labelledby="dashboard-learning-heading">
+                    <p class="eyebrow">خطوتك التسويقية التالية</p>
+                    <h2 id="dashboard-learning-heading">{{ $learningNext['exercise']['title'] }}</h2>
+                    <p>{{ $learningNext['reason'] }}</p>
+                    <p class="muted">لمشروع {{ $learningNext['project']->name }} · {{ $learningNext['exercise']['duration_minutes'] }} دقيقة</p>
+                    <a href="{{ route('app.learning.marketing.exercise', [$learningNext['project'], $learningNext['exercise']['key']]) }}" class="btn btn--primary">ابدأ المهمة</a>
+                </section>
+            @endif
+
             <section class="card consultation-entry" aria-labelledby="smart-consultation-heading">
                 <p class="eyebrow">المستشار التسويقي الذكي</p>
                 <h2 id="smart-consultation-heading">لا تعرف أي تشخيص تبدأ به؟</h2>

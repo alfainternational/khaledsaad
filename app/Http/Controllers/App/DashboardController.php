@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\MarketingLearningRun;
 use App\Models\Project;
 use App\Models\Tool;
 use App\Models\ToolRun;
+use App\Modules\Learning\MarketingLearningRecommender;
 use App\Services\Tools\ToolEngagement;
 use App\Support\Presentation\EngagementPresenter;
 use App\Support\Presentation\ProjectPresenter;
@@ -20,6 +22,7 @@ class DashboardController extends Controller
         private readonly ToolPresenter $tools,
         private readonly ToolEngagement $engagement,
         private readonly EngagementPresenter $engagements,
+        private readonly MarketingLearningRecommender $learning,
     ) {}
 
     public function __invoke(Request $request): View
@@ -49,6 +52,18 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
+        $learningProject = $projects->first();
+        $learningNext = null;
+
+        if ($learningProject !== null) {
+            $learningRun = MarketingLearningRun::startFor($learningProject, $user);
+            $recommendation = $this->learning->next($learningRun);
+            $learningNext = [
+                ...$recommendation,
+                'project' => $learningProject,
+            ];
+        }
+
         return [
             'projects' => $projects->map(fn ($project) => $this->projects->card($project))->all(),
             'unfinished' => $unfinished,
@@ -56,6 +71,7 @@ class DashboardController extends Controller
             'reports_count' => $projects->sum(fn ($project) => $project->reports->count()),
             'suggested_tools' => Tool::runnable()->with('currentVersion')->orderBy('sort_order')->limit(4)->get()
                 ->map(fn ($tool) => $this->tools->card($tool))->all(),
+            'learningNext' => $learningNext,
         ];
     }
 }

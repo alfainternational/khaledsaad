@@ -22,6 +22,7 @@ use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\FeedbackController;
 use App\Http\Controllers\App\GeoPackController;
 use App\Http\Controllers\App\KpiController;
+use App\Http\Controllers\App\MarketingLearningController;
 use App\Http\Controllers\App\MessageStudioController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\PortfolioController;
@@ -156,10 +157,18 @@ Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
 Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
 
+    Route::get('learn/marketing', [MarketingLearningController::class, 'home'])->name('learning.marketing.home');
+
     Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('projects/{project}/learn/marketing', [MarketingLearningController::class, 'index'])->name('learning.marketing.index');
+    Route::get('projects/{project}/learn/marketing/{exercise}', [MarketingLearningController::class, 'exercise'])->name('learning.marketing.exercise');
+    Route::put('projects/{project}/learn/marketing/{exercise}', [MarketingLearningController::class, 'save'])->name('learning.marketing.save');
+    Route::post('projects/{project}/learn/marketing/{exercise}/review', [MarketingLearningController::class, 'submit'])->middleware('throttle:20,60')->name('learning.marketing.submit');
+    Route::get('projects/{project}/learn/marketing/{exercise}/result', [MarketingLearningController::class, 'result'])->name('learning.marketing.result');
+    Route::post('projects/{project}/learn/marketing/{exercise}/retry', [MarketingLearningController::class, 'retry'])->middleware('throttle:10,60')->name('learning.marketing.retry');
     Route::get('projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::post('projects/{project}/consultations', [ConsultationController::class, 'start'])->name('consultations.start');
