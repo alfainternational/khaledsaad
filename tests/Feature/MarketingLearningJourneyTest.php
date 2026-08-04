@@ -129,6 +129,34 @@ class MarketingLearningJourneyTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    public function test_a_completed_attempt_is_not_reviewed_again_until_an_answer_changes(): void
+    {
+        Queue::fake();
+        [$user, $project] = $this->project();
+        $run = MarketingLearningRun::startFor($project, $user);
+        $attempt = $run->attemptFor('describe-real-customer');
+        $attempt->update([
+            'answers' => [
+                'customer_profile' => 'صاحب متجر إلكتروني صغير يدير الطلبات بنفسه ويريد زيادة المبيعات',
+                'customer_problem' => 'لا يعرف لماذا يزور الناس متجره ثم يغادرون من غير إكمال الطلب',
+                'buying_trigger' => 'يتحرك عندما تنخفض الطلبات أسبوعين ويحتاج إلى استعادة الدخل سريعًا',
+            ],
+            'status' => MarketingExerciseAttempt::STATUS_COMPLETED,
+            'final_score' => 82,
+        ]);
+
+        $this->actingAs($user)->post(route('app.learning.marketing.submit', [
+            $project,
+            'describe-real-customer',
+        ]))->assertRedirect(route('app.learning.marketing.result', [
+            $project,
+            'describe-real-customer',
+        ]));
+
+        Queue::assertNothingPushed();
+        $this->assertSame(MarketingExerciseAttempt::STATUS_COMPLETED, $attempt->refresh()->status);
+    }
+
     public function test_result_explains_each_answer_and_the_next_action_in_plain_language(): void
     {
         [$user, $project] = $this->project();

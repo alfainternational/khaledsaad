@@ -146,7 +146,11 @@ class MarketingLearningController extends Controller
         $run = MarketingLearningRun::startFor($project, $request->user());
         $attempt = $run->attemptFor($exercise);
 
-        if (in_array($attempt->status, [MarketingExerciseAttempt::STATUS_QUEUED, MarketingExerciseAttempt::STATUS_EVALUATING], true)) {
+        if (in_array($attempt->status, [
+            MarketingExerciseAttempt::STATUS_QUEUED,
+            MarketingExerciseAttempt::STATUS_EVALUATING,
+            MarketingExerciseAttempt::STATUS_COMPLETED,
+        ], true)) {
             return redirect()->route('app.learning.marketing.result', [$project, $exercise]);
         }
 
