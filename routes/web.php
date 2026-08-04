@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminConsultationController;
+use App\Http\Controllers\Admin\AdminContentCategoryController;
+use App\Http\Controllers\Admin\AdminContentController;
+use App\Http\Controllers\Admin\AdminContentMediaController;
+use App\Http\Controllers\Admin\AdminContentSubscriberController;
+use App\Http\Controllers\Admin\AdminCourseCurriculumController;
 use App\Http\Controllers\Admin\AdminCreditPackController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminFeatureController;
@@ -11,6 +16,8 @@ use App\Http\Controllers\Admin\AdminPlanController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminToolController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\ImpersonationController;
+use App\Http\Controllers\Admin\OperationsController;
 use App\Http\Controllers\Admin\UsageController;
 use App\Http\Controllers\App\AgencyReportController;
 use App\Http\Controllers\App\AudienceLabController;
@@ -34,6 +41,8 @@ use App\Http\Controllers\App\QuestionAssistController;
 use App\Http\Controllers\App\ReadinessController;
 use App\Http\Controllers\App\ReportController;
 use App\Http\Controllers\App\ReportWatchController;
+use App\Http\Controllers\App\SearchController;
+use App\Http\Controllers\App\SecurityController;
 use App\Http\Controllers\App\TaskController;
 use App\Http\Controllers\App\ToolCatalogController;
 use App\Http\Controllers\App\ToolRunController;
@@ -41,33 +50,70 @@ use App\Http\Controllers\App\VoiceIntakeController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Site\ContentLibraryController;
+use App\Http\Controllers\Site\ContentMediaController;
+use App\Http\Controllers\Site\ContentResourceController;
+use App\Http\Controllers\Site\ContentSubscriptionController;
 use App\Http\Controllers\Site\GuestRunController;
 use App\Http\Controllers\Site\HomeController;
 use App\Http\Controllers\Site\LegalController;
 use App\Http\Controllers\Site\MobileAppController;
+use App\Http\Controllers\Site\PricingController;
+use App\Http\Controllers\Site\ProfilePdfController;
+use App\Http\Controllers\Site\PublicPageController;
+use App\Http\Controllers\Site\SectorLandingController;
 use App\Http\Controllers\Site\SharedAgencyReportController;
+use App\Http\Controllers\Site\SharedReportController;
 use App\Http\Controllers\Site\ToolShowcaseController;
 use App\Http\Controllers\Webhooks\MoyasarWebhookController;
 use App\Http\Controllers\Webhooks\PayPalWebhookController;
 use App\Http\Controllers\Webhooks\TapWebhookController;
+use App\Models\Content;
+use App\Models\Tool;
+use App\Modules\Shared\Sectors\Sector;
 use App\Support\Billing\FeatureKey;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+Route::get('profile', [PublicPageController::class, 'profile'])->name('profile');
+Route::get('profile.pdf', ProfilePdfController::class)->name('profile.pdf');
+Route::permanentRedirect('cv', '/profile');
+Route::get('services', [PublicPageController::class, 'services'])->name('services');
+Route::get('methodology', [PublicPageController::class, 'methodology'])->name('methodology');
+Route::get('principles', [PublicPageController::class, 'principles'])->name('principles');
+Route::get('knowledge', [PublicPageController::class, 'knowledge'])->name('knowledge');
+Route::get('faq', [PublicPageController::class, 'faq'])->name('faq');
+Route::get('sample-report', [PublicPageController::class, 'sampleReport'])->name('sample-report');
 Route::get('download/android', MobileAppController::class)->name('mobile.download');
+Route::get('blog', [ContentLibraryController::class, 'index'])->name('content.index');
+Route::get('blog/media/{media}', ContentMediaController::class)->name('content.media.show');
+Route::get('blog/{content}/resources/{resource}', ContentResourceController::class)->name('content.resources.download');
+Route::get('blog/{content}', [ContentLibraryController::class, 'show'])->name('content.show');
+Route::post('blog/{content}/subscribe', [ContentSubscriptionController::class, 'store'])->middleware('throttle:8,1')->name('content.subscribe');
 
 // واجهة الأدوات العامة: يراها الزائر قبل التسجيل ليعرف ما الذي سيدخل إليه.
 Route::get('tools', [ToolShowcaseController::class, 'index'])->name('tools.index');
-Route::get('pricing', [\App\Http\Controllers\Site\PricingController::class, 'index'])->name('pricing');
+Route::get('pricing', [PricingController::class, 'index'])->name('pricing');
+Route::get('llms.txt', function () {
+    $lessons = Content::query()
+        ->published()
+        ->where('source_key', 'like', 'marketing-course-%')
+        ->orderBy('learning_order')
+        ->get();
+
+    return response()
+        ->view('site.content.llms', compact('lessons'))
+        ->header('Content-Type', 'text/plain; charset=UTF-8');
+})->name('llms');
 
 /*
  * صفحات القطاعات الثلاثة: التخصص المعلن يحتاج صفحةً تُثبته، لا جملةً في
  * الهيرو. المسار محصور بالقطاعات المتخصصة نفسها فلا تُخترع صفحة لقطاع
  * لا عمق لنا فيه.
  */
-Route::get('sectors', [\App\Http\Controllers\Site\SectorLandingController::class, 'index'])->name('sectors.index');
-Route::get('sectors/{sector}', [\App\Http\Controllers\Site\SectorLandingController::class, 'show'])
-    ->whereIn('sector', \App\Modules\Shared\Sectors\Sector::SPECIALIZED)
+Route::get('sectors', [SectorLandingController::class, 'index'])->name('sectors.index');
+Route::get('sectors/{sector}', [SectorLandingController::class, 'show'])
+    ->whereIn('sector', Sector::SPECIALIZED)
     ->name('sectors.show');
 
 // خريطة الموقع (بند ١٦): الصفحات العامة + صفحات الأدوات — من قاعدة البيانات
@@ -76,21 +122,36 @@ Route::get('sitemap.xml', function () {
     $xml = cache()->remember('sitemap.xml', now()->addHour(), function (): string {
         $urls = collect([
             ['loc' => route('home'), 'priority' => '1.0'],
+            ['loc' => route('profile'), 'priority' => '0.9'],
+            ['loc' => route('services'), 'priority' => '0.9'],
+            ['loc' => route('methodology'), 'priority' => '0.8'],
+            ['loc' => route('principles'), 'priority' => '0.7'],
+            ['loc' => route('knowledge'), 'priority' => '0.9'],
+            ['loc' => route('faq'), 'priority' => '0.7'],
+            ['loc' => route('sample-report'), 'priority' => '0.7'],
             ['loc' => route('tools.index'), 'priority' => '0.9'],
             ['loc' => route('pricing'), 'priority' => '0.9'],
+            ['loc' => route('content.index'), 'priority' => '0.9'],
             ['loc' => route('mobile.download'), 'priority' => '0.6'],
         ])->merge(
             // صفحات القطاعات في الخريطة: التخصص لا يُعثر عليه إن لم يُفهرس.
             collect([['loc' => route('sectors.index'), 'priority' => '0.9']])->merge(
-                collect(\App\Modules\Shared\Sectors\Sector::SPECIALIZED)
+                collect(Sector::SPECIALIZED)
                     ->map(fn (string $sector) => ['loc' => route('sectors.show', $sector), 'priority' => '0.9']),
             ),
         )->merge(
-            \App\Models\Tool::orderBy('sort_order')->get()
+            Tool::orderBy('sort_order')->get()
                 ->map(fn ($tool) => [
                     'loc' => route('tools.show', $tool->key),
                     'priority' => '0.8',
                     'lastmod' => $tool->updated_at?->toAtomString(),
+                ]),
+        )->merge(
+            Content::query()->published()->orderByDesc('published_at')->get()
+                ->map(fn ($content) => [
+                    'loc' => route('content.show', $content),
+                    'priority' => $content->type === Content::TYPE_COURSE ? '0.9' : '0.8',
+                    'lastmod' => $content->updated_at?->toAtomString(),
                 ]),
         );
 
@@ -121,7 +182,7 @@ Route::get('try/{run}/result', [GuestRunController::class, 'result'])->name('try
  */
 Route::middleware('throttle:30,1')->group(function (): void {
     // تقرير للقراءة فقط برابط موقّع مؤقت — بلا حساب (بند ١٨).
-    Route::get('r/report/{report}', [\App\Http\Controllers\Site\SharedReportController::class, 'show'])
+    Route::get('r/report/{report}', [SharedReportController::class, 'show'])
         ->middleware('signed')->name('shared.report');
 
     Route::get('r/{token}', [SharedAgencyReportController::class, 'show'])->name('shared.agency-report');
@@ -255,15 +316,15 @@ Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void 
     });
 
     // البحث الشامل في أسطح المستخدم الأربعة (بند ٢٥).
-    Route::get('search', [\App\Http\Controllers\App\SearchController::class, 'index'])->name('search');
+    Route::get('search', [SearchController::class, 'index'])->name('search');
 
     // إنهاء الانتحال: يستدعيه الآدمن وهو داخل حساب المستخدم (بند ٢١).
-    Route::post('impersonation/stop', [\App\Http\Controllers\Admin\ImpersonationController::class, 'stop'])->name('impersonation.stop');
+    Route::post('impersonation/stop', [ImpersonationController::class, 'stop'])->name('impersonation.stop');
 
     // أمان الحساب: خطوة التحقق الثانية + الأجهزة المتصلة (بند ٢٣).
-    Route::get('security', [\App\Http\Controllers\App\SecurityController::class, 'index'])->name('security');
-    Route::post('security/otp', [\App\Http\Controllers\App\SecurityController::class, 'toggleOtp'])->name('security.otp');
-    Route::post('security/logout-others', [\App\Http\Controllers\App\SecurityController::class, 'logoutOthers'])->name('security.logout-others');
+    Route::get('security', [SecurityController::class, 'index'])->name('security');
+    Route::post('security/otp', [SecurityController::class, 'toggleOtp'])->name('security.otp');
+    Route::post('security/logout-others', [SecurityController::class, 'logoutOthers'])->name('security.logout-others');
 
     Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('projects.tasks');
     Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
@@ -382,8 +443,25 @@ Route::post('webhooks/tap', TapWebhookController::class)->name('webhooks.tap');
 
 // لوحة الإدارة محصورة بصلاحية admin عبر middleware مخصص.
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::get('content-subscribers', [AdminContentSubscriberController::class, 'index'])->name('content-subscribers.index');
+    Route::get('content-subscribers/export', [AdminContentSubscriberController::class, 'export'])->name('content-subscribers.export');
+    Route::patch('content-subscribers/{subscriber}/status', [AdminContentSubscriberController::class, 'updateStatus'])->name('content-subscribers.status');
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('usage', UsageController::class)->name('usage');
+    Route::get('content-media', [AdminContentMediaController::class, 'index'])->name('content-media.index');
+    Route::delete('content-media/{media}', [AdminContentMediaController::class, 'destroy'])->name('content-media.destroy');
+    Route::post('content/media', [AdminContentMediaController::class, 'store'])->name('content.media.store');
+    Route::resource('content-categories', AdminContentCategoryController::class)->except('show');
+    Route::resource('content', AdminContentController::class)->except(['show', 'destroy']);
+    Route::get('content/{course}/curriculum', [AdminCourseCurriculumController::class, 'show'])->name('content.curriculum');
+    Route::post('content/{course}/curriculum/sections', [AdminCourseCurriculumController::class, 'storeSection'])->name('content.sections.store');
+    Route::put('content/{course}/curriculum/sections/{section}', [AdminCourseCurriculumController::class, 'updateSection'])->name('content.sections.update');
+    Route::delete('content/{course}/curriculum/sections/{section}', [AdminCourseCurriculumController::class, 'destroySection'])->name('content.sections.destroy');
+    Route::post('content/{course}/curriculum/sections/{section}/items', [AdminCourseCurriculumController::class, 'storeItem'])->name('content.sections.items.store');
+    Route::delete('content/{course}/curriculum/sections/{section}/items/{item}', [AdminCourseCurriculumController::class, 'destroyItem'])->name('content.sections.items.destroy');
+    Route::patch('content/{content}/archive', [AdminContentController::class, 'archive'])->name('content.archive');
+    Route::patch('content/{content}/restore', [AdminContentController::class, 'restore'])->name('content.restore');
+
     Route::get('consultations', [AdminConsultationController::class, 'index'])->name('consultations.index');
     Route::get('consultations/versions/{version}', [AdminConsultationController::class, 'show'])->name('consultations.show');
     Route::post('consultations/{blueprint}/drafts', [AdminConsultationController::class, 'createDraft'])->name('consultations.drafts.store');
@@ -403,11 +481,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('tools/{tool}/release', [AdminToolController::class, 'release'])->name('tools.release');
 
     // غرفة العمليات: الصحة والقمع والتدقيق (بنود ٢٠ و٢٢ و٣٠).
-    Route::get('operations', [\App\Http\Controllers\Admin\OperationsController::class, 'index'])->name('operations');
+    Route::get('operations', [OperationsController::class, 'index'])->name('operations');
 
     // انتحال مستخدم لخدمة العملاء (بند ٢١) — الإيقاف خارج مجموعة admin
     // لأن المنتحِل يتصفح بحساب المستخدم لا كآدمن.
-    Route::post('users/{user}/impersonate', [\App\Http\Controllers\Admin\ImpersonationController::class, 'start'])->name('users.impersonate');
+    Route::post('users/{user}/impersonate', [ImpersonationController::class, 'start'])->name('users.impersonate');
 
     // الخطط وحزم الأرصدة وبوابات الدفع: CRUD كامل.
     // فهرس الميزات: عناصر حقيقية تُختار في الخطط، لا سطور نصّية.

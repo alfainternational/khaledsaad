@@ -197,6 +197,7 @@
                         تعرف ما تبدأ به هذا الأسبوع، وما يؤجَّل بلا ندم.
                     </p>
                     <a href="{{ $startUrl }}">ابدأ التشخيص الأول <span aria-hidden="true">←</span></a>
+                    <a href="{{ route('services') }}">افهم المشكلات والمخرجات <span aria-hidden="true">←</span></a>
                 </div>
             </div>
         </section>
@@ -228,6 +229,7 @@
                         </article>
                     @endforeach
                 </div>
+                <a class="text-link" href="{{ route('services') }}">استعرض صفحة المشكلات والمخرجات كاملة <span aria-hidden="true">←</span></a>
             </div>
         </section>
 
@@ -249,6 +251,7 @@
                         <span aria-hidden="true">“</span>
                         <p>كل رقم في تقريرك يأتي معه أساسه: مِمَّ حُسب، وكم بندًا فُحص، وما وُسم منه فرضية.</p>
                     </div>
+                    <a class="text-link" href="{{ route('methodology') }}">اقرأ منهجية العمل كاملة <span aria-hidden="true">←</span></a>
                 </div>
 
                 <ol class="method-steps">
@@ -337,7 +340,7 @@
                         <li><span>✓</span> الفجوات مرتّبة على الأثر والجهد: ابدأ بهذه، وأجّل تلك</li>
                         <li><span>✓</span> كل توصية تتحول إلى مهمة لها موعد</li>
                     </ul>
-                    <a class="text-link" href="{{ $startUrl }}">أنشئ تشخيص مشروعك <span aria-hidden="true">←</span></a>
+                    <a class="text-link" href="{{ route('sample-report') }}">افتح نموذج النتيجة كاملًا <span aria-hidden="true">←</span></a>
                 </div>
 
                 <div class="sample-report reveal">
@@ -381,13 +384,14 @@
                     </div>
                     <div class="about-copy">
                         <p class="eyebrow">من يقف خلف المنهجية</p>
-                        <h2>عن خالد سعد</h2>
+                        <h2>عني</h2>
                         {{-- الجملة تقول مدة الخبرة ومجالها فقط، والتفصيل بالتواريخ تحتها يغني عن الوصف. --}}
                         <p class="about-lead">أكثر من 10 سنوات في بناء الحملات وقيادة الفرق وقراءة البيانات. المسار كاملًا بالتواريخ أدناه.</p>
                         @foreach ($brand['about'] as $paragraph)
                             <p>{{ $paragraph }}</p>
                         @endforeach
                         <div class="profile-links">
+                            <a href="{{ route('profile') }}">السيرة المهنية الكاملة <span>←</span></a>
                             <a href="{{ $brand['contact']['linkedin'] }}" target="_blank" rel="noopener noreferrer">LinkedIn <span>↗</span></a>
                             <a href="{{ $brand['contact']['x'] }}" target="_blank" rel="noopener noreferrer">X / Twitter <span>↗</span></a>
                         </div>
@@ -426,12 +430,13 @@
 
                         <section class="profile-card reveal">
                             <span class="profile-card__label">اعتمادات وتعلّم</span>
-                            @foreach ($brand['credentials'] as $credential)
+                            @foreach (array_slice($brand['credentials'], 0, 4) as $credential)
                                 <div class="credential">
                                     <span aria-hidden="true">✓</span>
-                                    <strong>{{ $credential }}</strong>
+                                    <strong>{{ $credential['name'] }}</strong>
                                 </div>
                             @endforeach
+                            <a class="text-link" href="{{ route('profile') }}#profile-credentials">استعرض الشهادات الـ{{ count($brand['credentials']) }} <span aria-hidden="true">←</span></a>
                         </section>
 
                         <section class="profile-card reveal">
@@ -457,6 +462,7 @@
                         واحدة قابلة للتحقق من التقرير نفسه: الوسم، والمهمة، والموعد.
                     --}}
                     <p>لا نعدك برقم. نعدك بأن تعرف كيف حُسب كل رقم تراه، وما وُسم منه «فرضية» لأنه مبنيّ على كلامك لا على قياس.</p>
+                    <a class="text-link" href="{{ route('principles') }}">اقرأ مبادئ العمل كاملة <span aria-hidden="true">←</span></a>
                 </div>
                 <div class="principles-grid">
                     <article class="reveal"><span>01</span><h3>لا توصية من دون سببها</h3><p>كل خطوة مقترحة معها الفجوة التي جاءت منها وأثرها المتوقع.</p></article>
@@ -471,26 +477,33 @@
             <div class="container">
                 <div class="split-heading">
                     <x-section-heading
-                        eyebrow="مقالات"
-                        title="من «يلا نفهم تسويق»"
-                        description="مقالات قصيرة أشرح فيها أشياء تحصل معك يوميًا في تسويق مشروعك."
+                        eyebrow="المكتبة المعرفية"
+                        title="محتوى يحول المعرفة إلى خطوات"
+                        description="مقالات ودروس ومحاضرات ودورات عملية: افهم المشكلة وطبّق خطوة واضحة يمكنك قياس أثرها."
                         align="start"
                     />
-                    <a class="text-link" href="{{ $brand['contact']['linkedin'] }}" target="_blank" rel="noopener noreferrer">تابع المزيد <span>↗</span></a>
+                    <a class="text-link" href="{{ route('knowledge') }}">استعرض صفحة المعرفة <span>←</span></a>
                 </div>
                 <div class="knowledge-grid">
-                    @foreach ($brand['knowledge'] as $index => $item)
-                        <a class="knowledge-card reveal" href="{{ $item['url'] }}" target="_blank" rel="noopener noreferrer">
+                    @forelse ($knowledge as $index => $item)
+                        <a class="knowledge-card reveal" href="{{ route('content.show', $item) }}">
                             <div class="knowledge-card__visual knowledge-card__visual--{{ $index + 1 }}">
                                 <span>{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</span>
                                 <i></i>
                             </div>
-                            <small>{{ $item['type'] }}</small>
-                            <h3>{{ $item['title'] }}</h3>
-                            <p>{{ $item['description'] }}</p>
-                            <span class="knowledge-card__link">اقرأ على LinkedIn <b>↗</b></span>
+                            <small>{{ ['article' => 'مقال', 'lesson' => 'درس', 'lecture' => 'محاضرة', 'course' => 'دورة'][$item->type] }}</small>
+                            <h3>{{ $item->title }}</h3>
+                            <p>{{ $item->excerpt }}</p>
+                            <span class="knowledge-card__link">عرض المحتوى <b>←</b></span>
                         </a>
-                    @endforeach
+                    @empty
+                        <div class="knowledge-card reveal">
+                            <small>النشرة المهنية</small>
+                            <h3>{{ $brand['knowledge'][0]['title'] }}</h3>
+                            <p>{{ $brand['knowledge'][0]['description'] }}</p>
+                            <a class="text-link" href="{{ route('knowledge') }}">استعرض المعرفة والمحتوى <span>←</span></a>
+                        </div>
+                    @endforelse
                 </div>
             </div>
         </section>
@@ -506,6 +519,7 @@
                     />
                     <div class="faq-contact">
                         <span>سؤالك غير موجود؟</span>
+                        <a href="{{ route('faq') }}">افتح صفحة الأسئلة والتواصل <b>←</b></a>
                         <a href="{{ $brand['contact']['whatsapp'] }}" target="_blank" rel="noopener noreferrer">تواصل مباشرة عبر واتساب <b>↗</b></a>
                     </div>
                 </div>

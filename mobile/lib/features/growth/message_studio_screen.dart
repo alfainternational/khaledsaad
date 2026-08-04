@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 
 /// استوديو الرسائل على الجوال: الشخصية هي الشاشة.
@@ -70,14 +71,16 @@ class _MessageStudioScreenState extends State<MessageStudioScreen> {
       future: _studio,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Scaffold(
+          return AdaptiveScaffold(
+            family: AdaptivePageFamily.form,
             appBar: AppBar(title: const Text('استوديو الرسائل')),
             body: Center(child: Text('${snapshot.error}')),
           );
         }
 
         if (!snapshot.hasData) {
-          return Scaffold(
+          return AdaptiveScaffold(
+            family: AdaptivePageFamily.form,
             appBar: AppBar(title: const Text('استوديو الرسائل')),
             body: const Center(child: CircularProgressIndicator()),
           );
@@ -85,12 +88,14 @@ class _MessageStudioScreenState extends State<MessageStudioScreen> {
 
         final data = snapshot.data!;
         final personas = List<Map<String, dynamic>>.from(
-          (data['personas'] as List? ?? const [])
-              .map((item) => Map<String, dynamic>.from(item as Map)),
+          (data['personas'] as List? ?? const []).map(
+            (item) => Map<String, dynamic>.from(item as Map),
+          ),
         );
 
         if (personas.isEmpty) {
-          return Scaffold(
+          return AdaptiveScaffold(
+            family: AdaptivePageFamily.form,
             appBar: AppBar(title: const Text('استوديو الرسائل')),
             body: const Padding(
               padding: EdgeInsets.all(24),

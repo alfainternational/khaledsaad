@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
+import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 
 /// العملاء المتوقعون على الجوال: بطاقة لكل شخص باسمه ورسالته.
@@ -83,14 +84,16 @@ class _ProspectsScreenState extends State<ProspectsScreen> {
       future: _data,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Scaffold(
+          return AdaptiveScaffold(
+            family: AdaptivePageFamily.operational,
             appBar: AppBar(title: const Text('العملاء المتوقعون')),
             body: Center(child: Text('${snapshot.error}')),
           );
         }
 
         if (!snapshot.hasData) {
-          return Scaffold(
+          return AdaptiveScaffold(
+            family: AdaptivePageFamily.operational,
             appBar: AppBar(title: const Text('العملاء المتوقعون')),
             body: const Center(child: CircularProgressIndicator()),
           );
@@ -108,7 +111,8 @@ class _ProspectsScreenState extends State<ProspectsScreen> {
         );
         final limit = (data['batch_limit'] as num?)?.toInt() ?? 10;
 
-        return Scaffold(
+        return AdaptiveScaffold(
+          family: AdaptivePageFamily.operational,
           appBar: AppBar(title: const Text('العملاء المتوقعون')),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: _busy ? null : () => _addProspect(data),
@@ -335,9 +339,10 @@ class _ProspectCard extends StatelessWidget {
         .where((row) => row['status'] != 'archived')
         .toList();
     final message = messages.isEmpty ? null : messages.first;
-    final details = [prospect['role'], prospect['organization'], prospect['city']]
-        .where((value) => value != null && value.toString().isNotEmpty)
-        .join(' · ');
+    final details =
+        [prospect['role'], prospect['organization'], prospect['city']]
+            .where((value) => value != null && value.toString().isNotEmpty)
+            .join(' · ');
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),

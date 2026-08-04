@@ -11,11 +11,12 @@
         <div class="footer-links">
             <div>
                 <strong>استكشف</strong>
-                <a href="{{ $anchorBase }}#method">المنهجية</a>
+                <a href="{{ route('methodology') }}">المنهجية</a>
+                <a href="{{ route('services') }}">المشكلات والمخرجات</a>
                 <a href="{{ route('tools.index') }}">التشخيصات</a>
-                <a href="{{ $anchorBase }}#about">عن خالد</a>
+                <a href="{{ route('profile') }}">السيرة المهنية</a>
                 {{-- تسمية تصف الوجهة: الرابط المجرّد لا يُنقر في التذييل. --}}
-                <a href="{{ $anchorBase }}#knowledge">مقالات</a>
+                <a href="{{ route('knowledge') }}">المعرفة والمحتوى</a>
             </div>
             <div>
                 {{-- كل قطاع برابطه: صفحة لا يصلها رابط لا تُفهرس ولا تُزار. --}}
@@ -34,7 +35,8 @@
                     <a href="{{ route('register') }}">إنشاء حساب</a>
                     <a href="{{ route('login') }}">تسجيل الدخول</a>
                 @endauth
-                <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>
+                <a href="{{ route('sample-report') }}">نموذج النتيجة</a>
+                <a href="{{ route('faq') }}">الأسئلة الشائعة</a>
             </div>
             <div>
                 <strong>تواصل</strong>

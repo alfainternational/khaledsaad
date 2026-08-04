@@ -350,8 +350,9 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
                       onPressed: _busy
                           ? null
                           : () => _action(
-                              () => widget.repository
-                                  .generateGeo(widget.projectSlug),
+                              () => widget.repository.generateGeo(
+                                widget.projectSlug,
+                              ),
                               success: 'تحدثت حزمة الظهور.',
                             ),
                       child: const Text('إنشاء أو تحديث'),
@@ -455,19 +456,26 @@ class _Section extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            action ?? const SizedBox.shrink(),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final heading = Text(
+              title,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+            );
+            if (action == null) return heading;
+            if (constraints.maxWidth < 800) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [heading, const SizedBox(height: 10), action!],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: heading),
+                action!,
+              ],
+            );
+          },
         ),
         const SizedBox(height: 10),
         if (error != null)

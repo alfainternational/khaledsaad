@@ -14,17 +14,17 @@
         </a>
 
         <nav class="desktop-nav" aria-label="التنقل الرئيسي">
-            <a href="{{ $anchorBase }}#method">المنهجية</a>
+            <a href="{{ route('methodology') }}" @class(['is-active' => request()->routeIs('methodology')])>المنهجية</a>
             <a href="{{ route('tools.index') }}" @class(['is-active' => request()->routeIs('tools.*')])>التشخيصات</a>
             {{-- الفهرس لا قطاعًا بعينه: رابطٌ يذهب إلى واحد يجعل الاثنين
                  الآخرين حاشيةً في ذهن الزائر قبل أن يقرأ سطرًا. --}}
             <a href="{{ route('sectors.index') }}" @class(['is-active' => request()->routeIs('sectors.*')])>قطاعاتنا</a>
             <a href="{{ route('pricing') }}" @class(['is-active' => request()->routeIs('pricing')])>الأسعار</a>
-            <a href="{{ $anchorBase }}#about">عن خالد</a>
+            <a href="{{ route('profile') }}" @class(['is-active' => request()->routeIs('profile')])>السيرة</a>
             {{-- «مقالات» تصف ما خلف الرابط؛ «المعرفة» تسمية مجرّدة لا يعرف
                  القارئ ماذا يجد تحتها فلا ينقر. --}}
-            <a href="{{ $anchorBase }}#knowledge">مقالات</a>
-            <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>
+            <a href="{{ route('knowledge') }}" @class(['is-active' => request()->routeIs('knowledge')])>المعرفة</a>
+            <a href="{{ route('faq') }}" @class(['is-active' => request()->routeIs('faq')])>الأسئلة الشائعة</a>
         </nav>
 
         <div class="nav-actions">
@@ -43,11 +43,12 @@
     </div>
 
     <nav id="mobile-menu" class="mobile-menu" aria-label="تنقل الجوال" data-mobile-menu hidden>
-        <a href="{{ $anchorBase }}#method">المنهجية</a>
+        <a href="{{ route('methodology') }}">المنهجية</a>
         <a href="{{ route('tools.index') }}">التشخيصات</a>
-        <a href="{{ $anchorBase }}#about">عن خالد</a>
-        <a href="{{ $anchorBase }}#knowledge">مقالات</a>
-        <a href="{{ $anchorBase }}#faq">الأسئلة الشائعة</a>
+        <a href="{{ route('services') }}">الخدمات والمخرجات</a>
+        <a href="{{ route('profile') }}">السيرة</a>
+        <a href="{{ route('knowledge') }}">المعرفة</a>
+        <a href="{{ route('faq') }}">الأسئلة الشائعة</a>
         @guest
             <a href="{{ route('login') }}">تسجيل الدخول</a>
         @endguest

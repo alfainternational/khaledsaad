@@ -24,6 +24,8 @@ use App\Http\Controllers\Api\V1\PresenceController as ApiPresenceController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ProspectController as ApiProspectController;
 use App\Http\Controllers\Api\V1\PublicContentController;
+use App\Http\Controllers\Api\V1\PublicContentLibraryController;
+use App\Http\Controllers\Api\V1\PublicContentSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadinessController as ApiReadinessController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\RunController;
@@ -51,6 +53,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('bootstrap', [PublicContentController::class, 'bootstrap'])->name('bootstrap');
         Route::get('legal/{page}', [PublicContentController::class, 'legal'])->name('legal');
         Route::get('mobile-app', [PublicContentController::class, 'mobileApp'])->name('mobile-app');
+        Route::get('content', [PublicContentLibraryController::class, 'index'])->name('content.index');
+        Route::post('content/subscribe', [PublicContentSubscriptionController::class, 'store'])
+            ->middleware('throttle:8,1')->name('content.subscribe');
+        Route::get('content/{content}', [PublicContentLibraryController::class, 'show'])->name('content.show');
         Route::post('tools/{tool}/runs', [GuestRunController::class, 'start'])->name('runs.start');
         Route::get('runs/{run}', [GuestRunController::class, 'show'])->name('runs.show');
         Route::put('runs/{run}/steps/{step}', [GuestRunController::class, 'saveStep'])->name('runs.step');

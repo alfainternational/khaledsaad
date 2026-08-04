@@ -35,7 +35,7 @@ class PublicHomePageTest extends TestCase
             ->assertSee('ما الذي سيساعدك على اتخاذ قرار أوضح؟')
             ->assertSee('ما الذي تريد فهمه أو تحسينه الآن؟')
             ->assertSee('هكذا تساعدك النتيجة على اتخاذ القرار')
-            ->assertSee('عن خالد سعد')
+            ->assertSee('عني')
             ->assertSee('شركة الشمال التعليمية')
             ->assertSee('جامعة النيلين')
             ->assertSee('إدارة المشاريع الاحترافية PMP')
