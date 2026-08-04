@@ -58,6 +58,11 @@ class Project extends Model
         return $this->hasMany(Task::class);
     }
 
+    public function marketingLearningRun(): HasOne
+    {
+        return $this->hasOne(MarketingLearningRun::class);
+    }
+
     public function kpis(): HasMany
     {
         return $this->hasMany(Kpi::class);
