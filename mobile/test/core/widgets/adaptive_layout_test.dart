@@ -136,12 +136,17 @@ void main() {
       'consultations/consultations_list_screen.dart':
           AdaptivePageFamily.operational,
       'growth/growth_hub_screen.dart': AdaptivePageFamily.operational,
+      'growth/message_studio_screen.dart': AdaptivePageFamily.form,
+      'growth/prospects_screen.dart': AdaptivePageFamily.operational,
       'growth/pulse_screen.dart': AdaptivePageFamily.operational,
       'projects/dashboard_screen.dart': AdaptivePageFamily.operational,
       'projects/project_form_screen.dart': AdaptivePageFamily.form,
       'projects/project_screen.dart': AdaptivePageFamily.operational,
       'projects/tasks_screen.dart': AdaptivePageFamily.operational,
       'public/legal_screen.dart': AdaptivePageFamily.reading,
+      'public/public_content_screen.dart': AdaptivePageFamily.reading,
+      'public/public_info_screen.dart': AdaptivePageFamily.operational,
+      'public/public_profile_screen.dart': AdaptivePageFamily.reading,
       // شاشة تشغيلية: درجة ومحاور وقائمة إصلاح، لا نصّ يُقرأ ولا نموذج يُملأ.
       'readiness/readiness_screen.dart': AdaptivePageFamily.operational,
       // نظيرتها على جانب الاستطلاع: نِسَب وجداول وزرّ تشغيل.

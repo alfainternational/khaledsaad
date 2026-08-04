@@ -12,6 +12,7 @@ import '../consultations/consultation_screen.dart';
 import '../consultations/consultations_list_screen.dart';
 import '../growth/pulse_screen.dart';
 import '../portfolio/portfolio_screen.dart';
+import '../public/public_shell.dart';
 import '../tools/engagement.dart';
 import '../tools/models.dart';
 import '../tools/resume_navigator.dart';
@@ -110,10 +111,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: const Icon(Icons.apps_outlined),
             onSelected: (value) {
               final screen = switch (value) {
-                'consultations' =>
-                  ConsultationsListScreen(repository: widget.repository),
+                'consultations' => ConsultationsListScreen(
+                  repository: widget.repository,
+                ),
                 'portfolio' => PortfolioScreen(repository: widget.repository),
                 'pulse' => PulseScreen(repository: widget.repository),
+                'public_hub' => PublicShell(repository: widget.repository),
                 _ => null,
               };
               if (screen != null) {
@@ -142,6 +145,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: ListTile(
                   leading: Icon(Icons.monitor_heart_outlined),
                   title: Text('نبض النمو الأسبوعي'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'public_hub',
+                child: ListTile(
+                  leading: Icon(Icons.public_outlined),
+                  title: Text('المعرفة والسيرة'),
                 ),
               ),
             ],

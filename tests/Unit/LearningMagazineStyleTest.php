@@ -19,4 +19,25 @@ class LearningMagazineStyleTest extends TestCase
         $this->assertStringContainsString('background: var(--surface);', $outline['rules'] ?? '');
         $this->assertStringContainsString('color: var(--ink);', $heading['rules'] ?? '');
     }
+
+    public function test_late_learning_rules_keep_the_reading_grid_single_column_on_mobile(): void
+    {
+        $css = file_get_contents(resource_path('css/content-library.css'));
+        $lastMobileQuery = strrpos($css, '@media (max-width: 1050px)');
+
+        $this->assertNotFalse($lastMobileQuery);
+
+        $mobileRules = substr($css, $lastMobileQuery, 700);
+
+        $this->assertStringContainsString(
+            '.content-page--learning .content-reading-grid',
+            $mobileRules,
+        );
+        $this->assertStringContainsString(
+            'grid-template-columns: minmax(0, 1fr);',
+            $mobileRules,
+        );
+        $this->assertStringContainsString('overscroll-behavior-inline: contain;', $mobileRules);
+        $this->assertStringContainsString('scroll-padding-inline: 1rem;', $mobileRules);
+    }
 }

@@ -197,6 +197,7 @@
                         تعرف ما تبدأ به هذا الأسبوع، وما يؤجَّل بلا ندم.
                     </p>
                     <a href="{{ $startUrl }}">ابدأ التشخيص الأول <span aria-hidden="true">←</span></a>
+                    <a href="{{ route('services') }}">افهم المشكلات والمخرجات <span aria-hidden="true">←</span></a>
                 </div>
             </div>
         </section>
@@ -228,6 +229,7 @@
                         </article>
                     @endforeach
                 </div>
+                <a class="text-link" href="{{ route('services') }}">استعرض صفحة المشكلات والمخرجات كاملة <span aria-hidden="true">←</span></a>
             </div>
         </section>
 
@@ -249,6 +251,7 @@
                         <span aria-hidden="true">“</span>
                         <p>كل رقم في تقريرك يأتي معه أساسه: مِمَّ حُسب، وكم بندًا فُحص، وما وُسم منه فرضية.</p>
                     </div>
+                    <a class="text-link" href="{{ route('methodology') }}">اقرأ منهجية العمل كاملة <span aria-hidden="true">←</span></a>
                 </div>
 
                 <ol class="method-steps">
@@ -337,7 +340,7 @@
                         <li><span>✓</span> الفجوات مرتّبة على الأثر والجهد: ابدأ بهذه، وأجّل تلك</li>
                         <li><span>✓</span> كل توصية تتحول إلى مهمة لها موعد</li>
                     </ul>
-                    <a class="text-link" href="{{ $startUrl }}">أنشئ تشخيص مشروعك <span aria-hidden="true">←</span></a>
+                    <a class="text-link" href="{{ route('sample-report') }}">افتح نموذج النتيجة كاملًا <span aria-hidden="true">←</span></a>
                 </div>
 
                 <div class="sample-report reveal">
@@ -388,6 +391,7 @@
                             <p>{{ $paragraph }}</p>
                         @endforeach
                         <div class="profile-links">
+                            <a href="{{ route('profile') }}">السيرة المهنية الكاملة <span>←</span></a>
                             <a href="{{ $brand['contact']['linkedin'] }}" target="_blank" rel="noopener noreferrer">LinkedIn <span>↗</span></a>
                             <a href="{{ $brand['contact']['x'] }}" target="_blank" rel="noopener noreferrer">X / Twitter <span>↗</span></a>
                         </div>
@@ -457,6 +461,7 @@
                         واحدة قابلة للتحقق من التقرير نفسه: الوسم، والمهمة، والموعد.
                     --}}
                     <p>لا نعدك برقم. نعدك بأن تعرف كيف حُسب كل رقم تراه، وما وُسم منه «فرضية» لأنه مبنيّ على كلامك لا على قياس.</p>
+                    <a class="text-link" href="{{ route('principles') }}">اقرأ مبادئ العمل كاملة <span aria-hidden="true">←</span></a>
                 </div>
                 <div class="principles-grid">
                     <article class="reveal"><span>01</span><h3>لا توصية من دون سببها</h3><p>كل خطوة مقترحة معها الفجوة التي جاءت منها وأثرها المتوقع.</p></article>
@@ -476,7 +481,7 @@
                         description="مقالات ودروس ومحاضرات ودورات عملية: افهم المشكلة وطبّق خطوة واضحة يمكنك قياس أثرها."
                         align="start"
                     />
-                    <a class="text-link" href="{{ route('content.index') }}">استعرض المكتبة <span>←</span></a>
+                    <a class="text-link" href="{{ route('knowledge') }}">استعرض صفحة المعرفة <span>←</span></a>
                 </div>
                 <div class="knowledge-grid">
                     @forelse ($knowledge as $index => $item)
@@ -492,10 +497,10 @@
                         </a>
                     @empty
                         <div class="knowledge-card reveal">
-                            <small>ابدأ الآن</small>
-                            <h3>لم تجد المادة المناسبة بعد؟</h3>
-                            <p>ابدأ التشخيص المجاني لتتعرف على فجوات مشروعك والخطوة التي تستحق الأولوية.</p>
-                            <a class="text-link" href="{{ route('tools.index') }}">ابدأ التشخيص المجاني <span>←</span></a>
+                            <small>النشرة المهنية</small>
+                            <h3>{{ $brand['knowledge'][0]['title'] }}</h3>
+                            <p>{{ $brand['knowledge'][0]['description'] }}</p>
+                            <a class="text-link" href="{{ route('knowledge') }}">استعرض المعرفة والمحتوى <span>←</span></a>
                         </div>
                     @endforelse
                 </div>
@@ -513,6 +518,7 @@
                     />
                     <div class="faq-contact">
                         <span>سؤالك غير موجود؟</span>
+                        <a href="{{ route('faq') }}">افتح صفحة الأسئلة والتواصل <b>←</b></a>
                         <a href="{{ $brand['contact']['whatsapp'] }}" target="_blank" rel="noopener noreferrer">تواصل مباشرة عبر واتساب <b>↗</b></a>
                     </div>
                 </div>

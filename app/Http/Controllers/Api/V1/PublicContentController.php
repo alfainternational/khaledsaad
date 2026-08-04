@@ -16,6 +16,7 @@ class PublicContentController extends Controller
         'headline',
         'location',
         'experience_years',
+        'professional_headline',
         'about',
         'contact',
         'services',
@@ -25,6 +26,9 @@ class PublicContentController extends Controller
         'education',
         'credentials',
         'skills',
+        'professional_services',
+        'principles',
+        'knowledge',
         'faqs',
     ];
 
@@ -41,6 +45,12 @@ class PublicContentController extends Controller
                 'links' => [
                     'privacy' => route('api.v1.public.legal', 'privacy'),
                     'terms' => route('api.v1.public.legal', 'terms'),
+                    'profile' => route('profile'),
+                    'profile_pdf' => route('profile.pdf'),
+                    'services' => route('services'),
+                    'methodology' => route('methodology'),
+                    'knowledge' => route('knowledge'),
+                    'faq' => route('faq'),
                 ],
             ],
         ]);

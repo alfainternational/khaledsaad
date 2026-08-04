@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './workspace.css';
 @import './site-pages.css';
+@import './public-pages.css';
 @import './content-editor.css';
 @import './content-library.css';
 

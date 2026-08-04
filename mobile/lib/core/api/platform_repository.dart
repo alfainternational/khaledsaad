@@ -134,6 +134,24 @@ class PlatformRepository {
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
+  Future<Map<String, dynamic>> publicContent({
+    String? type,
+    int page = 1,
+  }) async {
+    final response = await _api.get('/public/content', {
+      'page': '$page',
+      if (type != null && type.isNotEmpty) 'type': type,
+    });
+
+    return Map<String, dynamic>.from(response as Map);
+  }
+
+  Future<Map<String, dynamic>> publicContentDetail(String slug) async {
+    final response = await _api.get('/public/content/$slug');
+
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
   Future<Map<String, dynamic>> legalPage(String page) async {
     final response = await _api.get('/public/legal/$page');
 
@@ -432,10 +450,9 @@ class PlatformRepository {
     String projectSlug,
     Map<String, dynamic> brief,
   ) async {
-    final response = await _api.post(
-      '/projects/$projectSlug/agency-brief',
-      {'brief': brief},
-    );
+    final response = await _api.post('/projects/$projectSlug/agency-brief', {
+      'brief': brief,
+    });
 
     return Map<String, dynamic>.from(response['data'] as Map);
   }
@@ -449,8 +466,7 @@ class PlatformRepository {
   }
 
   Future<Map<String, dynamic>> adminConsultationVersion(int versionId) async {
-    final response =
-        await _api.get('/admin/consultations/versions/$versionId');
+    final response = await _api.get('/admin/consultations/versions/$versionId');
 
     return Map<String, dynamic>.from(response['data'] as Map);
   }
@@ -458,8 +474,9 @@ class PlatformRepository {
   Future<Map<String, dynamic>> adminCreateConsultationDraft(
     int blueprintId,
   ) async {
-    final response = await _api
-        .post('/admin/consultations/blueprints/$blueprintId/draft');
+    final response = await _api.post(
+      '/admin/consultations/blueprints/$blueprintId/draft',
+    );
 
     return Map<String, dynamic>.from(response['data'] as Map);
   }
@@ -478,8 +495,9 @@ class PlatformRepository {
   }
 
   Future<Map<String, dynamic>> adminPublishConsultation(int versionId) async {
-    final response = await _api
-        .post('/admin/consultations/versions/$versionId/publish');
+    final response = await _api.post(
+      '/admin/consultations/versions/$versionId/publish',
+    );
 
     return Map<String, dynamic>.from(response['data'] as Map);
   }
@@ -1018,12 +1036,10 @@ class PlatformRepository {
     required String objective,
     String? personaKey,
   }) async {
-    final response = await _api
-        .post('/projects/$projectSlug/message-studio/suggest', {
-          'channel': channel,
-          'objective': objective,
-          'persona_key': ?personaKey,
-        });
+    final response = await _api.post(
+      '/projects/$projectSlug/message-studio/suggest',
+      {'channel': channel, 'objective': objective, 'persona_key': ?personaKey},
+    );
 
     return Map<String, dynamic>.from(response as Map);
   }
@@ -1054,12 +1070,10 @@ class PlatformRepository {
     String? channel,
     String? objective,
   }) async {
-    final response = await _api
-        .post('/projects/$projectSlug/message-studio/tests', {
-          'variant_id': ?variantId,
-          'channel': ?channel,
-          'objective': ?objective,
-        });
+    final response = await _api.post(
+      '/projects/$projectSlug/message-studio/tests',
+      {'variant_id': ?variantId, 'channel': ?channel, 'objective': ?objective},
+    );
 
     return Map<String, dynamic>.from(response['data'] as Map);
   }
@@ -1081,10 +1095,10 @@ class PlatformRepository {
     int variantId,
     String status,
   ) async {
-    final response = await _api
-        .patch('/projects/$projectSlug/message-studio/variants/$variantId', {
-          'status': status,
-        });
+    final response = await _api.patch(
+      '/projects/$projectSlug/message-studio/variants/$variantId',
+      {'status': status},
+    );
 
     return Map<String, dynamic>.from(response['data'] as Map);
   }
@@ -1127,12 +1141,10 @@ class PlatformRepository {
     required String objective,
     int? prospectId,
   }) async {
-    final response = await _api
-        .post('/projects/$projectSlug/prospects/messages', {
-          'channel': channel,
-          'objective': objective,
-          'prospect_id': ?prospectId,
-        });
+    final response = await _api.post(
+      '/projects/$projectSlug/prospects/messages',
+      {'channel': channel, 'objective': objective, 'prospect_id': ?prospectId},
+    );
 
     return Map<String, dynamic>.from(response as Map);
   }
@@ -1154,10 +1166,10 @@ class PlatformRepository {
     int prospectId,
     String status,
   ) async {
-    final response = await _api
-        .patch('/projects/$projectSlug/prospects/$prospectId', {
-          'status': status,
-        });
+    final response = await _api.patch(
+      '/projects/$projectSlug/prospects/$prospectId',
+      {'status': status},
+    );
 
     return Map<String, dynamic>.from(response['data'] as Map);
   }

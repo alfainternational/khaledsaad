@@ -13,7 +13,7 @@ import 'features/auth/auth_screen.dart';
 import 'features/auth/password_reset_screen.dart';
 import 'core/widgets/app_update_screen.dart';
 import 'features/projects/dashboard_screen.dart';
-import 'features/public/public_home_screen.dart';
+import 'features/public/public_shell.dart';
 import 'features/public/shared_report_screen.dart';
 
 Future<void> main() async {
@@ -187,7 +187,7 @@ class _KhaledSaadAppState extends State<KhaledSaadApp> {
             );
           }
 
-          return PublicHomeScreen(
+          return PublicShell(
             repository: widget.repository,
             onLogin: () => _openAuth(registering: false),
             onRegister: () => _openAuth(registering: true),

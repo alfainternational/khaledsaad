@@ -43,6 +43,7 @@ class PublicApiParityTest extends TestCase
                         'headline',
                         'location',
                         'experience_years',
+                        'professional_headline',
                         'about',
                         'contact',
                         'services',
@@ -52,13 +53,24 @@ class PublicApiParityTest extends TestCase
                         'education',
                         'credentials',
                         'skills',
+                        'professional_services',
+                        'principles',
                         'knowledge',
                         'faqs',
                     ],
                     'tools',
                     'tool_stats',
                     'entry_tool',
-                    'links' => ['privacy', 'terms'],
+                    'links' => [
+                        'privacy',
+                        'terms',
+                        'profile',
+                        'profile_pdf',
+                        'services',
+                        'methodology',
+                        'knowledge',
+                        'faq',
+                    ],
                 ],
             ]);
 
@@ -66,6 +78,8 @@ class PublicApiParityTest extends TestCase
             config('brand.tagline'),
             $response->json('data.brand.tagline'),
         );
+        $this->assertSame(route('profile'), $response->json('data.links.profile'));
+        $this->assertSame(route('profile.pdf'), $response->json('data.links.profile_pdf'));
     }
 
     #[Test]

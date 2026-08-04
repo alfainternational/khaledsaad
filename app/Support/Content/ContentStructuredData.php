@@ -114,7 +114,15 @@ class ContentStructuredData
             'name' => config('brand.name'),
             'alternateName' => config('brand.name_en'),
             'url' => url('/'),
-            'jobTitle' => config('brand.headline'),
+            'jobTitle' => config('brand.professional_headline'),
+            'hasOccupation' => [
+                '@type' => 'Occupation',
+                'name' => config('brand.professional_headline'),
+                'occupationLocation' => [
+                    '@type' => 'City',
+                    'name' => 'عرعر، المملكة العربية السعودية',
+                ],
+            ],
             'description' => config('brand.about.0'),
             'telephone' => config('brand.contact.phone'),
             'address' => [

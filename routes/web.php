@@ -58,6 +58,8 @@ use App\Http\Controllers\Site\HomeController;
 use App\Http\Controllers\Site\LegalController;
 use App\Http\Controllers\Site\MobileAppController;
 use App\Http\Controllers\Site\PricingController;
+use App\Http\Controllers\Site\ProfilePdfController;
+use App\Http\Controllers\Site\PublicPageController;
 use App\Http\Controllers\Site\SectorLandingController;
 use App\Http\Controllers\Site\SharedAgencyReportController;
 use App\Http\Controllers\Site\SharedReportController;
@@ -72,6 +74,15 @@ use App\Support\Billing\FeatureKey;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+Route::get('profile', [PublicPageController::class, 'profile'])->name('profile');
+Route::get('profile.pdf', ProfilePdfController::class)->name('profile.pdf');
+Route::permanentRedirect('cv', '/profile');
+Route::get('services', [PublicPageController::class, 'services'])->name('services');
+Route::get('methodology', [PublicPageController::class, 'methodology'])->name('methodology');
+Route::get('principles', [PublicPageController::class, 'principles'])->name('principles');
+Route::get('knowledge', [PublicPageController::class, 'knowledge'])->name('knowledge');
+Route::get('faq', [PublicPageController::class, 'faq'])->name('faq');
+Route::get('sample-report', [PublicPageController::class, 'sampleReport'])->name('sample-report');
 Route::get('download/android', MobileAppController::class)->name('mobile.download');
 Route::get('blog', [ContentLibraryController::class, 'index'])->name('content.index');
 Route::get('blog/media/{media}', ContentMediaController::class)->name('content.media.show');
@@ -110,6 +121,13 @@ Route::get('sitemap.xml', function () {
     $xml = cache()->remember('sitemap.xml', now()->addHour(), function (): string {
         $urls = collect([
             ['loc' => route('home'), 'priority' => '1.0'],
+            ['loc' => route('profile'), 'priority' => '0.9'],
+            ['loc' => route('services'), 'priority' => '0.9'],
+            ['loc' => route('methodology'), 'priority' => '0.8'],
+            ['loc' => route('principles'), 'priority' => '0.7'],
+            ['loc' => route('knowledge'), 'priority' => '0.9'],
+            ['loc' => route('faq'), 'priority' => '0.7'],
+            ['loc' => route('sample-report'), 'priority' => '0.7'],
             ['loc' => route('tools.index'), 'priority' => '0.9'],
             ['loc' => route('pricing'), 'priority' => '0.9'],
             ['loc' => route('content.index'), 'priority' => '0.9'],
