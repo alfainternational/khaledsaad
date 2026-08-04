@@ -5,9 +5,21 @@ namespace App\Modules\Learning;
 use App\Models\MarketingExerciseAttempt;
 use App\Models\MarketingLearningRun;
 use App\Modules\Brain\BrainReader;
+use App\Modules\Diagnosis\AxisScorer;
 
 class MarketingLearningRecommender
 {
+    private const AXIS_EXERCISES = [
+        'strategic_clarity' => 'marketing-reality-check',
+        'audience_understanding' => 'describe-real-customer',
+        'positioning_message' => 'core-marketing-message',
+        'channel_structure' => 'choose-marketing-channel',
+        'measurement_data' => 'measure-current-performance',
+        'execution_capacity' => 'weekly-content-calendar',
+        'ai_readiness' => 'ai-marketing-strategy',
+        'owned_assets' => 'customer-loyalty-review',
+    ];
+
     /**
      * Missing project knowledge is checked in product-value order, not lesson order.
      * The result is deterministic so the reason can always be explained.
@@ -46,6 +58,7 @@ class MarketingLearningRecommender
     public function __construct(
         private readonly MarketingCourseCatalog $catalog,
         private readonly BrainReader $brain,
+        private readonly AxisScorer $axes,
     ) {}
 
     /**
@@ -81,8 +94,29 @@ class MarketingLearningRecommender
             ];
         }
 
+        $weakest = collect($this->axes->scoreAll($run->project))
+            ->filter(fn ($axis) => $axis->isActive())
+            ->sortBy(fn ($axis) => $axis->score)
+            ->first(function ($axis) use ($completed, $run): bool {
+                $exerciseKey = self::AXIS_EXERCISES[$axis->axis->value] ?? null;
+
+                return is_string($exerciseKey)
+                    && ! in_array($exerciseKey, $completed, true)
+                    && $this->eligible($run, $this->catalog->exercise($exerciseKey));
+            });
+
+        if ($weakest !== null) {
+            $exerciseKey = self::AXIS_EXERCISES[$weakest->axis->value];
+
+            return [
+                'exercise' => $this->catalog->exercise($exerciseKey),
+                'reason' => "نبدأ بمحور {$weakest->axis->label()} لأنه أضعف جانب معروف حاليًا، وتحسينه سيعالج فجوة واضحة في مشروعك.",
+            ];
+        }
+
         $next = collect($this->catalog->exercises())
             ->reject(fn (array $exercise) => in_array($exercise['key'], $completed, true))
+            ->filter(fn (array $exercise) => $this->eligible($run, $exercise))
             ->sortBy([
                 ['lesson_number', 'asc'],
                 ['duration_minutes', 'asc'],
@@ -95,5 +129,12 @@ class MarketingLearningRecommender
                 ? 'أكملت جميع المهام. راجع نتائجك واختر ما تريد تحسينه.'
                 : 'هذه أقرب مهمة غير منجزة، وستضيف مخرجًا جديدًا إلى خطة مشروعك.',
         ];
+    }
+
+    /** @param array<string, mixed> $exercise */
+    private function eligible(MarketingLearningRun $run, array $exercise): bool
+    {
+        return collect($exercise['brain_dependencies'] ?? [])
+            ->every(fn (string $key) => $this->brain->fact($run->project, $key) !== null);
     }
 }

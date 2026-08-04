@@ -25,7 +25,9 @@ class MarketingExerciseEvaluator
 
     public function evaluate(MarketingExerciseAttempt $attempt): MarketingExerciseAttempt
     {
-        if (! $this->claim($attempt->id)) {
+        $evaluationToken = $this->claim($attempt->id);
+
+        if ($evaluationToken === null) {
             return $attempt->fresh();
         }
 
@@ -33,6 +35,7 @@ class MarketingExerciseEvaluator
             ->with(['run.project', 'reviews'])
             ->findOrFail($attempt->id);
         $exercise = $this->catalog->exercise($attempt->exercise_key);
+        $evaluatedAnswers = $attempt->answers;
 
         try {
             $feedback = $this->runner->run(AIRequest::json(
@@ -44,12 +47,19 @@ class MarketingExerciseEvaluator
 
             $this->assertFeedbackKeys($exercise, $feedback);
 
-            return $this->storeSuccessfulReview($attempt, $exercise, $feedback);
+            return $this->storeSuccessfulReview($attempt, $exercise, $feedback, $evaluatedAnswers, $evaluationToken);
         } catch (Throwable $exception) {
-            $attempt->forceFill([
-                'status' => MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
-                'failure_reason' => Str::limit($exception->getMessage(), 1000),
-            ])->save();
+            $current = MarketingExerciseAttempt::query()->findOrFail($attempt->id);
+
+            if ($current->status === MarketingExerciseAttempt::STATUS_EVALUATING
+                && hash_equals((string) $current->evaluation_token, $evaluationToken)) {
+                $current->forceFill([
+                    'status' => MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
+                    'evaluation_token' => null,
+                    'evaluation_started_at' => null,
+                    'failure_reason' => Str::limit($exception->getMessage(), 1000),
+                ])->save();
+            }
 
             Log::warning('تعذرت مراجعة مهمة من مسار تعلم التسويق.', [
                 'attempt_id' => $attempt->id,
@@ -58,25 +68,32 @@ class MarketingExerciseEvaluator
                 'exception' => $exception,
             ]);
 
-            return $attempt->refresh();
+            return $current->refresh();
         }
     }
 
-    private function claim(int $attemptId): bool
+    private function claim(int $attemptId): ?string
     {
-        return DB::transaction(function () use ($attemptId): bool {
+        return DB::transaction(function () use ($attemptId): ?string {
             $attempt = MarketingExerciseAttempt::query()->lockForUpdate()->findOrFail($attemptId);
 
-            if ($attempt->status !== MarketingExerciseAttempt::STATUS_QUEUED) {
-                return false;
+            if (! in_array($attempt->status, [
+                MarketingExerciseAttempt::STATUS_QUEUED,
+                MarketingExerciseAttempt::STATUS_EVALUATING,
+            ], true)) {
+                return null;
             }
+
+            $token = (string) Str::uuid();
 
             $attempt->forceFill([
                 'status' => MarketingExerciseAttempt::STATUS_EVALUATING,
+                'evaluation_token' => $token,
+                'evaluation_started_at' => now(),
                 'failure_reason' => null,
             ])->save();
 
-            return true;
+            return $token;
         });
     }
 
@@ -122,9 +139,52 @@ class MarketingExerciseEvaluator
                     'purpose' => $exercise['purpose'],
                     'expected_deliverable' => $exercise['deliverable'],
                     'questions' => $questions,
+                    'related_previous_answers' => $this->relatedPreviousAnswers($attempt, $exercise),
                 ],
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)],
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $exercise
+     * @return array<int, array<string, mixed>>
+     */
+    private function relatedPreviousAnswers(MarketingExerciseAttempt $attempt, array $exercise): array
+    {
+        $relevantKeys = collect($exercise['brain_dependencies'] ?? [])
+            ->merge(collect($exercise['questions'])->pluck('brain_key')->filter())
+            ->unique();
+
+        if ($relevantKeys->isEmpty()) {
+            return [];
+        }
+
+        return $attempt->run->attempts()
+            ->where('id', '!=', $attempt->id)
+            ->where('status', MarketingExerciseAttempt::STATUS_COMPLETED)
+            ->latest('evaluated_at')
+            ->get()
+            ->map(function (MarketingExerciseAttempt $previous) use ($relevantKeys): ?array {
+                $definition = $this->catalog->exercise($previous->exercise_key);
+                $questions = collect($definition['questions'])
+                    ->filter(fn (array $question) => $relevantKeys->contains($question['brain_key'] ?? null))
+                    ->map(fn (array $question) => [
+                        'question' => $question['label'],
+                        'answer' => $previous->answers[$question['key']] ?? null,
+                    ])
+                    ->filter(fn (array $answer) => filled($answer['answer']))
+                    ->values()
+                    ->all();
+
+                return $questions === [] ? null : [
+                    'exercise_title' => $definition['title'],
+                    'answers' => $questions,
+                ];
+            })
+            ->filter()
+            ->take(5)
+            ->values()
+            ->all();
     }
 
     /**
@@ -147,14 +207,27 @@ class MarketingExerciseEvaluator
     /**
      * @param  array<string, mixed>  $exercise
      * @param  array<string, mixed>  $feedback
+     * @param  array<string, mixed>  $evaluatedAnswers
      */
     private function storeSuccessfulReview(
         MarketingExerciseAttempt $attempt,
         array $exercise,
         array $feedback,
+        array $evaluatedAnswers,
+        string $evaluationToken,
     ): MarketingExerciseAttempt {
-        return DB::transaction(function () use ($attempt, $exercise, $feedback): MarketingExerciseAttempt {
+        return DB::transaction(function () use ($attempt, $exercise, $feedback, $evaluatedAnswers, $evaluationToken): MarketingExerciseAttempt {
             $attempt = MarketingExerciseAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+
+            if ($attempt->status !== MarketingExerciseAttempt::STATUS_EVALUATING
+                || ! hash_equals((string) $attempt->evaluation_token, $evaluationToken)
+                || $attempt->answers !== $evaluatedAnswers) {
+                throw new AIInvalidOutputException(
+                    'تغيرت الإجابات أثناء المراجعة، لذلك لم نربط النتيجة بها.',
+                    ['attempt state or answers changed during evaluation'],
+                );
+            }
+
             $revision = ((int) $attempt->reviews()->max('revision')) + 1;
             $aiScore = max(0, min(100, (int) $feedback['overall_score']));
             $completeness = max(0, min(100, (int) $attempt->completeness_score));
@@ -162,7 +235,7 @@ class MarketingExerciseEvaluator
 
             $attempt->reviews()->create([
                 'revision' => $revision,
-                'answers' => $attempt->answers,
+                'answers' => $evaluatedAnswers,
                 'completeness_score' => $completeness,
                 'ai_score' => $aiScore,
                 'final_score' => $finalScore,
@@ -174,6 +247,8 @@ class MarketingExerciseEvaluator
             $attempt->forceFill([
                 'revision' => $revision,
                 'status' => MarketingExerciseAttempt::STATUS_COMPLETED,
+                'evaluation_token' => null,
+                'evaluation_started_at' => null,
                 'ai_score' => $aiScore,
                 'final_score' => $finalScore,
                 'feedback' => $feedback,

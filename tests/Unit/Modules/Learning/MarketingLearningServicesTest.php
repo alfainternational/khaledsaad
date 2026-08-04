@@ -7,6 +7,9 @@ use App\Models\MarketingLearningRun;
 use App\Models\Project;
 use App\Models\User;
 use App\Modules\Brain\BrainWriter;
+use App\Modules\Diagnosis\Axis;
+use App\Modules\Diagnosis\AxisScore;
+use App\Modules\Diagnosis\AxisScorer;
 use App\Modules\Learning\MarketingAnswerPrefill;
 use App\Modules\Learning\MarketingExerciseCompletenessScorer;
 use App\Modules\Learning\MarketingLearningRecommender;
@@ -76,6 +79,33 @@ class MarketingLearningServicesTest extends TestCase
         $recommendation = app(MarketingLearningRecommender::class)->next($run->fresh());
 
         $this->assertNotSame('describe-real-customer', $recommendation['exercise']['key']);
+    }
+
+    public function test_recommender_uses_the_weakest_known_diagnostic_axis_after_core_facts(): void
+    {
+        [$project, $run] = $this->projectAndRun();
+        $project->brainFacts()->delete();
+
+        foreach ([
+            'business.audience', 'business.value_proposition', 'business.primary_goal',
+            'business.active_channels', 'business.tracking_maturity',
+            'business.content_cadence', 'business.retention_motion',
+        ] as $key) {
+            app(BrainWriter::class)->record($project, $key, 'معلومة معروفة للمشروع', EvidenceLevel::Inferred, 'test');
+        }
+
+        $this->mock(AxisScorer::class)
+            ->shouldReceive('scoreAll')
+            ->once()
+            ->andReturn([
+                new AxisScore(Axis::AudienceUnderstanding, 72, 1.0, EvidenceLevel::Inferred, [], []),
+                new AxisScore(Axis::MeasurementData, 24, 1.0, EvidenceLevel::Inferred, [], []),
+            ]);
+
+        $recommendation = app(MarketingLearningRecommender::class)->next($run->fresh());
+
+        $this->assertSame('measure-current-performance', $recommendation['exercise']['key']);
+        $this->assertStringContainsString('القياس والبيانات', $recommendation['reason']);
     }
 
     public function test_prefill_uses_draft_before_completed_work_and_brain(): void

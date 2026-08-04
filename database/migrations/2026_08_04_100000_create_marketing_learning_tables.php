@@ -28,6 +28,8 @@ return new class extends Migration
             $table->unsignedSmallInteger('revision')->default(0);
             $table->json('answers');
             $table->string('status', 20)->default('draft');
+            $table->uuid('evaluation_token')->nullable();
+            $table->timestamp('evaluation_started_at')->nullable();
             $table->unsignedTinyInteger('completeness_score')->nullable();
             $table->unsignedTinyInteger('ai_score')->nullable();
             $table->unsignedTinyInteger('final_score')->nullable();

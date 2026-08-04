@@ -97,6 +97,22 @@
             <div class="learning-deliverable__content">{{ $attempt->feedback['deliverable'] ?? '' }}</div>
         </section>
 
+        @if ($reviewHistory->count() > 1)
+            <section class="card learning-history" aria-labelledby="score-history">
+                <p class="eyebrow">تطور إجاباتك</p>
+                <h2 id="score-history">نتائجك السابقة في هذه المهمة</h2>
+                <div class="learning-history__items">
+                    @foreach ($reviewHistory as $review)
+                        <article>
+                            <strong>{{ $review->final_score }}/100</strong>
+                            <span>المراجعة {{ $review->revision }}</span>
+                            <time>{{ $review->reviewed_at->translatedFormat('j F Y، H:i') }}</time>
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <div class="learning-result-actions">
             <a href="{{ route('app.learning.marketing.exercise', [$project, $exercise['key']]) }}" class="btn btn--ghost">حسّن إجاباتك</a>
             @if ($recommendation['exercise'] && $recommendation['exercise']['key'] !== $exercise['key'])

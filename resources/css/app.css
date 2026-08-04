@@ -3060,6 +3060,37 @@ svg {
     white-space: pre-wrap;
 }
 
+.learning-history {
+    margin-block-start: 1.25rem;
+}
+
+.learning-history__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.learning-history__items article {
+    display: grid;
+    min-inline-size: 9rem;
+    gap: 0.15rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+}
+
+.learning-history__items strong {
+    color: var(--brand-blue);
+    font-size: 1.2rem;
+}
+
+.learning-history__items span,
+.learning-history__items time {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
 .learning-result-actions {
     margin-block-start: 1.25rem;
     justify-content: flex-end;

@@ -21,7 +21,8 @@ class MarketingExerciseAttempt extends Model
 
     protected $fillable = [
         'marketing_learning_run_id', 'exercise_key', 'revision', 'answers',
-        'status', 'completeness_score', 'ai_score', 'final_score', 'feedback',
+        'status', 'evaluation_token', 'evaluation_started_at',
+        'completeness_score', 'ai_score', 'final_score', 'feedback',
         'failure_reason', 'submitted_at', 'evaluated_at',
     ];
 
@@ -30,6 +31,7 @@ class MarketingExerciseAttempt extends Model
         return [
             'answers' => 'array',
             'feedback' => 'array',
+            'evaluation_started_at' => 'datetime',
             'submitted_at' => 'datetime',
             'evaluated_at' => 'datetime',
         ];

@@ -70,10 +70,20 @@
                                     @if ($task['score'] !== null)
                                         <strong class="score-chip">{{ $task['score'] }}/100</strong>
                                     @endif
-                                    <a href="{{ $task['status'] === 'completed'
+                                    <a href="{{ in_array($task['status'], ['completed', 'queued', 'evaluating', 'review_failed'], true)
                                         ? route('app.learning.marketing.result', [$project, $task['key']])
                                         : route('app.learning.marketing.exercise', [$project, $task['key']]) }}" class="btn btn--ghost btn--sm">
-                                        {{ $task['status'] === 'completed' ? 'افتح النتيجة' : ($task['status'] === 'draft' ? 'أكمل' : 'ابدأ') }}
+                                        @if ($task['status'] === 'completed')
+                                            افتح النتيجة
+                                        @elseif (in_array($task['status'], ['queued', 'evaluating'], true))
+                                            تابع المراجعة
+                                        @elseif ($task['status'] === 'review_failed')
+                                            أعد المراجعة
+                                        @elseif ($task['status'] === 'draft')
+                                            أكمل
+                                        @else
+                                            ابدأ
+                                        @endif
                                     </a>
                                 </div>
                             </article>

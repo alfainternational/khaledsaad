@@ -14,8 +14,12 @@ use App\Modules\Learning\MarketingExerciseCompletenessScorer;
 use App\Modules\Learning\MarketingLearningRecommender;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use InvalidArgumentException;
+use Throwable;
 
 class MarketingLearningController extends Controller
 {
@@ -121,14 +125,40 @@ class MarketingLearningController extends Controller
         $data = $request->validate(['answer' => $rules], $messages);
         $run = MarketingLearningRun::startFor($project, $request->user());
         $attempt = $run->attemptFor($exercise);
-        $answers = $attempt->answers ?? [];
-        $changed = ($answers[$question['key']] ?? null) !== $data['answer'];
-        $answers[$question['key']] = $data['answer'];
 
-        $attempt->forceFill([
-            'answers' => $answers,
-            'status' => $changed ? MarketingExerciseAttempt::STATUS_DRAFT : $attempt->status,
-        ])->save();
+        if (in_array($attempt->status, [
+            MarketingExerciseAttempt::STATUS_QUEUED,
+            MarketingExerciseAttempt::STATUS_EVALUATING,
+        ], true)) {
+            return redirect()->route('app.learning.marketing.result', [$project, $exercise])
+                ->with('status', 'المراجعة تعمل الآن. بعد ظهور النتيجة يمكنك تعديل إجاباتك وتحسينها.');
+        }
+
+        $saved = DB::transaction(function () use ($attempt, $question, $data): bool {
+            $current = MarketingExerciseAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+
+            if (in_array($current->status, [
+                MarketingExerciseAttempt::STATUS_QUEUED,
+                MarketingExerciseAttempt::STATUS_EVALUATING,
+            ], true)) {
+                return false;
+            }
+
+            $answers = $current->answers ?? [];
+            $changed = ($answers[$question['key']] ?? null) !== $data['answer'];
+            $answers[$question['key']] = $data['answer'];
+            $current->forceFill([
+                'answers' => $answers,
+                'status' => $changed ? MarketingExerciseAttempt::STATUS_DRAFT : $current->status,
+            ])->save();
+
+            return true;
+        });
+
+        if (! $saved) {
+            return redirect()->route('app.learning.marketing.result', [$project, $exercise])
+                ->with('status', 'المراجعة بدأت قبل حفظ التعديل. انتظر النتيجة ثم أعد تعديل الإجابة.');
+        }
 
         $next = min($step + 1, count($definition['questions']));
 
@@ -167,17 +197,42 @@ class MarketingLearningController extends Controller
             ])->with('error', 'بقيت إجابة واحدة أو أكثر. أكملها ثم نراجع المهمة كاملة.');
         }
 
-        $attempt->forceFill([
-            'status' => MarketingExerciseAttempt::STATUS_QUEUED,
-            'completeness_score' => $completeness['score'],
-            'failure_reason' => null,
-            'submitted_at' => now(),
-        ])->save();
+        $answersAtSubmission = $attempt->answers;
+        $queued = DB::transaction(function () use ($attempt, $completeness, $answersAtSubmission): bool {
+            $current = MarketingExerciseAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
 
-        EvaluateMarketingExercise::dispatch($attempt->id);
+            if ($current->answers !== $answersAtSubmission || in_array($current->status, [
+                MarketingExerciseAttempt::STATUS_QUEUED,
+                MarketingExerciseAttempt::STATUS_EVALUATING,
+                MarketingExerciseAttempt::STATUS_COMPLETED,
+            ], true)) {
+                return false;
+            }
+
+            $current->forceFill([
+                'status' => MarketingExerciseAttempt::STATUS_QUEUED,
+                'evaluation_token' => null,
+                'evaluation_started_at' => null,
+                'completeness_score' => $completeness['score'],
+                'failure_reason' => null,
+                'submitted_at' => now(),
+            ])->save();
+
+            return true;
+        });
+
+        if (! $queued) {
+            return redirect()->route('app.learning.marketing.result', [$project, $exercise]);
+        }
+
+        $attempt->refresh();
+
+        $dispatched = $this->dispatchReview($attempt);
 
         return redirect()->route('app.learning.marketing.result', [$project, $exercise])
-            ->with('status', 'استلمنا إجاباتك. نراجعها الآن ونجهز لك المقترحات.');
+            ->with('status', $dispatched
+                ? 'استلمنا إجاباتك. نراجعها الآن ونجهز لك المقترحات.'
+                : 'حفظنا إجاباتك، لكن المراجعة لم تبدأ. يمكنك إعادة المحاولة من صفحة النتيجة.');
     }
 
     public function result(Request $request, Project $project, string $exercise): View
@@ -193,6 +248,7 @@ class MarketingLearningController extends Controller
             'attempt' => $attempt,
             'feedbackByKey' => collect($attempt->feedback['input_feedback'] ?? [])->keyBy('key'),
             'recommendation' => $this->recommender->next($run),
+            'reviewHistory' => $attempt->reviews()->latest('revision')->get(),
         ]);
     }
 
@@ -203,17 +259,64 @@ class MarketingLearningController extends Controller
         $run = MarketingLearningRun::startFor($project, $request->user());
         $attempt = $run->attempts()->where('exercise_key', $exercise)->firstOrFail();
 
-        if ($attempt->status === MarketingExerciseAttempt::STATUS_REVIEW_FAILED) {
-            $attempt->forceFill([
+        $retryAttempt = DB::transaction(function () use ($attempt): ?MarketingExerciseAttempt {
+            $current = MarketingExerciseAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+
+            if ($current->status !== MarketingExerciseAttempt::STATUS_REVIEW_FAILED) {
+                return null;
+            }
+
+            $current->forceFill([
                 'status' => MarketingExerciseAttempt::STATUS_QUEUED,
+                'evaluation_token' => null,
+                'evaluation_started_at' => null,
                 'failure_reason' => null,
                 'submitted_at' => now(),
             ])->save();
-            EvaluateMarketingExercise::dispatch($attempt->id);
+
+            return $current;
+        });
+
+        if ($retryAttempt !== null) {
+            $dispatched = $this->dispatchReview($retryAttempt);
+
+            return redirect()->route('app.learning.marketing.result', [$project, $exercise])
+                ->with('status', $dispatched
+                    ? 'بدأنا المراجعة مرة أخرى، وإجاباتك محفوظة كما هي.'
+                    : 'إجاباتك محفوظة، لكن المراجعة لم تبدأ. حاول مرة أخرى بعد قليل.');
         }
 
         return redirect()->route('app.learning.marketing.result', [$project, $exercise])
             ->with('status', 'بدأنا المراجعة مرة أخرى، وإجاباتك محفوظة كما هي.');
+    }
+
+    private function dispatchReview(MarketingExerciseAttempt $attempt): bool
+    {
+        try {
+            // تفريغ PendingDispatch داخل try يجعل خطأ الاتصال بالطابور قابلًا
+            // للمعالجة هنا بدل ترك المحاولة عالقة في حالة الانتظار.
+            $pending = EvaluateMarketingExercise::dispatch($attempt->id);
+            unset($pending);
+
+            return true;
+        } catch (Throwable $exception) {
+            $attempt->refresh();
+
+            if ($attempt->status === MarketingExerciseAttempt::STATUS_QUEUED) {
+                $attempt->forceFill([
+                    'status' => MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
+                    'failure_reason' => Str::limit($exception->getMessage(), 1000),
+                ])->save();
+            }
+
+            Log::warning('تعذر إرسال مهمة تعلم التسويق إلى المراجعة.', [
+                'attempt_id' => $attempt->id,
+                'exercise_key' => $attempt->exercise_key,
+                'reason' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     /** @return array<string, mixed> */
