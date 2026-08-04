@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Exceptions\AIProviderException;
 use App\Models\MarketingExerciseAttempt;
 use App\Models\MarketingLearningRun;
+use App\Models\Project;
 use App\Models\User;
 use App\Modules\Learning\MarketingExerciseEvaluator;
 use App\Modules\Shared\Evidence\EvidenceLevel;
@@ -90,7 +91,7 @@ class MarketingExerciseEvaluationTest extends TestCase
     }
 
     /**
-     * @return array{\App\Models\Project, MarketingExerciseAttempt}
+     * @return array{Project, MarketingExerciseAttempt}
      */
     private function readyAttempt(): array
     {

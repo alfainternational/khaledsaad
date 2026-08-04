@@ -6,6 +6,7 @@ use App\Models\MarketingExerciseAttempt;
 use App\Models\MarketingLearningRun;
 use App\Models\User;
 use App\Services\Projects\ProjectService;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -68,7 +69,7 @@ class MarketingLearningPersistenceTest extends TestCase
             'status' => 'draft',
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         MarketingExerciseAttempt::create([
             'marketing_learning_run_id' => $run->id,

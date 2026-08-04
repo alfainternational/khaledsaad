@@ -4,6 +4,7 @@ namespace Tests\Unit\Modules\Learning;
 
 use App\Models\MarketingExerciseAttempt;
 use App\Models\MarketingLearningRun;
+use App\Models\Project;
 use App\Models\User;
 use App\Modules\Brain\BrainWriter;
 use App\Modules\Learning\MarketingAnswerPrefill;
@@ -103,7 +104,7 @@ class MarketingLearningServicesTest extends TestCase
     }
 
     /**
-     * @return array{\App\Models\Project, MarketingLearningRun}
+     * @return array{Project, MarketingLearningRun}
      */
     private function projectAndRun(): array
     {
