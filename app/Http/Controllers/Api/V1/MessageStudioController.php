@@ -279,7 +279,7 @@ class MessageStudioController extends Controller
         $variants = MessageVariant::where('persona_panel_id', $panel->id)
             ->latest('id')->get()->groupBy('persona_key');
 
-        return array_map(function (array $persona) use ($panel, $variants): array {
+        return array_map(function (array $persona) use ($variants): array {
             $key = $this->profiles->keyFor($persona);
 
             return [

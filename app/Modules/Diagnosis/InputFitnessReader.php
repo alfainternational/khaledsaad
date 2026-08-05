@@ -20,7 +20,7 @@ use App\Models\Project;
 class InputFitnessReader
 {
     /**
-     * @return array<string, AnswerFitness>  مفتاحه `field_key`
+     * @return array<string, AnswerFitness> مفتاحه `field_key`
      */
     public function forProject(Project $project): array
     {

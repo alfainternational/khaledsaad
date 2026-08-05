@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Report;
 use App\Models\Tool;
 use App\Models\User;
 use App\Services\Projects\ProjectService;
@@ -130,7 +131,7 @@ class ScoreTransparencyTest extends TestCase
     }
 
     /**
-     * @return array{0: User, 1: \App\Models\Report}
+     * @return array{0: User, 1: Report}
      */
     private function reportForCompletedRun(): array
     {

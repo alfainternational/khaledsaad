@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Concerns\CarriesStartIntent;
 use App\Http\Controllers\Controller;
+use App\Notifications\LoginOtpNotification;
 use App\Support\Presentation\ToolPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -46,8 +48,8 @@ class AuthenticatedSessionController extends Controller
             auth()->logout();
 
             $code = (string) random_int(100000, 999999);
-            cache()->put('login-otp:'.$user->id, \Illuminate\Support\Facades\Hash::make($code), now()->addMinutes(10));
-            $user->notify(new \App\Notifications\LoginOtpNotification($code));
+            cache()->put('login-otp:'.$user->id, Hash::make($code), now()->addMinutes(10));
+            $user->notify(new LoginOtpNotification($code));
 
             $request->session()->put('otp_user_id', $user->id);
             $request->session()->put('otp_remember', $request->boolean('remember'));
@@ -83,7 +85,7 @@ class AuthenticatedSessionController extends Controller
         $userId = $request->session()->get('otp_user_id');
         $hashed = $userId ? cache()->get('login-otp:'.$userId) : null;
 
-        if ($userId === null || $hashed === null || ! \Illuminate\Support\Facades\Hash::check($request->string('code'), $hashed)) {
+        if ($userId === null || $hashed === null || ! Hash::check($request->string('code'), $hashed)) {
             throw ValidationException::withMessages([
                 'code' => 'الرمز غير صحيح أو انتهت صلاحيته — اطلب الدخول من جديد.',
             ]);

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services\Tools;
 
+use App\Services\Tools\ManualReportService;
 use App\Services\Tools\PipelineSchemas;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -45,8 +46,8 @@ class PipelineSchemasTest extends TestCase
 
         $this->assertStringContainsString($rubric, PipelineSchemas::systemPreamble());
 
-        $instructions = new \ReflectionMethod(\App\Services\Tools\ManualReportService::class, 'instructions');
-        $service = (new \ReflectionClass(\App\Services\Tools\ManualReportService::class))
+        $instructions = new \ReflectionMethod(ManualReportService::class, 'instructions');
+        $service = (new \ReflectionClass(ManualReportService::class))
             ->newInstanceWithoutConstructor();
 
         $this->assertStringContainsString($rubric, $instructions->invoke($service));

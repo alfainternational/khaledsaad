@@ -109,7 +109,6 @@ class FixListTest extends TestCase
         }
     }
 
-
     private function audit(): SiteAuditResult
     {
         $fetcher = new class implements PageFetcher

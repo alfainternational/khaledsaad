@@ -125,7 +125,6 @@ class BrainLedgerTest extends TestCase
         $this->assertEqualsCanonicalizing(['geography', 'business_model'], $coverage['missing']);
     }
 
-
     #[Test]
     public function a_snapshot_freezes_the_state_a_diagnosis_was_built_on(): void
     {

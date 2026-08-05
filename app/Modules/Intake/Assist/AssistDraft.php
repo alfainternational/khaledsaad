@@ -13,8 +13,8 @@ final class AssistDraft
 {
     /**
      * @param  array<int, array{label: string, value: string, why: string}>  $suggestions
-     *                                                                                    مقترحات ملموسة: `value` ما يُدخَل في الخانة، و`label` ما يُقرأ في
-     *                                                                                    الزر، و`why` سبب ملاءمته لهذا النشاط تحديدًا.
+     *                                                                                     مقترحات ملموسة: `value` ما يُدخَل في الخانة، و`label` ما يُقرأ في
+     *                                                                                     الزر، و`why` سبب ملاءمته لهذا النشاط تحديدًا.
      * @param  array<int, string>  $basis  على أي معلومة بُني هذا. مقترح بلا أساس معلن دعوى.
      */
     public function __construct(

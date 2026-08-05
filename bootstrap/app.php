@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthenticateBrowserSession;
 use App\Http\Middleware\EnsureFeature;
 use App\Http\Middleware\EnsureSupportedAppVersion;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -31,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // «سجّل خروجي من الأجهزة الأخرى» (بند ٢٣) يحتاج هذا الحارس ليُبطل
         // الجلسات الأخرى فعليًا عند إعادة توقيع كلمة المرور.
         $middleware->web(append: [
-            \App\Http\Middleware\AuthenticateBrowserSession::class,
+            AuthenticateBrowserSession::class,
         ]);
 
         // إشعارات البوابات تصل من خوادمها بلا جلسة ولا رمز CSRF؛

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tool;
+use App\Services\Tools\GoldenExamples;
 use App\Services\Tools\ToolShowcase;
 use Illuminate\View\View;
 
@@ -24,7 +25,7 @@ class ToolShowcaseController extends Controller
     {
         // عيّنة صادقة (بند ٦): من المثال الذهبي نفسه الذي يوجّه التوليد —
         // بصيغة التقرير الحقيقية، ومعلَنة أنها مثال توضيحي لا نتيجة عميل.
-        $example = \App\Services\Tools\GoldenExamples::catalog()[$tool->key] ?? null;
+        $example = GoldenExamples::catalog()[$tool->key] ?? null;
 
         return view('site.tools.show', [
             'brand' => config('brand'),

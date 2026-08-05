@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\ToolRun;
 use App\Services\Tools\ManualReportService;
 use Illuminate\Http\JsonResponse;
@@ -94,7 +95,7 @@ class AdminManualReportController extends Controller
 
         $report = $this->manual->import($run, $decoded, $request->user());
 
-        \App\Models\AuditLog::write('manual.import', $report, ['run' => $run->uuid]);
+        AuditLog::write('manual.import', $report, ['run' => $run->uuid]);
 
         return redirect()->route('admin.manual.index')
             ->with('status', "رُكِّب التقرير #{$report->id} وظهر في حساب العميل موثّقًا أنه مراجَع يدويًا.");

@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Modules\Brain\BrainWriter;
 use App\Modules\OwnedAssets\OwnedAssetsCollector;
 use App\Modules\Shared\Evidence\EvidenceLevel;
+use App\Modules\Shared\Sectors\Sector;
 
 /**
  * يحوّل ما رصده التدقيق وتحليل الزحف إلى حقائق في الدماغ.
@@ -32,7 +33,7 @@ class ReadinessCollector
     public function collectSiteAudit(Project $project, string $url): SiteAuditResult
     {
         // القطاع المعلن وحده يوجّه الفحص: التدقيق measured ولا يُبنى على ترجيح.
-        $result = $this->audit->audit($url, \App\Modules\Shared\Sectors\Sector::declaredOrGeneral($project->sector));
+        $result = $this->audit->audit($url, Sector::declaredOrGeneral($project->sector));
 
         /*
          * موقع تعذّر الوصول إليه لا يكتب شيئًا. لو كتبنا صفرًا لأصبح غياب

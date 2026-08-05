@@ -6,6 +6,7 @@ use App\Models\ToolRun;
 use App\Modules\Intake\ConsultationContextBuilder;
 use App\Modules\PlatformBridge\LegacyCapabilities;
 use App\Modules\Reporting\CrossToolSynthesis;
+use App\Modules\Shared\Sectors\Sector;
 
 /**
  * BR-005 / BR-006: التقرير يُبنى على لقطة مجمدة، فتعديل ملف المشروع لاحقًا
@@ -41,7 +42,7 @@ class ProjectSnapshotBuilder
                 // القطاع القانوني بتسميته العربية: النموذج يتخصص بمفردة
                 // مضبوطة لا باجتهاده في تفسير نص حر.
                 'sector' => $project->sector,
-                'sector_label' => \App\Modules\Shared\Sectors\Sector::label($project->sector),
+                'sector_label' => Sector::label($project->sector),
                 'stage' => $project->stage,
             ],
             'profile' => $project->profile?->only([

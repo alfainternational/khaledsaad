@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Modules\Brain\Models\BrainEvent;
 use App\Modules\Shared\Metrics\MetricKey;
 use App\Modules\Shared\Sectors\Sector;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -118,7 +119,7 @@ class IndustryBenchmark
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<Project>  $peers
+     * @param  Builder<Project>  $peers
      * @return array<int, int>
      */
     private function latestScoresOfPeers($peers): array

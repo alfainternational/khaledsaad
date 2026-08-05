@@ -13,6 +13,7 @@ use App\Support\ProductQuality\ParityMatrix;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Throwable;
 
 class AuditProductQuality extends Command
@@ -21,7 +22,10 @@ class AuditProductQuality extends Command
         {--matrix= : Override the product parity matrix path}
         {--require-verified : Fail unless every capability is verified}
         {--require-consultation : Fail unless the consultation catalog is installed and valid}
-        {--require-formats : Fail unless all stored form types have web and mobile widgets}';
+        {--require-formats : Fail unless all stored form types have web and mobile widgets}
+        {--mobile-source= : Override the Flutter consultation source directory}
+        {--prompt-fixtures= : Override the Prompt v2 fixture catalog path}
+        {--require-prompt-fixtures : Fail when the Prompt v2 fixture catalog is not deployed}';
 
     protected $description = 'Validate the product parity ledger and neutral-Arabic source copy';
 
@@ -30,7 +34,11 @@ class AuditProductQuality extends Command
         [$records, $matrixIssues] = $this->auditMatrix();
         $apiRouteIssues = $this->auditApiRoutes($records);
         $languageIssues = $scanner->scanDefaultPaths();
-        $promptFixtureIssues = $this->auditPromptFixtures();
+        $promptFixturePath = $this->option('prompt-fixtures') ?: base_path('tests/Fixtures/prompt-v2/catalog.php');
+        $promptFixtureAvailable = is_file($promptFixturePath);
+        $promptFixtureIssues = $promptFixtureAvailable || $this->option('require-prompt-fixtures')
+            ? $this->auditPromptFixtures($promptFixturePath)
+            : [];
         $consultationIssues = $this->auditConsultation();
         $formatIssues = $this->option('require-formats') ? $this->auditFormats() : [];
 
@@ -82,7 +90,9 @@ class AuditProductQuality extends Command
             }
         }
 
-        if ($promptFixtureIssues === []) {
+        if (! $promptFixtureAvailable && ! $this->option('require-prompt-fixtures')) {
+            $this->warn('Prompt v2 evaluation: SKIP (fixture catalog is not deployed)');
+        } elseif ($promptFixtureIssues === []) {
             $this->info('Prompt v2 evaluation: PASS (88 fixtures; 11 tools)');
         } else {
             $this->error(sprintf('Prompt v2 evaluation: FAIL (%d issues)', count($promptFixtureIssues)));
@@ -121,6 +131,27 @@ class AuditProductQuality extends Command
     private function auditFormats(): array
     {
         $issues = [];
+        $bladePath = resource_path('views/app/consultations/_answer-field.blade.php');
+        $mobileSource = $this->option('mobile-source') ?: base_path('mobile/lib/features/consultations');
+        $flutterPaths = [
+            $mobileSource.DIRECTORY_SEPARATOR.'consultation_screen.dart',
+            $mobileSource.DIRECTORY_SEPARATOR.'models.dart',
+        ];
+
+        if (! is_file($bladePath)) {
+            $issues[] = "Blade form source is missing: {$bladePath}";
+        }
+
+        foreach ($flutterPaths as $path) {
+            if (! is_file($path)) {
+                $issues[] = "Flutter form source is missing: {$path}";
+            }
+        }
+
+        if ($issues !== []) {
+            return $issues;
+        }
+
         $supported = AnswerTypeRegistry::all();
         $stored = QuestionVersion::query()->distinct()->pluck('answer_type')->all();
         $toolTypes = ToolField::query()->distinct()->pluck('type')->all();
@@ -131,9 +162,9 @@ class AuditProductQuality extends Command
             }
         }
 
-        $blade = file_get_contents(resource_path('views/app/consultations/_answer-field.blade.php')) ?: '';
-        $flutter = (file_get_contents(base_path('mobile/lib/features/consultations/consultation_screen.dart')) ?: '')
-            .(file_get_contents(base_path('mobile/lib/features/consultations/models.dart')) ?: '');
+        $blade = file_get_contents($bladePath) ?: '';
+        $flutter = (file_get_contents($flutterPaths[0]) ?: '')
+            .(file_get_contents($flutterPaths[1]) ?: '');
         foreach ($supported as $type) {
             $bladeCovered = in_array($type, ['textarea'], true) || str_contains($blade, "'{$type}'");
             $flutterCovered = in_array($type, ['text', 'textarea', 'url', 'email', 'date'], true)
@@ -197,8 +228,14 @@ class AuditProductQuality extends Command
             if (is_array($value) && $this->containsSensitiveEventMetadata($value)) {
                 return true;
             }
-            if (is_string($value) && preg_match('/[^\s@]+@[^\s@]+\.[^\s@]+|\b(?:\+?\d[\s-]?){8,}\b/u', $value)) {
-                return true;
+            if (is_string($value)) {
+                if (Str::isUuid($value)) {
+                    continue;
+                }
+
+                if (preg_match('/[^\s@]+@[^\s@]+\.[^\s@]+|\b(?:\+?\d[\s-]?){8,}\b/u', $value)) {
+                    return true;
+                }
             }
         }
 
@@ -312,9 +349,8 @@ class AuditProductQuality extends Command
     }
 
     /** @return list<string> */
-    private function auditPromptFixtures(): array
+    private function auditPromptFixtures(string $path): array
     {
-        $path = base_path('tests/Fixtures/prompt-v2/catalog.php');
         if (! is_file($path)) {
             return ['prompt fixture catalog is missing'];
         }

@@ -4,6 +4,7 @@ namespace App\Modules\AiReadiness;
 
 use App\Models\GeoPack;
 use App\Models\Project;
+use App\Modules\Shared\Sectors\Sector;
 use App\Services\Growth\GrowthSchemas;
 use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;
@@ -82,10 +83,10 @@ class GeoPackGenerator
         return [
             'name' => $project->name,
             // القطاع المعلن أدق من النص الحر حين وُجد — والنص الحر تفصيل يليه.
-            'industry' => \App\Modules\Shared\Sectors\Sector::isSpecialized($project->sector)
-                ? trim(\App\Modules\Shared\Sectors\Sector::label($project->sector).($project->industry ? " — {$project->industry}" : ''))
+            'industry' => Sector::isSpecialized($project->sector)
+                ? trim(Sector::label($project->sector).($project->industry ? " — {$project->industry}" : ''))
                 : $project->industry,
-            'sector' => \App\Modules\Shared\Sectors\Sector::declaredOrGeneral($project->sector),
+            'sector' => Sector::declaredOrGeneral($project->sector),
             'stage' => $project->stage,
             'business_model' => $profile?->business_model,
             'description' => $profile?->description,
@@ -194,9 +195,9 @@ class GeoPackGenerator
             // نوع القطاع أبلغ من Organization العام: EducationalOrganization
             // وRealEstateAgent يدخلان تصنيفات لا يبلغها النوع العام أصلًا.
             '@type' => match ($facts['sector'] ?? 'general') {
-                \App\Modules\Shared\Sectors\Sector::EDUCATION => 'EducationalOrganization',
-                \App\Modules\Shared\Sectors\Sector::ECOMMERCE => 'Store',
-                \App\Modules\Shared\Sectors\Sector::REAL_ESTATE => 'RealEstateAgent',
+                Sector::EDUCATION => 'EducationalOrganization',
+                Sector::ECOMMERCE => 'Store',
+                Sector::REAL_ESTATE => 'RealEstateAgent',
                 default => 'Organization',
             },
             'name' => $facts['name'],

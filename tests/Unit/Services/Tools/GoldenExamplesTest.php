@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services\Tools;
 
+use App\Modules\Shared\Sectors\Sector;
 use App\Services\Tools\GoldenExamples;
 use App\Services\Tools\PipelineSchemas;
 use App\Support\AI\JsonSchemaValidator;
@@ -50,7 +51,7 @@ class GoldenExamplesTest extends TestCase
         foreach (GoldenExamples::sectorCatalog() as $sector => $examples) {
             $this->assertContains(
                 $sector,
-                \App\Modules\Shared\Sectors\Sector::SPECIALIZED,
+                Sector::SPECIALIZED,
                 "ملف أمثلة لقطاع غير متخصص: {$sector} — المواصفة تحصر التأليف القطاعي في الثلاثة.",
             );
 

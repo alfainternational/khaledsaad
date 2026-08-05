@@ -26,6 +26,7 @@ use App\Services\Projects\ProjectService;
 use App\Services\Tools\ToolRunService;
 use App\Support\AI\AIRequest;
 use App\Support\AI\AIResponse;
+use App\Support\Marketing\BriefQuestions;
 use Closure;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -430,7 +431,7 @@ class InputIntelligenceTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        foreach (\App\Support\Marketing\BriefQuestions::fields() as $field) {
+        foreach (BriefQuestions::fields() as $field) {
             $this->assertStringContainsString(
                 'data-question-key="'.$field['key'].'"',
                 $html,
@@ -540,7 +541,7 @@ class InputIntelligenceTest extends TestCase
     }
 
     /**
-     * @return array{0: ToolRun, 1: string}  التشغيل ومفتاح أول حقل مفتوح فيه
+     * @return array{0: ToolRun, 1: string} التشغيل ومفتاح أول حقل مفتوح فيه
      */
     private function startedRun(User $user, Project $project): array
     {

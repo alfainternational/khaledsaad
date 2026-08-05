@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ConsultationSession;
 use App\Models\ProjectAnswer;
 use App\Models\User;
+use App\Modules\Intake\ConsultationEventRecorder;
 use App\Services\Projects\ProjectService;
 use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
@@ -72,6 +73,21 @@ class ConsultationPrivacySecurityTest extends TestCase
         Sanctum::actingAs(User::factory()->create());
         $this->deleteJson(route('api.v1.consultations.evidence.destroy', [$session, $evidence]))->assertNotFound();
         $this->assertDatabaseHas('consultation_evidence', ['id' => $evidence]);
+    }
+
+    #[Test]
+    public function report_uuids_are_not_mistaken_for_phone_numbers_in_event_metadata(): void
+    {
+        [$session] = $this->ownedSession();
+
+        app(ConsultationEventRecorder::class)->record($session, 'analysis_completed', [
+            'status' => 'completed',
+            'report_uuid' => '01234567-89ab-4cde-8f01-23456789abcd',
+        ]);
+
+        $this->artisan('product:audit', ['--require-consultation' => true])
+            ->expectsOutputToContain('Consultation integrity: PASS')
+            ->assertSuccessful();
     }
 
     /** @return array{ConsultationSession, mixed} */

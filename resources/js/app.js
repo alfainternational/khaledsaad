@@ -1,8 +1,11 @@
 import './bootstrap';
-import './content-editor';
 import './content-cover';
 import './content-resources';
 import './content-learning';
+
+if (document.querySelector('[data-content-editor]')) {
+    import('./content-editor');
+}
 
 document.documentElement.classList.add('js');
 

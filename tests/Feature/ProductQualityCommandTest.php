@@ -34,4 +34,39 @@ class ProductQualityCommandTest extends TestCase
             @unlink($path);
         }
     }
+
+    #[Test]
+    public function format_audit_reports_missing_flutter_sources_without_crashing(): void
+    {
+        $missingSource = storage_path('framework/testing/missing-flutter-consultation-source');
+
+        $this->assertDirectoryDoesNotExist($missingSource);
+
+        $this->artisan('product:audit', [
+            '--require-formats' => true,
+            '--mobile-source' => $missingSource,
+        ])
+            ->expectsOutputToContain('Form answer formats: FAIL')
+            ->expectsOutputToContain('Flutter form source is missing')
+            ->assertFailed();
+    }
+
+    #[Test]
+    public function prompt_fixture_audit_skips_an_undeployed_catalog_unless_it_is_required(): void
+    {
+        $missingCatalog = storage_path('framework/testing/missing-prompt-fixtures.php');
+
+        $this->assertFileDoesNotExist($missingCatalog);
+
+        $this->artisan('product:audit', ['--prompt-fixtures' => $missingCatalog])
+            ->expectsOutputToContain('Prompt v2 evaluation: SKIP')
+            ->assertSuccessful();
+
+        $this->artisan('product:audit', [
+            '--prompt-fixtures' => $missingCatalog,
+            '--require-prompt-fixtures' => true,
+        ])
+            ->expectsOutputToContain('Prompt v2 evaluation: FAIL')
+            ->assertFailed();
+    }
 }

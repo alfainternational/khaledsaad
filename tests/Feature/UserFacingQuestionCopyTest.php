@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Modules\Intake\Assist\ProfileQuestions;
 use App\Support\Marketing\BriefQuestions;
 use Tests\TestCase;
 
@@ -87,7 +88,7 @@ class UserFacingQuestionCopyTest extends TestCase
         $this->assertStringContainsString('Sector::options()', $create);
         $this->assertStringContainsString('class="question-reason" aria-label="سبب طرح السؤال"', $create);
 
-        $declared = collect(\App\Modules\Intake\Assist\ProfileQuestions::fields())
+        $declared = collect(ProfileQuestions::fields())
             ->keyBy('key');
 
         $this->assertSame('ما اسم مشروعك؟', $declared['name']['label'] ?? null);

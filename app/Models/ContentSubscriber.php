@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ContentSubscriber extends Model
 {
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_DISABLED = 'disabled';
 
     protected $attributes = [

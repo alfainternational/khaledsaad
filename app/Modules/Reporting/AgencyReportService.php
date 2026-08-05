@@ -11,6 +11,7 @@ use App\Modules\Brain\ProjectKnowledgeService;
 use App\Modules\Intake\ConsultationContextBuilder;
 use App\Modules\Intake\ConsultationReportGate;
 use App\Modules\Intake\Fitness\AnswerFitnessScorer;
+use App\Modules\Shared\Sectors\Sector;
 use App\Services\Marketing\BudgetPlanner;
 use App\Support\Marketing\BriefQuestions;
 use Illuminate\Support\Collection;
@@ -408,7 +409,7 @@ class AgencyReportService
                 'name' => $project->name,
                 'industry' => $project->industry,
                 // القطاع المعلن يتقدّم النص الحرّ في كل مستند يقرأه بشر أو نموذج.
-                'sector_display' => \App\Modules\Shared\Sectors\Sector::describe($project->sector, $project->industry),
+                'sector_display' => Sector::describe($project->sector, $project->industry),
                 'stage' => $project->stage,
                 'stage_label' => $this->stageLabel($project->stage),
                 'description' => $project->profile?->description,
@@ -616,7 +617,7 @@ class AgencyReportService
                     'name' => $project->name,
                     'description' => $project->profile?->description,
                     'industry' => $project->industry,
-                    'sector_display' => \App\Modules\Shared\Sectors\Sector::describe($project->sector, $project->industry),
+                    'sector_display' => Sector::describe($project->sector, $project->industry),
                     'stage' => $this->stageLabel($project->stage),
                     'geography' => $project->profile?->geography,
                     'website' => $project->profile?->website,

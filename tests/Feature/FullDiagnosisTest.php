@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\ProjectAnswer;
 use App\Models\Tool;
 use App\Models\ToolRun;
+use App\Models\ToolVersion;
 use App\Models\User;
 use App\Modules\Reporting\AgencyReportService;
 use App\Services\Billing\CreditManager;
@@ -178,7 +179,7 @@ class FullDiagnosisTest extends TestCase
         [$user, $project] = $this->project();
 
         // كل أداة مدفوعة ولا رصيد: لا شيء ينطلق، والحاجز مالي محض.
-        \App\Models\ToolVersion::query()->where('credit_cost', '<', 1)->update(['credit_cost' => 1]);
+        ToolVersion::query()->where('credit_cost', '<', 1)->update(['credit_cost' => 1]);
         $project->workspace->wallet()->update(['balance' => 0]);
 
         $result = app(FullDiagnosisRunner::class)->run($project->fresh(), $user);

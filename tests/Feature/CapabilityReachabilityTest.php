@@ -5,10 +5,11 @@ namespace Tests\Feature;
 use App\Models\Feature;
 use App\Models\Plan;
 use App\Models\PlanFeature;
+use App\Models\Project;
 use App\Models\User;
 use App\Modules\Measurement\QueryBudgetManager;
-use App\Services\Projects\ProjectService;
 use App\Services\Billing\Entitlements;
+use App\Services\Projects\ProjectService;
 use App\Support\Billing\FeatureKey;
 use App\Support\Settings\SettingsConfig;
 use Database\Seeders\FeatureSeeder;
@@ -145,7 +146,7 @@ class CapabilityReachabilityTest extends TestCase
     }
 
     /**
-     * @return array{0: User, 1: \App\Models\Project}
+     * @return array{0: User, 1: Project}
      */
     private function entitledProject(string $feature): array
     {

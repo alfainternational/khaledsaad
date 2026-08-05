@@ -19,6 +19,7 @@ use App\Support\Messaging\MessageChannel;
 use App\Support\Messaging\MessageObjective;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Throwable;
 
@@ -303,7 +304,7 @@ class MessageStudioController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, MessageVariant>
+     * @return Collection<int, MessageVariant>
      */
     private function singleVariant(PersonaPanel $panel, int $variantId)
     {
@@ -315,7 +316,7 @@ class MessageStudioController extends Controller
     /**
      * أحدث إصدار غير مؤرشف لكل شخصية — رسالة واحدة لكل شخصية لا أكثر.
      *
-     * @return \Illuminate\Support\Collection<int, MessageVariant>
+     * @return Collection<int, MessageVariant>
      */
     private function latestPerPersona(PersonaPanel $panel, ?string $channel, ?string $objective)
     {

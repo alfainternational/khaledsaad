@@ -26,6 +26,22 @@ class ApiRouteCoverageTest extends TestCase
     }
 
     #[Test]
+    public function every_declared_web_capability_resolves_to_a_named_route(): void
+    {
+        $missing = [];
+
+        foreach ((new ParityMatrix)->forSurface('web') as $record) {
+            $name = $record['web']['route'] ?? null;
+
+            if (is_string($name) && $name !== '' && ! Route::has($name)) {
+                $missing[] = "{$record['id']}:{$name}";
+            }
+        }
+
+        $this->assertSame([], $missing, 'Every declared web route must exist.');
+    }
+
+    #[Test]
     public function role_and_surface_filters_return_only_matching_records(): void
     {
         $matrix = new ParityMatrix;

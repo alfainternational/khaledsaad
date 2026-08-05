@@ -16,6 +16,7 @@ use App\Modules\Diagnosis\ScoreHistory;
 use App\Modules\Intake\IntakeCollector;
 use App\Modules\Measurement\ImpactAnalyzer;
 use App\Modules\Reporting\ReadinessCardPdfGenerator;
+use App\Modules\Shared\Sectors\Sector;
 use App\Policies\ProjectOwnership;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -146,7 +147,7 @@ class ReadinessController extends Controller
             abort(422, 'أضف رابط موقعك في ملف المشروع أولًا.');
         }
 
-        return $this->pdf->download($project, $this->audit->audit($url, \App\Modules\Shared\Sectors\Sector::declaredOrGeneral($project->sector)));
+        return $this->pdf->download($project, $this->audit->audit($url, Sector::declaredOrGeneral($project->sector)));
     }
 
     private function authorizeProject(Request $request, Project $project): void

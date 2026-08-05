@@ -95,4 +95,66 @@ class ParityMatrixTest extends TestCase
             }
         }
     }
+
+    /**
+     * @throws JsonException
+     */
+    #[Test]
+    public function every_declared_test_evidence_reference_exists(): void
+    {
+        $matrix = new ParityMatrix;
+        $references = [];
+
+        foreach ($matrix->records() as $record) {
+            foreach (['web', 'api', 'mobile'] as $surface) {
+                array_push($references, ...($record['tests'][$surface] ?? []));
+            }
+        }
+
+        foreach (['web', 'mobile', 'print'] as $surface) {
+            array_push($references, ...($matrix->layoutContract()[$surface]['tests'] ?? []));
+        }
+
+        foreach (array_unique($references) as $reference) {
+            $relativePath = str_starts_with($reference, 'Tests\\')
+                ? preg_replace('/^Tests\\\\/', 'tests\\\\', $reference).'.php'
+                : $reference;
+
+            $this->assertFileExists(
+                dirname(__DIR__, 3).DIRECTORY_SEPARATOR.str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath),
+                "Missing parity evidence: {$reference}",
+            );
+        }
+    }
+
+    /**
+     * @throws JsonException
+     */
+    #[Test]
+    public function every_declared_mobile_screen_exists_in_flutter(): void
+    {
+        $dartSource = '';
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator(dirname(__DIR__, 3).DIRECTORY_SEPARATOR.'mobile'.DIRECTORY_SEPARATOR.'lib'),
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getExtension() === 'dart') {
+                $dartSource .= file_get_contents($file->getPathname()) ?: '';
+            }
+        }
+
+        $screens = [];
+        foreach ((new ParityMatrix)->forSurface('mobile') as $record) {
+            array_push($screens, ...array_map('trim', explode('+', $record['mobile']['screen'])));
+        }
+
+        foreach (array_unique($screens) as $screen) {
+            $this->assertMatchesRegularExpression(
+                '/class\\s+'.preg_quote($screen, '/').'\\b/',
+                $dartSource,
+                "Missing Flutter screen declared by parity matrix: {$screen}",
+            );
+        }
+    }
 }

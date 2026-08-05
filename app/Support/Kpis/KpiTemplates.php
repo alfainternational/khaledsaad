@@ -2,6 +2,8 @@
 
 namespace App\Support\Kpis;
 
+use App\Modules\Shared\Sectors\Sector;
+
 /**
  * مؤشرات نموذجية جاهزة يختار منها المستخدم.
  *
@@ -91,7 +93,7 @@ class KpiTemplates
     private static function sectorGroup(?string $sector): ?array
     {
         return match ($sector) {
-            \App\Modules\Shared\Sectors\Sector::EDUCATION => [
+            Sector::EDUCATION => [
                 'group' => 'التسجيل والطلاب',
                 'items' => [
                     ['name' => 'استفسارات التسجيل شهريًا', 'unit' => 'استفسار',
@@ -108,7 +110,7 @@ class KpiTemplates
                         'example' => 'مثال: من 10 إلى 25 زيارة.'],
                 ],
             ],
-            \App\Modules\Shared\Sectors\Sector::ECOMMERCE => [
+            Sector::ECOMMERCE => [
                 'group' => 'متجرك',
                 'items' => [
                     ['name' => 'نسبة السلات المتروكة', 'unit' => '%',
@@ -122,7 +124,7 @@ class KpiTemplates
                         'example' => 'مثال: من 5 إلى 20 طلبًا شهريًا.'],
                 ],
             ],
-            \App\Modules\Shared\Sectors\Sector::REAL_ESTATE => [
+            Sector::REAL_ESTATE => [
                 'group' => 'استفساراتك ومعايناتك',
                 'items' => [
                     ['name' => 'الاستفسارات العقارية شهريًا', 'unit' => 'استفسار',

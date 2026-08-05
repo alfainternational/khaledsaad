@@ -8,6 +8,7 @@ use App\Models\GuestSession;
 use App\Models\Subscription;
 use App\Models\ToolRun;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -44,7 +45,7 @@ class OperationsController extends Controller
         ];
     }
 
-    /** @return \Illuminate\Support\Collection<int, ToolRun> */
+    /** @return Collection<int, ToolRun> */
     private function recentFailures()
     {
         return ToolRun::where('status', ToolRun::STATUS_FAILED)

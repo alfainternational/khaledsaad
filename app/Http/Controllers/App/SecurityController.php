@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -31,7 +32,7 @@ class SecurityController extends Controller
                 'current' => $session->id === $request->session()->getId(),
                 'ip' => $session->ip_address,
                 'agent' => $this->readableAgent((string) $session->user_agent),
-                'last_active' => \Illuminate\Support\Carbon::createFromTimestamp($session->last_activity)->diffForHumans(),
+                'last_active' => Carbon::createFromTimestamp($session->last_activity)->diffForHumans(),
             ]);
 
         return view('app.security', [

@@ -6,6 +6,7 @@ use App\Models\Workspace;
 use App\Modules\Diagnosis\MaturityAggregator;
 use App\Modules\Diagnosis\ScoreHistory;
 use App\Modules\Shared\Metrics\MetricKey;
+use App\Modules\Shared\Sectors\Sector;
 
 /**
  * محفظة الوكالة: كل أنشطة المساحة بدرجاتها واتجاهها في جدول واحد.
@@ -41,7 +42,7 @@ class AgencyPortfolio
                 'industry' => $project->industry,
                 'sector' => $project->sector,
                 // الوكالة تفرز محفظتها بالقطاع: نصٌّ حرّ لا يُفرز به.
-                'sector_display' => \App\Modules\Shared\Sectors\Sector::describe($project->sector, $project->industry),
+                'sector_display' => Sector::describe($project->sector, $project->industry),
 
                 /*
                  * المحسوب من صفر محاور لا يُعرض رقمًا: صفٌّ بدرجة صفر في جدول

@@ -4,6 +4,7 @@ namespace App\Modules\Intake\Assist;
 
 use App\Models\Project;
 use App\Modules\Brain\BrainReader;
+use App\Modules\Shared\Sectors\Sector;
 use App\Modules\Shared\Text\ArabicText;
 
 /**
@@ -58,8 +59,8 @@ class AssistContextBuilder
             'business' => array_filter([
                 'name' => $project->name,
                 'industry' => $project->industry,
-                'sector' => \App\Modules\Shared\Sectors\Sector::isSpecialized($project->sector)
-                    ? \App\Modules\Shared\Sectors\Sector::label($project->sector)
+                'sector' => Sector::isSpecialized($project->sector)
+                    ? Sector::label($project->sector)
                     : null,
                 'stage' => $project->stage,
                 'business_model' => $profile?->business_model,

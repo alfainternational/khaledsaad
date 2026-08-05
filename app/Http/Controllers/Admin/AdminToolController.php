@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AiUsageRecord;
+use App\Models\AuditLog;
 use App\Models\PromptVersion;
 use App\Models\Tool;
 use App\Models\ToolVersion;
+use App\Services\Tools\GoldenExamples;
 use App\Services\Tools\PipelineSchemas;
 use App\Services\Tools\ToolBuilder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -106,11 +109,11 @@ class AdminToolController extends Controller
 
         // ساحة المعاينة (بند ٢٩): الرسائل الفعلية التي تُرسل للنموذج في مرحلة
         // التركيب، بمدخل المثال الذهبي — بلا أي استدعاء ولا تكلفة.
-        $example = \App\Services\Tools\GoldenExamples::catalog()[$tool->key] ?? null;
+        $example = GoldenExamples::catalog()[$tool->key] ?? null;
         $synthesisPrompt = ($version?->prompts ?? collect())->firstWhere('stage', 'synthesis');
         $preview = $synthesisPrompt === null ? null : implode("\n\n────────────────────\n\n", [
-            "[system]\n".\App\Services\Tools\PipelineSchemas::systemPreamble($tool->key),
-            "[برومبت الأداة — synthesis v".($version?->version ?? '?')."]\n".$synthesisPrompt->content,
+            "[system]\n".PipelineSchemas::systemPreamble($tool->key),
+            '[برومبت الأداة — synthesis v'.($version?->version ?? '?')."]\n".$synthesisPrompt->content,
             "[بيانات التشغيل — مدخل المثال الذهبي]\n".($example['input'] ?? 'لا مثال لهذه الأداة'),
         ]);
 
@@ -133,9 +136,9 @@ class AdminToolController extends Controller
      */
     public function release(Tool $tool): RedirectResponse
     {
-        \Illuminate\Support\Facades\Artisan::call('tool:release', ['key' => $tool->key]);
+        Artisan::call('tool:release', ['key' => $tool->key]);
 
-        \App\Models\AuditLog::write('tool.release', $tool, ['output' => trim(\Illuminate\Support\Facades\Artisan::output())]);
+        AuditLog::write('tool.release', $tool, ['output' => trim(Artisan::output())]);
 
         return back()->with('status', 'صدر إصدار جديد ببرومبتات غير مقفلة، وصار هو الفعّال.');
     }
@@ -221,7 +224,7 @@ class AdminToolController extends Controller
 
         $prompt->update($data);
 
-        \App\Models\AuditLog::write('prompt.update', $prompt, ['tool' => $tool->key, 'stage' => $prompt->stage]);
+        AuditLog::write('prompt.update', $prompt, ['tool' => $tool->key, 'stage' => $prompt->stage]);
 
         return back()->with('status', 'حُدّث البرومبت.');
     }

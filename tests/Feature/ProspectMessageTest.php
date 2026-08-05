@@ -16,6 +16,7 @@ use App\Support\AI\StructuredRunner;
 use App\Support\Messaging\MessageChannel;
 use App\Support\Messaging\MessageObjective;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -243,7 +244,7 @@ class ProspectMessageTest extends TestCase
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Prospect>
+     * @return Collection<int, Prospect>
      */
     private function prospects(Project $project, User $user)
     {

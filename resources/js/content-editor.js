@@ -77,9 +77,15 @@ const icons = {
     fullscreen: svg('<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>'),
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+function initializeContentEditors() {
     document.querySelectorAll('[data-content-editor]').forEach((shell) => initializeEditor(shell));
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeContentEditors, { once: true });
+} else {
+    initializeContentEditors();
+}
 
 function initializeEditor(shell) {
     const form = shell.closest('form');

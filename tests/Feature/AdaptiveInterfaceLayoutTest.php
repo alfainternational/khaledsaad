@@ -95,6 +95,12 @@ class AdaptiveInterfaceLayoutTest extends TestCase
             resource_path('views/home.blade.php'),
             resource_path('views/agency-reports/shared.blade.php'),
         ];
+        $nonPageViews = array_map(static fn (string $path): string => str_replace('\\', '/', $path), [
+            // استجابة نصية للآلات؛ إضافة غلاف HTML أو data-layout تفسد llms.txt.
+            resource_path('views/site/content/llms.blade.php'),
+            // مستند طباعة مستقل يستهلكه محرك PDF، لا صفحة داخل غلاف الموقع.
+            resource_path('views/site/pages/profile-pdf.blade.php'),
+        ]);
 
         foreach (['app', 'admin', 'site', 'auth', 'errors'] as $root) {
             $iterator = new \RecursiveIteratorIterator(
@@ -106,6 +112,7 @@ class AdaptiveInterfaceLayoutTest extends TestCase
 
                 if (! str_ends_with($path, '.blade.php')
                     || str_contains($path, DIRECTORY_SEPARATOR.'partials'.DIRECTORY_SEPARATOR)
+                    || in_array(str_replace('\\', '/', $path), $nonPageViews, true)
                     || str_starts_with(basename($path), '_')) {
                     continue;
                 }

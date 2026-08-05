@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\PaymentGateway;
 use App\Models\User;
+use App\Support\Deployment\ClassmapAudit;
 use Database\Seeders\PaymentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -57,6 +59,23 @@ class PreflightTransitionTest extends TestCase
         User::factory()->create(['is_admin' => false]);
 
         $this->artisan('platform:preflight')->assertExitCode(1);
+    }
+
+    #[Test]
+    public function a_classmap_generated_from_another_worktree_blocks_the_transition(): void
+    {
+        $this->seed(PaymentSeeder::class);
+        User::factory()->create(['is_admin' => true]);
+
+        $audit = Mockery::mock(ClassmapAudit::class);
+        $audit->shouldReceive('foreignInStatic')->once()->andReturn([
+            ['line' => 42, 'path' => base_path('.worktrees/another-branch/app/Models/User.php')],
+        ]);
+        $this->app->instance(ClassmapAudit::class, $audit);
+
+        $this->artisan('platform:preflight')
+            ->expectsOutputToContain('worktree آخر')
+            ->assertExitCode(1);
     }
 
     #[Test]

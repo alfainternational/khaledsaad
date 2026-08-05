@@ -146,7 +146,6 @@ class GatewayAssistEngine implements AssistEngine
     }
 
     /**
-     * @param  mixed  $raw
      * @return array<int, array{label: string, value: string, why: string}>
      */
     private function suggestions(QuestionDescriptor $question, mixed $raw): array

@@ -60,6 +60,47 @@ class ClassmapAudit
     }
 
     /**
+     * ملفات موجودة لكن Composer حمّلها من worktree متداخل أو جذر آخر.
+     *
+     * وجود الملف لا يجعله صالحًا: مشاركة `vendor` عبر Junction ثم تشغيل
+     * `composer dump-autoload` من worktree آخر تولّد خريطة تعمل، لكنها تشغّل
+     * كود الفرع الخطأ بصمت. لذلك نفصل هذا الخطر عن الإدخالات القديمة.
+     *
+     * @return array<int, array{line: int, path: string}>
+     */
+    public function foreignInStatic(string $file, string $projectRoot): array
+    {
+        if (! is_file($file)) {
+            return [];
+        }
+
+        $base = dirname($file);
+        $lines = file($file) ?: [];
+        $inMap = false;
+        $foreign = [];
+
+        foreach ($lines as $index => $line) {
+            if (! $inMap) {
+                $inMap = str_contains($line, self::MAP_OPEN);
+
+                continue;
+            }
+
+            if (preg_match('/^\s*\);\s*$/', $line)) {
+                break;
+            }
+
+            $path = $this->resolve($line, $base);
+
+            if ($path !== null && is_file($path) && ! $this->belongsToProject($path, $projectRoot)) {
+                $foreign[] = ['line' => $index, 'path' => $path];
+            }
+        }
+
+        return $foreign;
+    }
+
+    /**
      * الإدخالات القديمة في `autoload_classmap.php` (التوليد غير المُحسَّن).
      *
      * @return array<string, string> صنف => مسار
@@ -108,5 +149,20 @@ class ClassmapAudit
         }
 
         return str_starts_with($expression, '__DIR__') ? $base.$path : $path;
+    }
+
+    private function belongsToProject(string $path, string $projectRoot): bool
+    {
+        $root = str_replace('\\', '/', (string) (realpath($projectRoot) ?: $projectRoot));
+        $resolved = str_replace('\\', '/', (string) (realpath($path) ?: $path));
+        $prefix = rtrim($root, '/').'/';
+
+        if (! str_starts_with($resolved, $prefix)) {
+            return false;
+        }
+
+        $relative = substr($resolved, strlen($prefix));
+
+        return preg_match('#^(?:\.worktrees|worktrees|\.claude/worktrees)(?:/|$)#', $relative) !== 1;
     }
 }

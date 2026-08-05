@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\AnswerFitness;
-use App\Models\Project;
-use App\Models\ProjectAnswer;
 use App\Models\User;
 use App\Modules\Reporting\AgencyReportService;
 use App\Services\Projects\ProjectService;

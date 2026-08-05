@@ -22,8 +22,7 @@
         "resources/css/workspace.css"
       ],
       "tests": [
-        "Tests\\Feature\\PageLayoutContractTest",
-        "Tests\\Feature\\WorkspaceLayoutTest"
+        "Tests\\Feature\\AdaptiveInterfaceLayoutTest"
       ]
     },
     "mobile": {

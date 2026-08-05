@@ -7,6 +7,9 @@ use App\Models\MessageTestResult;
 use App\Models\MessageVariant;
 use App\Models\PersonaPanel;
 use App\Models\Project;
+use App\Models\Report;
+use App\Models\Tool;
+use App\Models\ToolRun;
 use App\Models\User;
 use App\Modules\Shared\Evidence\EvidenceLevel;
 use App\Services\Messaging\MessageSchemas;
@@ -20,7 +23,10 @@ use App\Support\AI\StructuredRunner;
 use App\Support\Messaging\MessageChannel;
 use App\Support\Messaging\MessageObjective;
 use App\Support\Messaging\PersonaName;
+use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -39,7 +45,7 @@ class MessageStudioTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\ToolCatalogSeeder::class);
+        $this->seed(ToolCatalogSeeder::class);
     }
 
     #[Test]
@@ -441,13 +447,13 @@ class MessageStudioTest extends TestCase
         $this->assertNull(MessageVariant::first()->source_type);
     }
 
-    private function report(Project $project, string $toolKey): \App\Models\Report
+    private function report(Project $project, string $toolKey): Report
     {
         // أدوات حقيقية من الفهرس لا مصطنعة: التأهيل يُقاس بمفتاح الأداة كما هو.
-        $tool = \App\Models\Tool::where('key', $toolKey)->firstOrFail();
+        $tool = Tool::where('key', $toolKey)->firstOrFail();
         $version = $tool->versions()->latest('version')->firstOrFail();
-        $run = \App\Models\ToolRun::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+        $run = ToolRun::create([
+            'uuid' => (string) Str::uuid(),
             'project_id' => $project->id,
             'user_id' => $project->workspace->owner_id ?? User::first()->id,
             'tool_version_id' => $version->id,
@@ -455,7 +461,7 @@ class MessageStudioTest extends TestCase
             'answers' => [],
         ]);
 
-        return \App\Models\Report::create([
+        return Report::create([
             'tool_run_id' => $run->id,
             'project_id' => $project->id,
             'title' => 'تقرير '.$toolKey,
@@ -509,7 +515,7 @@ class MessageStudioTest extends TestCase
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, MessageVariant>
+     * @return Collection<int, MessageVariant>
      */
     private function draftsFor(PersonaPanel $panel, User $user)
     {

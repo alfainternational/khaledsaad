@@ -126,8 +126,18 @@ class PreflightTransition extends Command
         }
 
         // نفس المنطق الذي يستعمله المُصلح، لا نسخة ثانية منه.
-        $stale = count((new ClassmapAudit)->staleInStatic($file))
-            + count((new ClassmapAudit)->staleInClassmap(base_path('vendor/composer/autoload_classmap.php')));
+        $audit = app(ClassmapAudit::class);
+        $foreign = count($audit->foreignInStatic($file, base_path()));
+
+        if ($foreign > 0) {
+            return $this->blocker(
+                'خريطة الأصناف',
+                "{$foreign} إدخالًا يُحمّل الكود من worktree آخر — أعد توليد Composer من جذر هذا الإصدار.",
+            );
+        }
+
+        $stale = count($audit->staleInStatic($file))
+            + count($audit->staleInClassmap(base_path('vendor/composer/autoload_classmap.php')));
 
         if ($stale > 0) {
             return $this->blocker(

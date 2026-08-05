@@ -54,6 +54,20 @@ class AdminContentManagementTest extends TestCase
             ->assertSee('الصورة الرئيسية');
     }
 
+    public function test_content_editor_bundle_is_loaded_only_on_editor_pages(): void
+    {
+        $entrypoint = file_get_contents(resource_path('js/app.js'));
+        $editor = file_get_contents(resource_path('js/content-editor.js'));
+
+        $this->assertIsString($entrypoint);
+        $this->assertStringNotContainsString("import './content-editor';", $entrypoint);
+        $this->assertStringContainsString("document.querySelector('[data-content-editor]')", $entrypoint);
+        $this->assertStringContainsString("import('./content-editor')", $entrypoint);
+
+        $this->assertIsString($editor);
+        $this->assertStringContainsString("document.readyState === 'loading'", $editor);
+    }
+
     public function test_admin_can_save_uploaded_main_image_url(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
