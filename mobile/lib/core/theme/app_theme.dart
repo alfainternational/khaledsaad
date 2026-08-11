@@ -3,19 +3,19 @@ import 'package:flutter/material.dart';
 /// نفس الرموز اللونية المعرفة في resources/css/app.css.
 /// أي تغيير في الهوية يجب أن يمر على الملفين معًا.
 abstract final class BrandColors {
-  static const Color cyan = Color(0xFF09D7E5);
-  static const Color blue = Color(0xFF2575FF);
-  static const Color navy = Color(0xFF071F5B);
-  static const Color orange = Color(0xFFFF9B27);
-  static const Color red = Color(0xFFFF4B12);
+  static const Color cyan = Color(0xFF0B6B78);
+  static const Color blue = Color(0xFF134FC4);
+  static const Color navy = Color(0xFF0A1B33);
+  static const Color orange = Color(0xFFB45309);
+  static const Color red = Color(0xFFB42318);
 
-  static const Color ink = Color(0xFF071A38);
-  static const Color muted = Color(0xFF5D6B82);
-  static const Color line = Color(0xFFDFE8F5);
+  static const Color ink = Color(0xFF0A1B33);
+  static const Color muted = Color(0xFF4A5A72);
+  static const Color line = Color(0xFFE2E8F2);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceSoft = Color(0xFFF5F9FF);
   static const Color surfaceWarm = Color(0xFFFFF8F2);
-  static const Color success = Color(0xFF0F8A4D);
+  static const Color success = Color(0xFF0B7A66);
 }
 
 abstract final class AppTheme {
@@ -23,7 +23,7 @@ abstract final class AppTheme {
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: 'HacenTunisia',
+      fontFamily: 'IBMPlexSansArabic',
       scaffoldBackgroundColor: BrandColors.surfaceSoft,
       colorScheme: ColorScheme.fromSeed(
         seedColor: BrandColors.blue,
@@ -45,7 +45,7 @@ abstract final class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           side: const BorderSide(color: BrandColors.line),
         ),
       ),

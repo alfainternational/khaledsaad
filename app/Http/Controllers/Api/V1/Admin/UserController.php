@@ -69,7 +69,7 @@ class UserController extends Controller
         $this->confirm($request);
 
         if ($user->is($request->user()) && $user->isAdmin()) {
-            return response()->json(['message' => 'لا يمكنك نزع صلاحيتك عن نفسك.'], 409);
+            return response()->json(['message' => __('لا يمكنك نزع صلاحيتك عن نفسك.')], 409);
         }
 
         $users->toggleAdmin($request, $user);

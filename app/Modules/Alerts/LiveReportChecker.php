@@ -93,7 +93,7 @@ class LiveReportChecker
             if ($this->normalize($frozenProfile[$field] ?? null) !== $this->normalize($currentProfile[$field] ?? null)) {
                 $changes[] = [
                     'type' => 'profile',
-                    'text' => 'تغيّر «'.self::PROFILE_LABELS[$field].'» منذ إصدار التقرير.',
+                    'text' => __('تغيّر «:field» منذ إصدار التقرير.', ['field' => self::PROFILE_LABELS[$field]]),
                 ];
             }
         }
@@ -117,8 +117,8 @@ class LiveReportChecker
             $changes[] = [
                 'type' => 'audience',
                 'text' => $currentAudiences > $frozenAudiences
-                    ? 'أضفت شريحة جمهور جديدة لم تدخل في هذا التحليل.'
-                    : 'حذفت شريحة جمهور كان التحليل مبنيًا عليها.',
+                    ? __('أضفت شريحة جمهور جديدة لم تدخل في هذا التحليل.')
+                    : __('حذفت شريحة جمهور كان التحليل مبنيًا عليها.'),
             ];
         }
 

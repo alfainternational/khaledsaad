@@ -61,7 +61,8 @@ class ReportPdfGenerator
             'generatedAt' => now(),
         ])->render();
 
-        $mpdf = $this->engine->make();
+        // اتجاه الملف وخطّه ولغة تذييله من لغة التقرير نفسه.
+        $mpdf = $this->engine->make(locale: $report->locale ?: 'ar');
         $mpdf->WriteHTML($html);
 
         $path = $this->path($report);
@@ -78,7 +79,8 @@ class ReportPdfGenerator
     public function download(Report $report): StreamedResponse
     {
         $path = $this->ensure($report);
-        $filename = 'تقرير-'.$report->id.'.pdf';
+        // اسم الملف بلغة التقرير: من يحمّل تقريرًا فرنسيًّا لا يرتّبه باسم عربي.
+        $filename = __('تقرير-:id', ['id' => $report->id], $report->locale ?: 'ar').'.pdf';
 
         return Storage::disk(self::DISK)->download($path, $filename);
     }

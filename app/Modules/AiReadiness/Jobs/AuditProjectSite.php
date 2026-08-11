@@ -40,7 +40,7 @@ class AuditProjectSite implements ShouldQueue
 
         if (! $result->reachable) {
             // يُسجَّل ولا يُرمى: الفشل هنا معلومة عن الموقع لا عطل في النظام.
-            Log::info('تعذّر الوصول إلى موقع المشروع للتدقيق.', [
+            Log::info(__('تعذّر الوصول إلى موقع المشروع للتدقيق.'), [
                 'project_id' => $project->id,
                 'url' => $this->url,
             ]);

@@ -5,7 +5,7 @@ namespace Tests\Unit\Modules\AiReadiness;
 use App\Modules\AiReadiness\RepairSnippets;
 use App\Modules\AiReadiness\SiteAuditResult;
 use App\Modules\Shared\Sectors\Sector;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 /**
  * القصاصة الجاهزة: البند الذي يُصلَح بنصّ معياري ثابت لا يُترك وصفًا.

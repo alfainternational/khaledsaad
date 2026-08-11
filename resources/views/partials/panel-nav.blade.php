@@ -15,6 +15,11 @@
             <span>غرفة العمليات</span>
         </a>
 
+        <a href="{{ route('admin.insights') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.insights') || request()->routeIs('admin.insights.*')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 14 3-4 3 3 5-7"/></svg>
+            <span>إحصاءات الزوّار</span>
+        </a>
+
         <a href="{{ route('admin.usage') }}" @class(['panel__link', 'is-active' => request()->routeIs('admin.usage')])>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
             <span>التكلفة</span>
@@ -92,71 +97,59 @@
         </a>
     </nav>
 @else
+    @php($panelExperience = auth()->user()?->activeExperience() ?? \App\Support\Experience\Experience::BUSINESS)
     <nav class="panel__nav" aria-label="التنقل الرئيسي">
-        <p class="panel__nav-label">لوحة التحكم</p>
-
-        <a href="{{ route('app.dashboard') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.dashboard')])>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>
-            <span>النظرة العامة</span>
-        </a>
-
-        <a href="{{ route('app.learning.marketing.home') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.learning.marketing.*')])>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z"/><path d="m7.5 10 1.2 1.2 2.3-2.7"/></svg>
-            <span>تطبيق الدروس</span>
-        </a>
-
-        <a href="{{ route('app.projects.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.projects.*') || request()->routeIs('app.tasks.*')])>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-            <span>المشاريع</span>
-        </a>
-
-        <a href="{{ route('app.tools.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.tools.*') || request()->routeIs('app.runs.*')])>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-            <span>التشخيصات</span>
-        </a>
-
-        <a href="{{ route('app.consultations.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.consultations.*')])>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 8h8M8 12h5"/></svg>
-            <span>التشخيص الذكي الشامل</span>
-        </a>
-
-        {{--
-            لوحة الوكالة: محفظة الأنشطة كلها في شاشة واحدة. نطاقها مساحة العمل
-            لا مشروعًا، فمكانها التنقّل العام لا شاشة مشروع — وكانت مبنيّة
-            ومنشورة بلا رابط واحد يصلها.
-        --}}
-        @feature(\App\Support\Billing\FeatureKey::REPORTS_AGENCY)
-            <a href="{{ route('app.portfolio') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.portfolio')])>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
-                <span>محفظة العملاء</span>
+        @if ($panelExperience === \App\Support\Experience\Experience::LEARNING)
+            <p class="panel__nav-label">{{ __('التعلم بالتطبيق') }}</p>
+            @foreach ([
+                [__('مساري'), route('app.dashboard'), request()->routeIs('app.dashboard')],
+                [__('الدروس'), route('content.index'), false],
+                [__('تطبيقاتي'), route('app.learning.marketing.home').'#course-lessons', request()->routeIs('app.learning.marketing.*')],
+                [__('تقدمي'), route('app.learning.marketing.home').'#learning-progress', false],
+                [__('المكتبة'), route('content.index'), false],
+            ] as [$label, $url, $active])
+                <a href="{{ $url }}" @class(['panel__link', 'is-active' => $active])>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg>
+                    <span>{{ $label }}</span>
+                </a>
+            @endforeach
+        @else
+            <p class="panel__nav-label">{{ __('تحسين المشروع') }}</p>
+            @foreach ([
+                [__('اليوم'), route('app.dashboard'), request()->routeIs('app.dashboard')],
+                [__('مشاريعي'), route('app.projects.index'), request()->routeIs('app.projects.*') || request()->routeIs('app.tasks.*')],
+                [__('التشخيص'), route('app.tools.index'), request()->routeIs('app.tools.*') || request()->routeIs('app.runs.*')],
+                [__('الخطة والمهام'), route('app.projects.index'), request()->routeIs('app.tasks.*')],
+                [__('التقارير'), route('app.projects.index'), request()->routeIs('app.reports.*')],
+            ] as [$label, $url, $active])
+                <a href="{{ $url }}" @class(['panel__link', 'is-active' => $active])>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg>
+                    <span>{{ $label }}</span>
+                </a>
+            @endforeach
+            <a href="{{ route('app.consultations.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.consultations.*')])>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/></svg>
+                <span>{{ __('ساعدني أختار من أين أبدأ') }}</span>
             </a>
-        @endfeature
+        @endif
 
-        @feature(\App\Support\Billing\FeatureKey::GROWTH_PULSE)
-            <a href="{{ route('app.pulse.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.pulse.*')])>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l3-8 6 16 3-8h4"/></svg>
-                <span>النبض الأسبوعي</span>
+        <p class="panel__nav-label">{{ __('الحساب') }}</p>
+
+        <a href="{{ route('app.experience.choose') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.experience.*')])>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 7h12l-3-3m3 3-3 3M17 17H5l3 3m-3-3 3-3"/></svg>
+            <span>{{ __('تغيير ما أعمل عليه الآن') }}</span>
+        </a>
+
+        @if ($panelExperience === \App\Support\Experience\Experience::BUSINESS)
+            <a href="{{ route('app.billing') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.billing') || request()->routeIs('app.checkout.*')])>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+                <span>{{ __('الاشتراك والفوترة') }}</span>
             </a>
-        @endfeature
-
-        <a href="{{ route('app.notifications.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.notifications.*')])>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-            <span>الإشعارات</span>
-            @if (($panelUnread ?? 0) > 0)
-                <b class="panel__link-count">{{ $panelUnread > 9 ? '9+' : $panelUnread }}</b>
-            @endif
-        </a>
-
-        <p class="panel__nav-label">الحساب</p>
-
-        <a href="{{ route('app.billing') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.billing') || request()->routeIs('app.checkout.*')])>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
-            <span>الأرصدة والاشتراك</span>
-        </a>
+        @endif
 
         <a href="{{ route('app.security') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.security*')])>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6.5V11c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6.5z"/></svg>
-            <span>أمان الحساب</span>
+            <span>{{ __('أمان الحساب') }}</span>
         </a>
     </nav>
 @endif

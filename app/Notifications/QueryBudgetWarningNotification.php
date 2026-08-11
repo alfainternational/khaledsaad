@@ -37,11 +37,11 @@ class QueryBudgetWarningNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('اقتربت من سقف استعلامات هذا الشهر')
-            ->greeting('تنبيه ميزانية')
+            ->subject(__('اقتربت من سقف استعلامات هذا الشهر'))
+            ->greeting(__('تنبيه ميزانية'))
             ->line($this->body())
-            ->line('عند بلوغ السقف يتوقف الاستطلاع والنسخ الصوتي تلقائيًّا حتى بداية الشهر القادم.')
-            ->action('راجع خطتك', route('app.billing'));
+            ->line(__('عند بلوغ السقف يتوقف الاستطلاع والنسخ الصوتي تلقائيًّا حتى بداية الشهر القادم.'))
+            ->action(__('راجع خطتك'), route('app.billing'));
     }
 
     /**
@@ -51,7 +51,7 @@ class QueryBudgetWarningNotification extends Notification
     {
         return [
             'type' => 'query_budget_warning',
-            'title' => 'اقتربت من سقف استعلامات هذا الشهر',
+            'title' => __('اقتربت من سقف استعلامات هذا الشهر'),
             'body' => $this->body(),
             'url' => route('app.billing'),
         ];

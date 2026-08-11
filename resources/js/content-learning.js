@@ -1,3 +1,5 @@
+import { t } from './i18n';
+
 function initLearningArticle() {
     const article = document.querySelector('[data-learning-article]');
 
@@ -55,9 +57,9 @@ function initLearningArticle() {
                 section: activeSectionId || null,
                 updated_at: new Date().toISOString(),
             }));
-            if (announceSave) announce(`حُفظ تقدّمك عند ${maxPercent}%`);
+            if (announceSave) announce(t('حُفظ تقدّمك عند :percent%', { percent: maxPercent }));
         } catch {
-            if (announceSave) announce('تعذر حفظ التقدم في هذا المتصفح');
+            if (announceSave) announce(t('تعذر حفظ التقدم في هذا المتصفح'));
         }
     };
 
@@ -68,13 +70,13 @@ function initLearningArticle() {
         sectionUrl.hash = activeSectionId ? `#${activeSectionId}` : '';
         try {
             await navigator.clipboard.writeText(sectionUrl.toString());
-            announce('نُسخ رابط موضع القراءة');
+            announce(t('نُسخ رابط موضع القراءة'));
         } catch {
-            window.prompt('انسخ رابط موضع القراءة:', sectionUrl.toString());
+            window.prompt(t('انسخ رابط موضع القراءة:'), sectionUrl.toString());
         }
     });
     renderProgress(maxPercent);
-    if (savedPercent > 0) announce(`تقدّمك المحفوظ: ${savedPercent}%`);
+    if (savedPercent > 0) announce(t('تقدّمك المحفوظ: :percent%', { percent: savedPercent }));
 
     let ticking = false;
     window.addEventListener('scroll', () => {

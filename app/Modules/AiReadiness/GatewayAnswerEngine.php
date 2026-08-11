@@ -46,6 +46,14 @@ class GatewayAnswerEngine implements AnswerEngine
             tier: 'economy',
             temperature: self::TEMPERATURE,
             stage: 'answer_presence',
+            /*
+             * القياس لا لغة له تُملى عليه. السؤال يُطرح بلسان مشترٍ عربي
+             * لأنه يقيس الظهور في السوق العربي؛ ترجمته إلى لغة الواجهة
+             * تقيس سؤالًا آخر وتخالف §٤.٢. مُعلَن هنا رغم أن هذا المسار
+             * يتجاوز `StructuredRunner` أصلًا — كي لا يصير نقلُه إليه
+             * لاحقًا كسرًا صامتًا للقياس.
+             */
+            localeNeutral: true,
         ));
 
         return [

@@ -84,7 +84,7 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -100,7 +100,7 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -696,10 +696,7 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
                 ),
               ),
             ),
-            if (field.isKnown) ...[
-              const SizedBox(width: 8),
-              _knownBadge(),
-            ],
+            if (field.isKnown) ...[const SizedBox(width: 8), _knownBadge()],
           ],
         ),
         // إعلان المصدر صراحةً: الإجابة موروثة لا مكتوبة الآن، وقابلة للتعديل.
@@ -727,10 +724,7 @@ class _RunWizardScreenState extends State<RunWizardScreen> {
           const SizedBox(height: 8),
           _fitnessHint(_fitness[field.key]!),
         ],
-        if (!widget.guest) ...[
-          const SizedBox(height: 8),
-          _assistPanel(field),
-        ],
+        if (!widget.guest) ...[const SizedBox(height: 8), _assistPanel(field)],
         if (field.why != null && field.why!.isNotEmpty) ...[
           const SizedBox(height: 8),
           QuestionReason(field.why!),

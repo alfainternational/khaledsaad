@@ -25,7 +25,7 @@ class PersonaName
         $name = trim((string) $name);
 
         if ($name === '') {
-            return 'شخصية';
+            return __('شخصية');
         }
 
         $parts = preg_split('/\s+/u', $name) ?: [$name];

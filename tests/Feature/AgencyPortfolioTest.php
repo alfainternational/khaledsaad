@@ -18,6 +18,7 @@ use App\Support\Billing\FeatureKey;
 use Database\Seeders\FeatureSeeder;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -113,6 +114,21 @@ class AgencyPortfolioTest extends TestCase
             ->assertOk()
             ->assertSee('محفظة الأنشطة')
             ->assertSee('عميل');
+    }
+
+    #[Test]
+    public function the_mobile_api_exposes_the_same_portfolio_as_the_web_service(): void
+    {
+        $user = $this->agencyUser();
+        $this->measuredProject($user, 'عميل مقيس', axes: 1);
+        $this->projectFor($user, 'عميل بلا قياس');
+        $expected = app(AgencyPortfolio::class)->for($user->primaryWorkspace());
+
+        Sanctum::actingAs($user);
+
+        $this->getJson(route('api.v1.portfolio'))
+            ->assertOk()
+            ->assertExactJson(['data' => $expected]);
     }
 
     private function measuredProject(User $user, string $name, int $axes): Project

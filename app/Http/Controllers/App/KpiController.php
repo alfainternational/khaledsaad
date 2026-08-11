@@ -27,7 +27,7 @@ class KpiController extends Controller
 
         $project->kpis()->create($data + ['frequency' => $data['frequency'] ?? 'monthly']);
 
-        return back()->with('status', 'أُضيف المؤشر. سجّل أول قراءة لتبدأ المقارنة.');
+        return back()->with('status', __('أُضيف المؤشر. سجّل أول قراءة لتبدأ المقارنة.'));
     }
 
     public function record(Request $request, Kpi $kpi): RedirectResponse
@@ -44,6 +44,6 @@ class KpiController extends Controller
             'recorded_at' => $data['recorded_at'] ?? now()->toDateString(),
         ]);
 
-        return back()->with('status', 'سُجلت القراءة.');
+        return back()->with('status', __('سُجلت القراءة.'));
     }
 }

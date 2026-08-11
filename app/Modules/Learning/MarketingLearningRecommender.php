@@ -79,6 +79,20 @@ class MarketingLearningRecommender
             ];
         }
 
+        if ($run->project === null) {
+            $next = collect($this->catalog->exercises())
+                ->reject(fn (array $exercise) => in_array($exercise['key'], $completed, true))
+                ->sortBy([['lesson_number', 'asc'], ['duration_minutes', 'asc']])
+                ->first();
+
+            return [
+                'exercise' => $next,
+                'reason' => $next === null
+                    ? 'أكملت جميع المهام. راجع نتائجك واختر ما تريد تحسينه.'
+                    : 'ابدأ بهذه المهمة مباشرة. لا تحتاج إلى إنشاء مشروع، وستُبنى التوصية التالية على إجاباتك المحفوظة.',
+            ];
+        }
+
         foreach (self::PRIORITIES as $brainKey => $priority) {
             if ($this->brain->fact($run->project, $brainKey) !== null) {
                 continue;
@@ -134,6 +148,10 @@ class MarketingLearningRecommender
     /** @param array<string, mixed> $exercise */
     private function eligible(MarketingLearningRun $run, array $exercise): bool
     {
+        if ($run->project === null) {
+            return true;
+        }
+
         return collect($exercise['brain_dependencies'] ?? [])
             ->every(fn (string $key) => $this->brain->fact($run->project, $key) !== null);
     }

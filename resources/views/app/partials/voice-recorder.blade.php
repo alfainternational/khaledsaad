@@ -112,7 +112,7 @@
                     function reset() {
                         clearTimeout(stopTimer);
                         clearInterval(tickTimer);
-                        label.textContent = 'سجّل إجابتك صوتيًّا';
+                        label.textContent = @js(__('سجّل إجابتك صوتيًّا'));
                     }
 
                     async function start() {
@@ -135,8 +135,8 @@
                             };
 
                             recorder.start();
-                            label.textContent = 'أوقف التسجيل';
-                            say('يسجّل الآن…');
+                            label.textContent = @js(__('أوقف التسجيل'));
+                            say(@js(__('يسجّل الآن…')));
 
                             /*
                              * السقف يُطبَّق هنا لا عند الخادم وحده: تسجيل ست
@@ -145,7 +145,7 @@
                              */
                             stopTimer = setTimeout(function () {
                                 if (recorder && recorder.state === 'recording') {
-                                    say('بلغ التسجيل الحد الأقصى، ويُنسَخ الآن.');
+                                    say(@js(__('بلغ التسجيل الحد الأقصى، ويُنسَخ الآن.')));
                                     recorder.stop();
                                     reset();
                                 }
@@ -155,11 +155,11 @@
                                 if (!recorder || recorder.state !== 'recording') return;
 
                                 var left = maxSeconds - Math.round((Date.now() - startedAt) / 1000);
-                                say('يسجّل الآن… بقي ' + Math.max(0, left) + ' ثانية');
+                                say(@js(__('يسجّل الآن… بقي :seconds ثانية')).replace(':seconds', Math.max(0, left)));
                             }, 1000);
                         } catch (error) {
                             reset();
-                            say('تعذّر الوصول إلى الميكروفون. اكتب إجابتك بدلًا من ذلك.');
+                            say(@js(__('تعذّر الوصول إلى الميكروفون. اكتب إجابتك بدلًا من ذلك.')));
                         }
                     }
 
@@ -174,11 +174,11 @@
                         // زرٌّ حيٌّ أثناء الرفع يعني تسجيلين متزامنين وحجزين على السقف.
                         busy = true;
                         toggle.disabled = true;
-                        say('يُنسَخ التسجيل…');
+                        say(@js(__('يُنسَخ التسجيل…')));
 
                         try {
                             if (!csrf) {
-                                say('تعذّر نسخ التسجيل. حدّث الصفحة وحاول مرة أخرى.');
+                                say(@js(__('تعذّر نسخ التسجيل. حدّث الصفحة وحاول مرة أخرى.')));
 
                                 return;
                             }
@@ -196,7 +196,7 @@
 
                             if (!response.ok) {
                                 // رسالة السقف تُعرض بنصّها: هي إرشاد بميزانية لا عطل.
-                                say(payload.message || 'تعذّر نسخ التسجيل.');
+                                say(payload.message || @js(__('تعذّر نسخ التسجيل.')));
 
                                 return;
                             }
@@ -207,7 +207,7 @@
                                     : payload.data.text;
                                 field.dispatchEvent(new Event('input', { bubbles: true }));
                                 field.focus();
-                                say('راجع النص قبل الإرسال — النسخ قد يخطئ في الأسماء والأرقام.');
+                                say(@js(__('راجع النص قبل الإرسال — النسخ قد يخطئ في الأسماء والأرقام.')));
 
                                 return;
                             }
@@ -216,9 +216,9 @@
                              * لا خانة لهذا المسجّل: نص لا يُعرض ولا يُحفظ خسارةٌ
                              * صامتة دفع المستخدم ثمنها. يُقال له صريحًا.
                              */
-                            say('نُسخ التسجيل لكن تعذّر إيجاد خانة الإجابة: ' + payload.data.text);
+                            say(@js(__('نُسخ التسجيل لكن تعذّر إيجاد خانة الإجابة: :text')).replace(':text', payload.data.text));
                         } catch (error) {
-                            say('تعذّر نسخ التسجيل. حاول مرة أخرى أو اكتب إجابتك.');
+                            say(@js(__('تعذّر نسخ التسجيل. حاول مرة أخرى أو اكتب إجابتك.')));
                         } finally {
                             busy = false;
                             toggle.disabled = false;

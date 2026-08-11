@@ -30,7 +30,7 @@ class PasswordResetController extends Controller
         Password::sendResetLink($request->only('email'));
 
         // لا نكشف إن كان البريد مسجلًا أم لا: الرسالة واحدة في الحالتين.
-        return back()->with('status', 'إذا كان البريد مسجلًا، فستصلك رسالة تحتوي على رابط لتغيير كلمة المرور. تفقّد صندوق الوارد خلال دقائق.');
+        return back()->with('status', __('إذا كان البريد مسجلًا، فستصلك رسالة تحتوي على رابط لتغيير كلمة المرور. تفقّد صندوق الوارد خلال دقائق.'));
     }
 
     public function edit(Request $request, string $token): View
@@ -62,9 +62,9 @@ class PasswordResetController extends Controller
         );
 
         if ($status !== Password::PASSWORD_RESET) {
-            return back()->withErrors(['email' => 'الرابط انتهت صلاحيته أو استُخدم من قبل. اطلب رابطًا جديدًا.']);
+            return back()->withErrors(['email' => __('الرابط انتهت صلاحيته أو استُخدم من قبل. اطلب رابطًا جديدًا.')]);
         }
 
-        return redirect()->route('login')->with('status', 'تغيّرت كلمة المرور. يمكنك تسجيل الدخول الآن.');
+        return redirect()->route('login')->with('status', __('تغيّرت كلمة المرور. يمكنك تسجيل الدخول الآن.'));
     }
 }

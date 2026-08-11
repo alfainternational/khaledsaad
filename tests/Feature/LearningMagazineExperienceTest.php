@@ -38,7 +38,7 @@ class LearningMagazineExperienceTest extends TestCase
         $this->assertStringContainsString('الدرس 1', $html);
         $this->assertStringContainsString('الدرس 20', $html);
         $this->assertLessThan(
-            strpos($html, 'ورشة عمل تطبيقية'),
+            strpos($html, 'معرض الدروس والتطبيقات'),
             strpos($html, 'قبل ما تفكر في الحملة الجاية'),
         );
     }

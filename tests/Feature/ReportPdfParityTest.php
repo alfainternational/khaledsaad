@@ -100,11 +100,20 @@ class ReportPdfParityTest extends TestCase
     #[Test]
     public function the_printed_report_uses_the_same_font_file_as_the_website(): void
     {
-        // خط الموقع معرّف في partials/font.blade.php ويشير إلى هذا الملف نفسه.
+        /*
+         * خط الموقع معرّف في partials/font.blade.php. العائلة واحدة على
+         * السطحين، والصيغة تختلف بحكم الأداة: الويب WOFF2 (أخفّ بنحو ٦٠٪)،
+         * وmPDF لا يقرأ إلا TTF. المشترك المحروس هنا هو **العائلة والوزنان**،
+         * لا اسم الملف — فمخرج مطبوع بهرمية مختلفة عن الشاشة يكسر التطابق
+         * حتى لو حمل الاسم نفسه.
+         */
         $webFont = file_get_contents(resource_path('views/partials/font.blade.php'));
-        $this->assertStringContainsString('Hacen-Tunisia.ttf', $webFont);
+        $this->assertStringContainsString('IBM Plex Sans Arabic', $webFont);
+        $this->assertStringContainsString('plex-ar-400.woff2', $webFont);
+        $this->assertStringContainsString('plex-ar-700.woff2', $webFont);
 
-        $this->assertFileExists(public_path('assets/fonts/Hacen-Tunisia.ttf'));
+        $this->assertFileExists(public_path('assets/fonts/IBMPlexSansArabic-Regular.ttf'));
+        $this->assertFileExists(public_path('assets/fonts/IBMPlexSansArabic-Bold.ttf'));
 
         /*
          * الإعداد في محرك واحد مشترك لا في كل مولّد.
@@ -114,9 +123,11 @@ class ReportPdfParityTest extends TestCase
          * ويتحقق أن أحدًا لم يعد يبني نسخته الخاصة.
          */
         $engine = file_get_contents(app_path('Modules/Reporting/ArabicPdfEngine.php'));
-        $this->assertStringContainsString("'R' => 'Hacen-Tunisia.ttf'", $engine);
+        $this->assertStringContainsString("'R' => 'IBMPlexSansArabic-Regular.ttf'", $engine);
+        // الوزن العريض ملف مستقل لا عريض صناعي: بدونه يعود العنوان بسُمك النص
+        $this->assertStringContainsString("'B' => 'IBMPlexSansArabic-Bold.ttf'", $engine);
         $this->assertStringContainsString("'autoLangToFont' => false", $engine);
-        $this->assertStringContainsString("'default_font' => 'hacentunisia'", $engine);
+        $this->assertStringContainsString("'default_font' => 'plexarabic'", $engine);
 
         foreach (glob(app_path('Modules/Reporting/*PdfGenerator.php')) ?: [] as $generator) {
             $this->assertStringNotContainsString(

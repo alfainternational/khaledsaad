@@ -225,7 +225,7 @@ class AudienceSpecificAgencyReportsTest extends TestCase
             ->assertOk()
             ->assertSee('المشروع في سطور واضحة')
             ->assertSee('خط الأساس')
-            ->assertSee('الهدف الذي سنعمل عليه')
+            ->assertSee('الهدف المتفق عليه')
             ->assertSee('النطاق المطلوب')
             ->assertSee('الأصول والوصول')
             ->assertSee('آلية العمل')

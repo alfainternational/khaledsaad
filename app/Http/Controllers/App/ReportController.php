@@ -89,14 +89,14 @@ class ReportController extends Controller
         if ($recommendationId > 0) {
             $recommendation = Recommendation::where('report_id', $report->id)->findOrFail($recommendationId);
             $this->runs->convertRecommendation($recommendation, $request->user());
-            $message = 'أُضيفت التوصية إلى قائمة مهامك.';
+            $message = __('أُضيفت التوصية إلى قائمة مهامك.');
         } elseif ($request->input('scope') === 'all') {
             // «الكل» يعني الكل: من قرّر تنفيذ تقريره كاملًا لا يُجزَّأ عليه.
             $tasks = $this->runs->convertAllRecommendations($report, $request->user());
-            $message = count($tasks).' توصية أصبحت مهامًا مرتّبة بالأولوية ومعها خطواتها.';
+            $message = __(':count توصية أصبحت مهامًا مرتّبة بالأولوية ومعها خطواتها.', ['count' => count($tasks)]);
         } else {
             $tasks = $this->runs->convertTopRecommendations($report, $request->user());
-            $message = count($tasks).' توصيات أصبحت مهامًا بمواعيد نهائية.';
+            $message = __(':count توصيات أصبحت مهامًا بمواعيد نهائية.', ['count' => count($tasks)]);
         }
 
         return redirect()->route('app.projects.tasks', $report->project)->with('status', $message);
@@ -114,7 +114,7 @@ class ReportController extends Controller
 
         if (! app(Entitlements::class)->allows($workspace, FeatureKey::REPORTS_PDF)) {
             return redirect()->route('app.billing')
-                ->withErrors(['feature' => 'تصدير PDF غير متاح في خطتك الحالية.']);
+                ->withErrors(['feature' => __('تصدير PDF غير متاح في خطتك الحالية.')]);
         }
 
         return $this->pdf->download($report);

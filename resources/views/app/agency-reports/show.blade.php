@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('interface_family', 'reports')
 @section('layout', 'report')
 
 @section('title', $agencyReport->title)
@@ -55,7 +56,7 @@
         <section class="card card--warn">
             <h2 class="section-title">لديك معلومات أحدث من هذا التقرير</h2>
             <ul class="bullets">@foreach ($freshness['reasons'] as $reason)<li>{{ $reason }}</li>@endforeach</ul>
-            <p>سنحتفظ بهذه النسخة، وننشئ لك نسخة جديدة بالمعلومات الحالية.</p>
+            <p>تبقى هذه النسخة محفوظة، وتُنشأ نسخة جديدة بالمعلومات الحالية.</p>
             <form method="POST" action="{{ route('app.projects.agency-reports.store', $agencyReport->project) }}">
                 @csrf
                 @foreach (($agencyReport->visibility ?? []) as $key => $value)

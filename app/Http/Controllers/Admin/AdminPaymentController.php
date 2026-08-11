@@ -55,7 +55,7 @@ class AdminPaymentController extends Controller
     public function approve(Request $request, Payment $payment): RedirectResponse
     {
         if (! $payment->awaitsApproval()) {
-            return back()->withErrors(['payment' => 'هذه الدفعة ليست بانتظار اعتماد يدوي.']);
+            return back()->withErrors(['payment' => __('هذه الدفعة ليست بانتظار اعتماد يدوي.')]);
         }
 
         $this->checkout->approveManually($payment, $request->user());

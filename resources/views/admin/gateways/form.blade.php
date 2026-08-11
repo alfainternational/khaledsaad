@@ -94,7 +94,7 @@
 
         <label class="field">
             <span class="field__label">تعليمات الدفع (تظهر للعميل)</span>
-            <textarea name="instructions" rows="3" placeholder="بيانات الحساب البنكي أو ملاحظة للعميل">{{ old('instructions', $gateway->instructions) }}</textarea>
+            <textarea name="instructions" rows="3" placeholder="{{ __('بيانات الحساب البنكي أو ملاحظة للعميل') }}">{{ old('instructions', $gateway->instructions) }}</textarea>
         </label>
 
         <button type="submit" class="btn btn--primary">{{ $gateway->exists ? 'حفظ' : 'إنشاء وحفظ بيانات الربط' }}</button>

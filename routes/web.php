@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminCreditPackController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminFeatureController;
 use App\Http\Controllers\Admin\AdminGatewayController;
+use App\Http\Controllers\Admin\AdminInsightsController;
 use App\Http\Controllers\Admin\AdminManualReportController;
 use App\Http\Controllers\Admin\AdminPaymentController;
 use App\Http\Controllers\Admin\AdminPlanController;
@@ -26,10 +27,12 @@ use App\Http\Controllers\App\CheckoutController;
 use App\Http\Controllers\App\CompetitorController;
 use App\Http\Controllers\App\ConsultationController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\ExperienceController;
 use App\Http\Controllers\App\FeedbackController;
 use App\Http\Controllers\App\GeoPackController;
 use App\Http\Controllers\App\KpiController;
-use App\Http\Controllers\App\MarketingLearningController;
+use App\Http\Controllers\App\MarketingCourseController;
+use App\Http\Controllers\App\LegacyMarketingLearningController;
 use App\Http\Controllers\App\MessageStudioController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\PortfolioController;
@@ -51,6 +54,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Site\ContentLibraryController;
+use App\Http\Controllers\InsightsCollectorController;
 use App\Http\Controllers\Site\ContentMediaController;
 use App\Http\Controllers\Site\ContentResourceController;
 use App\Http\Controllers\Site\ContentSubscriptionController;
@@ -73,6 +77,17 @@ use App\Models\Tool;
 use App\Modules\Shared\Sectors\Sector;
 use App\Support\Billing\FeatureKey;
 use Illuminate\Support\Facades\Route;
+
+/*
+ * نقطة جمع الإحصاءات — الطبقة الثانية بعد التقاط الخادم.
+ *
+ * السقف مرتفع عمدًا (١٢٠ في الدقيقة): نبضة كل خمس عشرة ثوان من عدة
+ * تبويبات مفتوحة تصل بسرعة إلى عشرات الطلبات، وسقفٌ ضيّق هنا يقطع
+ * قياس الزمن عن أطول الجلسات — أي عن أهمّ الزوّار تحديدًا.
+ */
+Route::post('_insights/collect', InsightsCollectorController::class)
+    ->middleware('throttle:120,1')
+    ->name('insights.collect');
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('profile', [PublicPageController::class, 'profile'])->name('profile');
@@ -101,8 +116,20 @@ Route::get('llms.txt', function () {
         ->orderBy('learning_order')
         ->get();
 
+    /*
+     * القطاعات في الملف لا في الشيفرة: `llms.txt` يصف ما تفعله المنصة
+     * لنموذج لغوي، والتخصص أهم ما يميّزها. قائمة يدوية هنا تنجرف عن
+     * `Sector::SPECIALIZED` بلا أن يلاحظ أحد.
+     */
+    $sectors = collect(\App\Modules\Shared\Sectors\Sector::SPECIALIZED)
+        ->map(fn (string $sector): array => [
+            'label' => \App\Modules\Shared\Sectors\Sector::label($sector),
+            'url' => route('sectors.show', $sector),
+        ])
+        ->all();
+
     return response()
-        ->view('site.content.llms', compact('lessons'))
+        ->view('site.content.llms', compact('lessons', 'sectors'))
         ->header('Content-Type', 'text/plain; charset=UTF-8');
 })->name('llms');
 
@@ -120,7 +147,7 @@ Route::get('sectors/{sector}', [SectorLandingController::class, 'show'])
 // لا من قائمة يدوية تنجرف. كاش ساعة لأنها لا تتغير إلا ببذر أو إصدار.
 Route::get('sitemap.xml', function () {
     $xml = cache()->remember('sitemap.xml', now()->addHour(), function (): string {
-        $urls = collect([
+        $sitemapUrls = collect([
             ['loc' => route('home'), 'priority' => '1.0'],
             ['loc' => route('profile'), 'priority' => '0.9'],
             ['loc' => route('services'), 'priority' => '0.9'],
@@ -155,13 +182,45 @@ Route::get('sitemap.xml', function () {
                 ]),
         );
 
-        $entries = $urls->map(function (array $url): string {
+        /*
+         * كل رابط يُعلن نسخه بكل لغة داخل عنصره.
+         *
+         * `hreflang` في الصفحة يخبر جوجل بالبدائل بعد أن يزورها. وإعلانها
+         * في الخريطة يخبره **قبل** أن يزور أيًّا منها، فيكتشف النسخ الأخرى
+         * ولا ينتظر أن يعثر عليها بالزحف. وبلا هذا تبقى الإنجليزية
+         * والفرنسية معلومتين للزائر ومجهولتين للفهرس.
+         *
+         * الشرط الذي يُسقط القيمة كلها إن اختلّ: كل رابط بديل هنا يجب أن
+         * يطابق `canonical` تلك الصفحة حرفيًّا — ولذلك يُبنى الاثنان من
+         * `LocaleUrls` نفسه.
+         */
+        $urls = app(\App\Modules\Shared\I18n\LocaleUrls::class);
+        $locales = app(\App\Modules\Shared\I18n\LocaleRegistry::class);
+        $enabled = $locales->enabled();
+
+        $entries = $sitemapUrls->map(function (array $url) use ($urls, $locales, $enabled): string {
             $lastmod = isset($url['lastmod']) && $url['lastmod'] ? "<lastmod>{$url['lastmod']}</lastmod>" : '';
 
-            return "<url><loc>{$url['loc']}</loc>{$lastmod}<priority>{$url['priority']}</priority></url>";
+            $alternates = '';
+
+            if (count($enabled) > 1) {
+                foreach ($enabled as $code) {
+                    $href = htmlspecialchars($urls->absolute($url['loc'], $code), ENT_XML1);
+                    $alternates .= '<xhtml:link rel="alternate" hreflang="'.$locales->htmlLang($code).'" href="'.$href.'"/>';
+                }
+
+                $default = htmlspecialchars($urls->absolute($url['loc'], $locales->source()), ENT_XML1);
+                $alternates .= '<xhtml:link rel="alternate" hreflang="x-default" href="'.$default.'"/>';
+            }
+
+            $loc = htmlspecialchars($url['loc'], ENT_XML1);
+
+            return "<url><loc>{$loc}</loc>{$lastmod}<priority>{$url['priority']}</priority>{$alternates}</url>";
         })->implode('');
 
-        return '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'.$entries.'</urlset>';
+        return '<?xml version="1.0" encoding="UTF-8"?>'
+            .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
+            .$entries.'</urlset>';
     });
 
     return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
@@ -215,21 +274,33 @@ Route::middleware('guest')->group(function (): void {
 Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware('auth')->name('logout');
 
-Route::middleware('auth')->prefix('app')->name('app.')->group(function (): void {
+Route::middleware(['auth', 'experience-access'])->prefix('app')->name('app.')->group(function (): void {
+    Route::get('experience', [ExperienceController::class, 'choose'])->name('experience.choose');
+    Route::post('experience', [ExperienceController::class, 'select'])->name('experience.select');
+    Route::get('experience/{experience}/activate', [ExperienceController::class, 'activation'])->name('experience.activate');
+    Route::post('experience/{experience}/activate', [ExperienceController::class, 'enable'])->name('experience.enable');
+    Route::post('experience/{experience}/switch', [ExperienceController::class, 'switch'])->name('experience.switch');
+
     Route::get('/', DashboardController::class)->name('dashboard');
 
-    Route::get('learn/marketing', [MarketingLearningController::class, 'home'])->name('learning.marketing.home');
+    Route::get('learn/marketing', [MarketingCourseController::class, 'index'])->name('learning.marketing.home');
+    Route::get('learn/marketing/{exercise}', [MarketingCourseController::class, 'exercise'])->name('learning.marketing.course.exercise');
+    Route::put('learn/marketing/{exercise}', [MarketingCourseController::class, 'save'])->name('learning.marketing.course.save');
+    Route::post('learn/marketing/{exercise}/review', [MarketingCourseController::class, 'submit'])->middleware('throttle:20,60')->name('learning.marketing.course.submit');
+    Route::get('learn/marketing/{exercise}/result', [MarketingCourseController::class, 'result'])->name('learning.marketing.course.result');
+    Route::post('learn/marketing/{exercise}/retry', [MarketingCourseController::class, 'retry'])->middleware('throttle:10,60')->name('learning.marketing.course.retry');
+    Route::post('learn/marketing/{exercise}/questions/{question}/assist', [MarketingCourseController::class, 'assist'])->middleware('throttle:10,1')->name('learning.marketing.course.assist');
 
     Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
-    Route::get('projects/{project}/learn/marketing', [MarketingLearningController::class, 'index'])->name('learning.marketing.index');
-    Route::get('projects/{project}/learn/marketing/{exercise}', [MarketingLearningController::class, 'exercise'])->name('learning.marketing.exercise');
-    Route::put('projects/{project}/learn/marketing/{exercise}', [MarketingLearningController::class, 'save'])->name('learning.marketing.save');
-    Route::post('projects/{project}/learn/marketing/{exercise}/review', [MarketingLearningController::class, 'submit'])->middleware('throttle:20,60')->name('learning.marketing.submit');
-    Route::get('projects/{project}/learn/marketing/{exercise}/result', [MarketingLearningController::class, 'result'])->name('learning.marketing.result');
-    Route::post('projects/{project}/learn/marketing/{exercise}/retry', [MarketingLearningController::class, 'retry'])->middleware('throttle:10,60')->name('learning.marketing.retry');
+    Route::get('projects/{project}/learn/marketing', [LegacyMarketingLearningController::class, 'index'])->name('learning.marketing.index');
+    Route::get('projects/{project}/learn/marketing/{exercise}', [LegacyMarketingLearningController::class, 'exercise'])->name('learning.marketing.exercise');
+    Route::put('projects/{project}/learn/marketing/{exercise}', [LegacyMarketingLearningController::class, 'save'])->name('learning.marketing.save');
+    Route::post('projects/{project}/learn/marketing/{exercise}/review', [LegacyMarketingLearningController::class, 'submit'])->middleware('throttle:20,60')->name('learning.marketing.submit');
+    Route::get('projects/{project}/learn/marketing/{exercise}/result', [LegacyMarketingLearningController::class, 'result'])->name('learning.marketing.result');
+    Route::post('projects/{project}/learn/marketing/{exercise}/retry', [LegacyMarketingLearningController::class, 'retry'])->middleware('throttle:10,60')->name('learning.marketing.retry');
     Route::get('projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::post('projects/{project}/consultations', [ConsultationController::class, 'start'])->name('consultations.start');
@@ -448,6 +519,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('content-subscribers/{subscriber}/status', [AdminContentSubscriberController::class, 'updateStatus'])->name('content-subscribers.status');
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('usage', UsageController::class)->name('usage');
+
+    /*
+     * إحصاءات الزوّار: مصدرها هذا الخادم وحده، بلا سكربت خارجي.
+     * الترتيب مقصود — `live` و`export` قبل `{visitor}` وإلا ابتلعهما
+     * المُعامل الحرّ وصارا «زائرًا اسمه live».
+     */
+    Route::get('insights', [AdminInsightsController::class, 'index'])->name('insights');
+    Route::get('insights/live', [AdminInsightsController::class, 'live'])->name('insights.live');
+    Route::get('insights/export', [AdminInsightsController::class, 'export'])->name('insights.export');
+    Route::get('insights/visitors', [AdminInsightsController::class, 'visitors'])->name('insights.visitors');
+    Route::get('insights/visitors/{visitor}', [AdminInsightsController::class, 'visitor'])->name('insights.visitor');
+    Route::get('insights/sessions/{session}', [AdminInsightsController::class, 'session'])->name('insights.session');
     Route::get('content-media', [AdminContentMediaController::class, 'index'])->name('content-media.index');
     Route::delete('content-media/{media}', [AdminContentMediaController::class, 'destroy'])->name('content-media.destroy');
     Route::post('content/media', [AdminContentMediaController::class, 'store'])->name('content.media.store');
@@ -461,6 +544,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('content/{course}/curriculum/sections/{section}/items/{item}', [AdminCourseCurriculumController::class, 'destroyItem'])->name('content.sections.items.destroy');
     Route::patch('content/{content}/archive', [AdminContentController::class, 'archive'])->name('content.archive');
     Route::patch('content/{content}/restore', [AdminContentController::class, 'restore'])->name('content.restore');
+    Route::post('content/{content}/learning-update', [AdminContentController::class, 'draftLearningUpdate'])->name('content.learning-update');
 
     Route::get('consultations', [AdminConsultationController::class, 'index'])->name('consultations.index');
     Route::get('consultations/versions/{version}', [AdminConsultationController::class, 'show'])->name('consultations.show');

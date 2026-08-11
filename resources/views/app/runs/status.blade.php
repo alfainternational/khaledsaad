@@ -10,7 +10,7 @@
             <h1 id="run-status-title">{{ $run['status_label'] }}</h1>
             <p class="muted">
                 إجاباتك محفوظة. يمكنك إغلاق الصفحة الآن —
-                ستجد هذا التحليل في قسم «أكمل ما بدأته» داخل لوحة التحكم، وسنرسل إشعارًا عند اكتماله.
+                ستجد هذا التحليل في قسم «أكمل ما بدأته» داخل لوحة التحكم، ويصلك إشعار عند اكتماله.
             </p>
         </div>
 
@@ -65,10 +65,10 @@
             if (!container || container.dataset.terminal === '1') return;
 
             const labels = {
-                pending: 'بانتظار الدور',
-                running: 'جارية',
-                completed: 'اكتملت',
-                failed: 'تعذرت',
+                pending: @js(__('بانتظار الدور')),
+                running: @js(__('جارية')),
+                completed: @js(__('اكتملت')),
+                failed: @js(__('تعذرت')),
             };
 
             const poll = async () => {

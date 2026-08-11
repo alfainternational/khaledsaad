@@ -7,6 +7,9 @@
         <div class="footer-brand">
             <x-brand-logo light />
             <p>{{ $brand['tagline'] }}</p>
+            {{-- المكان يُذكر بصيغة شخص يعمل من مدينة، لا بصيغة «مقر» مؤسسة.
+                 موضعه هنا تحت الاسم لا في عمود مستقل بعنوان إداري. --}}
+            <p class="footer-brand__where">أعمل من {{ $brand['location_short'] }}، وأتعامل مع عملائي عن بُعد.</p>
         </div>
         <div class="footer-links">
             <div>
@@ -20,7 +23,7 @@
             </div>
             <div>
                 {{-- كل قطاع برابطه: صفحة لا يصلها رابط لا تُفهرس ولا تُزار. --}}
-                <strong>قطاعاتنا</strong>
+                <strong>القطاعات</strong>
                 @foreach (\App\Modules\Shared\Sectors\Sector::SPECIALIZED as $sectorKey)
                     <a href="{{ route('sectors.show', $sectorKey) }}">{{ \App\Modules\Shared\Sectors\Sector::label($sectorKey) }}</a>
                 @endforeach
@@ -46,9 +49,10 @@
                 <a href="{{ $brand['contact']['x'] }}" target="_blank" rel="noopener noreferrer">X / Twitter</a>
             </div>
             <div>
-                {{-- «الموقع» كانت تُقرأ «موقع الويب» والعمود يحمل مدينة وسياستين. --}}
-                <strong>المقر والسياسات</strong>
-                <span>{{ $brand['location'] }}</span>
+                {{-- كان العنوان «المقر والسياسات» ويحمل مدينةً وسياستين: كلمة
+                     «المقر» وحدها توحي بمكتب شركة. المكان انتقل إلى سطر شخصي
+                     تحت الاسم، وبقي هنا ما هو سياسات فعلًا. --}}
+                <strong>الخصوصية والشروط</strong>
                 <a href="{{ route('privacy') }}">معلوماتك وخصوصيتك</a>
                 <a href="{{ route('terms') }}">شروط الاستخدام</a>
             </div>
@@ -56,7 +60,7 @@
     </div>
     <div class="container footer-bottom">
         <span>© {{ date('Y') }} خالد سعد. جميع الحقوق محفوظة.</span>
-        {{-- شعار مجرّد بلا معنى قابل للتحقّق، استُبدل بوصف ما نفعله فعلًا. --}}
-        <span>نقيس نشاطك، ونعرض الفجوات ومعها دليلها.</span>
+        {{-- شعار مجرّد بلا معنى قابل للتحقّق، استُبدل بوصف ما أفعله فعلًا. --}}
+        <span>أقيس نشاطك، وأعرض الفجوات ومعها دليلها.</span>
     </div>
 </footer>

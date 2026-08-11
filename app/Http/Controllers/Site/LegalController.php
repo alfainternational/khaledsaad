@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\I18n\TranslatedConfig;
 use Illuminate\View\View;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -17,7 +18,7 @@ class LegalController extends Controller
         }
 
         return view('site.legal', [
-            'brand' => config('brand'),
+            'brand' => TranslatedConfig::get('brand'),
             'page' => $content,
         ]);
     }

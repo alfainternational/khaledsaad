@@ -36,7 +36,7 @@ class AdminPlanController extends Controller
         $this->syncFeatures($request, $plan);
 
         return redirect()->route('admin.plans.edit', $plan)
-            ->with('status', 'أُنشئت الخطة. راجع عناصر ميزاتها.');
+            ->with('status', __('أُنشئت الخطة. راجع عناصر ميزاتها.'));
     }
 
     public function edit(Plan $plan): View
@@ -53,18 +53,18 @@ class AdminPlanController extends Controller
         $plan->update($this->validated($request, $plan));
         $this->syncFeatures($request, $plan);
 
-        return redirect()->route('admin.plans.index')->with('status', 'حُدّثت الخطة وعناصر ميزاتها.');
+        return redirect()->route('admin.plans.index')->with('status', __('حُدّثت الخطة وعناصر ميزاتها.'));
     }
 
     public function destroy(Plan $plan): RedirectResponse
     {
         if ($plan->subscriptions()->exists()) {
-            return back()->withErrors(['plan' => 'لا يمكن حذف خطة مشترك بها أحد. أخفِها بدل الحذف.']);
+            return back()->withErrors(['plan' => __('لا يمكن حذف خطة مشترك بها أحد. أخفِها بدل الحذف.')]);
         }
 
         $plan->delete();
 
-        return redirect()->route('admin.plans.index')->with('status', 'حُذفت الخطة.');
+        return redirect()->route('admin.plans.index')->with('status', __('حُذفت الخطة.'));
     }
 
     /**

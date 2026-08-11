@@ -26,11 +26,11 @@ class LowCreditsNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('رصيدك أوشك على الانتهاء')
-            ->greeting('تنبيه رصيد')
+            ->subject(__('رصيدك أوشك على الانتهاء'))
+            ->greeting(__('تنبيه رصيد'))
             ->line("رصيدك الحالي {$this->balance}، وقد لا يكفي لبدء تشخيص جديد.")
-            ->action('راجع الخطط وخيارات الرصيد', route('app.billing'))
-            ->line('يمكنك الترقية أو شراء حزمة أرصدة في أي وقت.');
+            ->action(__('راجع الخطط وخيارات الرصيد'), route('app.billing'))
+            ->line(__('يمكنك الترقية أو شراء حزمة أرصدة في أي وقت.'));
     }
 
     /**
@@ -40,7 +40,7 @@ class LowCreditsNotification extends Notification
     {
         return [
             'type' => 'low_credits',
-            'title' => 'رصيدك أوشك على الانتهاء',
+            'title' => __('رصيدك أوشك على الانتهاء'),
             'body' => "رصيدك الحالي {$this->balance}.",
             'url' => route('app.billing'),
         ];

@@ -52,7 +52,7 @@ class AdminGatewayController extends Controller
             'credentials' => $this->credentialsFrom($request, $data['provider']),
         ]);
 
-        return redirect()->route('admin.gateways.edit', $gateway)->with('status', 'أُنشئت البوابة وحُفظت بيانات الربط. اختبر الاتصال ثم فعّلها.');
+        return redirect()->route('admin.gateways.edit', $gateway)->with('status', __('أُنشئت البوابة وحُفظت بيانات الربط. اختبر الاتصال ثم فعّلها.'));
     }
 
     public function edit(PaymentGateway $gateway): View
@@ -88,18 +88,18 @@ class AdminGatewayController extends Controller
             ] : []),
         ]);
 
-        return redirect()->route('admin.gateways.index')->with('status', 'حُدّثت البوابة.');
+        return redirect()->route('admin.gateways.index')->with('status', __('حُدّثت البوابة.'));
     }
 
     public function toggle(PaymentGateway $gateway): RedirectResponse
     {
         // المفاتيح الإلزامية شرط التفعيل: بوابة ناقصة تعني شراءً ينفجر عند أول عميل.
         if (! $gateway->is_active && ! $gateway->hasRequiredCredentials()) {
-            return back()->withErrors(['gateway' => 'أضف كل المفاتيح الإلزامية قبل تفعيل البوابة.']);
+            return back()->withErrors(['gateway' => __('أضف كل المفاتيح الإلزامية قبل تفعيل البوابة.')]);
         }
 
         if (! $gateway->is_active && $gateway->isLive() && ! $gateway->isHealthy()) {
-            return back()->withErrors(['gateway' => 'اختبر اتصال البوابة بنجاح قبل تفعيلها في الوضع المباشر.']);
+            return back()->withErrors(['gateway' => __('اختبر اتصال البوابة بنجاح قبل تفعيلها في الوضع المباشر.')]);
         }
 
         $gateway->update(['is_active' => ! $gateway->is_active]);
@@ -109,24 +109,24 @@ class AdminGatewayController extends Controller
             PaymentGateway::where('is_active', true)->orderBy('sort_order')->first()?->update(['is_default' => true]);
         }
 
-        return back()->with('status', $gateway->is_active ? 'فُعّلت البوابة.' : 'عُطّلت البوابة.');
+        return back()->with('status', $gateway->is_active ? __('فُعّلت البوابة.') : __('عُطّلت البوابة.'));
     }
 
     public function destroy(PaymentGateway $gateway): RedirectResponse
     {
         if (Payment::where('payment_gateway_id', $gateway->id)->exists()) {
-            return back()->withErrors(['gateway' => 'لا يمكن حذف بوابة مرتبطة بمدفوعات سابقة. عطّلها بدلًا من ذلك.']);
+            return back()->withErrors(['gateway' => __('لا يمكن حذف بوابة مرتبطة بمدفوعات سابقة. عطّلها بدلًا من ذلك.')]);
         }
 
         $gateway->delete();
 
-        return redirect()->route('admin.gateways.index')->with('status', 'حُذفت البوابة.');
+        return redirect()->route('admin.gateways.index')->with('status', __('حُذفت البوابة.'));
     }
 
     public function test(PaymentGateway $gateway, PaymentGatewayManager $manager): RedirectResponse
     {
         if (! $gateway->hasRequiredCredentials()) {
-            return back()->withErrors(['gateway' => 'أضف كل بيانات الربط الإلزامية أولًا.']);
+            return back()->withErrors(['gateway' => __('أضف كل بيانات الربط الإلزامية أولًا.')]);
         }
 
         try {
@@ -146,14 +146,14 @@ class AdminGatewayController extends Controller
                 'last_health_message' => $exception->getMessage(),
             ]);
 
-            return back()->withErrors(['gateway' => 'فشل اختبار الاتصال: '.$exception->getMessage()]);
+            return back()->withErrors(['gateway' => __('فشل اختبار الاتصال: :reason', ['reason' => $exception->getMessage()])]);
         }
     }
 
     public function setDefault(PaymentGateway $gateway): RedirectResponse
     {
         if (! $gateway->is_active || ! $gateway->hasRequiredCredentials()) {
-            return back()->withErrors(['gateway' => 'فعّل البوابة المهيأة قبل جعلها افتراضية.']);
+            return back()->withErrors(['gateway' => __('فعّل البوابة المهيأة قبل جعلها افتراضية.')]);
         }
 
         DB::transaction(function () use ($gateway): void {
@@ -161,7 +161,7 @@ class AdminGatewayController extends Controller
             $gateway->update(['is_default' => true]);
         });
 
-        return back()->with('status', 'أصبحت البوابة هي الافتراضية، مع بقاء البوابات الأخرى متاحة للعملاء.');
+        return back()->with('status', __('أصبحت البوابة هي الافتراضية، مع بقاء البوابات الأخرى متاحة للعملاء.'));
     }
 
     /**

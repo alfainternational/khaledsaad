@@ -1,4 +1,5 @@
 @extends('layouts.public')
+@section('interface_family', 'reports')
 @section('layout', 'report')
 
 @section('title', $report['title'].' — نسخة للاطلاع | خالد سعد')

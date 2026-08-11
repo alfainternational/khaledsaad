@@ -1,0 +1,271 @@
+/* ------------------------------------------------------------------
+ * إحصاءات الزوّار — ما لا تغطيه أنماط اللوحة العامة.
+ *
+ * الصفحة كثيفة بطبعها: من يفتحها يقارن أعمدة ويقرأ عشرات الصفوف، فالكثافة
+ * عنده ميزة لا عبء. ولذلك تُبنى فوق `data-audience="admin"` ولا تُعمَّم.
+ * ------------------------------------------------------------------ */
+
+.insights-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-block-end: 1.25rem;
+}
+
+.insights-nav a {
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.86rem;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.insights-nav a.is-active {
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: #fff;
+}
+
+/* ------------------------------------------------------------------
+ * شريط التصفية — تخطيط مملوك بالكامل لا موروث.
+ *
+ * أول نشر خرج بحقول ممتدة عرض الشاشة ومربّعات اختيار منفصلة عن نصوصها،
+ * لأن القالب استعمل كلاسات لا يقابلها نمط. والاعتماد على أنماط اللوحة
+ * العامة ليس علاجًا: نسخة `app.css` المبنية تختلف بين المحلي والإنتاج،
+ * فالتحقق محليًّا لا يقول شيئًا عمّا سيظهر على الخادم.
+ *
+ * ولذلك يحمل هذا الملف تخطيط الشريط كاملًا — يُنشر معه، ويظهر واحدًا
+ * في المكانين مهما كانت حزمة الأصول هناك.
+ * ------------------------------------------------------------------ */
+.insights-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    padding: 1rem;
+    margin-block-end: 1.25rem;
+    border: 1px solid var(--line, #e3e8ef);
+    border-radius: 0.75rem;
+    background: var(--surface, #fff);
+}
+
+.insights-filters__field {
+    display: grid;
+    gap: 0.35rem;
+    min-inline-size: 0;
+}
+
+/* الحقل النصّي وحده هو ما يستحق التمدّد؛ البقية بعرض محتواها. */
+.insights-filters__field--grow {
+    flex: 1 1 16rem;
+}
+
+.insights-filters__label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted, #667085);
+}
+
+.insights-filters input[type='search'],
+.insights-filters select {
+    inline-size: 100%;
+    min-block-size: 2.6rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--line, #e3e8ef);
+    border-radius: 0.5rem;
+    background: var(--surface, #fff);
+    color: inherit;
+    font: inherit;
+}
+
+/* مربّع الاختيار أفقي بجانب نصّه: رصُّه رأسيًّا يفصل المربّع عن معناه. */
+.insights-filters__check {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-block-size: 2.6rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.insights-filters__check input {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
+    margin: 0;
+    flex: none;
+}
+
+.insights-filters__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.6rem;
+}
+
+/* شريط المدة: أزرار لا حقل حرّ — المدة القصيرة جدًّا تُنتج نسبًا كاذبة. */
+.insights-range {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.insights-range a {
+    padding: 0.3rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    font-size: 0.84rem;
+    text-decoration: none;
+    color: var(--muted);
+}
+
+.insights-range a.is-active {
+    background: var(--surface-soft);
+    color: var(--ink-brand);
+    border-color: var(--ink-brand);
+    font-weight: 600;
+}
+
+/* دلتا المقارنة: اللون يقول الاتجاه، والرقم يقول المقدار. */
+.delta {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.delta--up { color: var(--on-tint-good, #0b7a66); }
+.delta--down { color: var(--brand-red, #c0392b); }
+.delta--flat { color: var(--muted); }
+
+/* الرسم الزمني: مساحة + خط، بلا مكتبة رسم — SVG مولَّد من نفس الأرقام. */
+/* نسبة ثابتة لا ارتفاع ثابت: التمدّد على محور واحد يشوّه النقاط ويضخّم
+   الميل بصريًّا، فيبدو ارتفاعٌ طفيف قفزةً. */
+.insights-chart {
+    inline-size: 100%;
+    aspect-ratio: 1000 / 220;
+    display: block;
+    overflow: visible;
+}
+
+.insights-chart__area { fill: rgba(37, 117, 255, 0.14); }
+.insights-chart__line { fill: none; stroke: var(--brand-blue, #2575ff); stroke-width: 2; stroke-linejoin: round; }
+.insights-chart__dot { fill: var(--brand-blue, #2575ff); }
+.insights-chart__grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
+.insights-chart__label { fill: var(--muted); font-size: 10px; }
+
+/* خريطة الساعات: أربع وعشرون خانة تُقرأ دفعة واحدة لا صفًّا صفًّا. */
+.hour-map {
+    display: grid;
+    grid-template-columns: repeat(24, 1fr);
+    gap: 2px;
+    direction: ltr;
+}
+
+.hour-map__cell {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: var(--surface-soft);
+    position: relative;
+}
+
+.hour-map__legend {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-block-start: 0.35rem;
+    direction: ltr;
+}
+
+/* الخط الزمني للجلسة: عمود واحد يُقرأ من أعلى لأسفل بترتيب الوقوع. */
+.journey {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    padding-inline-start: 1.35rem;
+}
+
+.journey::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.5rem;
+    inset-inline-start: 0.32rem;
+    inline-size: 2px;
+    background: var(--line);
+}
+
+.journey__item {
+    position: relative;
+    padding-block: 0.55rem;
+}
+
+.journey__item::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: -1.2rem;
+    inset-block-start: 0.95rem;
+    inline-size: 0.62rem;
+    block-size: 0.62rem;
+    border-radius: 999px;
+    background: var(--brand-blue, #2575ff);
+    border: 2px solid var(--surface, #fff);
+}
+
+.journey__item--event::before { background: var(--brand-orange, #f59e0b); }
+.journey__item--conversion::before { background: var(--on-tint-good, #12b76a); }
+
+.journey__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.journey__time {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.journey__meta {
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+/* نبضة «الآن»: نقطة تتنفّس تفصل الحيّ عن المؤرشف بنظرة. */
+.live-dot {
+    display: inline-block;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-radius: 999px;
+    background: #12b76a;
+    margin-inline-end: 0.35rem;
+    animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .live-dot { animation: none; }
+}
+
+/* مسار الصفحة في الجداول: يُقصّ بصريًّا ولا يكسر عمود الجدول. */
+.path-cell {
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 0.82rem;
+    direction: ltr;
+    display: inline-block;
+    max-inline-size: 22rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}

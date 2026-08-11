@@ -48,5 +48,17 @@ Schedule::command('tasks:remind')->dailyAt('08:00')->withoutOverlapping();
 // نبض الأسبوع: صباح الاثنين، بعد أن تكون أرقام السوق والمنافسون قد تحدّثوا.
 Schedule::command('growth:pulse')->weeklyOn(1, '07:30')->withoutOverlapping();
 
+/*
+ * تجميع إحصاءات الزوّار: يوميًّا فجرًا على آخر يومين.
+ *
+ * يومان لا يوم: الجلسة التي تبدأ ٢٣:٥٥ تستمر بعد منتصف الليل، وتجميع
+ * الأمس وحده يلتقطها ناقصة. وإعادة الكتابة بـ`updateOrCreate` تجعل
+ * التداخل تصحيحًا لا مضاعفة.
+ */
+Schedule::command('insights:rollup --days=2')->dailyAt('02:00')->withoutOverlapping();
+
+// تقليم الصفوف الخام بعد مدة الاحتفاظ. يجمّع قبل أن يحذف بحكم الأمر نفسه.
+Schedule::command('insights:prune')->weeklyOn(2, '03:15')->withoutOverlapping();
+
 // إكمال الدفعات التي أغلق العميل متصفحها قبل العودة، دون لمس التحويل اليدوي.
 Schedule::command('payments:reconcile --minutes=15 --limit=100')->everyTenMinutes()->withoutOverlapping();

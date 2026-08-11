@@ -22,14 +22,35 @@ class ReportPresenter
 
         // قائمة المنافسين تُقرأ حيّة لا من لقطة التقرير: تأكيد/استبعاد يظهر فورًا.
         $competitorView = $this->competitors->forReport($report->project);
+        $confirmation = collect($report->assumptions ?? [])->first();
+        if (is_array($confirmation)) {
+            $confirmation = $confirmation['text'] ?? $confirmation['title'] ?? null;
+        }
+        if (! is_string($confirmation) || trim($confirmation) === '') {
+            $confirmation = $report->findings->firstWhere('is_assumption', true)?->title;
+        }
 
         return [
             'id' => $report->id,
             'title' => $report->title,
+            // لغة نصّ التقرير — تُعلَن للقارئ حين تختلف عن لغة واجهته،
+            // وتحدّد اتجاه صفحة الـPDF وخطّها.
+            'locale' => $report->locale ?: 'ar',
             'status' => $report->status,
             'score' => $report->score,
             'score_band' => $report->score_band,
             'summary' => $report->summary,
+            'executive_summary' => [
+                'current_state' => $report->summary,
+                'top_issues' => $report->findings
+                    ->sortBy('sort_order')
+                    ->take(3)
+                    ->pluck('title')
+                    ->values()
+                    ->all(),
+                'this_week' => $report->next_step,
+                'needs_confirmation' => $confirmation,
+            ],
             // توثيق أن التقرير رُوجع بشريًا: بيان صادق موجز، لا لافتة تمدح.
             // الإحساس البشري يجيء من نص التقرير نفسه (تعليمات المُراجِع)، لا
             // من جملة تدّعي أنها مكتوبة بيد.
@@ -76,7 +97,7 @@ class ReportPresenter
                 'confidence' => $finding->confidence,
                 'is_assumption' => $finding->is_assumption,
                 // التسمية الظاهرة للمستخدم: الفصل بين الدليل والافتراض ليس تفصيلًا تقنيًا.
-                'basis_label' => $finding->is_assumption ? 'افتراض' : 'مدعوم بدليل',
+                'basis_label' => $finding->is_assumption ? __('افتراض') : __('مدعوم بدليل'),
                 'recommendations' => $finding->recommendations->map(fn ($recommendation) => [
                     'id' => $recommendation->id,
                     'title' => $recommendation->title,
@@ -125,6 +146,8 @@ class ReportPresenter
      */
     public function card(Report $report): array
     {
+        $report->loadMissing('toolRun.toolVersion.tool');
+
         return [
             'id' => $report->id,
             'title' => $report->title,
@@ -132,6 +155,10 @@ class ReportPresenter
             'score_band' => $report->score_band,
             'status' => $report->status,
             'created_at' => $report->created_at?->toIso8601String(),
+            'tool' => [
+                'key' => $report->toolRun->toolVersion->tool->key,
+                'title' => $report->toolRun->toolVersion->tool->title,
+            ],
         ];
     }
 
@@ -201,7 +228,7 @@ class ReportPresenter
             'label' => match (true) {
                 $delta > 0 => "درجتك ارتفعت {$delta} نقطة منذ آخر مرة — تعبك واضح فيها",
                 $delta < 0 => 'درجتك تراجعت '.abs($delta).' نقطة منذ آخر مرة — تستحق وقفة',
-                default => 'درجتك ثابتة منذ آخر تقرير — لم يتغيّر شيء',
+                default => __('درجتك ثابتة منذ آخر تقرير — لم يتغيّر شيء'),
             },
             'days_between' => $previous->created_at?->diffInDays($current->created_at) ?? 0,
         ];

@@ -54,7 +54,7 @@ class ToolPresenter
             'category' => $tool->category,
             'status' => $tool->status,
             'is_runnable' => $tool->isRunnable(),
-            'status_label' => $tool->isRunnable() ? 'جاهزة' : 'نعمل عليها',
+            'status_label' => $tool->isRunnable() ? __('جاهزة') : __('نعمل عليها'),
             'credit_cost' => $tool->currentVersion?->credit_cost,
         ];
     }
@@ -229,11 +229,11 @@ class ToolPresenter
     private function answerGuidance(string $type): string
     {
         return match ($type) {
-            'select' => 'اختر الإجابة الأقرب إلى وضع مشروعك الآن.',
-            'multiselect' => 'اختر كل ما ينطبق على وضع مشروعك الآن.',
-            'number' => 'اكتب الرقم التقريبي إذا لم يكن لديك رقم دقيق.',
-            'url' => 'الصق الرابط كاملًا، مثل: https://example.com',
-            default => 'اكتب إجابتك بطريقتك، ويمكنك استخدام مثال من واقع مشروعك.',
+            'select' => __('اختر الإجابة الأقرب إلى وضع مشروعك الآن.'),
+            'multiselect' => __('اختر كل ما ينطبق على وضع مشروعك الآن.'),
+            'number' => __('اكتب الرقم التقريبي إذا لم يكن لديك رقم دقيق.'),
+            'url' => __('الصق الرابط كاملًا، مثل: https://example.com'),
+            default => __('اكتب إجابتك بطريقتك، ويمكنك استخدام مثال من واقع مشروعك.'),
         };
     }
 

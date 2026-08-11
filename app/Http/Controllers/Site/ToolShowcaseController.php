@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tool;
+use App\Modules\Shared\I18n\TranslatedConfig;
 use App\Services\Tools\GoldenExamples;
 use App\Services\Tools\ToolShowcase;
 use Illuminate\View\View;
@@ -15,7 +16,7 @@ class ToolShowcaseController extends Controller
     public function index(): View
     {
         return view('site.tools.index', [
-            'brand' => config('brand'),
+            'brand' => TranslatedConfig::get('brand'),
             'tools' => $this->showcase->cards(),
             'toolStats' => $this->showcase->stats(),
         ]);
@@ -28,7 +29,7 @@ class ToolShowcaseController extends Controller
         $example = GoldenExamples::catalog()[$tool->key] ?? null;
 
         return view('site.tools.show', [
-            'brand' => config('brand'),
+            'brand' => TranslatedConfig::get('brand'),
             'sample' => $example === null ? null : [
                 'summary' => $example['output']['summary'],
                 'finding' => collect($example['output']['findings'])->firstWhere('is_assumption', false),

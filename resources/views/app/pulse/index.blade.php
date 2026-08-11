@@ -22,7 +22,7 @@
         </section>
     @else
         @foreach ($weeks as $week)
-            <section class="pulse-week" aria-label="أسبوع {{ $week['week_start']->translatedFormat('j F Y') }}">
+            <section class="pulse-week" aria-label="{{ __('أسبوع :date', ['date' => $week['week_start']->translatedFormat('j F Y')]) }}">
                 <h2 class="section-title">
                     أسبوع {{ $week['week_start']->translatedFormat('j F Y') }}
                     @if ($loop->first)

@@ -69,7 +69,7 @@ class AdminUserController extends Controller
         $this->credits->grant(
             $user->primaryWorkspace(),
             $data['credits'],
-            'منحة من الإدارة',
+            __('منحة من الإدارة'),
         );
 
         return back()->with('status', "أُضيف {$data['credits']} رصيدًا إلى {$user->name}.");
@@ -132,7 +132,7 @@ class AdminUserController extends Controller
             $data['effective'], $data['credit_amount'] ?? null,
         );
 
-        return redirect()->route('admin.users.edit', $user)->with('status', 'حُدّثت خطة المستخدم وسُجل القرار.');
+        return redirect()->route('admin.users.edit', $user)->with('status', __('حُدّثت خطة المستخدم وسُجل القرار.'));
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -144,19 +144,19 @@ class AdminUserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('admin.users.index')->with('status', 'حُدّث المستخدم.');
+        return redirect()->route('admin.users.index')->with('status', __('حُدّث المستخدم.'));
     }
 
     public function toggleAdmin(Request $request, User $user): RedirectResponse
     {
         // منع الآدمن من نزع صلاحيته عن نفسه فيقفل نفسه خارج اللوحة.
         if ($user->id === $request->user()->id && $user->isAdmin()) {
-            return back()->withErrors(['admin' => 'لا يمكنك نزع صلاحيتك عن نفسك.']);
+            return back()->withErrors(['admin' => __('لا يمكنك نزع صلاحيتك عن نفسك.')]);
         }
 
         $user->forceFill(['is_admin' => ! $user->isAdmin()])->save();
 
-        return back()->with('status', $user->isAdmin() ? 'مُنحت صلاحية الإدارة.' : 'نُزعت صلاحية الإدارة.');
+        return back()->with('status', $user->isAdmin() ? __('مُنحت صلاحية الإدارة.') : __('نُزعت صلاحية الإدارة.'));
     }
 
     /** @return array<string, mixed> */

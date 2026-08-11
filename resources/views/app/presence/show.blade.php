@@ -7,7 +7,7 @@
     <header class="page-head">
         <h1>حضورك في إجابات الذكاء</h1>
         <p class="muted">
-            نسأل نماذج الذكاء أسئلة يكتبها مشترٍ حقيقي في سوقك، ونقرأ من تذكره في الجواب.
+            أسأل نماذج الذكاء أسئلة يكتبها مشترٍ حقيقي في سوقك، وأقرأ من تذكره في الجواب.
         </p>
     </header>
 
@@ -20,7 +20,7 @@
     @enderror
 
     <section class="card">
-        <h2>الأسئلة التي نسألها عنك</h2>
+        <h2>الأسئلة التي تُسأل عنك</h2>
         <ul class="check-list">
             @foreach ($questions as $question)
                 <li><span aria-hidden="true">•</span> {{ $question['text'] }}</li>

@@ -44,7 +44,7 @@
         <section class="empty">
             <h2>لوحة جمهورك لم تُبنَ بعد</h2>
             <p class="muted">
-                نبني 3–4 شخصيات بتفاصيل استهداف كاملة — العمر والجنس والمدن
+                تُبنى 3–4 شخصيات بتفاصيل استهداف كاملة — العمر والجنس والمدن
                 والاهتمامات والمنصات ومستوى الإنفاق — ثم تكتب لكل واحدة رسالتها.
             </p>
         </section>
@@ -107,8 +107,7 @@
             <p class="alert alert--info">
                 @include('app.partials.evidence-badge', [
                     'level' => $panel->evidenceLevel(),
-                    'note' => 'هؤلاء شخصيات مبنية على وصف مشروعك، لا عملاء حقيقيين.
-                        درجاتهم ترتّب الصياغات بينها ولا تتنبأ بأداء إعلان.',
+                    'note' => __('هؤلاء شخصيات مبنية على وصف مشروعك، لا عملاء حقيقيين. درجاتهم ترتّب الصياغات بينها ولا تتنبأ بأداء إعلان.'),
                 ])
             </p>
 
@@ -237,7 +236,7 @@
                     form.addEventListener('submit', function () {
                         form.querySelectorAll('[data-once]').forEach(function (button) {
                             button.disabled = true;
-                            button.textContent = 'جارٍ التنفيذ…';
+                            button.textContent = @js(__('جارٍ التنفيذ…'));
                         });
                     });
                 });
@@ -252,7 +251,7 @@
 
                         navigator.clipboard.writeText(source.textContent.trim()).then(function () {
                             var original = button.textContent;
-                            button.textContent = 'نُسخت';
+                            button.textContent = @js(__('نُسخت'));
                             setTimeout(function () { button.textContent = original; }, 2000);
                         });
                     });

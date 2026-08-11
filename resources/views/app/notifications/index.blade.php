@@ -26,7 +26,7 @@
 
     @php($activeGroup = request()->query('group', ''))
     <nav class="filter-chips" aria-label="تصفية التنبيهات">
-        @foreach (['' => 'الكل', 'watch' => 'المتابعة والمنافسون', 'reports' => 'تقاريري', 'tasks' => 'المهام', 'billing' => 'الرصيد'] as $key => $label)
+        @foreach (['' => __('الكل'), 'watch' => __('المتابعة والمنافسون'), 'reports' => __('تقاريري'), 'tasks' => __('المهام'), 'billing' => __('الرصيد')] as $key => $label)
             <a href="{{ route('app.notifications.index', $key === '' ? [] : ['group' => $key]) }}"
                 @class(['filter-chip', 'is-active' => $activeGroup === $key])
                 @if ($activeGroup === $key) aria-current="page" @endif>{{ $label }}</a>

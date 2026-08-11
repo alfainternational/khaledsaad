@@ -69,7 +69,7 @@ class _RunStatusScreenState extends State<RunStatusScreen> {
       }
     } catch (error) {
       // انقطاع الشبكة لا يوقف الاستطلاع؛ المحاولة التالية تكفي.
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) setState(() => _error = userErrorMessage(error));
     }
   }
 
@@ -96,7 +96,7 @@ class _RunStatusScreenState extends State<RunStatusScreen> {
       });
       _startPolling();
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) setState(() => _error = userErrorMessage(error));
     } finally {
       if (mounted) setState(() => _retrying = false);
     }

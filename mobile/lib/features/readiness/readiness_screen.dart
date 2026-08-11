@@ -75,7 +75,9 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
     setState(() => _downloading = true);
 
     try {
-      final bytes = await widget.repository.readinessCardPdf(widget.projectSlug);
+      final bytes = await widget.repository.readinessCardPdf(
+        widget.projectSlug,
+      );
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/readiness-${widget.projectSlug}.pdf');
       await file.writeAsBytes(bytes, flush: true);
@@ -84,7 +86,7 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
     } finally {
       if (mounted) setState(() => _downloading = false);
     }
@@ -108,7 +110,7 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -407,7 +409,9 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
 
     if (delta != null) {
       final side = delta >= 0 ? 'أعلى بـ$delta' : 'أدنى بـ${delta.abs()}';
-      buffer.write(' أنت $side نقطة، فوق ${benchmark.percentile}٪ من أنشطة قطاعك.');
+      buffer.write(
+        ' أنت $side نقطة، فوق ${benchmark.percentile}٪ من أنشطة قطاعك.',
+      );
     }
 
     return Padding(
@@ -416,8 +420,7 @@ class _ReadinessScreenState extends State<ReadinessScreen> {
     );
   }
 
-  String _day(DateTime? at) =>
-      at == null ? '—' : '${at.day}/${at.month}';
+  String _day(DateTime? at) => at == null ? '—' : '${at.day}/${at.month}';
 
   Widget _axes(BuildContext context, Map<String, dynamic>? maturity) {
     final axes = (maturity?['axes'] as List<dynamic>?) ?? const [];

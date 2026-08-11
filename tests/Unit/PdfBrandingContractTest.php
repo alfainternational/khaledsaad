@@ -24,6 +24,11 @@ class PdfBrandingContractTest extends TestCase
 
         $this->assertStringContainsString('ArabicPdfEngine', $controller);
         $this->assertStringNotContainsString('DomPDF', $controller);
-        $this->assertStringContainsString("make('السيرة المهنية'", $controller);
+        /*
+         * العنوان يمرّ بالترجمة الآن. القالب `site.pages.profile-pdf` قالب
+         * Blade يُغلَّف تلقائيًّا، فكان المحتوى يُترجَم بينما عنوان المستند
+         * واسم الملف يبقيان عربيّين — مستندٌ نصفه بلغة ونصفه بأخرى.
+         */
+        $this->assertStringContainsString("make(__('السيرة المهنية')", $controller);
     }
 }

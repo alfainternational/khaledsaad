@@ -22,14 +22,19 @@ class Num
         return number_format((float) $value, 0, '.', ',');
     }
 
-    /** نسبة مئوية: 41٪ */
+    /**
+     * نسبة مئوية: «41٪» بالعربية و«41%» بغيرها.
+     *
+     * علامة النسبة نفسها تختلف: العربية تكتب ٪ ملاصقةً، واللاتينية %.
+     * ولذلك تمرّ عبر الترجمة كقالب لا تُلصق في الكود.
+     */
     public static function pct(int|float|null $value, int $decimals = 0): string
     {
         if ($value === null) {
             return '—';
         }
 
-        return number_format((float) $value, $decimals, '.', ',').'٪';
+        return __(':value٪', ['value' => number_format((float) $value, $decimals, '.', ',')]);
     }
 
     /** مبلغ بالريال: 3,000 ر.س */
@@ -48,7 +53,16 @@ class Num
      */
     public static function withBasis(int|float $percent, int $total, string $unit): string
     {
-        return self::pct($percent).' من '.self::int($total).' '.$unit;
+        /*
+         * الوصل بـ`.` كان يثبّت ترتيب العربية: «١٢٪ من ٦٢٠ استعلام».
+         * ترتيب اللغة الهدف ملكها لا ملكنا، فصار قالبًا بنوّاب تُعيد
+         * اللغة ترتيبه كما تشاء دون أن يفقد الرقم أساسه (§١٣).
+         */
+        return __(':percent من :total :unit', [
+            'percent' => self::pct($percent),
+            'total' => self::int($total),
+            'unit' => $unit,
+        ]);
     }
 
     /** درجة من مئة: «41 من 100» */
@@ -58,6 +72,6 @@ class Num
             return '—';
         }
 
-        return self::int($value).' من 100';
+        return __(':value من 100', ['value' => self::int($value)]);
     }
 }

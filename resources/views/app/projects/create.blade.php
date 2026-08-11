@@ -65,7 +65,7 @@
                 <span class="field__label">إلى أي مرحلة وصل مشروعك؟</span>
                 <span class="field__help">اختر المرحلة التي تصف وضع المشروع الآن، لا المرحلة التي تريد الوصول إليها.</span>
                 <select name="stage">
-                    @foreach (['idea' => 'فكرة قيد الدراسة', 'launch' => 'بدأ المشروع حديثًا', 'growth' => 'يحقق مبيعات حاليًا', 'scale' => 'يحقق مبيعات ويستعد للتوسع'] as $value => $label)
+                    @foreach (['idea' => __('فكرة قيد الدراسة'), 'launch' => __('بدأ المشروع حديثًا'), 'growth' => __('يحقق مبيعات حاليًا'), 'scale' => __('يحقق مبيعات ويستعد للتوسع')] as $value => $label)
                         <option value="{{ $value }}" @selected(old('stage', 'growth') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>

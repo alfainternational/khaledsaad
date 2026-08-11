@@ -34,7 +34,7 @@ class RunPresenter
             // تشغيل متوقف: الواجهة تقول الحقيقة بدل إبقاء المستخدم ينتظر بلا نهاية.
             'is_stale' => $run->isStale(),
             'stale_hint' => $run->isStale()
-                ? 'التحليل لم يتقدم منذ فترة. إجاباتك محفوظة بالكامل — اضغط «أعد المحاولة»، وإن تكرر الأمر فالمعالجة في الخادم متوقفة.'
+                ? __('التحليل لم يتقدم منذ فترة. إجاباتك محفوظة بالكامل — اضغط «أعد المحاولة»، وإن تكرر الأمر فالمعالجة في الخادم متوقفة.')
                 : null,
             'progress_percent' => $run->progressPercent(),
             'tool' => $this->tools->card($run->toolVersion->tool),
@@ -87,10 +87,10 @@ class RunPresenter
             'size_kb' => (int) round($file->size_bytes / 1024),
             'status' => $file->extraction_status,
             'status_label' => match ($file->extraction_status) {
-                'completed' => 'جاهز للقراءة',
-                'unsupported' => 'لن يُقرأ آليًا',
-                'failed' => 'تعذّرت قراءته',
-                default => 'بانتظار المعالجة',
+                'completed' => __('جاهز للقراءة'),
+                'unsupported' => __('لن يُقرأ آليًا'),
+                'failed' => __('تعذّرت قراءته'),
+                default => __('بانتظار المعالجة'),
             },
         ])->all();
     }
@@ -109,10 +109,10 @@ class RunPresenter
                 'label' => $stage->label,
                 'status' => $stage->status,
                 'status_label' => match ($stage->status) {
-                    'running' => 'جارية',
-                    'completed' => 'اكتملت',
-                    'failed' => 'تعذرت',
-                    default => 'بانتظار الدور',
+                    'running' => __('جارية'),
+                    'completed' => __('اكتملت'),
+                    'failed' => __('تعذرت'),
+                    default => __('بانتظار الدور'),
                 },
                 'error' => $stage->error,
             ])->values()->all(),
@@ -122,12 +122,12 @@ class RunPresenter
     private function statusLabel(ToolRun $run): string
     {
         return match ($run->status) {
-            ToolRun::STATUS_DRAFT => 'مسودة',
-            ToolRun::STATUS_QUEUED => 'في الطابور',
-            ToolRun::STATUS_PROCESSING => 'قيد التحليل',
-            ToolRun::STATUS_COMPLETED => 'مكتمل',
-            ToolRun::STATUS_PARTIAL => 'مكتمل جزئيًا',
-            default => 'تعذر',
+            ToolRun::STATUS_DRAFT => __('مسودة'),
+            ToolRun::STATUS_QUEUED => __('في الطابور'),
+            ToolRun::STATUS_PROCESSING => __('قيد التحليل'),
+            ToolRun::STATUS_COMPLETED => __('مكتمل'),
+            ToolRun::STATUS_PARTIAL => __('مكتمل جزئيًا'),
+            default => __('تعذر'),
         };
     }
 }

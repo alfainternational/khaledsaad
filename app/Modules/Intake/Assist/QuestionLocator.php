@@ -120,7 +120,7 @@ class QuestionLocator
     private function options(QuestionVersion $version): array
     {
         if ($version->answer_type === 'boolean' && empty($version->options)) {
-            return [['value' => '1', 'label' => 'نعم'], ['value' => '0', 'label' => 'لا']];
+            return [['value' => '1', 'label' => __('نعم')], ['value' => '0', 'label' => __('لا')]];
         }
 
         return array_map(

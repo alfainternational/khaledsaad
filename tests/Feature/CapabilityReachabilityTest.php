@@ -101,7 +101,7 @@ class CapabilityReachabilityTest extends TestCase
         $response->assertSee('سقوف الاستعلامات');
         // الرقم مع أساسه لا وحده (§١٣).
         $response->assertSee('8 من 10');
-        $response->assertSee('نُبِّهت عند ٨٠٪');
+        $response->assertSee('نُبِّهت عند 80٪');
     }
 
     #[Test]

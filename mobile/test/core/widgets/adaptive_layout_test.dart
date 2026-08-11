@@ -135,6 +135,10 @@ void main() {
       'consultations/consultation_screen.dart': AdaptivePageFamily.form,
       'consultations/consultations_list_screen.dart':
           AdaptivePageFamily.operational,
+      'experience/experience_selection_screen.dart': AdaptivePageFamily.form,
+      'experience/learning_application_screen.dart': AdaptivePageFamily.form,
+      'experience/learning_dashboard_screen.dart':
+          AdaptivePageFamily.operational,
       'growth/growth_hub_screen.dart': AdaptivePageFamily.operational,
       'growth/message_studio_screen.dart': AdaptivePageFamily.form,
       'growth/prospects_screen.dart': AdaptivePageFamily.operational,

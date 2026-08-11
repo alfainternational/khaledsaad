@@ -30,12 +30,12 @@ class AnalysisFailedNotification extends Notification
         $tool = $this->run->toolVersion->tool->title;
 
         return (new MailMessage)
-            ->subject('لم يكتمل التحليل — إجاباتك محفوظة')
-            ->greeting('لم نتمكن من إكمال التحليل هذه المرة')
+            ->subject(__('لم يكتمل التحليل — إجاباتك محفوظة'))
+            ->greeting(__('لم نتمكن من إكمال التحليل هذه المرة'))
             ->line("لم يكتمل تحليل «{$tool}» هذه المرة.")
-            ->line('إجاباتك محفوظة، وأُعيد الرصيد المستخدم إلى حسابك.')
-            ->action('حاول إكمال التحليل', route('app.runs.status', $this->run->uuid))
-            ->line('لن تحتاج إلى إدخال إجاباتك مرة أخرى.');
+            ->line(__('إجاباتك محفوظة، وأُعيد الرصيد المستخدم إلى حسابك.'))
+            ->action(__('حاول إكمال التحليل'), route('app.runs.status', $this->run->uuid))
+            ->line(__('لن تحتاج إلى إدخال إجاباتك مرة أخرى.'));
     }
 
     /**
@@ -45,8 +45,8 @@ class AnalysisFailedNotification extends Notification
     {
         return [
             'type' => 'analysis_failed',
-            'title' => 'تعذّر إكمال التحليل',
-            'body' => 'إجاباتك محفوظة، وأُعيد الرصيد المستخدم. يمكنك المحاولة مرة أخرى.',
+            'title' => __('تعذّر إكمال التحليل'),
+            'body' => __('إجاباتك محفوظة، وأُعيد الرصيد المستخدم. يمكنك المحاولة مرة أخرى.'),
             'run_uuid' => $this->run->uuid,
             'url' => route('app.runs.status', $this->run->uuid),
         ];

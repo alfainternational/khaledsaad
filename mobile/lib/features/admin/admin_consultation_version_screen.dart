@@ -50,7 +50,7 @@ class _AdminConsultationVersionScreenState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -113,7 +113,8 @@ class _AdminConsultationVersionScreenState
                   contentPadding: EdgeInsets.zero,
                   value: allowSkip,
                   title: const Text('يسمح بالتخطي'),
-                  onChanged: (v) => setDialogState(() => allowSkip = v ?? false),
+                  onChanged: (v) =>
+                      setDialogState(() => allowSkip = v ?? false),
                 ),
               ],
             ),
@@ -151,15 +152,15 @@ class _AdminConsultationVersionScreenState
         },
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('حُفظ السؤال في المسودة.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('حُفظ السؤال في المسودة.')));
       setState(_load);
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

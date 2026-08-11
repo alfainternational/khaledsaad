@@ -8,6 +8,7 @@ use App\Models\User;
 use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -60,5 +61,45 @@ class AdminConsultationTest extends TestCase
         $this->assertSame($draft->id, $blueprint->refresh()->current_version_id);
         $this->put(route('admin.consultations.questions.update', [$draft, $draftQuestion]), ['user_text' => 'محاولة تعديل'])
             ->assertSessionHasErrors('version');
+    }
+
+    #[Test]
+    public function the_admin_mobile_api_governs_the_same_independent_draft_lifecycle(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $blueprint = ConsultationBlueprint::where('key', 'smart-marketing-consultation')->firstOrFail();
+        $oldVersion = $blueprint->currentVersion;
+        $oldQuestion = QuestionVersion::whereHas('definition', fn ($query) => $query->where('key', 'START-01'))
+            ->where('version', $oldVersion->version)
+            ->firstOrFail();
+        $originalText = $oldQuestion->user_text;
+
+        Sanctum::actingAs($admin);
+
+        $this->getJson(route('api.v1.admin.consultations.index'))
+            ->assertOk()
+            ->assertJsonPath('data.0.current_version_id', $oldVersion->id);
+
+        $draft = $this->postJson(route('api.v1.admin.consultations.draft', $blueprint))
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'draft')
+            ->json('data');
+        $draftQuestion = collect($draft['modules'])->pluck('questions')->flatten(1)
+            ->firstWhere('key', 'START-01');
+
+        $this->putJson(route('api.v1.admin.consultations.questions.update', [$draft['id'], $draftQuestion['id']]), [
+            'user_text' => 'ما النطاق الذي تريد تشخيصه من التطبيق؟',
+            'required' => true,
+            'allow_unknown' => true,
+            'allow_skip' => false,
+        ])->assertOk()->assertJsonPath('data.status', 'draft');
+
+        $this->postJson(route('api.v1.admin.consultations.publish', $draft['id']))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'published')
+            ->assertJsonPath('data.is_editable', false);
+
+        $this->assertSame($originalText, $oldQuestion->refresh()->user_text);
+        $this->assertSame($draft['id'], $blueprint->refresh()->current_version_id);
     }
 }

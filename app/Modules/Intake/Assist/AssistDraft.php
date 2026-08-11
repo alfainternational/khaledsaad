@@ -54,7 +54,7 @@ final class AssistDraft
             'basis' => $this->basis,
             'evidence_level' => 'inferred',
             // الوسم النصّي يسافر مع البيانات لا يُترك للواجهة (§١٣).
-            'assumption_label' => 'فرضية — مقترح مبني على ما وصفته، راجعه وعدّله قبل اعتماده.',
+            'assumption_label' => __('فرضية — مقترح مبني على ما وصفته، راجعه وعدّله قبل اعتماده.'),
         ];
     }
 

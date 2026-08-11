@@ -17,7 +17,7 @@ class NotificationController extends Controller
         $notifications = $user->notifications()->latest()->limit(50)->get()
             ->map(fn ($notification) => [
                 'id' => $notification->id,
-                'title' => $notification->data['title'] ?? 'إشعار',
+                'title' => $notification->data['title'] ?? __('إشعار'),
                 'body' => $notification->data['body'] ?? '',
                 'url' => $notification->data['url'] ?? null,
                 'read' => $notification->read_at !== null,
@@ -59,7 +59,7 @@ class NotificationController extends Controller
     {
         $request->user()->unreadNotifications->markAsRead();
 
-        return back()->with('status', 'عُلّمت كل الإشعارات كمقروءة.');
+        return back()->with('status', __('عُلّمت كل الإشعارات كمقروءة.'));
     }
 
     /**

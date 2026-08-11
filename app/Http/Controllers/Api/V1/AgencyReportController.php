@@ -176,7 +176,7 @@ class AgencyReportController extends Controller
             'missing_count' => 6,
             'missing_critical' => [],
             'requirements' => [],
-            'message' => 'أنشئ إصدارًا جديدًا بعد إكمال بيانات موجز الوكالة.',
+            'message' => __('أنشئ إصدارًا جديدًا بعد إكمال بيانات موجز الوكالة.'),
         ];
 
         return [
@@ -193,11 +193,11 @@ class AgencyReportController extends Controller
             'documents' => [
                 'owner' => [
                     // تسمية موحّدة عبر الأسطح: الويب يسمّيه «تقريرك الخاص».
-                    'label' => 'تقريرك الخاص',
+                    'label' => __('تقريرك الخاص'),
                     'pdf_url' => route('api.v1.agency-reports.pdf', $report),
                 ],
                 'agency_brief' => [
-                    'label' => 'موجز الوكالة',
+                    'label' => __('موجز الوكالة'),
                     'is_ready' => (bool) ($briefReadiness['is_ready'] ?? false),
                     'missing_count' => (int) ($briefReadiness['missing_count'] ?? 0),
                     // البنود الناقصة بالاسم، لا مجرد عددها — نفس ما يراه الويب،

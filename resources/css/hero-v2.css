@@ -1,0 +1,292 @@
+/* ==========================================================================
+   الهيرو — التكوين المعتمد (docs/design/hero-olex-v2.png)
+   ثلاث مناطق غير متماثلة بلا بطاقات ولا ظلال: كتلة حرف يمينًا، الجسم يعبر
+   اللوحة قُطريًّا، وعمود جانبي يسارًا فوق الشعاع الطيفي. القواعد الحاكمة
+   في STYLESEED.md — وما هنا استثناءات معلنة لا مخالفات صامتة.
+
+   لماذا left/right هنا بدل inline-start/inline-end؟
+   لأن هذا تكوين فنّي محدَّد الاتجاه لا تخطيط قابل للانعكاس: الشعاع الطيفي
+   يسار والحرف يمين لأن العين العربية تبدأ من اليمين فتصل إلى الجسم ثم إلى
+   اللون. الخصائص المنطقية تعكسه فيصير الشعاع فوق العنوان. بقية الموقع تبقى
+   على المنطقية كما هي.
+   ========================================================================== */
+
+.hero-v2 {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    /* ناقص ارتفاع الهيدر (~5.5rem)، وإلا سقط صفّ الدرجة تحت الحافة */
+    min-block-size: min(calc(100svh - 5rem), 48rem);
+    padding-block: clamp(1rem, 2.5vw, 2rem) clamp(1.25rem, 3vw, 2.5rem);
+    background: var(--hero-canvas);
+}
+
+/* — الشعاع الطيفي: الحدث اللوني الوحيد في الصفحة كلها —
+   في الوضع الداكن يخفت إلى الثلث: نفس الطيف لا يعمل على سطح أسود. */
+.hero-v2__beam {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    inline-size: min(30rem, 34%);
+    -webkit-mask-image: linear-gradient(to right, #000 34%, transparent 92%);
+    mask-image: linear-gradient(to right, #000 34%, transparent 92%);
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(38rem 34rem at 4% 4%,   rgba(158, 240, 32, .80), transparent 62%),
+        radial-gradient(36rem 30rem at 12% 19%, rgba(214, 250, 114, .72), transparent 64%),
+        radial-gradient(34rem 30rem at 2% 35%,  rgba(158, 240, 32, .70), transparent 62%),
+        radial-gradient(36rem 30rem at 12% 50%, rgba(255, 210, 61, .74), transparent 62%),
+        radial-gradient(34rem 29rem at 3% 65%,  rgba(255, 178, 122, .72), transparent 62%),
+        radial-gradient(36rem 30rem at 11% 80%, rgba(255, 123, 200, .74), transparent 62%),
+        radial-gradient(34rem 28rem at 2% 96%,  rgba(201, 155, 255, .58), transparent 62%);
+}
+
+:root[data-theme='dark'] .hero-v2__beam { opacity: .34; }
+
+/* — «٨» عدد المحاور: العلامة الضخمة الساكنة خلف كل شيء — */
+.hero-v2__axes {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: clamp(6rem, 12vw, 11rem);
+    inset-inline-end: clamp(2rem, 7vw, 7.5rem);
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(7rem, 17vw, 16.5rem);
+    line-height: .78;
+    color: var(--ink);
+    transform: skewX(-10deg);
+    pointer-events: none;
+    user-select: none;
+}
+
+/* — الجسم البطل: الساعة وحزامها يعبران اللوحة —
+   العرض والموضع بوحدات نسبية إلى ارتفاع الشاشة لا إلى عرضها، وإلا انزلق
+   الجسم خارج الإطار على الشاشات العريضة القصيرة. */
+.hero-v2__device {
+    position: absolute;
+    z-index: 3;
+    inline-size: clamp(19rem, 32vh, 33rem);
+    inset-block-start: 50%;
+    inset-inline-end: 44%;
+    /* مركز الهيكل داخل الصورة = 50% أفقيًّا و48.3% رأسيًّا */
+    translate: -50% -48.3%;
+    rotate: 23deg;
+    pointer-events: none;
+    /* لا drop-shadow هنا: الصورة 1100×4316، وتظليلها يفرض على المتصفح
+       ترشيح سطح بهذا الحجم فيسقط المحتوى ويبقى الظلّ وحده — قِيس فعليًّا.
+       ظلّ الجسم مدموج في الصورة نفسها، وهو أرخص وأدقّ. */
+}
+
+/* — صاحب النشاط: حاضر خلف الجسم لا أمامه —
+   يُعتَّم قليلًا كي يبقى الجهاز البطل، ويتلاشى أسفله في الشعاع بتدرّج
+   مدموج في الصورة نفسها لا بقناع CSS — أرخص ولا يتكسّر عند التدوير. */
+.hero-v2__person {
+    position: absolute;
+    z-index: 2;
+    inline-size: clamp(12rem, 30vh, 28rem);
+    inset-block-end: -1%;
+    inset-inline-end: 20%;
+    filter: brightness(.74) contrast(1.06) saturate(.92);
+    pointer-events: none;
+}
+
+/* — بطاقة الجاهزية: ما يستلمه فعلًا، لا زخرفة —
+   `border: 0` صراحةً: القاعدة العامة `[class*='-card']` تعطي كل ما ينتهي
+   بـcard حدًّا رفيعًا، وهي صورة شفافة لا بطاقة واجهة. */
+.hero-v2__card {
+    border: 0;
+    position: absolute;
+    z-index: 4;
+    inline-size: clamp(8rem, 16vh, 16rem);
+    inset-block-start: clamp(24rem, 46vh, 34rem);
+    inset-inline-end: clamp(1rem, 4vw, 4.5rem);
+    rotate: -7deg;
+    filter: drop-shadow(10px 20px 30px rgba(57, 64, 74, .34));
+    pointer-events: none;
+}
+
+/* — الطبقة النصية — */
+.hero-v2__inner {
+    position: relative;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-block-size: inherit;
+}
+
+.hero-v2__copy {
+    grid-area: 1 / 1;
+    justify-self: start;
+    inline-size: min(43rem, 100%);
+    padding-block-start: clamp(1.25rem, 4vh, 3rem);
+}
+
+.hero-v2 h1 {
+    margin: 0;
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(2.4rem, 5.4vw, 5rem);
+    line-height: 1.12;
+    letter-spacing: 0;
+    text-wrap: balance;
+    color: var(--ink);
+}
+
+.hero-v2__lead {
+    margin-block-start: clamp(1rem, 2.5vh, 2rem);
+    inline-size: min(30rem, 100%);
+    font-size: clamp(1rem, 1.35vw, 1.25rem);
+    font-weight: 700;
+    line-height: 1.65;
+    color: var(--ink);
+}
+
+.hero-v2__rule {
+    grid-area: 1 / 1;
+    align-self: end;
+    margin-block-end: clamp(2.5rem, 6vh, 4.5rem);
+    block-size: 1px;
+    background: var(--line-strong);
+}
+
+/* — صفّ الدرجة: يقابل موضع السعر في المرجع — */
+.hero-v2__score {
+    grid-area: 1 / 1;
+    align-self: end;
+    justify-self: start;
+    display: flex;
+    align-items: baseline;
+    gap: clamp(1rem, 2.5vw, 2.25rem);
+    text-align: start;
+}
+
+.hero-v2__score b {
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(2.4rem, 4.4vw, 3.5rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+}
+
+.hero-v2__score b i {
+    font-style: normal;
+    font-size: .45em;
+    font-weight: 700;
+}
+
+.hero-v2__score span {
+    font-size: clamp(.8125rem, 1.1vw, 1rem);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+/* — العمود الجانبي: الادعاء ثم الزر الوحيد — */
+.hero-v2__aside {
+    grid-area: 1 / 1;
+    align-self: end;
+    justify-self: end;
+    inline-size: min(15rem, 40%);
+    text-align: center;
+}
+
+.hero-v2__claim {
+    margin: 0 0 clamp(.9rem, 2vh, 1.4rem);
+    font-size: clamp(.875rem, 1.1vw, 1rem);
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--ink);
+}
+
+.hero-v2__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: var(--tap-min);
+    padding-inline: clamp(1.5rem, 2.6vw, 2.25rem);
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--surface);
+    font-weight: 800;
+    font-size: clamp(.9375rem, 1.1vw, 1rem);
+    transition: background 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.hero-v2__cta:hover { background: var(--brand-blue); }
+
+/* الروابط الثانوية: نصّية لا أزرار — زرٌّ واحد في الشاشة (STYLESEED §٥) */
+.hero-v2__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .35rem 1.25rem;
+    margin-block-start: clamp(.9rem, 2vh, 1.4rem);
+    font-size: .8125rem;
+    font-weight: 600;
+}
+
+.hero-v2__links a {
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+}
+
+.hero-v2__links a:hover { color: var(--ink); }
+
+/* ==========================================================================
+   دون 62rem: التكوين المتراكب ينهار إلى عمود واحد.
+   الجسم يبقى — هو الهوية — لكنه يصير خلفيةً خافتة خلف النصّ بدل أن يزاحمه،
+   والبطاقة و«٨» يُخفيان: ثلاثة أجسام في عرض 375px ضجيج لا تكوين.
+   ========================================================================== */
+@media (max-width: 62rem) {
+    .hero-v2 {
+        min-block-size: 0;
+        padding-block: 2rem 3rem;
+    }
+
+    /* الشعاع على الجوال طبقة خلفية لا بطل: يبقى شريطًا جانبيًّا خافتًا،
+       لأنه بعرض الشاشة كاملًا يبتلع النصّ ويقتل التباين. */
+    .hero-v2__beam {
+        inline-size: 78%;
+        opacity: .5;
+        -webkit-mask-image: linear-gradient(to right, #000 20%, transparent 88%);
+        mask-image: linear-gradient(to right, #000 20%, transparent 88%);
+    }
+
+    .hero-v2__axes,
+    .hero-v2__card,
+    .hero-v2__person { display: none; }
+
+    /* الجسم يخرج نصفه من الحافة اليسرى: حضورٌ بلا مزاحمة للنصّ */
+    .hero-v2__device {
+        inline-size: 15rem;
+        inset-block-start: 74%;
+        inset-inline-end: -14%;
+        opacity: .5;
+    }
+
+    .hero-v2__inner {
+        gap: 2rem;
+        grid-template-areas: 'copy' 'score' 'aside';
+        grid-template-columns: 1fr;
+    }
+
+    .hero-v2__copy  { grid-area: copy;  justify-self: stretch; padding-block-start: 0; }
+    .hero-v2__score { grid-area: score; justify-self: start; align-self: auto; }
+    .hero-v2__aside { grid-area: aside; justify-self: stretch; inline-size: 100%; text-align: start; }
+    .hero-v2__links { justify-content: flex-start; }
+    .hero-v2__rule  { display: none; }
+    .hero-v2__lead  { margin-block-start: 1.25rem; }
+}
+
+/* لا حركة دخول على الجسم والبطاقة.
+   كانت `heroRise` تبدأ من opacity:0، فحين لا تُشغَّل الحركة — إعدادات تقليل
+   الحركة، أو متصفح بلا دعم، أو لقطة قبل أول إطار — يبقى الجسم البطل مخفيًّا
+   والصفحة بلا بطلها. قِيس فعليًّا: opacity=0 على الاثنين معًا.
+   القاعدة: لا يُخفى محتوى خلف حركة. */

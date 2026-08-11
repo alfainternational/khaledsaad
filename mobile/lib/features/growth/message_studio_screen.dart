@@ -74,7 +74,7 @@ class _MessageStudioScreenState extends State<MessageStudioScreen> {
           return AdaptiveScaffold(
             family: AdaptivePageFamily.form,
             appBar: AppBar(title: const Text('استوديو الرسائل')),
-            body: Center(child: Text('${snapshot.error}')),
+            body: Center(child: Text(userErrorMessage(snapshot.error))),
           );
         }
 

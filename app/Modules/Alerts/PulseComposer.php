@@ -54,8 +54,13 @@ class PulseComposer
             if ($changes !== []) {
                 $items[] = [
                     'type' => 'drift',
-                    'title' => 'مشروعك تغيّر بعد آخر تحليل',
-                    'body' => $changes[0]['text'].(count($changes) > 1 ? ' وهناك '.(count($changes) - 1).' تغييرات أخرى.' : ''),
+                    'title' => __('مشروعك تغيّر بعد آخر تحليل'),
+                    'body' => count($changes) > 1
+                        ? __(':first وهناك :rest تغييرات أخرى.', [
+                            'first' => $changes[0]['text'],
+                            'rest' => count($changes) - 1,
+                        ])
+                        : $changes[0]['text'],
                 ];
             }
         }
@@ -70,8 +75,8 @@ class PulseComposer
         if ($overdue > 0) {
             $items[] = [
                 'type' => 'overdue',
-                'title' => "لديك {$overdue} ".($overdue === 1 ? 'مهمة متأخرة' : 'مهام متأخرة'),
-                'body' => 'التوصيات التي تحولت إلى مهام ثم تأخرت هي قيمة اشتريتها ولم تقبضها بعد.',
+                'title' => "لديك {$overdue} ".($overdue === 1 ? __('مهمة متأخرة') : __('مهام متأخرة')),
+                'body' => __('التوصيات التي تحولت إلى مهام ثم تأخرت هي قيمة اشتريتها ولم تقبضها بعد.'),
             ];
         }
 
@@ -83,8 +88,12 @@ class PulseComposer
         if ($candidates > 0) {
             $items[] = [
                 'type' => 'competitors',
-                'title' => "{$candidates} ".($candidates === 1 ? 'منافس مرشّح ينتظر' : 'منافسون مرشّحون ينتظرون').' تأكيدك',
-                'body' => 'أكّد من ينافسك فعلًا واستبعد الباقي — دقة قائمة المنافسين ترفع دقة كل تحليل قادم.',
+                // الجملة كاملة مفتاحٌ واحد لكل حالة عدد: العربية تُفرد وتُجمع،
+                // وغيرها قد يفرّق بينهما بموضع الكلمة لا بصيغتها.
+                'title' => $candidates === 1
+                    ? __(':count منافس مرشّح ينتظر تأكيدك', ['count' => $candidates])
+                    : __(':count منافسون مرشّحون ينتظرون تأكيدك', ['count' => $candidates]),
+                'body' => __('أكّد من ينافسك فعلًا واستبعد الباقي — دقة قائمة المنافسين ترفع دقة كل تحليل قادم.'),
             ];
         }
 
@@ -97,8 +106,10 @@ class PulseComposer
         if ($doneThisWeek > 0) {
             $items[] = [
                 'type' => 'progress',
-                'title' => "أنجزت {$doneThisWeek} ".($doneThisWeek === 1 ? 'مهمة' : 'مهام').' هذا الأسبوع',
-                'body' => 'استمر بنفس الإيقاع — الدرجة القادمة ستعكس هذا الشغل.',
+                'title' => $doneThisWeek === 1
+                    ? __('أنجزت :count مهمة هذا الأسبوع', ['count' => $doneThisWeek])
+                    : __('أنجزت :count مهام هذا الأسبوع', ['count' => $doneThisWeek]),
+                'body' => __('استمر بنفس الإيقاع — الدرجة القادمة ستعكس هذا الشغل.'),
             ];
         }
 
@@ -110,7 +121,7 @@ class PulseComposer
             $items[] = [
                 'type' => 'stale',
                 'title' => "آخر تحليل لك عمره {$age} يومًا",
-                'body' => 'السوق تحرّك منذ ذلك الحين. إعادة القياس تُظهر أثر ما نفّذته وتصحح الاتجاه.',
+                'body' => __('السوق تحرّك منذ ذلك الحين. إعادة القياس تُظهر أثر ما نفّذته وتصحح الاتجاه.'),
             ];
         }
 
@@ -118,8 +129,8 @@ class PulseComposer
         if ($latestReport === null) {
             $items[] = [
                 'type' => 'start',
-                'title' => 'مشروعك لم يُقس بعد',
-                'body' => 'شغّل تشخيص الجاهزية لتحصل على درجة وخطة — كل ما بعده يُبنى عليه.',
+                'title' => __('مشروعك لم يُقس بعد'),
+                'body' => __('شغّل تشخيص الجاهزية لتحصل على درجة وخطة — كل ما بعده يُبنى عليه.'),
             ];
         }
 
@@ -127,8 +138,8 @@ class PulseComposer
         if ($items === []) {
             $items[] = [
                 'type' => 'steady',
-                'title' => 'أسبوع هادئ — لا متأخرات ولا تغييرات',
-                'body' => 'الوقت المناسب لخطوة تقدم بدل خطوة إصلاح.',
+                'title' => __('أسبوع هادئ — لا متأخرات ولا تغييرات'),
+                'body' => __('الوقت المناسب لخطوة تقدم بدل خطوة إصلاح.'),
             ];
         }
 
@@ -147,16 +158,16 @@ class PulseComposer
 
         if (in_array('overdue', $types, true)) {
             return [
-                'title' => 'أنجز مهمة متأخرة واحدة اليوم',
-                'description' => 'ابدأ بالأقدم — إغلاق واحدة يكسر الجمود ويعيد القائمة إلى حجم قابل للإدارة.',
+                'title' => __('أنجز مهمة متأخرة واحدة اليوم'),
+                'description' => __('ابدأ بالأقدم — إغلاق واحدة يكسر الجمود ويعيد القائمة إلى حجم قابل للإدارة.'),
                 'url' => route('app.projects.tasks', $project),
             ];
         }
 
         if (in_array('drift', $types, true) || in_array('stale', $types, true)) {
             return [
-                'title' => 'أعد التحليل ببياناتك المحدّثة',
-                'description' => 'إجاباتك السابقة محفوظة — إعادة التشغيل تأخذ دقائق وتعطيك درجة تعكس واقعك الحالي.',
+                'title' => __('أعد التحليل ببياناتك المحدّثة'),
+                'description' => __('إجاباتك السابقة محفوظة — إعادة التشغيل تأخذ دقائق وتعطيك درجة تعكس واقعك الحالي.'),
                 'url' => route('app.projects.show', $project),
             ];
         }
@@ -165,7 +176,7 @@ class PulseComposer
 
         if ($suggestion !== null) {
             return [
-                'title' => 'شغّل «'.$suggestion['tool']->title.'»',
+                'title' => __('شغّل «:tool»', ['tool' => $suggestion['tool']->title]),
                 'description' => $suggestion['reason'],
                 'url' => route('app.tools.show', $suggestion['tool']),
             ];

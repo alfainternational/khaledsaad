@@ -43,7 +43,7 @@ class HttpPageFetcher implements PageFetcher
             return substr($response->body(), 0, self::MAX_BYTES);
         } catch (Throwable $exception) {
             // يُسجَّل المصدر بلا تفاصيل قد تحمل بيانات العميل.
-            Log::warning('تعذّر جلب صفحة للتدقيق.', [
+            Log::warning(__('تعذّر جلب صفحة للتدقيق.'), [
                 'url' => $url,
                 'reason' => $exception->getMessage(),
             ]);

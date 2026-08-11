@@ -34,7 +34,7 @@ class AdminContentMediaController extends Controller
         $directory = 'content/'.now()->format('Y/m');
         $path = $file->storeAs($directory, Str::uuid().'.'.$extension, 'local');
 
-        abort_if($path === false, 500, 'تعذر حفظ الملف.');
+        abort_if($path === false, 500, __('تعذر حفظ الملف.'));
 
         $media = ContentMedia::query()->create([
             'disk' => 'local',
@@ -75,17 +75,17 @@ class AdminContentMediaController extends Controller
             ->exists();
 
         if ($isReferenced) {
-            return back()->withErrors(['media' => 'لا يمكن حذف ملف مستخدم داخل محتوى. أزل استخدامه أولًا.']);
+            return back()->withErrors(['media' => __('لا يمكن حذف ملف مستخدم داخل محتوى. أزل استخدامه أولًا.')]);
         }
 
         $disk = Storage::disk($media->disk);
 
         if ($disk->exists($media->path) && ! $disk->delete($media->path)) {
-            return back()->withErrors(['media' => 'تعذر حذف الملف من التخزين. لم يُحذف السجل.']);
+            return back()->withErrors(['media' => __('تعذر حذف الملف من التخزين. لم يُحذف السجل.')]);
         }
 
         $media->delete();
 
-        return back()->with('success', 'تم حذف الملف من مكتبة الوسائط.');
+        return back()->with('success', __('تم حذف الملف من مكتبة الوسائط.'));
     }
 }

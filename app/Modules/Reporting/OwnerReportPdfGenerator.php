@@ -33,7 +33,7 @@ class OwnerReportPdfGenerator
             'brand' => config('brand'),
         ])->render();
 
-        $mpdf = $this->engine->make('تقريرك الخاص');
+        $mpdf = $this->engine->make(__('تقريرك الخاص'));
         $mpdf->WriteHTML($html);
         Storage::disk(self::DISK)->put($path, $mpdf->Output('', 'S'));
 

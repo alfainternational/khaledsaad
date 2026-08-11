@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: hacentunisia; color: #1a2233; font-size: 10pt; line-height: 1.8; }
+        body { font-family: plexarabic; color: #1a2233; font-size: 10pt; line-height: 1.8; }
         h2 { color: #071f5b; font-size: 12.5pt; margin: 16pt 0 6pt; border-bottom: 2px solid #2575ff; padding-bottom: 3pt; }
         h3 { color: #071f5b; font-size: 10.5pt; margin: 0 0 3pt; }
         p { margin: 0 0 6pt; }
@@ -56,7 +56,7 @@
         td { overflow-wrap: anywhere; }
     </style>
 </head>
-<body class="print-report">
+<body class="print-report" data-interface-system="v2" data-interface-family="reports">
 
 <div class="cover">
     <h1>بطاقة الجاهزية للذكاء الاصطناعي</h1>
@@ -148,7 +148,7 @@
     </div>
 @else
     <p class="muted" style="font-size: 9pt;">
-        {{ $crawl['total_visits'] }} زيارة بوت خلال آخر ٣٠ يومًا، من
+        {{ $crawl['total_visits'] }} زيارة بوت خلال آخر 30 يومًا، من
         {{ $crawl['parsed_lines'] }} سطرًا مقروءًا.
         @if ($crawl['unparsed_lines'] > 0)
             ({{ $crawl['unparsed_lines'] }} سطرًا لم يُفهم — التغطية {{ (int) round($crawl['parse_ratio'] * 100) }}٪.)

@@ -21,6 +21,8 @@ class AuthenticatedSessionController extends Controller
     public function create(Request $request): View
     {
         $tool = $this->rememberStartIntent($request);
+        $this->rememberExperienceIntent($request);
+        $this->rememberSafeReturnUrl($request);
 
         return view('auth.login', [
             'startTool' => $tool !== null ? $this->presenter->card($tool) : null,
@@ -36,7 +38,7 @@ class AuthenticatedSessionController extends Controller
 
         if (! auth()->attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
-                'email' => 'بيانات الدخول غير صحيحة.',
+                'email' => __('بيانات الدخول غير صحيحة.'),
             ]);
         }
 
@@ -58,6 +60,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
+        $this->forgetExperienceIntent($request);
 
         // العائد الذي جاء من أداة يُنقل إليها مباشرة ليختار المشروع ويشغّلها.
         $tool = $this->consumeStartIntent($request);
@@ -87,7 +90,7 @@ class AuthenticatedSessionController extends Controller
 
         if ($userId === null || $hashed === null || ! Hash::check($request->string('code'), $hashed)) {
             throw ValidationException::withMessages([
-                'code' => 'الرمز غير صحيح أو انتهت صلاحيته — اطلب الدخول من جديد.',
+                'code' => __('الرمز غير صحيح أو انتهت صلاحيته — اطلب الدخول من جديد.'),
             ]);
         }
 
@@ -97,6 +100,7 @@ class AuthenticatedSessionController extends Controller
         auth()->loginUsingId($userId, (bool) $request->session()->pull('otp_remember', false));
         $request->session()->forget('otp_user_id');
         $request->session()->regenerate();
+        $this->forgetExperienceIntent($request);
 
         $tool = $this->consumeStartIntent($request);
 

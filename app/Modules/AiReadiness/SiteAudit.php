@@ -88,7 +88,7 @@ class SiteAudit
                 arabicPageStructure: 'poor',
                 llmsTxt: false,
                 aiBotsAllowed: false,
-                notes: ['تعذّر الوصول إلى الموقع، فلم يُفحص. هذه ليست نتيجة فحص سلبية.'],
+                notes: [__('تعذّر الوصول إلى الموقع، فلم يُفحص. هذه ليست نتيجة فحص سلبية.')],
                 sector: $sector,
             );
         }
@@ -108,7 +108,7 @@ class SiteAudit
             arabicPageStructure: $this->arabicStructure($html),
             llmsTxt: $this->fetcher->get($base.'/llms.txt') !== null,
             aiBotsAllowed: $this->botsAllowed($robots),
-            notes: $robots === null ? ['لا يوجد robots.txt — البوتات غير محجوبة ضمنًا.'] : [],
+            notes: $robots === null ? [__('لا يوجد robots.txt — البوتات غير محجوبة ضمنًا.')] : [],
             homepageHtml: $html,
             sector: $sector,
         );

@@ -63,6 +63,7 @@ class ConsultationVisibilityAndAnswerTypesTest extends TestCase
 
         $this->assertNotNull($reviewItem);
         $this->assertArrayHasKey('required', $reviewItem);
+        $this->assertIsArray($reviewItem['validation']);
 
         $this->actingAs($user)->get(route('app.consultations.show', $session))
             ->assertOk()

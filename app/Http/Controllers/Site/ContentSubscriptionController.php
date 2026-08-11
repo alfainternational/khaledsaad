@@ -21,12 +21,12 @@ class ContentSubscriptionController extends Controller
             'email' => ['required', 'email:rfc', 'max:255'],
             'consent' => ['accepted'],
         ], [
-            'consent.accepted' => 'وافق على حفظ بريدك لفتح المحتوى.',
+            'consent.accepted' => __('وافق على حفظ بريدك لفتح المحتوى.'),
         ]);
 
         $result = $this->subscriptions->subscribe($data['email'], true);
         $request->session()->put(ContentAccessService::SESSION_KEY, $result['token']);
 
-        return redirect()->route('content.show', $content)->with('success', 'تم فتح المحتوى على هذا الجهاز.');
+        return redirect()->route('content.show', $content)->with('success', __('تم فتح المحتوى على هذا الجهاز.'));
     }
 }

@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <style>
-        /* خط الموقع نفسه: Hacen Tunisia المحمّل من public/assets/fonts */
-        body { font-family: hacentunisia; color: #1a2233; font-size: 10pt; line-height: 1.8; }
+        /* خط الموقع نفسه: IBM Plex Sans Arabic بوزنيه، من public/assets/fonts */
+        body { font-family: plexarabic; color: #1a2233; font-size: 10pt; line-height: 1.8; }
         h1 { color: #ffffff; font-size: 17pt; margin: 0; }
         h2 { color: #071f5b; font-size: 12.5pt; margin: 16pt 0 6pt; border-bottom: 2px solid #2575ff; padding-bottom: 3pt; }
         h3 { color: #071f5b; font-size: 10.5pt; margin: 0 0 3pt; }
@@ -109,7 +109,7 @@
         .print-report th, .print-report td, .print-table th, .print-table td { overflow-wrap: anywhere; word-break: break-word; }
     </style>
 </head>
-<body class="print-report">
+<body class="print-report" data-interface-system="v2" data-interface-family="reports">
 
 {{-- الغلاف --}}
 <div class="cover">
@@ -319,7 +319,7 @@
         @else
             <h3>متابعة التقرير</h3>
             <p class="muted">
-                سننبهك إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
+                يصلك تنبيه إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
                 @if ($watcher->last_checked_at)
                     آخر فحص {{ $watcher->last_checked_at->locale('ar')->translatedFormat('j F Y') }}.
                 @endif

@@ -53,6 +53,9 @@ final class FeatureKey
      */
     public const DIAGNOSIS_FULL = 'diagnosis.full';
 
+    /** مسار دروس التسويق وتطبيقاتها التفاعلية. */
+    public const LEARNING_MARKETING = 'learning.marketing';
+
     /**
      * كل مفاتيح البوابات.
      *
@@ -73,6 +76,7 @@ final class FeatureKey
             self::COMPETITORS_LIMIT,
             self::KPI_TRACKING,
             self::DIAGNOSIS_FULL,
+            self::LEARNING_MARKETING,
         ];
     }
 }

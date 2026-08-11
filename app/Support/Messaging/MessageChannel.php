@@ -19,11 +19,11 @@ enum MessageChannel: string
     public function label(): string
     {
         return match ($this) {
-            self::Ad => 'إعلان',
-            self::Social => 'منشور اجتماعي',
-            self::Whatsapp => 'واتساب',
-            self::Email => 'بريد إلكتروني',
-            self::Landing => 'وصف صفحة هبوط',
+            self::Ad => __('إعلان'),
+            self::Social => __('منشور اجتماعي'),
+            self::Whatsapp => __('واتساب'),
+            self::Email => __('بريد إلكتروني'),
+            self::Landing => __('وصف صفحة هبوط'),
         };
     }
 
@@ -44,11 +44,11 @@ enum MessageChannel: string
     public function hint(): string
     {
         return match ($this) {
-            self::Ad => 'سطران على الأكثر: وعد واحد ونداء إجراء واحد.',
-            self::Social => 'افتتاحية توقف التمرير، ثم القيمة، ثم دعوة واحدة.',
-            self::Whatsapp => 'رسالة شخصية قصيرة كأنها من إنسان لا من نظام.',
-            self::Email => 'سطر أول يبرر الفتح، ثم القيمة والدليل، ثم إجراء واحد.',
-            self::Landing => 'جملة عنوان وجملة توضيح — لا فقرة تسويقية.',
+            self::Ad => __('سطران على الأكثر: وعد واحد ونداء إجراء واحد.'),
+            self::Social => __('افتتاحية توقف التمرير، ثم القيمة، ثم دعوة واحدة.'),
+            self::Whatsapp => __('رسالة شخصية قصيرة كأنها من إنسان لا من نظام.'),
+            self::Email => __('سطر أول يبرر الفتح، ثم القيمة والدليل، ثم إجراء واحد.'),
+            self::Landing => __('جملة عنوان وجملة توضيح — لا فقرة تسويقية.'),
         };
     }
 

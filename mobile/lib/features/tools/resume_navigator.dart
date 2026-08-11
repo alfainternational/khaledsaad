@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/platform_repository.dart';
+import '../../core/widgets/common.dart';
 import '../reports/report_screen.dart';
 import 'engagement.dart';
 import 'run_status_screen.dart';
@@ -30,7 +31,7 @@ abstract final class ResumeNavigator {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     }
   }

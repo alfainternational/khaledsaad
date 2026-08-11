@@ -52,7 +52,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _downloadingPdf = false);
@@ -92,7 +92,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _converting = false);
@@ -113,7 +113,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _engagementBusy = false);
@@ -130,7 +130,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _engagementBusy = false);
@@ -161,7 +161,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _engagementBusy = false);
@@ -298,9 +298,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   // «الكل» هو الزر الأول: من قرأ تقريره كاملًا وقرّر تنفيذه
                   // لا يُفترض أن يضغط زرًّا لكل توصية. العدد من التقرير نفسه.
                   FilledButton.icon(
-                    onPressed: _converting
-                        ? null
-                        : () => _convert(all: true),
+                    onPressed: _converting ? null : () => _convert(all: true),
                     icon: const Icon(Icons.checklist),
                     label: Text(
                       'حوّل كل التوصيات إلى مهام'

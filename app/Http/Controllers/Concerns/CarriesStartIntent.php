@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Models\Tool;
+use App\Support\Experience\Experience;
 use Illuminate\Http\Request;
 
 /**
@@ -14,6 +15,8 @@ use Illuminate\Http\Request;
 trait CarriesStartIntent
 {
     private const SESSION_KEY = 'start_tool';
+
+    private const EXPERIENCE_SESSION_KEY = 'start_experience';
 
     /**
      * يقرأ النية من الرابط أو الجلسة، ويحفظها للخطوة التالية.
@@ -53,5 +56,40 @@ trait CarriesStartIntent
     protected function forgetStartIntent(Request $request): void
     {
         $request->session()->forget(self::SESSION_KEY);
+    }
+
+    protected function rememberExperienceIntent(Request $request): ?Experience
+    {
+        $experience = Experience::tryFrom((string) $request->query('intent'))
+            ?? Experience::tryFrom((string) $request->session()->get(self::EXPERIENCE_SESSION_KEY));
+
+        if ($experience !== null) {
+            $request->session()->put(self::EXPERIENCE_SESSION_KEY, $experience->value);
+        }
+
+        return $experience;
+    }
+
+    protected function rememberSafeReturnUrl(Request $request): ?string
+    {
+        $candidate = $request->query('return_url');
+
+        if (! is_string($candidate) || ! str_starts_with($candidate, '/') || str_starts_with($candidate, '//')) {
+            return null;
+        }
+
+        $parts = parse_url($candidate);
+        if ($parts === false || isset($parts['host'], $parts['scheme'])) {
+            return null;
+        }
+
+        $request->session()->put('url.intended', url($candidate));
+
+        return $candidate;
+    }
+
+    protected function forgetExperienceIntent(Request $request): void
+    {
+        $request->session()->forget(self::EXPERIENCE_SESSION_KEY);
     }
 }

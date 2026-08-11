@@ -105,7 +105,7 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -126,7 +126,7 @@ class _GrowthHubScreenState extends State<GrowthHubScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -479,7 +479,7 @@ class _Section extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         if (error != null)
-          ErrorNotice(message: error.toString())
+          ErrorNotice(message: userErrorMessage(error))
         else
           Center(child: child),
       ],

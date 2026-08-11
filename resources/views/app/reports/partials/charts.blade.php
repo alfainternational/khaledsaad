@@ -9,7 +9,10 @@
             {{-- عدّاد الدرجة --}}
             <article class="card chart">
                 <h3>{{ $charts['score_gauge']['title'] }}</h3>
-                <div class="gauge" role="img" aria-label="الدرجة {{ $charts['score_gauge']['value'] }} من {{ $charts['score_gauge']['max'] }}">
+                <div class="gauge" role="img" aria-label="{{ __('الدرجة :value من :max', [
+                    'value' => $charts['score_gauge']['value'],
+                    'max' => $charts['score_gauge']['max'],
+                ]) }}">
                     @php($circumference = 2 * M_PI * 52)
                     @php($filled = $charts['score_gauge']['value'] / max(1, $charts['score_gauge']['max']) * $circumference)
                     <svg viewBox="0 0 120 120" aria-hidden="true">

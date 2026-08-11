@@ -8,7 +8,7 @@ class PublicResponsiveLayoutTest extends TestCase
 {
     public function test_mobile_header_has_a_single_row_and_moves_all_secondary_actions_into_the_menu(): void
     {
-        $css = file_get_contents(resource_path('css/app.css'));
+        $css = str_replace("\r\n", "\n", file_get_contents(resource_path('css/app.css')));
         $view = file_get_contents(resource_path('views/partials/site-header.blade.php'));
         $mobileQuery = strpos($css, '@media (max-width: 900px)');
 
@@ -38,7 +38,7 @@ class PublicResponsiveLayoutTest extends TestCase
 
         $smallRules = substr($css, $smallQuery, 4200);
 
-        $this->assertStringContainsString('padding-inline: clamp(1rem, 4vw, 1.25rem);', $smallRules);
+        $this->assertStringContainsString('padding-inline: var(--ui-page-inline);', $smallRules);
         $this->assertStringContainsString('width: min(8.5rem, 44vw);', $smallRules);
         $this->assertStringContainsString('padding-block: clamp(3.5rem, 12vw, 4.5rem);', $smallRules);
     }

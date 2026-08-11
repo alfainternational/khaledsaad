@@ -71,11 +71,26 @@ class ProjectPresenter
      */
     public function overview(Project $project): array
     {
-        $project->loadMissing(['profile', 'reports', 'tasks', 'kpis.entries']);
+        $project->loadMissing(['profile', 'reports.toolRun.toolVersion.tool', 'tasks', 'kpis.entries']);
 
         $reports = $project->reports->sortByDesc('created_at')->values();
         $latestReport = $reports->first();
         $openTasks = $project->tasks->where('status', '!=', Task::STATUS_DONE);
+        $reportGroups = $reports
+            ->groupBy(fn (Report $report): string => $report->toolRun->toolVersion->tool->key)
+            ->map(function ($toolReports, string $toolKey): array {
+                $cards = $toolReports->map(fn (Report $report): array => $this->reports->card($report))->values();
+
+                return [
+                    'tool_key' => $toolKey,
+                    'tool_title' => $cards->first()['tool']['title'],
+                    'versions_count' => $cards->count(),
+                    'latest' => $cards->first(),
+                    'history' => $cards->slice(1)->values()->all(),
+                ];
+            })
+            ->values()
+            ->all();
 
         return [
             ...$this->card($project),
@@ -83,11 +98,13 @@ class ProjectPresenter
                 'business_model', 'description', 'geography', 'website',
                 'monthly_budget', 'primary_goal', 'value_proposition',
             ]) ?? [],
+            'description_needs_attention' => mb_strlen(trim((string) ($project->profile?->description ?? ''))) < 40,
             'latest_report' => $latestReport ? $this->reports->card($latestReport) : null,
             'comparison' => $latestReport
                 ? $this->reports->comparison($latestReport, $this->reports->previousFor($latestReport))
                 : null,
             'reports' => $reports->map(fn ($report) => $this->reports->card($report))->all(),
+            'report_groups' => $reportGroups,
             'tasks' => [
                 'open' => $openTasks->count(),
                 'overdue' => $openTasks->filter(fn (Task $task) => $task->isOverdue())->count(),

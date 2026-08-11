@@ -3,15 +3,18 @@
 namespace App\Support\Content;
 
 use App\Models\Content;
+use App\Modules\Learning\MarketingCourseCatalog;
 use Illuminate\Support\Str;
 
 class LearningPresenter
 {
+    public function __construct(private readonly MarketingCourseCatalog $catalog) {}
+
     /** @return array<string, mixed> */
     public function present(Content $content): array
     {
         if ($content->learning_order === null) {
-            return ['enabled' => false];
+            return ['enabled' => false, 'applications' => []];
         }
 
         $series = Content::query()
@@ -50,6 +53,9 @@ class LearningPresenter
             'next' => $next,
             'progress_key' => 'learning-progress-'.($content->source_key ?: $content->slug),
             'cover_alt' => $content->learning_meta['cover']['alt'] ?? $content->title,
+            'applications' => Str::startsWith((string) $content->source_key, 'marketing-course-')
+                ? (collect($this->catalog->lessons())->firstWhere('number', $content->learning_order)['exercises'] ?? [])
+                : [],
         ];
     }
 }

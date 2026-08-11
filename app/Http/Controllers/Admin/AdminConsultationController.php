@@ -40,7 +40,7 @@ class AdminConsultationController extends Controller
     {
         $draft = $this->manager->createDraft($blueprint);
 
-        return redirect()->route('admin.consultations.show', $draft)->with('status', 'أُنشئت مسودة مستقلة؛ الإصدار المنشور لم يتغير.');
+        return redirect()->route('admin.consultations.show', $draft)->with('status', __('أُنشئت مسودة مستقلة؛ الإصدار المنشور لم يتغير.'));
     }
 
     public function updateQuestion(Request $request, ConsultationBlueprintVersion $version, QuestionVersion $question): RedirectResponse
@@ -58,14 +58,14 @@ class AdminConsultationController extends Controller
         $validated['allow_skip'] = $request->boolean('allow_skip');
         $this->manager->updateQuestion($version, $question, $validated);
 
-        return back()->with('status', 'حُفظ السؤال في المسودة.');
+        return back()->with('status', __('حُفظ السؤال في المسودة.'));
     }
 
     public function publish(ConsultationBlueprintVersion $version): RedirectResponse
     {
         $published = $this->manager->publish($version);
 
-        return redirect()->route('admin.consultations.show', $published)->with('status', 'نُشر الإصدار وقُفل ضد التعديل.');
+        return redirect()->route('admin.consultations.show', $published)->with('status', __('نُشر الإصدار وقُفل ضد التعديل.'));
     }
 
     public function simulate(Request $request, ConsultationBlueprintVersion $version): View

@@ -46,7 +46,7 @@ class TaskController extends Controller
             'completed_at' => $data['status'] === Task::STATUS_DONE ? now() : null,
         ]);
 
-        return back()->with('status', 'حُدثت حالة المهمة.');
+        return back()->with('status', __('حُدثت حالة المهمة.'));
     }
 
     /**
@@ -60,12 +60,12 @@ class TaskController extends Controller
         $this->authorizeTask($request, $task);
 
         if ($task->guide_status === Task::GUIDE_PENDING) {
-            return back()->with('status', 'دليل هذه المهمة قيد التطوير الآن.');
+            return back()->with('status', __('دليل هذه المهمة قيد التطوير الآن.'));
         }
 
         $this->guides->dispatch($task);
 
-        return back()->with('status', 'بدأ تطوير المهمة. ستجد الخطوات والأمثلة هنا خلال دقيقة.');
+        return back()->with('status', __('بدأ تطوير المهمة. ستجد الخطوات والأمثلة هنا خلال دقيقة.'));
     }
 
     /**

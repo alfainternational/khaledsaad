@@ -8,6 +8,22 @@ use Tests\TestCase;
 class MobileDownloadTest extends TestCase
 {
     #[Test]
+    public function the_server_flutter_package_and_request_header_share_one_build_number(): void
+    {
+        $pubspec = file_get_contents(base_path('mobile/pubspec.yaml'));
+        $environment = file_get_contents(base_path('mobile/lib/core/config/app_environment.dart'));
+
+        $this->assertIsString($pubspec);
+        $this->assertIsString($environment);
+        preg_match('/^version:\s*([^+\s]+)\+(\d+)$/m', $pubspec, $package);
+        preg_match('/appBuild\s*=.*defaultValue:\s*(\d+)/s', $environment, $header);
+
+        $this->assertSame(config('mobile.version'), $package[1] ?? null);
+        $this->assertSame(config('mobile.build'), isset($package[2]) ? (int) $package[2] : null);
+        $this->assertSame(config('mobile.build'), isset($header[1]) ? (int) $header[1] : null);
+    }
+
+    #[Test]
     public function the_release_manifest_matches_the_public_mobile_version(): void
     {
         $manifest = json_decode(

@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('interface_family', 'reports')
 @section('layout', 'index')
 
 @section('title', 'موجز الوكالة')
@@ -181,7 +182,7 @@
     <section class="card">
         @if ($readiness['can_generate'])
             <h2 class="section-title">جاهز لإنشاء تقريرك الكامل</h2>
-            <p class="muted">سنقرأ {{ $readiness['included_count'] }} تشخيصات معًا، ثم نشرح لك الصورة والخطوة التالية بلا تكرار:</p>
+            <p class="muted">تُقرأ {{ $readiness['included_count'] }} تشخيصات معًا، ثم أشرح لك الصورة والخطوة التالية بلا تكرار:</p>
             <ul class="bullets">
                 @foreach ($readiness['included_tools'] as $tool)
                     <li>

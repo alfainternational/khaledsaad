@@ -35,7 +35,7 @@ class LiveReportChangedNotification extends Notification
     {
         $mail = (new MailMessage)
             ->subject('بيانات مشروعك تغيّرت — '.$this->report->title)
-            ->greeting('يوجد تحديث قد يؤثر في تقريرك')
+            ->greeting(__('يوجد تحديث قد يؤثر في تقريرك'))
             ->line("تغيّرت بعض البيانات التي بُني عليها «{$this->report->title}»:");
 
         foreach (array_slice($this->changes, 0, 4) as $change) {
@@ -43,8 +43,8 @@ class LiveReportChangedNotification extends Notification
         }
 
         return $mail
-            ->action('راجع التقرير والتغييرات', route('app.reports.show', $this->report->id))
-            ->line('إجاباتك محفوظة، ويمكنك طلب تحليل جديد بعد مراجعة التغييرات.');
+            ->action(__('راجع التقرير والتغييرات'), route('app.reports.show', $this->report->id))
+            ->line(__('إجاباتك محفوظة، ويمكنك طلب تحليل جديد بعد مراجعة التغييرات.'));
     }
 
     /**
@@ -54,7 +54,7 @@ class LiveReportChangedNotification extends Notification
     {
         return [
             'type' => 'live_report_changed',
-            'title' => 'مشروعك تغيّر بعد آخر تحليل',
+            'title' => __('مشروعك تغيّر بعد آخر تحليل'),
             'body' => $this->changes[0]['text']
                 .(count($this->changes) > 1 ? ' و'.(count($this->changes) - 1).' تغييرات أخرى.' : ''),
             'report_id' => $this->report->id,

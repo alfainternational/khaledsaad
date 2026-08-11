@@ -33,7 +33,7 @@
 @elseif ($type === 'repeater')
     <p class="field__help">أدخل كل عنصر في خانة مستقلة.</p>
     @for ($index = 0; $index < min(10, $validation['max_items'] ?? 5); $index++)
-        <input class="question-control" type="text" name="value[]" value="{{ data_get($current, $index) }}" placeholder="عنصر {{ $index + 1 }}" @required($index === 0 && $required)>
+        <input class="question-control" type="text" name="value[]" value="{{ data_get($current, $index) }}" placeholder="{{ __('عنصر :number', ['number' => $index + 1]) }}" @required($index === 0 && $required)>
     @endfor
 @elseif (in_array($type, ['url', 'email', 'date', 'text'], true))
     <input class="question-control" type="{{ $type === 'text' ? 'text' : $type }}" name="value" value="{{ $current }}" @required($required)>

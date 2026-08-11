@@ -8,6 +8,8 @@ use App\Models\MarketingLearningRun;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\Projects\ProjectService;
+use App\Support\Experience\Experience;
+use App\Support\Experience\ExperienceService;
 use Illuminate\Contracts\Bus\Dispatcher as BusDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -23,7 +25,7 @@ class MarketingLearningJourneyTest extends TestCase
         [$user, $project] = $this->project();
 
         $response = $this->actingAs($user)
-            ->get(route('app.learning.marketing.index', $project));
+            ->get(route('app.learning.marketing.home', ['project' => $project->slug]));
 
         $response->assertOk()
             ->assertSee('ابدأ من هنا')
@@ -36,9 +38,9 @@ class MarketingLearningJourneyTest extends TestCase
     {
         [$user, $project] = $this->project();
 
-        $response = $this->actingAs($user)->get(route('app.learning.marketing.exercise', [
-            $project,
-            'describe-real-customer',
+        $response = $this->actingAs($user)->get(route('app.learning.marketing.course.exercise', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
             'step' => 1,
         ]));
 
@@ -59,27 +61,26 @@ class MarketingLearningJourneyTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('app.learning.marketing.index', $project))
+            ->get(route('app.learning.marketing.home', ['project' => $project->slug]))
             ->assertOk()
             ->assertSee('أعد المراجعة')
-            ->assertSee(route('app.learning.marketing.result', [$project, 'describe-real-customer']), false);
+            ->assertSee(route('app.learning.marketing.course.result', ['exercise' => 'describe-real-customer', 'project' => $project->slug]), false);
     }
 
     public function test_saving_a_step_keeps_the_answer_and_opens_the_next_question(): void
     {
         [$user, $project] = $this->project();
 
-        $response = $this->actingAs($user)->put(route('app.learning.marketing.save', [
-            $project,
-            'describe-real-customer',
+        $response = $this->actingAs($user)->put(route('app.learning.marketing.course.save', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
         ]), [
             'step' => 1,
             'answer' => 'صاحب متجر إلكتروني صغير يدير الطلبات بنفسه ويريد زيادة المبيعات',
         ]);
 
-        $response->assertRedirect(route('app.learning.marketing.exercise', [
-            $project,
-            'describe-real-customer',
+        $response->assertRedirect(route('app.learning.marketing.course.exercise', [
+            'exercise' => 'describe-real-customer',
             'step' => 2,
         ]));
 
@@ -105,21 +106,20 @@ class MarketingLearningJourneyTest extends TestCase
             'buying_trigger' => 'يتحرك عندما تنخفض الطلبات أسبوعين ويحتاج إلى استعادة الدخل سريعًا',
         ]]);
 
-        $response = $this->actingAs($user)->post(route('app.learning.marketing.submit', [
-            $project,
-            'describe-real-customer',
+        $response = $this->actingAs($user)->post(route('app.learning.marketing.course.submit', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
         ]));
 
-        $response->assertRedirect(route('app.learning.marketing.result', [
-            $project,
-            'describe-real-customer',
+        $response->assertRedirect(route('app.learning.marketing.course.result', [
+            'exercise' => 'describe-real-customer',
         ]));
         $this->assertSame(MarketingExerciseAttempt::STATUS_QUEUED, $attempt->refresh()->status);
         Queue::assertPushed(EvaluateMarketingExercise::class, 1);
 
-        $this->actingAs($user)->post(route('app.learning.marketing.submit', [
-            $project,
-            'describe-real-customer',
+        $this->actingAs($user)->post(route('app.learning.marketing.course.submit', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
         ]));
         Queue::assertPushed(EvaluateMarketingExercise::class, 1);
     }
@@ -133,14 +133,13 @@ class MarketingLearningJourneyTest extends TestCase
             'customer_profile' => 'صاحب متجر إلكتروني صغير يدير الطلبات بنفسه ويريد زيادة المبيعات',
         ]]);
 
-        $response = $this->actingAs($user)->post(route('app.learning.marketing.submit', [
-            $project,
-            'describe-real-customer',
+        $response = $this->actingAs($user)->post(route('app.learning.marketing.course.submit', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
         ]));
 
-        $response->assertRedirect(route('app.learning.marketing.exercise', [
-            $project,
-            'describe-real-customer',
+        $response->assertRedirect(route('app.learning.marketing.course.exercise', [
+            'exercise' => 'describe-real-customer',
             'step' => 2,
         ]));
         $response->assertSessionHas('error');
@@ -163,12 +162,11 @@ class MarketingLearningJourneyTest extends TestCase
             'final_score' => 82,
         ]);
 
-        $this->actingAs($user)->post(route('app.learning.marketing.submit', [
-            $project,
-            'describe-real-customer',
-        ]))->assertRedirect(route('app.learning.marketing.result', [
-            $project,
-            'describe-real-customer',
+        $this->actingAs($user)->post(route('app.learning.marketing.course.submit', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
+        ]))->assertRedirect(route('app.learning.marketing.course.result', [
+            'exercise' => 'describe-real-customer',
         ]));
 
         Queue::assertNothingPushed();
@@ -186,15 +184,14 @@ class MarketingLearningJourneyTest extends TestCase
             'status' => MarketingExerciseAttempt::STATUS_EVALUATING,
         ]);
 
-        $this->actingAs($user)->put(route('app.learning.marketing.save', [
-            $project,
-            'describe-real-customer',
+        $this->actingAs($user)->put(route('app.learning.marketing.course.save', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
         ]), [
             'step' => 1,
             'answer' => 'إجابة جديدة يجب ألا تختلط بالمراجعة التي تعمل الآن',
-        ])->assertRedirect(route('app.learning.marketing.result', [
-            $project,
-            'describe-real-customer',
+        ])->assertRedirect(route('app.learning.marketing.course.result', [
+            'exercise' => 'describe-real-customer',
         ]));
 
         $this->assertSame($original, $attempt->refresh()->answers['customer_profile']);
@@ -216,12 +213,11 @@ class MarketingLearningJourneyTest extends TestCase
             ->once()
             ->andThrow(new RuntimeException('queue unavailable'));
 
-        $this->actingAs($user)->post(route('app.learning.marketing.submit', [
-            $project,
-            'describe-real-customer',
-        ]))->assertRedirect(route('app.learning.marketing.result', [
-            $project,
-            'describe-real-customer',
+        $this->actingAs($user)->post(route('app.learning.marketing.course.submit', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
+        ]))->assertRedirect(route('app.learning.marketing.course.result', [
+            'exercise' => 'describe-real-customer',
         ]));
 
         $attempt->refresh();
@@ -241,7 +237,7 @@ class MarketingLearningJourneyTest extends TestCase
             'status' => MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
         ]);
 
-        $route = route('app.learning.marketing.retry', [$project, 'describe-real-customer']);
+        $route = route('app.learning.marketing.course.retry', ['exercise' => 'describe-real-customer', 'project' => $project->slug]);
         $this->actingAs($user)->post($route)->assertRedirect();
         $this->actingAs($user)->post($route)->assertRedirect();
 
@@ -290,9 +286,9 @@ class MarketingLearningJourneyTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($user)->get(route('app.learning.marketing.result', [
-            $project,
-            'describe-real-customer',
+        $response = $this->actingAs($user)->get(route('app.learning.marketing.course.result', [
+            'exercise' => 'describe-real-customer',
+            'project' => $project->slug,
         ]));
 
         $response->assertOk()
@@ -309,14 +305,17 @@ class MarketingLearningJourneyTest extends TestCase
     public function test_another_user_cannot_see_the_course_or_answers_for_the_project(): void
     {
         [$owner, $project] = $this->project();
-        $stranger = User::factory()->create();
+        $stranger = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
 
         $this->actingAs($stranger)
-            ->get(route('app.learning.marketing.index', $project))
+            ->get(route('app.learning.marketing.home', ['project' => $project->slug]))
             ->assertNotFound();
 
         $this->actingAs($owner)
-            ->get(route('app.learning.marketing.index', $project))
+            ->get(route('app.learning.marketing.home', ['project' => $project->slug]))
             ->assertOk();
     }
 
@@ -328,6 +327,8 @@ class MarketingLearningJourneyTest extends TestCase
         $user = User::factory()->create();
         $project = app(ProjectService::class)->create($user, ['name' => 'متجر الاختبار']);
         $project->brainFacts()->delete();
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
+        $user = app(ExperienceService::class)->activate($user, Experience::LEARNING);
 
         return [$user, $project];
     }

@@ -54,7 +54,7 @@ class ManualReportController extends Controller
         AdminManualReportController $manual,
     ): JsonResponse {
         if ($run->status === ToolRun::STATUS_COMPLETED) {
-            return response()->json(['message' => 'اكتمل هذا التقرير مسبقاً.'], 409);
+            return response()->json(['message' => __('اكتمل هذا التقرير مسبقاً.')], 409);
         }
 
         if (is_array($request->input('payload'))) {

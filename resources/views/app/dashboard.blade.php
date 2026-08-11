@@ -6,13 +6,14 @@
 @section('content')
     <header class="page-head">
         <div>
-            <p class="eyebrow">لوحة التحكم</p>
-            <h1>ملخص مشاريعك وخطوتك التالية</h1>
+            <p class="eyebrow">{{ __('اليوم') }}</p>
+            <h1>{{ __('ما أهم شيء أفعله الآن لتحسين مشروعي؟') }}</h1>
         </div>
-        <a href="{{ route('app.projects.create') }}" class="btn btn--primary" data-tour="ابدأ من هنا: أضف مشروعك مرة واحدة، وكل التشخيصات بعدها تبني عليه.">أضف مشروعًا</a>
     </header>
 
-    <section class="layout-metrics" aria-label="الملخص الأساسي">
+    {{-- شريط مساند لا ثلاث بطاقات متصدّرة: هذه عدّادات سياق، والبؤرة
+         تبقى لـ«أكمل ما بدأته» ومشاريعك وخطوتك التالية. --}}
+    <section class="layout-metrics layout-metrics--rail" aria-label="الملخص الأساسي">
         <article class="stat">
             <span class="stat__value">{{ count($projects) }}</span>
             <span class="stat__label">مشروع</span>
@@ -59,7 +60,7 @@
         @if ($projects === [])
         <section class="empty">
             <h2>أضف مشروعك الأول</h2>
-            <p>أدخل معلوماته الأساسية مرة واحدة، وسنستخدمها لتخصيص الأسئلة والتقارير من دون تكرار.</p>
+            <p>أدخل معلوماته الأساسية مرة واحدة، وتُستخدم لتخصيص الأسئلة والتقارير من دون تكرار.</p>
             <a href="{{ route('app.projects.create') }}" class="btn btn--primary">أضف مشروعك الأول</a>
         </section>
         @else
@@ -101,35 +102,22 @@
         </div>
 
         <aside class="layout-aside layout-flow" aria-label="الخطوة التالية">
-            @if (($learningNext['exercise'] ?? null) !== null)
-                <section class="card consultation-entry" aria-labelledby="dashboard-learning-heading">
-                    <p class="eyebrow">خطوتك التسويقية التالية</p>
-                    <h2 id="dashboard-learning-heading">{{ $learningNext['exercise']['title'] }}</h2>
-                    <p>{{ $learningNext['reason'] }}</p>
-                    <p class="muted">لمشروع {{ $learningNext['project']->name }} · {{ $learningNext['exercise']['duration_minutes'] }} دقيقة</p>
-                    <a href="{{ route('app.learning.marketing.exercise', [$learningNext['project'], $learningNext['exercise']['key']]) }}" class="btn btn--primary">ابدأ المهمة</a>
-                </section>
-            @endif
-
-            <section class="card consultation-entry" aria-labelledby="smart-consultation-heading">
-                <p class="eyebrow">المستشار التسويقي الذكي</p>
-                <h2 id="smart-consultation-heading">لا تعرف أي تشخيص تبدأ به؟</h2>
-                <p>ابدأ باستشارة واحدة تفهم مشروعك، تسمح بأكثر من اختيار عندما ينطبق، ثم تحدد التحليلات والأولويات المناسبة.</p>
-                <a href="{{ route('app.consultations.index') }}" class="btn btn--primary">ابدأ التشخيص الذكي الشامل</a>
+            <section class="card consultation-entry" aria-labelledby="smart-consultation-heading" data-primary-action>
+                <p class="eyebrow">{{ __('خطوتك الأهم الآن') }}</p>
+                <h2 id="smart-consultation-heading">{{ $projects === [] ? __('أضف مشروعك الأول') : __('ساعدني أختار من أين أبدأ') }}</h2>
+                <p>{{ $projects === []
+                    ? __('تحتاج نحو 3 دقائق. بعدها نستخدم وصف المشروع لتخصيص التشخيصات والمهام دون تكرار.')
+                    : __('تحتاج نحو 10 دقائق. سنفرز وضع مشروعك ونقترح التشخيص الأنسب بدل عرض كل الخيارات معًا.') }}</p>
+                <a href="{{ $projects === [] ? route('app.projects.create') : route('app.consultations.index') }}" class="btn btn--primary">
+                    {{ $projects === [] ? __('أضف مشروعك') : __('ابدأ اختيار نقطة البداية') }}
+                </a>
             </section>
         </aside>
     </div>
 
     <section aria-labelledby="tools-heading">
-        <h2 data-tour="اختر أول تشخيص من هنا — نحو 10 دقائق وتخرج بدرجة وفجوات واضحة." id="tools-heading" class="section-title">تشخيصات مقترحة للبدء</h2>
-        <div class="card-grid">
-            @foreach ($suggested_tools as $tool)
-                <a class="card card--link" href="{{ route('app.tools.show', $tool['key']) }}">
-                    <p class="eyebrow">{{ $tool['category'] }}</p>
-                    <h3>{{ $tool['title'] }}</h3>
-                    <p class="muted">{{ $tool['promise'] ?: $tool['description'] }}</p>
-                </a>
-            @endforeach
-        </div>
+        <h2 id="tools-heading" class="section-title">{{ __('التشخيصات الأخرى') }}</h2>
+        <p class="muted">{{ __('عندما تعرف ما تحتاجه، ستجد كتالوج التشخيصات كاملًا في صفحة واحدة.') }}</p>
+        <a class="btn btn--ghost" href="{{ route('app.tools.index') }}">{{ __('استكشف بقية التشخيصات') }}</a>
     </section>
 @endsection

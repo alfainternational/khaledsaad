@@ -52,8 +52,8 @@ class QuestionAssistController extends Controller
             'run_uuid' => ['nullable', 'string', 'max:64'],
             'session_uuid' => ['nullable', 'string', 'max:64'],
         ], [], [
-            'surface' => 'موضع السؤال',
-            'question_key' => 'مفتاح السؤال',
+            'surface' => __('موضع السؤال'),
+            'question_key' => __('مفتاح السؤال'),
         ]);
 
         $question = $this->locate($project, $validated);
@@ -85,7 +85,7 @@ class QuestionAssistController extends Controller
             'type' => ['required', 'string', 'max:32'],
             // القيمة قد تصل نصًّا أو مصفوفة (متكرر): كلاهما يُضم إلى نصٍّ واحد.
             'value' => ['nullable'],
-        ], [], ['field_key' => 'الحقل', 'type' => 'نوع الإجابة']);
+        ], [], ['field_key' => __('الحقل'), 'type' => __('نوع الإجابة')]);
 
         if (! AnswerFitnessScorer::measures((string) $validated['type'])) {
             return response()->json(['data' => null], options: JSON_UNESCAPED_UNICODE);

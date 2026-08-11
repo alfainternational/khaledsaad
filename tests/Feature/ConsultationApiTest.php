@@ -31,6 +31,7 @@ class ConsultationApiTest extends TestCase
         $created = $this->postJson(route('api.v1.consultations.store', $project), ['depth' => 'standard'])
             ->assertCreated()
             ->assertJsonPath('data.question.key', 'START-01');
+        $this->assertIsObject(json_decode($created->getContent())->data->question->validation);
         $uuid = $created->json('data.uuid');
 
         $this->putJson(route('api.v1.consultations.answer', [$uuid, 'START-01']), ['value' => 'مشروع قائم'])

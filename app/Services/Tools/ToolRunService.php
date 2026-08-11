@@ -73,6 +73,12 @@ class ToolRunService
             'guest_session_id' => $guestSessionId,
             'status' => ToolRun::STATUS_DRAFT,
             'current_step' => 1,
+            /*
+             * لغة صاحب التشغيل تُثبَّت عند البدء لا عند التوليد: بينهما
+             * قد يبدّل لغته أو تنتهي جلسته، والمخرَج يجب أن يصل بلغة من
+             * أجاب على الأسئلة.
+             */
+            'locale' => app()->getLocale(),
         ]);
 
         // ما أجاب عنه المستخدم في أي أداة سابقة يُملأ هنا مسبقًا:

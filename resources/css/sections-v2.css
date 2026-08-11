@@ -1,0 +1,990 @@
+/* ==========================================================================
+   طبقة المكوّنات — «الوضوح الطبي» على كل صفحات الموقع واللوحة.
+   المرجع البصري: docs/design/hero-live-final.png. القواعد: STYLESEED.md.
+
+   لماذا هنا لا في كل قالب؟ لأن ٣٢٣ استعمالًا لـ`muted` و٢٥١ لـ`btn` و١٤٤
+   لـ`card` موزّعة على ١٥٠ ملف بلاطة. تغيير اللغة يكون في المكوّن لا في
+   مواضع استعماله، وإلا انحرف السطح بعد أول تعديل.
+
+   كل محدِّد مسبوق بـ`:root` لأن `@import` يُدرَج في أعلى app.css فتغلبه
+   قواعد الملف الأصلية عند تساوي الانتقائية — قِيس فعليًّا على التذييل.
+   ========================================================================== */
+
+/* ==========================================================================
+   ١ · إيقاع الأقسام والعناوين
+   ========================================================================== */
+
+/* الفراغ مضغوط بقرار المالك: القسم كان يأخذ 7rem علوًا وسفلًا فتصير
+   الصفحة سُلَّمًا من الفراغات. النصف يكفي لفصل قسم عن قسم. */
+:root .section { padding-block: clamp(2.25rem, 4vw, 4rem); }
+
+/* العنوان يصير هو الصورة: عائلة العرض ومقاس يقفز عن النصّ لا يجاوره */
+:root .section-title,
+:root .section-heading__title,
+:root .page-head h1,
+:root .page-hero h1 {
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(1.75rem, 3.4vw, 3rem);
+    line-height: 1.18;
+    letter-spacing: 0;
+    text-wrap: balance;
+    color: var(--ink);
+}
+
+/* الفوقيّة: كانت بلون التوكيد فتزاحم الزرّ على الانتباه.
+   صارت رماديّة صغيرة بتباعد حروف — تُقرأ تسمية لا نداءً. */
+:root .eyebrow {
+    color: var(--muted);
+    font-size: .8125rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+:root .eyebrow::before,
+:root .eyebrow::after { background: var(--line-strong); }
+
+:root .muted { color: var(--muted); }
+
+/* رأس الصفحة يُفصل بخطّ شعري: فصلٌ بلا كتلة */
+:root .page-head {
+    padding-block-end: clamp(1rem, 2vw, 1.75rem);
+    border-block-end: 1px solid var(--line);
+}
+
+/* ==========================================================================
+   ٢ · الأسطح: خطّ رفيع بدل الظلّ — جوهر الاتجاه
+   ========================================================================== */
+
+:root .card,
+:root .panel-card,
+:root .profile-card,
+:root .knowledge-card,
+:root .tool-card,
+:root .plan-card,
+:root .sector-card,
+:root .result-window,
+:root .timeline-panel,
+:root .insight-banner,
+:root .empty {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: none;
+}
+
+:root .card:hover,
+:root .tool-card:hover,
+:root .knowledge-card:hover,
+:root .sector-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: none;
+    transform: none;
+}
+
+/* الكرات الزخرفية خلف الهيرو: ضبابٌ ملوّن بلا معنى، والشعاع وحده
+   هو الحدث اللوني المسموح في الصفحة (STYLESEED §٣). */
+:root .hero-orb,
+:root .diagnosis-card__glow,
+:root .pulse-icon { display: none; }
+
+/* ==========================================================================
+   ٣ · الأزرار: حبّة سوداء واحدة، وما عداها خطّ رفيع
+   ========================================================================== */
+
+:root .btn,
+:root .button {
+    min-block-size: var(--tap-min);
+    border-radius: var(--radius-pill);
+    box-shadow: none;
+    font-weight: 800;
+    transition: background 150ms cubic-bezier(.4, 0, .2, 1),
+                border-color 150ms cubic-bezier(.4, 0, .2, 1),
+                color 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+:root .btn--primary,
+:root .button--primary {
+    border: 0;
+    background: var(--ink);
+    color: var(--surface);
+    box-shadow: none;
+}
+
+:root .btn--primary:hover:not(:disabled),
+:root .button--primary:hover {
+    background: var(--brand-blue);
+    box-shadow: none;
+    filter: none;
+}
+
+:root .btn--ghost,
+:root .button--ghost {
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    color: var(--ink);
+}
+
+:root .btn--ghost:hover,
+:root .button--ghost:hover {
+    border-color: var(--ink);
+    background: transparent;
+    color: var(--ink);
+}
+
+:root .btn--sm { min-block-size: 2.25rem; padding-block: .35rem; }
+
+:root .text-link {
+    color: var(--brand-blue);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+}
+
+/* ==========================================================================
+   ٤ · الأرقام: بطل القسم لا سطرًا في بطاقة
+   ========================================================================== */
+
+:root .stat__value,
+:root .score-ring strong,
+:root .metric__value {
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(2rem, 3.6vw, 3.25rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+}
+
+:root .stat__label,
+:root .metric__label {
+    color: var(--muted);
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+:root .stat {
+    border: 0;
+    border-inline-start: 1px solid var(--line);
+    border-radius: 0;
+    padding-inline-start: 1.25rem;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* ==========================================================================
+   ٥ · الشارات والوسوم: هادئة، ومعناها من تدرّج الدليل
+   ========================================================================== */
+
+:root .badge,
+:root .tag,
+:root .chip,
+:root .score-chip {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+:root .badge--good,
+:root .evidence-badge--measured { border-color: var(--on-tint-good); color: var(--on-tint-good); }
+
+:root .badge--warn,
+:root .evidence-badge--inferred { border-color: var(--on-tint-warn); color: var(--on-tint-warn); }
+
+:root .badge--bad { border-color: var(--on-tint-bad); color: var(--on-tint-bad); }
+
+:root .evidence-badge--derived { border-color: var(--evidence-derived); color: var(--evidence-derived); }
+
+/* ==========================================================================
+   ٦ · التنبيهات: لون الحالة في الخطّ والنصّ، والخلفية طبقة رقيقة
+   ========================================================================== */
+
+:root .alert {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+    box-shadow: none;
+}
+
+:root .alert--success { border-color: var(--on-tint-good); background: var(--tint-good); color: var(--on-tint-good); }
+:root .alert--error   { border-color: var(--on-tint-bad);  background: var(--tint-bad);  color: var(--on-tint-bad); }
+:root .alert--warn    { border-color: var(--on-tint-warn); background: var(--tint-warn); color: var(--on-tint-warn); }
+:root .alert--info    { border-color: var(--brand-blue);   background: var(--tint-info); color: var(--ink); }
+
+/* ==========================================================================
+   ٧ · الجداول: صفوف بخطوط شعرية، وأرقام لا ترقص
+   ========================================================================== */
+
+:root .table,
+:root .data-table {
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+:root .table th,
+:root .data-table th {
+    border-block-end: 1px solid var(--line-strong);
+    background: transparent;
+    color: var(--muted);
+    font-size: .8125rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+}
+
+:root .table td,
+:root .data-table td { border-block-end: 1px solid var(--line); }
+
+:root .table-wrap,
+:root .table-scroll {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+}
+
+/* ==========================================================================
+   ٨ · النماذج: حقل واضح الحدّ، وتركيز بلون التوكيد الوحيد
+   ========================================================================== */
+
+:root .field input,
+:root .field select,
+:root .field textarea,
+:root .question-control input,
+:root .question-control select,
+:root .question-control textarea {
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-shadow: none;
+}
+
+:root .field input:focus,
+:root .field select:focus,
+:root .field textarea:focus {
+    border-color: var(--brand-blue);
+    box-shadow: none;
+}
+
+:root .field__label { color: var(--ink); font-weight: 700; }
+:root .field__help  { color: var(--muted); }
+
+/* ==========================================================================
+   ٩ · القوائم: نقطة واحدة بلون التوكيد بدل أيقونات متفرقة
+   ========================================================================== */
+
+:root .bullets li::marker { color: var(--brand-blue); }
+
+/* ==========================================================================
+   ١٠ · شريط القطاعات أسفل الهيرو: صفٌّ واحد بخطوط فاصلة لا بطاقات
+   ========================================================================== */
+
+:root .hero-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(.75rem, 3vw, 2.5rem);
+    padding-block: clamp(1.25rem, 3vw, 2rem);
+    border-block-start: 1px solid var(--line);
+}
+
+:root .hero-strip a {
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+    color: var(--ink);
+    font-size: .9375rem;
+    font-weight: 700;
+}
+
+:root .hero-strip a:hover { color: var(--brand-blue); }
+
+/* ==========================================================================
+   ١١ · نزع الزينة — الأقسام الداكنة والتوهّجات الملوّنة
+   الموقع كان يتنقّل بين لوحة فاتحة وأربعة أقسام كحلية متدرّجة وتوهّجات
+   سماوية على البطاقات. لوحة واحدة تعني لوحة واحدة: الإيقاع يأتي من الفراغ
+   والخطّ الشعري، لا من تبديل الخلفية كل قسمين.
+   كل قاعدة هنا تعيد لون النصّ صراحةً — قسمٌ كان أبيض النصّ على كحلي يختفي
+   نصّه تمامًا إن غُيّرت خلفيته وحدها.
+   ========================================================================== */
+
+:root .method-section,
+:root .principles-section,
+:root .sample-section,
+:root .profile-hero,
+:root .content-library-hero,
+:root .content-page__hero,
+:root .content-page--learning .content-page__hero,
+:root .page-hero,
+:root .diagnosis-card,
+:root .tool-card--featured,
+:root .profile-card--education,
+:root .learning-section--summary {
+    background: var(--hero-canvas);
+    color: var(--ink);
+}
+
+:root .method-section h2, :root .method-section h3, :root .method-section p,
+:root .principles-section h2, :root .principles-section h3, :root .principles-section p,
+:root .profile-hero h1, :root .profile-hero p,
+:root .content-library-hero h1, :root .content-library-hero p,
+:root .content-page__hero h1, :root .content-page__hero p,
+:root .diagnosis-card h2, :root .diagnosis-card p,
+:root .tool-card--featured h3, :root .tool-card--featured p,
+:root .profile-card--education h3, :root .profile-card--education p,
+:root .learning-section--summary h3, :root .learning-section--summary p { color: var(--ink); }
+
+:root .method-section .muted, :root .principles-section .muted,
+:root .profile-hero .muted, :root .content-page__hero .muted,
+:root .diagnosis-card .muted, :root .tool-card--featured .muted { color: var(--muted); }
+
+/* الأنماط الزخرفية المرسومة بـ::before/::after تُطفأ من جذرها */
+:root .method-section::before,
+:root .service-card::after,
+:root .content-page__hero::before,
+:root .tool-card--featured::after,
+:root .profile-card--education::before { content: none; }
+
+/* البطاقة المميّزة تُميَّز بخطّ لون التوكيد لا بكتلة داكنة */
+:root .tool-card--featured {
+    border: 1px solid var(--brand-blue);
+}
+
+/* أغلفة بطاقات المعرفة: كانت ثلاثة تدرّجات بثلاثة ألوان مختلفة —
+   ثلاث علامات لونية بلا معنى دلالي. صارت سطحًا واحدًا هادئًا. */
+:root .knowledge-card__visual--1,
+:root .knowledge-card__visual--2,
+:root .knowledge-card__visual--3 {
+    background: var(--surface-soft);
+    border-block-end: 1px solid var(--line);
+}
+
+/* أيقونة بطاقة المشكلة: مربّع مصمت بلون التوكيد بدل تدرّج */
+:root .problem-card__icon {
+    background: var(--accent-quiet);
+    border: 1px solid var(--line);
+}
+
+/* أقسام التعلّم: التلوين من الرموز الدلالية لا من ألوان مخترعة */
+:root .learning-section--goals   { background: var(--tint-good); border-color: var(--on-tint-good); }
+:root .learning-section--quiz    { background: var(--tint-info); border-color: var(--brand-blue); }
+:root .learning-section--task    { background: var(--tint-warn); border-color: var(--on-tint-warn); }
+:root .learning-section--example { background: var(--surface-soft); border-color: var(--line-strong); }
+
+/* بطاقات اللوحة ذات التدرّج الداخلي */
+:root .card--resume,
+:root .live-insights__card--ai,
+:root .resume-section .list__item {
+    background: var(--surface);
+    border-color: var(--brand-blue);
+}
+
+/* أشرطة الدعوة: خطّ فاصل بدل كتلة ملوّنة */
+:root .cta-band,
+:root .try-cta,
+:root .public-sample-report,
+:root .sample-report__next {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: none;
+}
+
+/* ==========================================================================
+   ١٢ · بقايا النصّ الأبيض
+   الأقسام التي كانت كحلية تحمل `color:#fff` على أبنائها لا على نفسها، فتغيير
+   خلفية الأب وحده يترك النصّ أبيض على لوحة فاتحة — قِيست ٤ مواضع على الرئيسية
+   وثلاثة على صفحة الأدوات بنسبة تباين 1.18. تُعاد صراحةً إلى لون الحبر.
+   ========================================================================== */
+
+:root .method-layout :where(h1, h2, h3, h4, p, li, span, strong, small, dt, dd),
+:root .method-section :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .diagnosis-card :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .journey-strip :where(li, span, strong),
+:root .cta-band,
+:root .cta-band :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .try-cta :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .principles-section :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .profile-hero :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .profile-card--education :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .tool-card--featured :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .content-page__hero :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .content-library-hero :where(h1, h2, h3, h4, p, li, span, strong, small),
+:root .learning-section--summary :where(h1, h2, h3, h4, p, li, span, strong, small) {
+    color: var(--ink);
+}
+
+/* الوسوم الخافتة داخلها تبقى خافتة لا حبريّة */
+:root .method-layout .muted,
+:root .diagnosis-card .muted,
+:root .cta-band .muted,
+:root .try-cta .muted,
+:root .principles-section .muted,
+:root .profile-hero .muted,
+:root .content-page__hero .muted,
+:root .tool-card--featured .muted { color: var(--muted); }
+
+/* والزرّ الأسود يبقى نصّه أبيض: القاعدة أعلاه تطال أبناءه فتُنقض هنا صراحةً.
+   تُكتب بعدها لا قبلها — ترتيب المصدر هو الحَكَم عند تساوي الانتقائية. */
+:root .btn--primary,
+:root .button--primary,
+:root .hero-v2__cta,
+:root .btn--primary :where(span, strong, small),
+:root .button--primary :where(span, strong, small),
+:root .hero-v2__cta :where(span, strong, small) {
+    color: var(--surface);
+}
+
+/* ==========================================================================
+   ١٣ · المحدِّدات المركّبة التي بقيت بيضاء
+   `:where()` انتقائيته صفر، فقاعدة مثل `.method-section .section-heading > p`
+   بانتقائية (0,2,1) تغلب قاعدتي (0,2,0) وإن جاءت بعدها. تُطابَق هنا بأعيانها
+   وبانتقائية أعلى — أدقّ من !important وأبقى على قابلية التخصيص لاحقًا.
+   ========================================================================== */
+
+:root:root .method-section,
+:root:root .method-section .section-heading > p:last-child:not(.eyebrow),
+:root:root .method-quote p,
+:root:root .diagnosis-card,
+:root:root .journey-strip b,
+:root:root .try-cta { color: var(--ink); }
+
+:root:root .method-steps p,
+:root:root .diagnosis-card__content > p:not(.eyebrow),
+:root:root .diagnosis-actions > span,
+:root:root .journey-strip li,
+:root:root .cta-band p,
+:root:root .try-cta .check-list li { color: var(--muted); }
+
+/* وتبقى الأزرار داكنة الخلفية بيضاء النصّ */
+:root:root .btn--primary,
+:root:root .button--primary,
+:root:root .hero-v2__cta { color: var(--surface); }
+
+/* عناوين الأقسام المنزوعة الزينة: `.method-section .section-heading h2`
+   انتقائيته (0,2,1) — يتعادل مع قواعدي ويسبقها بترتيب المصدر فيغلب.
+   `:root:root` يرفعها إلى (0,4,1) فتُحسم بلا !important. */
+:root:root .method-section .section-heading h2,
+:root:root .method-section .section-heading h3,
+:root:root .principles-section .section-heading h2,
+:root:root .diagnosis-card .section-heading h2,
+:root:root .try-cta .section-heading h2,
+:root:root .profile-hero .section-heading h2 { color: var(--ink); }
+
+/* آخر بقايا الأبيض: `.public-sample-report` يحمل color:#fff على نفسه فيرثه كل
+   أبنائه، وخلفيته صارت بيضاء فصار النصّ أبيض على أبيض (تباين 1.00). */
+:root:root .public-sample-report,
+:root:root .public-sample-report :where(h1, h2, h3, h4, p, li, span, strong, small) { color: var(--ink); }
+:root:root .public-sample-report .muted { color: var(--muted); }
+
+/* أرضية المقاس: `.muted` داخل مخطّطات القطاع كانت تُصغَّر إلى 12px بقاعدة
+   محلية. الأرضية 13px تسري على كل السطوح بلا استثناء (STYLESEED §٢). */
+:root:root .muted { font-size: max(0.8125rem, 1em); }
+
+/* ==========================================================================
+   ١٤ · أهداف اللمس المتبقّية
+   روابط قائمة بذاتها بارتفاع 26–32px في صفحة السيرة: بيانات التواصل وروابط
+   الاعتمادات ورابط الشعار. القاعدة العامة استثنت الروابط داخل الجُمل — وهذه
+   ليست داخل جملة، بل أزرار فعلية بلا لباس زرّ.
+   ========================================================================== */
+
+:root .profile-credential-card__link,
+:root .profile-links a,
+:root .profile-contact a,
+:root .brand-link {
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+}
+
+/* ==========================================================================
+   ١٥ · «ما تخرج به» — فهرس تحريري
+   ثلاث مناطق غير متماثلة كما في الهيرو: عنوان ضخم يمينًا، شرح صغير يسارًا،
+   ثم صفوف كاملة العرض بأرقام ضخمة وخطوط شعرية. لا بطاقة ولا ظلّ ولا شبكة.
+   ========================================================================== */
+
+.outcomes {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(2.25rem, 4vw, 4.25rem);
+    background: var(--hero-canvas);
+}
+
+.outcomes__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    column-gap: clamp(1.5rem, 4vw, 4.5rem);
+    row-gap: clamp(1rem, 2vw, 1.75rem);
+    align-items: end;
+}
+
+/* الجسم يعبر الحافة اليسرى ويقف خلف النصّ: حضورٌ بلا مزاحمة، وقصٌّ بحافة
+   القسم يوحي بأن الشيء أكبر من الإطار — نفس حيلة الحزام في الهيرو. */
+.outcomes__object {
+    position: absolute;
+    z-index: 0;
+    inline-size: clamp(9rem, 17vw, 20rem);
+    inset-block-start: 8%;
+    inset-inline-end: -4%;
+    rotate: -8deg;
+    opacity: .9;
+    pointer-events: none;
+}
+
+.outcomes__inner { position: relative; z-index: 1; }
+
+.outcomes__eyebrow {
+    margin: 0 0 .6rem;
+    color: var(--muted);
+    font-size: .8125rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.outcomes__title {
+    margin: 0;
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(2.25rem, 5vw, 4.5rem);
+    line-height: 1.12;
+    letter-spacing: 0;
+    color: var(--ink);
+}
+
+.outcomes__aside {
+    margin: 0;
+    max-inline-size: 26rem;
+    font-size: clamp(.9375rem, 1.15vw, 1.0625rem);
+    font-weight: 600;
+    line-height: 1.75;
+    color: var(--muted);
+}
+
+.outcomes__list {
+    grid-column: 1 / -1;
+    margin: clamp(.5rem, 1.5vw, 1.25rem) 0 0;
+    padding: 0;
+    list-style: none;
+    border-block-start: 1px solid var(--line-strong);
+}
+
+/* الصفّ: رقم ضخم ثم عنوان ثم شرح — ثلاثة أعمدة بنسب متباعدة تصنع الإيقاع */
+.outcome {
+    display: grid;
+    grid-template-columns: minmax(4.5rem, auto) minmax(0, 1fr) minmax(0, 1.15fr);
+    column-gap: clamp(1rem, 3.5vw, 3.5rem);
+    align-items: baseline;
+    padding-block: clamp(.7rem, 1.4vw, 1.15rem);
+    border-block-end: 1px solid var(--line);
+    transition: background 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.outcome:hover { background: color-mix(in srgb, var(--brand-blue) 5%, transparent); }
+
+/* الرقم بمقاس العرض لا بمقاس التسمية: هو ما تمسحه العين أولًا */
+.outcome__num {
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(1.75rem, 3.4vw, 3rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--line-strong);
+    transition: color 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.outcome:hover .outcome__num { color: var(--brand-blue); }
+
+.outcome__title {
+    margin: 0;
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(1.125rem, 1.9vw, 1.625rem);
+    line-height: 1.3;
+    color: var(--ink);
+}
+
+.outcome__desc {
+    margin: 0;
+    font-size: clamp(.875rem, 1.05vw, 1rem);
+    font-weight: 500;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+.outcomes__more {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin-block-start: clamp(.75rem, 1.4vw, 1.1rem);
+    color: var(--ink);
+    font-size: .9375rem;
+    font-weight: 800;
+    border-block-end: 1px solid var(--ink);
+}
+
+.outcomes__more:hover { color: var(--brand-blue); border-color: var(--brand-blue); }
+
+@media (max-width: 62rem) {
+    .outcomes__object { display: none; }
+
+    .outcomes__inner { grid-template-columns: 1fr; align-items: start; }
+
+    /* على الجوال يسقط عمود الشرح تحت العنوان، والصفّ يصير سطرين:
+       رقم وعنوان في الأول، والشرح تحتهما — ثلاثة أعمدة في 375px لا تُقرأ. */
+    .outcome {
+        grid-template-columns: minmax(3rem, auto) minmax(0, 1fr);
+        row-gap: .5rem;
+    }
+
+    .outcome__desc { grid-column: 2 / -1; }
+}
+
+/* ==========================================================================
+   ١٦ · النمط التحريري العام — يُعاد استعماله في كل قسم
+   ثلاث مناطق غير متماثلة كما في الهيرو: عنوان ضخم يمينًا، شرح صغير يسارًا،
+   ثم صفوف كاملة العرض بأرقام ضخمة وخطوط شعرية. لا بطاقة ولا ظلّ ولا شبكة.
+   ========================================================================== */
+
+.esec {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(2.25rem, 4vw, 4.25rem);
+    background: var(--hero-canvas);
+}
+
+.esec__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    column-gap: clamp(1.5rem, 4vw, 4.5rem);
+    row-gap: clamp(1rem, 2vw, 1.75rem);
+    align-items: end;
+}
+
+/* الجسم يعبر الحافة اليسرى ويقف خلف النصّ: حضورٌ بلا مزاحمة، وقصٌّ بحافة
+   القسم يوحي بأن الشيء أكبر من الإطار — نفس حيلة الحزام في الهيرو. */
+.esec__object {
+    position: absolute;
+    z-index: 0;
+    inline-size: clamp(9rem, 17vw, 20rem);
+    inset-block-start: 8%;
+    inset-inline-end: -4%;
+    rotate: -8deg;
+    opacity: .9;
+    pointer-events: none;
+}
+
+.esec__inner { position: relative; z-index: 1; }
+
+.esec__eyebrow {
+    margin: 0 0 .6rem;
+    color: var(--muted);
+    font-size: .8125rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.esec__title {
+    margin: 0;
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(2.25rem, 5vw, 4.5rem);
+    line-height: 1.12;
+    letter-spacing: 0;
+    color: var(--ink);
+}
+
+.esec__aside {
+    margin: 0;
+    max-inline-size: 26rem;
+    font-size: clamp(.9375rem, 1.15vw, 1.0625rem);
+    font-weight: 600;
+    line-height: 1.75;
+    color: var(--muted);
+}
+
+.esec__list {
+    grid-column: 1 / -1;
+    margin: clamp(.5rem, 1.5vw, 1.25rem) 0 0;
+    padding: 0;
+    list-style: none;
+    border-block-start: 1px solid var(--line-strong);
+}
+
+/* الصفّ: رقم ضخم ثم عنوان ثم شرح — ثلاثة أعمدة بنسب متباعدة تصنع الإيقاع */
+.erow {
+    display: grid;
+    grid-template-columns: minmax(4.5rem, auto) minmax(0, 1fr) minmax(0, 1.15fr);
+    column-gap: clamp(1rem, 3.5vw, 3.5rem);
+    align-items: baseline;
+    padding-block: clamp(.7rem, 1.4vw, 1.15rem);
+    border-block-end: 1px solid var(--line);
+    transition: background 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.erow:hover { background: color-mix(in srgb, var(--brand-blue) 5%, transparent); }
+
+/* الرقم بمقاس العرض لا بمقاس التسمية: هو ما تمسحه العين أولًا */
+.erow__num {
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(1.75rem, 3.4vw, 3rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--line-strong);
+    transition: color 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.erow:hover .erow__num { color: var(--brand-blue); }
+
+.erow__title {
+    margin: 0;
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(1.125rem, 1.9vw, 1.625rem);
+    line-height: 1.3;
+    color: var(--ink);
+}
+
+.erow__desc {
+    margin: 0;
+    font-size: clamp(.875rem, 1.05vw, 1rem);
+    font-weight: 500;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+.esec__more {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin-block-start: clamp(.75rem, 1.4vw, 1.1rem);
+    color: var(--ink);
+    font-size: .9375rem;
+    font-weight: 800;
+    border-block-end: 1px solid var(--ink);
+}
+
+.esec__more:hover { color: var(--brand-blue); border-color: var(--brand-blue); }
+
+@media (max-width: 62rem) {
+    .esec__object { display: none; }
+
+    .esec__inner { grid-template-columns: 1fr; align-items: start; }
+
+    /* على الجوال يسقط عمود الشرح تحت العنوان، والصفّ يصير سطرين:
+       رقم وعنوان في الأول، والشرح تحتهما — ثلاثة أعمدة في 375px لا تُقرأ. */
+    .erow {
+        grid-template-columns: minmax(3rem, auto) minmax(0, 1fr);
+        row-gap: .5rem;
+    }
+
+    .erow__desc { grid-column: 2 / -1; }
+}
+
+/* جسم بشري: أمام الصفوف لا خلفها.
+   كان خلفها فتعبر الخطوط الشعرية وجهه كخطوط مسح. الجسم في الهيرو أمام
+   الحزام لا تحته — والقاعدة نفسها تسري هنا: ما يُقصّ بالحافة يتقدّم. */
+.esec__object--person {
+    z-index: 2;
+    inline-size: clamp(9rem, 15vw, 17rem);
+    inset-block-start: auto;
+    inset-block-end: -10%;
+    inset-inline-end: -2%;
+    rotate: 0deg;
+    filter: brightness(.78) contrast(1.05) saturate(.92);
+}
+
+/* ==========================================================================
+   ١٧ · تنويعات النمط التحريري
+   ========================================================================== */
+
+/* جسم عريض (تقرير مفتوح · جهاز مواجه · معصم): يعبر الحافة اليسرى أفقيًّا */
+.esec__object--wide {
+    z-index: 0;
+    inline-size: clamp(11rem, 22vw, 26rem);
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    inset-inline-end: -6%;
+    rotate: -6deg;
+}
+
+/* رقم نصّي بدل رقم عددي: التاريخ أو نوع المحتوى — يحتاج مقاسًا أصغر */
+.erow__num--sm {
+    font-size: clamp(.75rem, 1vw, .875rem);
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: .02em;
+    color: var(--muted);
+    align-self: start;
+}
+
+/* صفّ قابل للنقر: العنوان رابط، والصفّ كله يستجيب للتحويم */
+.erow--link .erow__title a { color: inherit; }
+.erow--link:hover .erow__title a { color: var(--brand-blue); }
+
+.erow__flag {
+    margin-inline-start: .5rem;
+    font-size: .75rem;
+    font-style: normal;
+    font-weight: 700;
+    color: var(--on-tint-warn);
+}
+
+.erow__meta {
+    display: inline-block;
+    margin-inline-start: .6rem;
+    color: var(--ink);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* الدرجة داخل العمود الجانبي: الرقم بمقاس العرض */
+.esec__score {
+    display: flex;
+    align-items: baseline;
+    gap: .75rem;
+    margin: 0 0 .75rem;
+}
+
+.esec__score b {
+    font-family: 'Cairo Display', var(--font-sans);
+    font-weight: 900;
+    font-size: clamp(2.25rem, 3.6vw, 3.25rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+}
+
+.esec__score b i { font-style: normal; font-size: .42em; font-weight: 700; }
+.esec__score span { font-size: .8125rem; font-weight: 600; color: var(--muted); }
+
+/* روابط العمود الجانبي: صفّ واحد بخطوط سفلية رفيعة */
+.esec__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.25rem;
+    margin-block-start: .75rem;
+}
+
+.esec__links a {
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+    color: var(--ink);
+    font-weight: 700;
+    font-size: .875rem;
+    border-block-end: 1px solid var(--line-strong);
+}
+
+.esec__links a:hover { color: var(--brand-blue); border-color: var(--brand-blue); }
+
+/* الأسئلة: الطيّ يبقى، لكن بخطوط شعرية ومفتاح زائد لا سهم ملوّن */
+.efaq { border-block-start: 1px solid var(--line-strong); }
+
+.efaq__item {
+    border-block-end: 1px solid var(--line);
+    padding-block: clamp(.7rem, 1.4vw, 1.15rem);
+}
+
+.efaq__item summary {
+    display: grid;
+    grid-template-columns: minmax(4.5rem, auto) minmax(0, 1fr);
+    column-gap: clamp(1rem, 3.5vw, 3.5rem);
+    align-items: baseline;
+    cursor: pointer;
+    list-style: none;
+}
+
+.efaq__item summary::-webkit-details-marker { display: none; }
+
+.efaq__item summary::after {
+    content: '+';
+    grid-column: 2;
+    justify-self: end;
+    margin-block-start: -1.6em;
+    font-family: 'Cairo Display', var(--font-sans);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--muted);
+}
+
+.efaq__item[open] summary::after { content: '−'; color: var(--brand-blue); }
+
+.efaq__item > .erow__desc {
+    margin: .75rem 0 0;
+    padding-inline-end: clamp(5.5rem, 8.5vw, 8rem);
+    max-inline-size: 46rem;
+}
+
+/* الخطوات الأربع في الختام: صفّ أفقي بفواصل رفيعة */
+.esec__steps {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(.75rem, 2.5vw, 2.25rem);
+    margin: clamp(.75rem, 2vw, 1.5rem) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.esec__steps li {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .5rem;
+    font-size: .9375rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.esec__steps b {
+    font-family: 'Cairo Display', var(--font-sans);
+    font-size: 1.125rem;
+    font-weight: 900;
+    color: var(--ink);
+}
+
+.esec__cta {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem 1rem;
+    margin-block-start: clamp(1rem, 2vw, 1.75rem);
+}
+
+.esec__note { margin-block-start: .5rem; font-size: .8125rem; color: var(--muted); }
+
+/* القسم الختامي يُفصل بخطّ علوي: نهايةٌ معلنة لا قسمٌ آخر */
+.esec--close { border-block-start: 1px solid var(--line-strong); }
+
+@media (max-width: 62rem) {
+    .esec__object--wide { display: none; }
+
+    .efaq__item summary { grid-template-columns: minmax(3rem, auto) minmax(0, 1fr); }
+    .efaq__item > .erow__desc { padding-inline-end: 0; }
+}
+
+/* ==========================================================================
+   ١٨ · أرضية المقاس وأهداف اللمس في النمط التحريري
+   `clamp(.75rem, 1vw, .875rem)` يعطي 12.8px عند عرض 1280 — تحت الأرضية.
+   الحدّ الأدنى يصير 13px صراحةً، والعناوين الرابطة تصير أهداف لمس كاملة.
+   ========================================================================== */
+
+.erow__num--sm { font-size: clamp(.8125rem, 1vw, .9375rem); }
+
+.erow--link .erow__title a,
+.esec__more,
+.esec__links a {
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+}
+
+.efaq__item summary { min-block-size: var(--tap-min); }

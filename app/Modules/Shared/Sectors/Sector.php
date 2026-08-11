@@ -43,11 +43,29 @@ final class Sector
     public static function label(?string $sector): string
     {
         return match ($sector) {
-            self::EDUCATION => 'التعليم',
-            self::ECOMMERCE => 'التجارة الإلكترونية',
-            self::REAL_ESTATE => 'العقارات',
-            self::OTHER => 'قطاع آخر',
-            default => 'غير محدد',
+            self::EDUCATION => __('التعليم'),
+            self::ECOMMERCE => __('التجارة الإلكترونية'),
+            self::REAL_ESTATE => __('العقارات'),
+            self::OTHER => __('قطاع آخر'),
+            default => __('غير محدد'),
+        };
+    }
+
+    /**
+     * أيقونة القطاع من عائلة الأيقونات الخطّية الواحدة (`site/content/_icon`).
+     *
+     * **سبب وجودها:** كانت بطاقات القطاعات تشتقّ علامتها بأخذ أول حرف من
+     * التسمية، فخرجت الثلاثة بحرف «ا» نفسه لأن «التعليم» و«التجارة» و«العقارات»
+     * كلها تبدأ بألف التعريف — عنصر تمييز لا يميّز شيئًا. الحرف الأول لا يصلح
+     * علامةً في العربية أصلًا لهذا السبب، والمفتاح يُقرأ من هنا لا يُكرَّر.
+     */
+    public static function icon(?string $sector): string
+    {
+        return match ($sector) {
+            self::EDUCATION => 'graduation-cap',
+            self::ECOMMERCE => 'shopping-bag',
+            self::REAL_ESTATE => 'building',
+            default => 'target',
         };
     }
 
@@ -66,22 +84,22 @@ final class Sector
             [
                 'value' => self::EDUCATION,
                 'label' => self::label(self::EDUCATION),
-                'hint' => 'مدرسة، جامعة، معهد، مركز تدريب، أو منصة تعليمية',
+                'hint' => __('مدرسة، جامعة، معهد، مركز تدريب، أو منصة تعليمية'),
             ],
             [
                 'value' => self::ECOMMERCE,
                 'label' => self::label(self::ECOMMERCE),
-                'hint' => 'متجر إلكتروني أو بيع عبر المنصات الوسيطة',
+                'hint' => __('متجر إلكتروني أو بيع عبر المنصات الوسيطة'),
             ],
             [
                 'value' => self::REAL_ESTATE,
                 'label' => self::label(self::REAL_ESTATE),
-                'hint' => 'وساطة، تطوير، تسويق عقاري، أو إدارة أملاك',
+                'hint' => __('وساطة، تطوير، تسويق عقاري، أو إدارة أملاك'),
             ],
             [
                 'value' => self::OTHER,
                 'label' => self::label(self::OTHER),
-                'hint' => 'أي نشاط آخر — تصلك كل القدرات بالمسار العام',
+                'hint' => __('أي نشاط آخر — تصلك كل القدرات بالمسار العام'),
             ],
         ];
     }

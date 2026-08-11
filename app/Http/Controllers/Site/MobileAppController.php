@@ -10,7 +10,7 @@ class MobileAppController extends Controller
     public function __invoke(): BinaryFileResponse
     {
         $path = (string) config('mobile.apk_path');
-        abort_unless(is_file($path), 404, 'نسخة أندرويد غير متاحة مؤقتًا.');
+        abort_unless(is_file($path), 404, __('نسخة أندرويد غير متاحة مؤقتًا.'));
 
         return response()->download($path, 'Khaled-Saad-Growth.apk', [
             'Content-Type' => 'application/vnd.android.package-archive',

@@ -96,7 +96,7 @@ class ReadinessController extends Controller
 
         if (blank($url)) {
             return response()->json([
-                'message' => 'أضف رابط موقعك في ملف المشروع أولًا، فبدونه لا يوجد ما يُفحص.',
+                'message' => __('أضف رابط موقعك في ملف المشروع أولًا، فبدونه لا يوجد ما يُفحص.'),
             ], 422);
         }
 
@@ -121,7 +121,7 @@ class ReadinessController extends Controller
 
         $request->validate([
             'log' => ['required', 'file', 'max:20480'],
-        ], [], ['log' => 'ملف السجل']);
+        ], [], ['log' => __('ملف السجل')]);
 
         $summary = $this->collector->collectCrawlLog(
             $project,
@@ -144,7 +144,7 @@ class ReadinessController extends Controller
         $url = $project->profile?->website;
 
         if (blank($url)) {
-            abort(422, 'أضف رابط موقعك في ملف المشروع أولًا.');
+            abort(422, __('أضف رابط موقعك في ملف المشروع أولًا.'));
         }
 
         return $this->pdf->download($project, $this->audit->audit($url, Sector::declaredOrGeneral($project->sector)));

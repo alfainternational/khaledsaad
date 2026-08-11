@@ -16,7 +16,7 @@
             $sectorDeclared = \App\Modules\Shared\Sectors\Sector::isSpecialized($project->sector);
         @endphp
         <p class="lede">
-            نفحص موقعك كما تقرأه النماذج: بياناته المنظَّمة،
+            أفحص موقعك كما تقرأه النماذج: بياناته المنظَّمة،
             {{ $project->sector === \App\Modules\Shared\Sectors\Sector::EDUCATION ? 'رسومه' : 'أسعاره' }}،
             سياساته، وبنيته العربية. ثم نقرأ سجل خادمك لنعرف أي بوت زارك فعلًا.
         </p>
@@ -252,7 +252,7 @@
             </p>
         @else
             <p class="muted">
-                {{ $crawl['total_visits'] }} زيارة بوت خلال ٣٠ يومًا، من {{ $crawl['parsed_lines'] }} سطرًا مقروءًا.
+                {{ $crawl['total_visits'] }} زيارة بوت خلال 30 يومًا، من {{ $crawl['parsed_lines'] }} سطرًا مقروءًا.
                 @if ($crawl['unparsed_lines'] > 0)
                     ({{ $crawl['unparsed_lines'] }} سطرًا لم يُفهم.)
                 @endif
@@ -305,10 +305,10 @@
 
             <div class="fix-matrix" role="table" aria-label="الفجوات مرتبة على الأثر والجهد">
                 @foreach ([
-                    'high-easy' => ['label' => 'اكسب سريعًا — ابدأ هنا', 'tone' => 'win'],
-                    'high-hard' => ['label' => 'خطط له هذا الشهر', 'tone' => 'plan'],
-                    'low-easy' => ['label' => 'نفّذه حين تفرغ', 'tone' => 'later'],
-                    'low-hard' => ['label' => 'أجّله بلا ندم', 'tone' => 'skip'],
+                    'high-easy' => ['label' => __('اكسب سريعًا — ابدأ هنا'), 'tone' => 'win'],
+                    'high-hard' => ['label' => __('خطط له هذا الشهر'), 'tone' => 'plan'],
+                    'low-easy' => ['label' => __('نفّذه حين تفرغ'), 'tone' => 'later'],
+                    'low-hard' => ['label' => __('أجّله بلا ندم'), 'tone' => 'skip'],
                 ] as $key => $cell)
                     <div class="fix-matrix__cell fix-matrix__cell--{{ $cell['tone'] }}">
                         <h3>{{ $cell['label'] }}</h3>

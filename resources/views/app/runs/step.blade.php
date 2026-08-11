@@ -55,7 +55,7 @@
 
             @if ($fresh === [])
                 <p class="alert alert--info" role="status">
-                    كل أسئلة هذه الخطوة إجاباتها موجودة عندنا. راجعها فوق أو أكمل مباشرة.
+                    كل أسئلة هذه الخطوة إجاباتها محفوظة بالفعل. راجعها فوق أو أكمل مباشرة.
                 </p>
             @endif
 
@@ -186,11 +186,11 @@
                 text('insight-ai-opportunity', data.preliminary.risk_or_opportunity);
                 text('insight-ai-recommendation', data.preliminary.recommendation);
                 text('insight-ai-question', data.preliminary.deepen_question);
-                status.textContent = 'مؤشرات لحظية — لا تغيّر إجاباتك ولا درجتك.';
+                status.textContent = @js(__('مؤشرات لحظية — لا تغيّر إجاباتك ولا درجتك.'));
             }
 
             function request(includeAi) {
-                status.textContent = includeAi ? 'نقرأ الخطوة المكتملة…' : 'نحدّث المؤشرات…';
+                status.textContent = includeAi ? @js(__('نقرأ الخطوة المكتملة…')) : @js(__('نحدّث المؤشرات…'));
 
                 fetch(panel.dataset.url, {
                     method: 'POST',
@@ -211,7 +211,7 @@
                     })
                     .then(function (payload) { render(payload.data); })
                     .catch(function () {
-                        status.textContent = 'تعذّر تحديث الإرشادات الآن؛ يمكنك مواصلة الإجابة بصورة طبيعية.';
+                        status.textContent = @js(__('تعذّر تحديث الإرشادات الآن؛ يمكنك مواصلة الإجابة بصورة طبيعية.'));
                     });
             }
 

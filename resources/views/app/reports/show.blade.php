@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('interface_family', 'reports')
 @section('layout', 'report')
 
 @section('title', $report['title'])
@@ -26,6 +27,9 @@
             </form>
         </div>
     </header>
+
+    {{-- لغة نصّ التقرير حين تختلف عن لغة الواجهة — قبل أول سطر منه لا بعده. --}}
+    <x-content-language :locale="$report['locale'] ?? null" />
 
     <section id="report-summary" class="report-head">
         <article class="card card--score">
@@ -62,16 +66,31 @@
                 </p>
             @endif
 
-            <p class="eyebrow">الخلاصة</p>
-            <p>{{ $report['summary'] }}</p>
+            <p class="eyebrow">{{ __('ملخص تنفيذي') }}</p>
+            <h2>{{ __('الوضع الآن') }}</h2>
+            <p>{{ $report['executive_summary']['current_state'] }}</p>
 
-            @if ($report['next_step'])
+            @if ($report['executive_summary']['top_issues'] !== [])
+                <h3>{{ __('أهم 3 مشكلات') }}</h3>
+                <ol class="bullets">
+                    @foreach ($report['executive_summary']['top_issues'] as $issue)
+                        <li>{{ $issue }}</li>
+                    @endforeach
+                </ol>
+            @endif
+
+            @if ($report['executive_summary']['this_week'])
                 <div class="next-step">
-                    <p class="eyebrow">الخطوة التالية</p>
-                    <strong>{{ $report['next_step']['title'] }}</strong>
-                    <p class="muted">{{ $report['next_step']['description'] }}</p>
+                    <p class="eyebrow">{{ __('خطوة هذا الأسبوع') }}</p>
+                    <strong>{{ $report['executive_summary']['this_week']['title'] }}</strong>
+                    <p class="muted">{{ $report['executive_summary']['this_week']['description'] }}</p>
                 </div>
             @endif
+
+            <div class="next-step">
+                <p class="eyebrow">{{ __('معلومة تحتاج تأكيدًا') }}</p>
+                <p class="muted">{{ $report['executive_summary']['needs_confirmation'] ?? __('لا توجد معلومة معلّقة للتأكيد في هذا التقرير.') }}</p>
+            </div>
         </article>
     </section>
 
@@ -103,7 +122,7 @@
             @else
                 <p class="eyebrow">متابعة التقرير مفعّلة</p>
                 <p class="muted">
-                    سننبهك إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
+                    يصلك تنبيه إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
                     @if ($watcher->last_checked_at)
                         آخر فحص {{ $watcher->last_checked_at->diffForHumans() }}.
                     @endif
@@ -333,7 +352,7 @@
                                     <p class="score-row__share">
                                         هذا البند يساوي {{ $row['share'] }}٪ من درجتك
                                         @if (! empty($row['weight_tier']))
-                                            — بند <b>{{ $row['weight_tier'] }}</b> عندنا،
+                                            — بند <b>{{ $row['weight_tier'] }}</b> في المنهجية،
                                             الأثقل رقم {{ $row['weight_rank'] }} من {{ $row['weight_rank_of'] }} بندًا انطبقت عليك
                                         @endif
                                     </p>
@@ -398,7 +417,7 @@
                                     @endif
                                     <form method="POST" action="{{ route('app.competitors.dismiss', $competitor['id']) }}" class="competitor-list__x">
                                         @csrf
-                                        <button type="submit" aria-label="استبعاد {{ $competitor['name'] }}" title="استبعاد">×</button>
+                                        <button type="submit" aria-label="{{ __('استبعاد :name', ['name' => $competitor['name']]) }}" title="استبعاد">×</button>
                                     </form>
                                 </li>
                             @endforeach
@@ -410,7 +429,9 @@
                             <p>لم تضف منافسيك المحليين بعد. إضافتهم تساعد على مقارنة مشروعك بالجهات الأقرب إلى عملائك وسوقك.</p>
                             <form method="POST" action="{{ route('app.competitors.store', $report['project']['slug']) }}" class="competitor-add">
                                 @csrf
-                                <input type="text" name="names" placeholder="اسم منافس أو اسمين، أو @حسابهم" maxlength="500" required>
+                                {{-- النائب مغلَّف يدويًّا: قيمته تحمل `@`، والمغلّف الآلي يتخطّى
+                                     كل سمة فيها `@` لأنها في الغالب توجيه Blade لا نصّ. --}}
+                                <input type="text" name="names" placeholder="{{ __('اسم منافس أو اسمين، أو @حسابهم') }}" maxlength="500" required>
                                 <button type="submit" class="btn btn--primary btn--sm">أضِفهم</button>
                             </form>
                         </div>

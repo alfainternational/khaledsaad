@@ -33,16 +33,16 @@ class WeeklyPulseNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $mail = (new MailMessage)
-            ->subject('ملخص الأسبوع — ما تغيّر وما يستحق المتابعة')
-            ->greeting('ملخص مشاريعك الأسبوعي جاهز');
+            ->subject(__('ملخص الأسبوع — ما تغيّر وما يستحق المتابعة'))
+            ->greeting(__('ملخص مشاريعك الأسبوعي جاهز'));
 
         foreach (array_slice($this->highlights, 0, 3) as $highlight) {
             $mail->line('• '.$highlight);
         }
 
         return $mail
-            ->action('راجع ملخص الأسبوع', route('app.pulse.index'))
-            ->line('راجع التغييرات والمهام المتأخرة، ثم اختر أولوية هذا الأسبوع.');
+            ->action(__('راجع ملخص الأسبوع'), route('app.pulse.index'))
+            ->line(__('راجع التغييرات والمهام المتأخرة، ثم اختر أولوية هذا الأسبوع.'));
     }
 
     /**
@@ -52,7 +52,7 @@ class WeeklyPulseNotification extends Notification
     {
         return [
             'type' => 'weekly_pulse',
-            'title' => 'ملخص الأسبوع جاهز',
+            'title' => __('ملخص الأسبوع جاهز'),
             'body' => $this->highlights[0] ?? 'خلاصة أسبوعك عبر '.$this->projectCount.' مشاريع.',
             'url' => route('app.pulse.index'),
         ];

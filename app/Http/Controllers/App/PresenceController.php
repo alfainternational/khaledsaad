@@ -86,7 +86,7 @@ class PresenceController extends Controller
 
         return redirect()
             ->route('app.presence.show', $project)
-            ->with('status', 'بدأ الاستطلاع. سيظهر التقرير هنا عند اكتماله.');
+            ->with('status', __('بدأ الاستطلاع. سيظهر التقرير هنا عند اكتماله.'));
     }
 
     private function authorizeProject(Request $request, Project $project): void

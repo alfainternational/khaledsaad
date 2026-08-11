@@ -148,6 +148,24 @@ class AdaptiveInterfaceLayoutTest extends TestCase
     }
 
     #[Test]
+    public function light_workspace_sidebar_uses_the_dark_brand_and_readable_text_tokens(): void
+    {
+        $layout = file_get_contents(resource_path('views/layouts/app.blade.php'));
+        $css = file_get_contents(resource_path('css/interface-system.css'));
+
+        $this->assertStringContainsString('<x-brand-logo class="panel__brand-logo--on-light" />', $layout);
+        $this->assertStringContainsString('<x-brand-logo light class="panel__brand-logo--on-dark" />', $layout);
+        $this->assertStringContainsString("html[data-theme='dark'] .panel__brand-logo--on-light", $css);
+        $this->assertMatchesRegularExpression(
+            "/body\[data-interface-system='v2'\] \.panel__side \{[^}]*color:\s*var\(--ui-ink\);/s",
+            $css,
+        );
+        $this->assertStringContainsString("body[data-interface-system='v2'] .panel__brand-context", $css);
+        $this->assertStringContainsString("body[data-interface-system='v2'] .panel__link:not(.is-active)", $css);
+        $this->assertStringContainsString("body[data-interface-system='v2'] .panel__user-meta strong", $css);
+    }
+
+    #[Test]
     public function representative_pages_use_the_approved_structural_patterns(): void
     {
         $expectations = [
@@ -176,20 +194,28 @@ class AdaptiveInterfaceLayoutTest extends TestCase
     }
 
     #[Test]
-    public function the_customer_dashboard_keeps_metrics_first_and_recommendations_full_width(): void
+    public function the_customer_dashboard_keeps_metrics_first_and_other_diagnostics_secondary(): void
     {
         $dashboard = file_get_contents(resource_path('views/app/dashboard.blade.php'));
         $css = file_get_contents(resource_path('css/workspace.css'));
 
+        // بلا قوس إغلاق: الصنف يقبل مُعدِّلًا بعده (`layout-metrics--rail`)،
+        // وبإبقاء علامة الاقتباس الختامية كانت `strpos` ترجع false فيمرّ
+        // التحقق من الترتيب فراغًا — يجتاز وهو لا يفحص شيئًا.
+        $metricsAt = strpos($dashboard, 'class="layout-metrics');
+        $this->assertIsInt($metricsAt, 'شريط الأرقام غائب عن اللوحة.');
         $this->assertLessThan(
             strpos($dashboard, 'class="layout-main-aside"'),
-            strpos($dashboard, 'class="layout-metrics"'),
+            $metricsAt,
         );
         $this->assertStringContainsString(
             "</aside>\n    </div>\n\n    <section aria-labelledby=\"tools-heading\">",
             $dashboard,
         );
-        $this->assertStringContainsString("id=\"tools-heading\" class=\"section-title\">تشخيصات مقترحة للبدء</h2>\n        <div class=\"card-grid\">", $dashboard);
+        $this->assertStringContainsString('id="tools-heading" class="section-title">{{ __(\'التشخيصات الأخرى\') }}</h2>', $dashboard);
+        $this->assertStringContainsString("class=\"btn btn--ghost\" href=\"{{ route('app.tools.index') }}\"", $dashboard);
+        $this->assertSame(1, substr_count($dashboard, 'data-primary-action'));
+        $this->assertStringNotContainsString('تشخيصات مقترحة للبدء', $dashboard);
         $this->assertStringNotContainsString('[data-layout="dashboard"] > .layout-metrics', $css);
     }
 

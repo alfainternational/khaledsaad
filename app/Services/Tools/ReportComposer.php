@@ -70,6 +70,9 @@ class ReportComposer
                 [
                     'project_id' => $run->project_id,
                     'title' => $this->title($run),
+                    // لغة التقرير هي لغة تشغيله لا لغة اللحظة: إعادة
+                    // التركيب قد تجري في عامل يقرأ لغة أخرى.
+                    'locale' => $run->locale ?: app()->getLocale(),
                     'status' => 'draft',
                     'score' => $baseline['score'],
                     'score_band' => $baseline['band'],

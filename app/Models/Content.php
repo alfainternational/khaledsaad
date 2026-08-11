@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LocalizesContent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Content extends Model
 {
     use HasFactory;
+    use LocalizesContent;
 
     public const TYPE_ARTICLE = 'article';
 
@@ -42,6 +44,7 @@ class Content extends Model
         'type',
         'category_id',
         'title',
+        'locale',
         'slug',
         'source_key',
         'source_filename',
@@ -124,6 +127,11 @@ class Content extends Model
     public function resources(): HasMany
     {
         return $this->hasMany(ContentResource::class)->orderBy('position');
+    }
+
+    public function learningUpdateDrafts(): HasMany
+    {
+        return $this->hasMany(LearningContentUpdateDraft::class)->latest('id');
     }
 
     public function category(): BelongsTo

@@ -66,7 +66,7 @@
                                 <td>{{ $budget['remaining'] }}</td>
                                 <td>
                                     {{-- شريط مرئي بعتبتي §4.4: تنبيه 80٪ وتوقف 100٪ (بند ١٢) --}}
-                                    <div class="budget-bar" role="img" aria-label="استهلاك {{ $budget['usage_percent'] }}٪">
+                                    <div class="budget-bar" role="img" aria-label="{{ __('استهلاك :percent٪', ['percent' => $budget['usage_percent']]) }}">
                                         <span @class([
                                             'budget-bar__fill',
                                             'budget-bar__fill--warn' => $budget['usage_percent'] >= 80 && ! $budget['exhausted'],
@@ -80,7 +80,7 @@
                                     @if ($budget['exhausted'])
                                         متوقّفة حتى الشهر القادم
                                     @elseif ($budget['warned'])
-                                        نُبِّهت عند ٨٠٪
+                                        نُبِّهت عند 80٪
                                     @else
                                         تعمل
                                     @endif

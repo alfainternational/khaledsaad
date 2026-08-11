@@ -23,7 +23,7 @@
     margin: 0;
     font-size: clamp(1.9rem, 4.6vw, 3rem);
     line-height: 1.2;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .page-hero__lead {
@@ -48,7 +48,7 @@
 }
 
 .page-hero__facts strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.55rem;
     line-height: 1;
 }
@@ -87,7 +87,7 @@
 }
 
 .crumbs b {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 /* --- شارات الحالة --- */
@@ -100,21 +100,21 @@
     border-radius: 999px;
     background: var(--surface-soft);
     color: var(--muted);
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
     font-weight: 800;
     white-space: nowrap;
 }
 
 .pill--live {
     border-color: rgba(15, 138, 77, 0.28);
-    background: #eaf9f1;
-    color: #0b5d34;
+    background: var(--tint-good);
+    color: var(--on-tint-good);
 }
 
 .pill--soon {
     border-color: rgba(255, 155, 39, 0.35);
     background: var(--surface-warm);
-    color: #8a4b06;
+    color: var(--on-tint-warn);
 }
 
 /* --- كتالوج الأدوات --- */
@@ -171,7 +171,7 @@
 
 .catalog-card__category {
     color: var(--brand-blue);
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
     font-weight: 800;
     letter-spacing: 0.03em;
 }
@@ -179,14 +179,14 @@
 .catalog-card__name {
     margin: 0;
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     letter-spacing: 0.02em;
 }
 
 .catalog-card h2,
 .catalog-card h3 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.15rem;
     line-height: 1.35;
 }
@@ -237,7 +237,7 @@
     margin: 0;
     font-size: clamp(1.85rem, 4.2vw, 2.8rem);
     line-height: 1.2;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .tool-hero__tags {
@@ -263,7 +263,7 @@
 }
 
 .tool-hero__meta strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.3rem;
     line-height: 1;
 }
@@ -296,7 +296,7 @@
 
 .panel-block h2 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1rem;
 }
 
@@ -324,7 +324,7 @@
 
 .check-list li span {
     flex: 0 0 auto;
-    color: #0f8a4d;
+    color: var(--on-tint-good);
     font-weight: 800;
 }
 
@@ -341,7 +341,7 @@
 }
 
 .notice strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .notice p {
@@ -392,7 +392,7 @@
 
 .step-card h3 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.05rem;
 }
 
@@ -435,7 +435,7 @@
 
 .journey-steps h3 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.02rem;
 }
 
@@ -465,9 +465,9 @@
 }
 
 .cta-band .button--primary {
-    color: var(--brand-navy);
-    background: #fff;
-    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+    color: var(--ink-brand);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
 }
 
 /* --- سياق الحساب: من جاء من أداة يعرف إلى أين يعود --- */
@@ -484,12 +484,12 @@
 
 .auth-intent__tag {
     color: var(--brand-blue);
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
     font-weight: 800;
 }
 
 .auth-intent strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .auth-intent p {
@@ -522,11 +522,11 @@
     border: 1px solid var(--line);
     border-radius: 999px;
     background: var(--surface);
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
 }
 
 .auth-steps .is-current {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-weight: 700;
 }
 

@@ -29,10 +29,10 @@ class TaskOverdueNotification extends Notification
     {
         return (new MailMessage)
             ->subject('مهمة تأخّرت — '.$this->task->title)
-            ->greeting('مهمة تنتظرك')
+            ->greeting(__('مهمة تنتظرك'))
             ->line("تأخرت مهمة «{$this->task->title}» عن موعدها.")
-            ->action('افتح المهام', route('app.projects.tasks', $this->task->project->slug))
-            ->line('حدّث حالة المهمة أو اختر لها موعدًا جديدًا.');
+            ->action(__('افتح المهام'), route('app.projects.tasks', $this->task->project->slug))
+            ->line(__('حدّث حالة المهمة أو اختر لها موعدًا جديدًا.'));
     }
 
     /**
@@ -42,7 +42,7 @@ class TaskOverdueNotification extends Notification
     {
         return [
             'type' => 'task_overdue',
-            'title' => 'مهمة تأخّرت',
+            'title' => __('مهمة تأخّرت'),
             'body' => "«{$this->task->title}» تجاوزت موعدها.",
             'task_id' => $this->task->id,
             'url' => route('app.projects.tasks', $this->task->project->slug),

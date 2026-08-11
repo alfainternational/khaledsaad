@@ -20,7 +20,7 @@
         </section>
     @else
         <div class="board layout-board" data-task-board>
-            @foreach (['todo' => 'لم تبدأ', 'doing' => 'قيد التنفيذ', 'done' => 'منجزة'] as $key => $label)
+            @foreach (['todo' => __('لم تبدأ'), 'doing' => __('قيد التنفيذ'), 'done' => __('منجزة')] as $key => $label)
                 <section class="board__column" aria-labelledby="column-{{ $key }}" data-task-column="{{ $key }}">
                     <h2 id="column-{{ $key }}">{{ $label }} ({{ count($tasks[$key]) }})</h2>
 

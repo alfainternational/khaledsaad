@@ -40,14 +40,14 @@
             <h2>راجع ما فهمناه</h2>
             <p>اكتملت المعلومات الأساسية. صحّح أي تعارض قبل بدء التحليل.</p>
 
-            @foreach (['weak_inputs' => 'إجابات عامة تُضعف تشخيصك', 'facts' => 'حقائق صرّحت بها', 'estimates' => 'تقديرات تحتاج تحققًا', 'unknowns' => 'معلومات غير متاحة', 'assumptions' => 'افتراضات معلنة'] as $group => $title)
+            @foreach (['weak_inputs' => __('إجابات عامة تُضعف تشخيصك'), 'facts' => __('حقائق صرّحت بها'), 'estimates' => __('تقديرات تحتاج تحققًا'), 'unknowns' => __('معلومات غير متاحة'), 'assumptions' => __('افتراضات معلنة')] as $group => $title)
                 <section class="consultation-review-group">
                     <h3>{{ $title }}</h3>
                     @forelse ($consultation['review'][$group] as $item)
                         <p><strong>{{ $item['label'] ?? $item['statement'] ?? $item['key'] }}</strong>@isset($item['value']) — {{ is_array($item['value']) ? implode('، ', $item['value']) : $item['value'] }} @endisset</p>
                         @if (! empty($item['fitness']) && $item['fitness']['verdict'] !== 'sufficient')
                             {{-- الرقم مع أساسه: «كفاية ٣٢ من ١٠٠» بلا ذكر ما ينقصه لا يقود لقرار (§٦، §١٣). --}}
-                            <p class="muted">كفاية هذه الإجابة {{ $item['fitness']['score'] }} من ١٠٠@if (! empty($item['fitness']['gaps'])) — ينقصها: {{ implode('، ', $item['fitness']['gaps']) }}@endif</p>
+                            <p class="muted">كفاية هذه الإجابة {{ $item['fitness']['score'] }} من 100 @if (! empty($item['fitness']['gaps'])) — ينقصها: {{ implode('، ', $item['fitness']['gaps']) }}@endif</p>
                         @endif
                         @if(isset($item['question_key']))
                             <details class="consultation-revise"><summary>صحّح الإجابة</summary>
@@ -90,7 +90,7 @@
         </article>
     @else
         <article class="card consultation-status" aria-live="polite">
-            <h2>{{ $consultation['status'] === 'completed' ? 'اكتمل التقرير' : ($consultation['status'] === 'failed' ? 'تعذر التحليل' : 'نبني تقريرك الآن') }}</h2>
+            <h2>{{ $consultation['status'] === 'completed' ? 'اكتمل التقرير' : ($consultation['status'] === 'failed' ? 'تعذر التحليل' : 'يُبنى تقريرك الآن') }}</h2>
             <p>{{ $consultation['status_message'] }}</p>
             @if ($consultation['report_uuid'])
                 <a class="btn btn--primary" href="{{ route('app.agency-reports.show', $consultation['report_uuid']) }}">افتح التقرير الموحد</a>

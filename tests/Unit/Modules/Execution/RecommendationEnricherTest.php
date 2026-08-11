@@ -7,7 +7,7 @@ use App\Modules\Execution\ExampleContext;
 use App\Modules\Execution\RecommendationEnricher;
 use App\Modules\Execution\WorkedExample;
 use App\Modules\Shared\Sectors\Sector;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 /**
  * الضمان الذي جاء المُثري لأجله: لا توصية تصل بلا خطوة ولا بلا مثال.

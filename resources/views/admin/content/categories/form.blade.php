@@ -29,7 +29,7 @@
             <label class="field">
                 <span class="field__label">الأيقونة</span>
                 <select name="icon" required>
-                    @foreach (['folder' => 'مجلد', 'megaphone' => 'تسويق', 'book-open' => 'كتاب', 'graduation-cap' => 'تعليم', 'presentation' => 'محاضرة', 'chart' => 'تحليل', 'lightbulb' => 'أفكار', 'target' => 'أهداف'] as $value => $label)
+                    @foreach (['folder' => __('مجلد'), 'megaphone' => __('تسويق'), 'book-open' => __('كتاب'), 'graduation-cap' => __('تعليم'), 'presentation' => __('محاضرة'), 'chart' => __('تحليل'), 'lightbulb' => __('أفكار'), 'target' => __('أهداف')] as $value => $label)
                         <option value="{{ $value }}" @selected(old('icon', $category->icon ?: 'folder') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>

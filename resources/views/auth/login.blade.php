@@ -11,7 +11,7 @@
         <div class="auth-intent" role="note">
             <span class="auth-intent__tag">{{ $startTool['category'] }}</span>
             <strong>{{ $startTool['title'] }}</strong>
-            <p>سننقلك إلى هذا التشخيص مباشرة بعد تسجيل الدخول.</p>
+            <p>تنتقل إلى هذا التشخيص مباشرة بعد تسجيل الدخول.</p>
         </div>
     @endif
 @endsection

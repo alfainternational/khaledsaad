@@ -26,7 +26,7 @@
             <span class="filter-bar__label">النوع</span>
             <select name="type">
                 <option value="">كل الأنواع</option>
-                @foreach (['article' => 'مقال', 'lesson' => 'درس', 'lecture' => 'محاضرة', 'course' => 'دورة'] as $value => $label)
+                @foreach (['article' => __('مقال'), 'lesson' => __('درس'), 'lecture' => __('محاضرة'), 'course' => __('دورة')] as $value => $label)
                     <option value="{{ $value }}" @selected(request('type') === $value)>{{ $label }}</option>
                 @endforeach
             </select>
@@ -44,7 +44,7 @@
             <span class="filter-bar__label">الحالة</span>
             <select name="status">
                 <option value="">كل الحالات</option>
-                @foreach (['draft' => 'مسودة', 'scheduled' => 'مجدول', 'published' => 'منشور', 'archived' => 'مؤرشف'] as $value => $label)
+                @foreach (['draft' => __('مسودة'), 'scheduled' => __('مجدول'), 'published' => __('منشور'), 'archived' => __('مؤرشف')] as $value => $label)
                     <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
                 @endforeach
             </select>

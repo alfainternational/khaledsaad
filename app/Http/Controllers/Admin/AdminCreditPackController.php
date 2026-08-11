@@ -26,7 +26,7 @@ class AdminCreditPackController extends Controller
     {
         CreditPack::create($this->validated($request));
 
-        return redirect()->route('admin.packs.index')->with('status', 'أُنشئت الحزمة.');
+        return redirect()->route('admin.packs.index')->with('status', __('أُنشئت الحزمة.'));
     }
 
     public function edit(CreditPack $pack): View
@@ -38,14 +38,14 @@ class AdminCreditPackController extends Controller
     {
         $pack->update($this->validated($request));
 
-        return redirect()->route('admin.packs.index')->with('status', 'حُدّثت الحزمة.');
+        return redirect()->route('admin.packs.index')->with('status', __('حُدّثت الحزمة.'));
     }
 
     public function destroy(CreditPack $pack): RedirectResponse
     {
         $pack->delete();
 
-        return redirect()->route('admin.packs.index')->with('status', 'حُذفت الحزمة.');
+        return redirect()->route('admin.packs.index')->with('status', __('حُذفت الحزمة.'));
     }
 
     /**

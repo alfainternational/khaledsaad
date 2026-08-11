@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: hacentunisia; color: #1a2233; font-size: 10pt; line-height: 1.8; }
+        body { font-family: plexarabic; color: #1a2233; font-size: 10pt; line-height: 1.8; }
         h1 { color: #fff; font-size: 20pt; margin: 0; }
         h2 { color: #071f5b; font-size: 14pt; border-bottom: 2px solid #2575ff; padding-bottom: 3pt; margin: 16pt 0 7pt; }
         h3 { color: #071f5b; font-size: 11pt; margin: 7pt 0 3pt; }
@@ -34,7 +34,7 @@
         .worked-example__title { color: #5d6b82; font-weight: normal; }
         .worked-example__lead { color: #5d6b82; font-size: 8.5pt; margin: 0 0 4pt; }
         .worked-example__text { background: #ffffff; border: 1px solid #dfe8f5; padding: 6pt 8pt; margin: 0;
-            white-space: pre-wrap; font-family: hacentunisia; font-size: 9pt; line-height: 1.7;
+            white-space: pre-wrap; font-family: plexarabic; font-size: 9pt; line-height: 1.7;
             overflow-wrap: anywhere; page-break-inside: avoid; }
         .worked-example__text--ltr { direction: ltr; text-align: left; font-family: monospace; font-size: 7.5pt; line-height: 1.5; }
         .worked-example__notes { margin: 5pt 0 0; font-size: 8.5pt; color: #5d6b82; }
@@ -42,7 +42,7 @@
         .evidence-badge { font-size: 8pt; font-weight: normal; color: #b05c00; }
     </style>
 </head>
-<body class="print-report">
+<body class="print-report" data-interface-system="v2" data-interface-family="reports">
     <div class="cover">
         <h1>أين يقف مشروعك؟</h1>
         <p>{{ $snapshot['project']['name'] }} · تقرير خاص بك يشرح وضعك والخطوة التالية بلغة واضحة</p>

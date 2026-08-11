@@ -38,7 +38,7 @@ class GeoPackController extends Controller
         // بوابة الجاهزية: حزمة من ملف ناقص تعرّف الآلات على مشروع مشوّه.
         if ($this->generator->missingFields($project) !== []) {
             return back()->withErrors([
-                'geo' => 'أكمل ملف المشروع أولًا — الحزمة تُبنى مما كتبته أنت.',
+                'geo' => __('أكمل ملف المشروع أولًا — الحزمة تُبنى مما كتبته أنت.'),
             ]);
         }
 
@@ -46,7 +46,7 @@ class GeoPackController extends Controller
 
         return redirect()
             ->route('app.geo.show', $project)
-            ->with('status', 'حزمتك جاهزة. انسخ ما تحتاجه وضعه في موقعك.');
+            ->with('status', __('حزمتك جاهزة. انسخ ما تحتاجه وضعه في موقعك.'));
     }
 
     public function llms(Request $request, Project $project): Response

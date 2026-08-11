@@ -93,7 +93,7 @@
             <label class="field">
                 <span class="field__label">ما تعرفه عنه</span>
                 <textarea name="notes" rows="3" maxlength="2000"
-                    placeholder="أين قابلته، ماذا قال، ما الذي يشغله الآن…">{{ old('notes') }}</textarea>
+                    placeholder="{{ __('أين قابلته، ماذا قال، ما الذي يشغله الآن…') }}">{{ old('notes') }}</textarea>
                 <span class="field__help">
                     هذا الحقل هو الفرق بين رسالة شخصية ورسالة جماعية مُقنَّعة —
                     وما لا تكتبه هنا لن يُخترع لك.
@@ -208,7 +208,7 @@
                             <input type="hidden" name="objective" value="{{ $objective->value }}">
                             <textarea name="content" rows="3" minlength="20" required
                                 maxlength="{{ \App\Support\Messaging\MessageChannel::from($prospect->preferred_channel)->maxLength() }}"
-                                aria-label="رسالة {{ $prospect->name }}"></textarea>
+                                aria-label="{{ __('رسالة :name', ['name' => $prospect->name]) }}"></textarea>
                             <button type="submit" class="btn btn--ghost btn--sm">احفظ رسالته</button>
                         </form>
                     </details>
@@ -240,7 +240,7 @@
 
                     navigator.clipboard.writeText(source.textContent.trim()).then(function () {
                         var original = button.textContent;
-                        button.textContent = 'نُسخت';
+                        button.textContent = @js(__('نُسخت'));
                         setTimeout(function () { button.textContent = original; }, 2000);
                     });
                 });
@@ -250,7 +250,7 @@
                 form.addEventListener('submit', function () {
                     form.querySelectorAll('[data-once]').forEach(function (button) {
                         button.disabled = true;
-                        button.textContent = 'جارٍ التوليد…';
+                        button.textContent = @js(__('جارٍ التوليد…'));
                     });
                 });
             });

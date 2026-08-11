@@ -5,12 +5,10 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Concerns\CarriesStartIntent;
 use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
-use App\Models\MarketingLearningRun;
 use App\Models\Project;
 use App\Models\Tool;
 use App\Models\ToolField;
 use App\Models\ToolVersion;
-use App\Modules\Learning\MarketingLearningRecommender;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ProjectAnswerMemory;
 use App\Services\Tools\ToolEngagement;
@@ -38,7 +36,6 @@ class ProjectController extends Controller
         private readonly ProjectAnswerMemory $memory,
         private readonly ToolEngagement $engagement,
         private readonly EngagementPresenter $engagements,
-        private readonly MarketingLearningRecommender $learning,
     ) {}
 
     public function index(Request $request): View
@@ -78,7 +75,7 @@ class ProjectController extends Controller
         }
 
         return redirect()->route('app.projects.show', $project)
-            ->with('status', 'أُضيف المشروع. اختر التشخيص الذي يناسب أولويتك الحالية.');
+            ->with('status', __('أُضيف المشروع. اختر التشخيص الذي يناسب أولويتك الحالية.'));
     }
 
     public function show(Request $request, Project $project): View
@@ -86,8 +83,6 @@ class ProjectController extends Controller
         $this->authorizeProject($request, $project);
 
         $tools = Tool::with('currentVersion')->orderBy('sort_order')->get();
-        $learningRun = MarketingLearningRun::startFor($project, $request->user());
-
         return view('app.projects.show', [
             'project' => $this->presenter->overview($project),
             'tools' => $tools->map(fn ($tool) => $this->tools->card($tool))->all(),
@@ -102,7 +97,6 @@ class ProjectController extends Controller
                     ),
                 ])
                 ->all(),
-            'learningNext' => $this->learning->next($learningRun),
         ]);
     }
 
@@ -130,7 +124,7 @@ class ProjectController extends Controller
         $this->service->updateProfile($project, $data);
 
         return redirect()->route('app.projects.show', $project)
-            ->with('status', 'حُدّث ملف المشروع. التقارير السابقة لم تتغير.');
+            ->with('status', __('حُدّث ملف المشروع. التقارير السابقة لم تتغير.'));
     }
 
     /**

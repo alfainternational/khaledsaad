@@ -156,7 +156,7 @@ class ToolRunController extends Controller
         $manual->requestManualReview($run);
 
         return redirect()->route('app.runs.status', $run)
-            ->with('status', 'وصلتنا إجاباتك. سيراجعها خالد بنفسه، ونُشعرك فور جاهزية النتيجة.');
+            ->with('status', __('وصلتنا إجاباتك. سيراجعها خالد بنفسه، ونُشعرك فور جاهزية النتيجة.'));
     }
 
     public function status(Request $request, ToolRun $run): View|RedirectResponse
@@ -196,7 +196,7 @@ class ToolRunController extends Controller
 
         $this->uploader->store($run, $request->file('file'));
 
-        return back()->with('status', 'أُرفق الملف. سنقرأه عند التحليل.');
+        return back()->with('status', __('أُرفق الملف. سنقرأه عند التحليل.'));
     }
 
     public function deleteFile(Request $request, ToolRun $run, ToolRunFile $file): RedirectResponse
@@ -207,6 +207,6 @@ class ToolRunController extends Controller
 
         $this->uploader->delete($file);
 
-        return back()->with('status', 'حُذف الملف.');
+        return back()->with('status', __('حُذف الملف.'));
     }
 }

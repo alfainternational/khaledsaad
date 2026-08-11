@@ -31,7 +31,7 @@ class AdminContentCategoryController extends Controller
     {
         ContentCategory::query()->create($request->validated());
 
-        return redirect()->route('admin.content-categories.index')->with('success', 'أُضيف القسم.');
+        return redirect()->route('admin.content-categories.index')->with('success', __('أُضيف القسم.'));
     }
 
     public function edit(ContentCategory $contentCategory): View
@@ -45,18 +45,18 @@ class AdminContentCategoryController extends Controller
     {
         $contentCategory->update($request->validated());
 
-        return redirect()->route('admin.content-categories.index')->with('success', 'حُدّث القسم.');
+        return redirect()->route('admin.content-categories.index')->with('success', __('حُدّث القسم.'));
     }
 
     public function destroy(ContentCategory $contentCategory): RedirectResponse
     {
         if ($contentCategory->contents()->exists()) {
             return redirect()->route('admin.content-categories.index')
-                ->with('error', 'لا يمكن حذف قسم مرتبط بمحتوى. انقل المواد إلى قسم آخر أولًا.');
+                ->with('error', __('لا يمكن حذف قسم مرتبط بمحتوى. انقل المواد إلى قسم آخر أولًا.'));
         }
 
         $contentCategory->delete();
 
-        return redirect()->route('admin.content-categories.index')->with('success', 'حُذف القسم.');
+        return redirect()->route('admin.content-categories.index')->with('success', __('حُذف القسم.'));
     }
 }
