@@ -26,6 +26,7 @@ class LearningApplicationScreen extends StatefulWidget {
 class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _answerController = TextEditingController();
+  int _loadGeneration = 0;
   int _selectedProjectId = 0;
   late Future<Map<String, dynamic>> _future = _load();
   Map<String, dynamic>? _data;
@@ -35,15 +36,22 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
 
   @override
   void dispose() {
+    _loadGeneration++;
     _answerController.dispose();
     super.dispose();
   }
 
   Future<Map<String, dynamic>> _load() async {
+    final generation = ++_loadGeneration;
     final data = await widget.repository.marketingLearningApplication(
       widget.exerciseKey,
       projectId: _selectedProjectId == 0 ? null : _selectedProjectId,
     );
+
+    if (!mounted || generation != _loadGeneration) {
+      return data;
+    }
+
     _data = data;
     _selectedProjectId =
         ((data['project'] as Map?)?['id'] as num?)?.toInt() ?? 0;
@@ -175,6 +183,7 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
             final question = questions[_step];
             final status = attempt['status']?.toString() ?? 'draft';
             final underReview = status == 'queued' || status == 'evaluating';
+            final completed = status == 'completed';
             final allAnswered = questions.every(
               (item) => _answers(data).containsKey(item['key'].toString()),
             );
@@ -245,6 +254,8 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
                 ],
                 if (underReview)
                   BrandCard(child: Text(strings.text('review_in_progress')))
+                else if (completed)
+                  BrandCard(child: Text(strings.text('application_completed')))
                 else
                   Form(
                     key: _formKey,

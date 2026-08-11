@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class MarketingLearningRun extends Model
 {
@@ -36,36 +37,41 @@ class MarketingLearningRun extends Model
             throw new \InvalidArgumentException('Project does not belong to the learning workspace.');
         }
 
-        $run = self::query()
-            ->when(
-                $project,
-                fn ($query) => $query->where('project_id', $project->id),
-                fn ($query) => $query->whereNull('project_id'),
-            )
-            ->where('workspace_id', $workspace->id)
-            ->where('started_by', $user?->id)
-            ->oldest('id')
-            ->first();
+        return DB::transaction(function () use ($workspace, $user, $project): self {
+            Workspace::query()->whereKey($workspace->id)->lockForUpdate()->firstOrFail();
 
-        if ($run === null && $project !== null) {
-            $run = self::query()->where('project_id', $project->id)->first();
-        }
+            $run = self::query()
+                ->when(
+                    $project,
+                    fn ($query) => $query->where('project_id', $project->id),
+                    fn ($query) => $query->whereNull('project_id'),
+                )
+                ->where('workspace_id', $workspace->id)
+                ->where('started_by', $user?->id)
+                ->oldest('id')
+                ->lockForUpdate()
+                ->first();
 
-        if ($run !== null) {
-            if ($run->workspace_id === null) {
-                $run->forceFill(['workspace_id' => $workspace->id])->save();
+            if ($run === null && $project !== null) {
+                $run = self::query()->where('project_id', $project->id)->lockForUpdate()->first();
             }
 
-            return $run;
-        }
+            if ($run !== null) {
+                if ($run->workspace_id === null) {
+                    $run->forceFill(['workspace_id' => $workspace->id])->save();
+                }
 
-        return self::query()->create([
-            'workspace_id' => $workspace->id,
-            'project_id' => $project?->id,
-            'started_by' => $user?->id,
-            'status' => self::STATUS_ACTIVE,
-            'started_at' => now(),
-        ]);
+                return $run;
+            }
+
+            return self::query()->create([
+                'workspace_id' => $workspace->id,
+                'project_id' => $project?->id,
+                'started_by' => $user?->id,
+                'status' => self::STATUS_ACTIVE,
+                'started_at' => now(),
+            ]);
+        });
     }
 
     public function workspace(): BelongsTo

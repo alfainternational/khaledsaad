@@ -90,19 +90,12 @@ class MarketingLearningController extends Controller
             abort(404);
         }
 
-        $context = $request->input('project_id') === null || $request->input('project_id') === ''
-            ? null
-            : $this->learningContext($request);
+        [$workspace, $project] = $this->learningContext($request);
         $rules = ($questionDefinition['type'] ?? 'textarea') === 'number'
             ? ['required', 'numeric', 'min:'.(int) ($questionDefinition['min'] ?? 1)]
             : ['required', 'string', 'min:'.(int) ($questionDefinition['min'] ?? 1), 'max:5000'];
         $data = $request->validate(['answer' => $rules]);
-        if ($context === null) {
-            [$run, $project] = $this->run($request);
-        } else {
-            [$workspace, $project] = $context;
-            $run = MarketingLearningRun::startForWorkspace($workspace, $request->user(), $project);
-        }
+        $run = MarketingLearningRun::startForWorkspace($workspace, $request->user(), $project);
         $attempt = $run->attemptFor($exercise);
 
         if (! $this->answerIsEditable($attempt)) {
@@ -194,8 +187,19 @@ class MarketingLearningController extends Controller
             return $current->refresh();
         });
 
-        if ($queued !== null) {
-            $this->dispatchReview($queued);
+        if ($queued !== null && ! $this->dispatchReview($queued)) {
+            $attempt = $queued->refresh();
+
+            return response()->json([
+                'error' => [
+                    'code' => 'learning_review_dispatch_failed',
+                    'message' => __('تعذر بدء المراجعة الآن. إجاباتك محفوظة ويمكنك إعادة المحاولة.'),
+                ],
+                'data' => [
+                    'attempt' => $this->attemptPayload($attempt),
+                    'project' => $this->projectPayload($project),
+                ],
+            ], 503);
         }
 
         $attempt = ($queued ?? $attempt)->refresh();
@@ -351,10 +355,13 @@ class MarketingLearningController extends Controller
         ], 409);
     }
 
-    private function dispatchReview(MarketingExerciseAttempt $attempt): void
+    private function dispatchReview(MarketingExerciseAttempt $attempt): bool
     {
         try {
-            EvaluateMarketingExercise::dispatch($attempt->id);
+            $pending = EvaluateMarketingExercise::dispatch($attempt->id);
+            unset($pending);
+
+            return true;
         } catch (Throwable $exception) {
             $attempt->forceFill([
                 'status' => MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
@@ -365,6 +372,8 @@ class MarketingLearningController extends Controller
                 'exercise_key' => $attempt->exercise_key,
                 'reason' => $exception->getMessage(),
             ]);
+
+            return false;
         }
     }
 }

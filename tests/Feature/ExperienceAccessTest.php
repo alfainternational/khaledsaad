@@ -3,17 +3,23 @@
 namespace Tests\Feature;
 
 use App\Jobs\EvaluateMarketingExercise;
+use App\Models\Feature;
 use App\Models\MarketingExerciseAttempt;
 use App\Models\MarketingLearningRun;
+use App\Models\PlanFeature;
 use App\Models\User;
+use App\Services\Billing\Entitlements;
 use App\Services\Projects\ProjectService;
+use App\Support\Billing\FeatureKey;
 use App\Support\Experience\Experience;
 use App\Support\Experience\ExperienceService;
+use Illuminate\Contracts\Bus\Dispatcher as BusDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use RuntimeException;
 use Tests\TestCase;
 
 class ExperienceAccessTest extends TestCase
@@ -359,6 +365,45 @@ class ExperienceAccessTest extends TestCase
         $this->assertDatabaseMissing('marketing_learning_runs', ['project_id' => $foreignProject->id]);
     }
 
+    public function test_learning_api_checks_entitlement_before_projectless_answer_validation(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $workspace = $user->primaryWorkspace();
+        $plan = $workspace->subscription()->firstOrFail()->plan;
+        $feature = Feature::query()->create([
+            'key' => FeatureKey::LEARNING_MARKETING,
+            'name' => 'التعلم التطبيقي',
+            'description' => 'اختبار',
+            'group' => 'core',
+            'type' => Feature::TYPE_BOOLEAN,
+            'enforcement' => Feature::ENFORCEMENT_GATE,
+            'default_enabled' => false,
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+        PlanFeature::query()->create([
+            'plan_id' => $plan->id,
+            'feature_id' => $feature->id,
+            'enabled' => false,
+        ]);
+        app(Entitlements::class)->flush();
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson('/api/v1/learning/marketing/marketing-reality-check/answers/current_actions', [
+                'answer' => '',
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'feature_not_available');
+
+        $this->assertDatabaseMissing('marketing_learning_runs', [
+            'workspace_id' => $workspace->id,
+            'started_by' => $user->id,
+        ]);
+    }
+
     public function test_learning_api_hides_project_context_until_business_is_enabled(): void
     {
         $user = User::factory()->create();
@@ -404,6 +449,34 @@ class ExperienceAccessTest extends TestCase
             ->assertJsonPath('data.attempt.status', MarketingExerciseAttempt::STATUS_QUEUED);
 
         Queue::assertPushed(EvaluateMarketingExercise::class, 1);
+    }
+
+    public function test_learning_api_reports_a_dispatch_failure_as_a_non_success_response(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $run = MarketingLearningRun::startForWorkspace($user->primaryWorkspace(), $user);
+        $run->attemptFor('marketing-reality-check')->update(['answers' => [
+            'current_actions' => 'أنشر محتوى تعليميًا مرتين أسبوعيًا وأتابع الطلبات الناتجة عن كل منشور.',
+            'business_result' => 'أريد خمس محادثات بيع مؤهلة أسبوعيًا يمكن ربطها بالمحتوى المنشور.',
+        ]]);
+        $this->mock(BusDispatcher::class)
+            ->shouldReceive('dispatch')
+            ->once()
+            ->andThrow(new RuntimeException('queue unavailable'));
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/learning/marketing/marketing-reality-check/review')
+            ->assertStatus(503)
+            ->assertJsonPath('error.code', 'learning_review_dispatch_failed')
+            ->assertJsonPath('data.attempt.status', MarketingExerciseAttempt::STATUS_REVIEW_FAILED);
+
+        $this->assertSame(
+            MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
+            $run->attemptFor('marketing-reality-check')->refresh()->status,
+        );
     }
 
     public function test_business_user_can_read_public_learning_content_but_not_open_course_applications(): void
