@@ -90,11 +90,19 @@ class MarketingLearningController extends Controller
             abort(404);
         }
 
+        $context = $request->input('project_id') === null || $request->input('project_id') === ''
+            ? null
+            : $this->learningContext($request);
         $rules = ($questionDefinition['type'] ?? 'textarea') === 'number'
             ? ['required', 'numeric', 'min:'.(int) ($questionDefinition['min'] ?? 1)]
             : ['required', 'string', 'min:'.(int) ($questionDefinition['min'] ?? 1), 'max:5000'];
         $data = $request->validate(['answer' => $rules]);
-        [$run, $project] = $this->run($request);
+        if ($context === null) {
+            [$run, $project] = $this->run($request);
+        } else {
+            [$workspace, $project] = $context;
+            $run = MarketingLearningRun::startForWorkspace($workspace, $request->user(), $project);
+        }
         $attempt = $run->attemptFor($exercise);
 
         if (! $this->answerIsEditable($attempt)) {
@@ -203,6 +211,14 @@ class MarketingLearningController extends Controller
     /** @return array{0: MarketingLearningRun, 1: ?Project} */
     private function run(Request $request): array
     {
+        [$workspace, $project] = $this->learningContext($request);
+
+        return [MarketingLearningRun::startForWorkspace($workspace, $request->user(), $project), $project];
+    }
+
+    /** @return array{0: Workspace, 1: ?Project} */
+    private function learningContext(Request $request): array
+    {
         $user = $request->user();
         $workspace = $user->primaryWorkspace();
 
@@ -219,7 +235,7 @@ class MarketingLearningController extends Controller
 
         $project = $this->projectContext($request, $workspace);
 
-        return [MarketingLearningRun::startForWorkspace($workspace, $user, $project), $project];
+        return [$workspace, $project];
     }
 
     private function projectContext(Request $request, Workspace $workspace): ?Project

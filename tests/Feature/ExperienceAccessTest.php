@@ -337,6 +337,28 @@ class ExperienceAccessTest extends TestCase
         $this->assertDatabaseMissing('marketing_learning_runs', ['project_id' => $outsidePrimaryWorkspace->id]);
     }
 
+    public function test_learning_api_checks_project_ownership_before_answer_validation(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $user = app(ExperienceService::class)->activate($user, Experience::BUSINESS);
+        $foreignProject = app(ProjectService::class)->create(
+            User::factory()->create(),
+            ['name' => 'مشروع مستخدم آخر'],
+        );
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson('/api/v1/learning/marketing/marketing-reality-check/answers/current_actions', [
+                'answer' => '',
+                'project_id' => $foreignProject->id,
+            ])
+            ->assertNotFound();
+
+        $this->assertDatabaseMissing('marketing_learning_runs', ['project_id' => $foreignProject->id]);
+    }
+
     public function test_learning_api_hides_project_context_until_business_is_enabled(): void
     {
         $user = User::factory()->create();
