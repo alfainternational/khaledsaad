@@ -162,6 +162,7 @@ class PlatformRepository {
     required String name,
     required String email,
     required String password,
+    String experience = 'business',
   }) async {
     final guestToken = await _guestSessions.read();
     final payload = <String, dynamic>{
@@ -169,6 +170,7 @@ class PlatformRepository {
       'email': email,
       'password': password,
       'device_name': AppEnvironment.deviceName,
+      'experience': experience,
     };
     if (guestToken != null) payload['guest_token'] = guestToken;
     final response = await _api.post('/auth/register', payload);
@@ -194,6 +196,56 @@ class PlatformRepository {
 
   Future<Map<String, dynamic>> me() async {
     final response = await _api.get('/auth/me');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> activateExperience(String experience) async {
+    final response = await _api.post('/experiences/$experience/activate');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> switchExperience(String experience) async {
+    final response = await _api.post('/experiences/$experience/switch');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> marketingLearningOverview() async {
+    final response = await _api.get('/learning/marketing');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> marketingLearningApplication(
+    String key, {
+    int? projectId,
+  }) async {
+    final response = await _api.get(
+      '/learning/marketing/$key',
+      projectId == null ? null : {'project_id': '$projectId'},
+    );
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> saveMarketingLearningAnswer(
+    String exerciseKey,
+    String questionKey,
+    dynamic answer, {
+    int? projectId,
+  }) async {
+    final response = await _api.put(
+      '/learning/marketing/$exerciseKey/answers/$questionKey',
+      {'answer': answer, 'project_id': ?projectId},
+    );
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> reviewMarketingLearningApplication(
+    String exerciseKey, {
+    int? projectId,
+  }) async {
+    final response = await _api.post(
+      '/learning/marketing/$exerciseKey/review',
+      projectId == null ? null : {'project_id': projectId},
+    );
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
