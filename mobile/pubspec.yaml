@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.1+15
+version: 1.1.3+17
 
 environment:
   sdk: ^3.12.2
@@ -96,12 +96,15 @@ flutter:
   assets:
     - assets/brand/
 
-  # نفس ملف الخط المستخدم في الويب، مضمّن في التطبيق حتى لا يعتمد على
-  # خطوط الجهاز ويظهر بشكل مختلف عن الموقع.
+  # نفس عائلة الخط المستخدمة في الويب، مضمّنة في التطبيق حتى تبقى
+  # الواجهات العربية متطابقة ولا تعتمد على خطوط الجهاز.
   fonts:
-    - family: HacenTunisia
+    - family: IBMPlexSansArabic
       fonts:
-        - asset: assets/fonts/Hacen-Tunisia.ttf
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+          weight: 700
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
