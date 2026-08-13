@@ -14,20 +14,30 @@ class Report extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tool_run_id', 'project_id', 'title', 'status', 'score', 'score_band',
+        'tool_run_id', 'project_id', 'title', 'locale', 'status', 'score', 'score_band',
         'summary', 'assumptions', 'next_step', 'generated_by_model', 'tool_version',
         'published_at', 'pdf_path', 'pdf_generated_at',
         'review_mode', 'reviewed_by', 'reviewed_at',
+        'provenance', 'score_raw', 'score_max', 'issued_at', 'authored_at',
+        'authored_by', 'validation_status', 'schema_version', 'contract_payload',
+        'declared_gaps',
     ];
 
     protected function casts(): array
     {
         return [
             'assumptions' => 'array',
+            'declared_gaps' => 'array',
             'next_step' => 'array',
             'published_at' => 'datetime',
+            'issued_at' => 'datetime',
+            'authored_at' => 'datetime',
             'reviewed_at' => 'datetime',
             'pdf_generated_at' => 'datetime',
+            'score_raw' => 'float',
+            'score_max' => 'float',
+            'schema_version' => 'integer',
+            'contract_payload' => 'array',
         ];
     }
 
@@ -80,6 +90,26 @@ class Report extends Model
     public function feedback(): MorphMany
     {
         return $this->morphMany(ContentFeedback::class, 'subject');
+    }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(ReportRevision::class);
+    }
+
+    public function validationFindings(): HasMany
+    {
+        return $this->hasMany(ValidationFinding::class);
+    }
+
+    public function humanTraces(): HasMany
+    {
+        return $this->hasMany(HumanTrace::class);
+    }
+
+    public function scoringItems(): HasMany
+    {
+        return $this->hasMany(ScoringItem::class);
     }
 
     public static function bandFor(int $score): string

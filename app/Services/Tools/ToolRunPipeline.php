@@ -10,6 +10,7 @@ use App\Modules\Alerts\RunNotifier;
 use App\Modules\Competitors\CompetitorRegistry;
 use App\Modules\Diagnosis\DeterministicScorer;
 use App\Modules\Intake\IntakeCollector;
+use App\Modules\Reporting\Publication\ReportPublicationGate;
 use App\Services\Billing\CreditManager;
 use App\Services\Tools\V2\ReportSemanticGuard;
 use App\Support\AI\AIRequest;
@@ -55,6 +56,7 @@ class ToolRunPipeline
         private readonly ReportSemanticGuard $semanticGuard,
         private readonly IntakeCollector $intake,
         private readonly DeterministicInsights $deterministic,
+        private readonly ReportPublicationGate $publication,
     ) {}
 
     public static function seedStages(ToolRun $run): void
@@ -69,6 +71,18 @@ class ToolRunPipeline
 
     public function handle(ToolRun $run): void
     {
+        /*
+         * لغة التشغيل هي مصدر الحقيقة لا لغة العملية.
+         *
+         * حمولة الطابور تحمل لغة لحظة الإرسال، وهي تكفي في المسار العادي.
+         * لكن إعادة المحاولة اليدوية من لوحة الإدارة تُرسِل المهمة من جلسة
+         * مدير قد تكون لغته غير لغة صاحب التشغيل — فيصل صاحبَه تقريرٌ
+         * بلغة من أعاد المحاولة. القراءة من السجل تُغلق هذا الباب.
+         */
+        if ($run->locale !== null && $run->locale !== '') {
+            app()->setLocale($run->locale);
+        }
+
         self::seedStages($run);
 
         $run->forceFill([
@@ -122,7 +136,7 @@ class ToolRunPipeline
 
         try {
             $this->run($run, 'persist', fn () => $this->composer->compose($run, $baseline, $sections, $synthesis, $gaps));
-            $this->run($run, 'notify', fn () => $this->publish($run));
+        $this->run($run, 'notify', fn () => $this->publish($run));
         } catch (Throwable $exception) {
             $this->fail($run, $exception);
 
@@ -439,10 +453,11 @@ class ToolRunPipeline
 
     private function publish(ToolRun $run): void
     {
-        $run->report?->forceFill([
-            'status' => 'published',
-            'published_at' => now(),
-        ])->save();
+        if ($run->report === null) {
+            throw new \RuntimeException('لا يوجد تقرير لإصداره.');
+        }
+
+        $this->publication->publish($run->report);
     }
 
     private function fail(ToolRun $run, Throwable $exception): void

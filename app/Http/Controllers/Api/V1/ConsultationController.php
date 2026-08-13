@@ -62,14 +62,14 @@ class ConsultationController extends Controller
         $validated = $request->validate(['depth' => 'nullable|in:quick,standard,deep']);
         $session = $this->service->start($project, $request->user(), $validated['depth'] ?? 'standard');
 
-        return response()->json(['data' => $this->presenter->show($session)], 201);
+        return response()->json(['data' => $this->presenter->api($session)], 201);
     }
 
     public function show(Request $request, ConsultationSession $consultation): JsonResponse
     {
         $this->authorizeOwned($request, $consultation->project);
 
-        return response()->json(['data' => $this->presenter->show($consultation)]);
+        return response()->json(['data' => $this->presenter->api($consultation)]);
     }
 
     public function answer(Request $request, ConsultationSession $consultation, string $question): JsonResponse
@@ -86,7 +86,7 @@ class ConsultationController extends Controller
             ? $this->service->answer($consultation, $current, $validated)
             : $this->service->revise($consultation, $previous->questionVersion, $validated);
 
-        return response()->json(['data' => $this->presenter->show($session), 'message' => 'حُفظت إجابتك.']);
+        return response()->json(['data' => $this->presenter->api($session), 'message' => __('حُفظت إجابتك.')]);
     }
 
     public function confirm(Request $request, ConsultationSession $consultation): JsonResponse
@@ -94,7 +94,7 @@ class ConsultationController extends Controller
         $this->authorizeOwned($request, $consultation->project);
         $session = $this->service->confirm($consultation, $request->user());
 
-        return response()->json(['data' => $this->presenter->show($session), 'message' => 'بدأ التحليل الشامل.']);
+        return response()->json(['data' => $this->presenter->api($session), 'message' => __('بدأ التحليل الشامل.')]);
     }
 
     public function retry(Request $request, ConsultationSession $consultation): JsonResponse
@@ -102,21 +102,21 @@ class ConsultationController extends Controller
         $this->authorizeOwned($request, $consultation->project);
         $session = $this->service->retry($consultation, $request->user());
 
-        return response()->json(['data' => $this->presenter->show($session), 'message' => 'أُعيد تشغيل التحليل.']);
+        return response()->json(['data' => $this->presenter->api($session), 'message' => __('أُعيد تشغيل التحليل.')]);
     }
 
     public function review(Request $request, ConsultationSession $consultation): JsonResponse
     {
         $this->authorizeOwned($request, $consultation->project);
 
-        return response()->json(['data' => $this->presenter->show($this->service->review($consultation))]);
+        return response()->json(['data' => $this->presenter->api($this->service->review($consultation))]);
     }
 
     public function status(Request $request, ConsultationSession $consultation): JsonResponse
     {
         $this->authorizeOwned($request, $consultation->project);
 
-        return response()->json(['data' => $this->presenter->show($consultation->refresh())]);
+        return response()->json(['data' => $this->presenter->api($consultation->refresh())]);
     }
 
     public function resolveConflict(Request $request, ConsultationSession $consultation, ConsultationConflict $conflict): JsonResponse
@@ -125,7 +125,7 @@ class ConsultationController extends Controller
         $validated = $request->validate(['resolution' => 'required|string|min:5|max:1000']);
         $session = $this->service->resolveConflict($consultation, $conflict, $validated['resolution']);
 
-        return response()->json(['data' => $this->presenter->show($session), 'message' => 'حُفظ توضيح التعارض.']);
+        return response()->json(['data' => $this->presenter->api($session), 'message' => __('حُفظ توضيح التعارض.')]);
     }
 
     public function export(Request $request, ConsultationSession $consultation): JsonResponse
@@ -149,7 +149,7 @@ class ConsultationController extends Controller
         $validated = $request->validate(['file' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,csv,txt,png,jpg,jpeg,webp']);
         $this->evidence->store($consultation, $validated['file']);
 
-        return response()->json(['data' => $this->presenter->show($consultation->refresh()), 'message' => 'رُفع الدليل بأمان.'], 201);
+        return response()->json(['data' => $this->presenter->api($consultation->refresh()), 'message' => __('رُفع الدليل بأمان.')], 201);
     }
 
     public function deleteEvidence(Request $request, ConsultationSession $consultation, ConsultationEvidence $evidence): JsonResponse
@@ -157,7 +157,7 @@ class ConsultationController extends Controller
         $this->authorizeOwned($request, $consultation->project);
         $this->evidence->delete($consultation, $evidence);
 
-        return response()->json(['data' => $this->presenter->show($consultation->refresh())]);
+        return response()->json(['data' => $this->presenter->api($consultation->refresh())]);
     }
 
     private function authorizeOwned(Request $request, Project $project): void

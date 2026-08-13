@@ -38,7 +38,7 @@
                             <a href="{{ route('admin.users.edit', $user['id']) }}" class="btn btn--ghost btn--sm">تعديل</a>
                             @unless ($user['is_admin'])
                                 <form method="POST" action="{{ route('admin.users.impersonate', $user['id']) }}" class="inline-form"
-                                    data-confirm="ستدخل بحساب {{ $user['name'] }} وتُسجَّل الجلسة في التدقيق. متأكد؟">
+                                    data-confirm="{{ __('ستدخل بحساب :name وتُسجَّل الجلسة في التدقيق. متأكد؟', ['name' => $user['name']]) }}">
                                     @csrf
                                     <button type="submit" class="btn btn--ghost btn--sm">ادخل بحسابه</button>
                                 </form>

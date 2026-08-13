@@ -60,6 +60,16 @@ class ConsultationController extends Controller
         return redirect()->route('app.consultations.show', $session);
     }
 
+    public function project(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorizeProject($request, $project);
+        $latest = $project->consultationSessions()->latest('id')->first();
+
+        return $latest !== null
+            ? redirect()->route('app.consultations.show', $latest)
+            : redirect()->route('app.consultations.index');
+    }
+
     public function show(Request $request, ConsultationSession $consultation): View
     {
         $this->authorizeProject($request, $consultation->project);
@@ -87,7 +97,7 @@ class ConsultationController extends Controller
         $validated = $request->validate(['value' => 'nullable', 'unknown' => 'nullable|boolean', 'skipped' => 'nullable|boolean']);
         $this->service->revise($consultation, $answer->questionVersion, $validated);
 
-        return redirect()->route('app.consultations.show', $consultation)->with('status', 'صُححت الإجابة وأُعيد حساب نطاق التشخيص.');
+        return redirect()->route('app.consultations.show', $consultation)->with('status', __('صُححت الإجابة وأُعيد حساب نطاق التشخيص.'));
     }
 
     public function confirm(Request $request, ConsultationSession $consultation): RedirectResponse
@@ -95,7 +105,7 @@ class ConsultationController extends Controller
         $this->authorizeProject($request, $consultation->project);
         $this->service->confirm($consultation, $request->user());
 
-        return redirect()->route('app.consultations.show', $consultation)->with('status', 'بدأ التحليل الشامل. سنعرض التقرير هنا عند اكتماله.');
+        return redirect()->route('app.consultations.show', $consultation)->with('status', __('بدأ التحليل الشامل. سنعرض التقرير هنا عند اكتماله.'));
     }
 
     public function retry(Request $request, ConsultationSession $consultation): RedirectResponse
@@ -103,7 +113,7 @@ class ConsultationController extends Controller
         $this->authorizeProject($request, $consultation->project);
         $this->service->retry($consultation, $request->user());
 
-        return redirect()->route('app.consultations.show', $consultation)->with('status', 'أُعيد تشغيل التحليل.');
+        return redirect()->route('app.consultations.show', $consultation)->with('status', __('أُعيد تشغيل التحليل.'));
     }
 
     public function review(Request $request, ConsultationSession $consultation): RedirectResponse
@@ -120,7 +130,7 @@ class ConsultationController extends Controller
         $validated = $request->validate(['resolution' => 'required|string|min:5|max:1000']);
         $this->service->resolveConflict($consultation, $conflict, $validated['resolution']);
 
-        return redirect()->route('app.consultations.show', $consultation)->with('status', 'حُفظ التوضيح.');
+        return redirect()->route('app.consultations.show', $consultation)->with('status', __('حُفظ التوضيح.'));
     }
 
     public function export(Request $request, ConsultationSession $consultation)
@@ -137,7 +147,7 @@ class ConsultationController extends Controller
         $project = $consultation->project;
         $this->privacy->delete($consultation);
 
-        return redirect()->route('app.projects.show', $project)->with('status', 'حُذفت بيانات الاستشارة مع بقاء المشروع والتقارير المنشورة.');
+        return redirect()->route('app.projects.show', $project)->with('status', __('حُذفت بيانات الاستشارة مع بقاء المشروع والتقارير المنشورة.'));
     }
 
     public function uploadEvidence(Request $request, ConsultationSession $consultation): RedirectResponse
@@ -146,7 +156,7 @@ class ConsultationController extends Controller
         $validated = $request->validate(['file' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,csv,txt,png,jpg,jpeg,webp']);
         $this->evidence->store($consultation, $validated['file']);
 
-        return back()->with('status', 'رُفع الدليل وأُضيف إلى سجل الاستشارة.');
+        return back()->with('status', __('رُفع الدليل وأُضيف إلى سجل الاستشارة.'));
     }
 
     public function deleteEvidence(Request $request, ConsultationSession $consultation, ConsultationEvidence $evidence): RedirectResponse
@@ -154,6 +164,6 @@ class ConsultationController extends Controller
         $this->authorizeProject($request, $consultation->project);
         $this->evidence->delete($consultation, $evidence);
 
-        return back()->with('status', 'حُذف الدليل.');
+        return back()->with('status', __('حُذف الدليل.'));
     }
 }

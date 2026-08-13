@@ -13,6 +13,7 @@ use App\Modules\Reporting\AgencyReportDocumentAdapter;
 use App\Modules\Reporting\AgencyReportService;
 use App\Modules\Reporting\AgencyReportSharing;
 use App\Services\Projects\ProjectService;
+use App\Support\Experience\Experience;
 use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -225,7 +226,7 @@ class AudienceSpecificAgencyReportsTest extends TestCase
             ->assertOk()
             ->assertSee('المشروع في سطور واضحة')
             ->assertSee('خط الأساس')
-            ->assertSee('الهدف الذي سنعمل عليه')
+            ->assertSee('الهدف المتفق عليه')
             ->assertSee('النطاق المطلوب')
             ->assertSee('الأصول والوصول')
             ->assertSee('آلية العمل')
@@ -386,7 +387,10 @@ class AudienceSpecificAgencyReportsTest extends TestCase
 
     private function project(): array
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
+        ]);
         $project = app(ProjectService::class)->create($user, [
             'name' => 'مشروع الاختبار',
             'industry' => 'التجارة الإلكترونية',

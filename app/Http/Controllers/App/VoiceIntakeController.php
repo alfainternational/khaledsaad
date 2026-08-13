@@ -51,7 +51,7 @@ class VoiceIntakeController extends Controller
                 .'audio/flac,audio/x-flac,video/mp4,video/webm,video/ogg,application/ogg',
             ],
             'seconds' => ['required', 'integer', 'min:1', 'max:'.self::MAX_SECONDS],
-        ], [], ['audio' => 'التسجيل', 'seconds' => 'مدة التسجيل']);
+        ], [], ['audio' => __('التسجيل'), 'seconds' => __('مدة التسجيل')]);
 
         try {
             $result = $this->voice->transcribe(
@@ -68,7 +68,7 @@ class VoiceIntakeController extends Controller
             return response()->json(['message' => $exception->getMessage()], 422);
         } catch (Throwable $exception) {
             return response()->json([
-                'message' => 'تعذّر نسخ التسجيل. حاول مرة أخرى أو اكتب إجابتك.',
+                'message' => __('تعذّر نسخ التسجيل. حاول مرة أخرى أو اكتب إجابتك.'),
             ], 422);
         }
 

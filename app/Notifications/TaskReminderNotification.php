@@ -32,7 +32,7 @@ class TaskReminderNotification extends Notification
     {
         $message = (new MailMessage)
             ->subject('تذكير بمهمة — '.$this->task->title)
-            ->greeting('مهمة تقترب من موعدها')
+            ->greeting(__('مهمة تقترب من موعدها'))
             ->line("مهمة «{$this->task->title}» موعدها {$this->dueLabel()}.");
 
         $firstStep = $this->firstStep();
@@ -42,8 +42,8 @@ class TaskReminderNotification extends Notification
         }
 
         return $message
-            ->action('افتح المهام', route('app.projects.tasks', $this->task->project->slug))
-            ->line('إن لم يعد الوقت مناسبًا، غيّر الموعد بدل أن تتركها تتأخر.');
+            ->action(__('افتح المهام'), route('app.projects.tasks', $this->task->project->slug))
+            ->line(__('إن لم يعد الوقت مناسبًا، غيّر الموعد بدل أن تتركها تتأخر.'));
     }
 
     /**
@@ -53,7 +53,7 @@ class TaskReminderNotification extends Notification
     {
         return [
             'type' => 'task_reminder',
-            'title' => 'تذكير بمهمة',
+            'title' => __('تذكير بمهمة'),
             'body' => $this->firstStep()
                 ?? "«{$this->task->title}» موعدها {$this->dueLabel()}.",
             'task_id' => $this->task->id,
@@ -70,6 +70,6 @@ class TaskReminderNotification extends Notification
 
     private function dueLabel(): string
     {
-        return $this->task->due_date?->translatedFormat('j F') ?? 'قريب';
+        return $this->task->due_date?->translatedFormat('j F') ?? __('قريب');
     }
 }

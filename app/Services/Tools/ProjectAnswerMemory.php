@@ -159,6 +159,90 @@ class ProjectAnswerMemory
     }
 
     /**
+     * حفظ إجابات يكتبها صاحب النشاط لسدّ فجوة أعلنها تقرير — خارج أي تشغيل.
+     *
+     * **سبب وجوده:** المسارات الثلاثة القائمة كلها تحتاج سياقًا: `remember`
+     * تحتاج تشغيلًا، و`rememberProfile` لا تقيس إلا حقول الملف الثمانية.
+     * والفجوة المعلنة في تقرير صدر ليس لها تشغيل مفتوح — التشغيل انتهى، وهذا
+     * سببُ ظهورها أصلًا. فبقيت الجملة «ناقص نعرفه عنك» بلا مكان يُكتب فيه
+     * الجواب.
+     *
+     * والقياس يجري هنا كما يجري في المسارين الآخرين: من يسدّ فجوة بجملة
+     * عامة يجب أن يأخذ الدرجة نفسها التي يأخذها من كتبها داخل الأداة، وإلا
+     * صار سدّ الفجوات بابًا خلفيًّا يرفع الدرجة بلا معلومة.
+     *
+     * @param  array<string, mixed>  $answers
+     * @return array<int, string> مفاتيح ما حُفظ فعلًا
+     */
+    public function rememberDeclared(Project $project, array $answers): array
+    {
+        if ($answers === []) {
+            return [];
+        }
+
+        $project->loadMissing('profile');
+        $fields = ToolField::query()->whereIn('key', array_keys($answers))->get()->unique('key')->keyBy('key');
+        $saved = [];
+
+        DB::transaction(function () use ($project, $answers, $fields, &$saved): void {
+            $profileUpdates = [];
+            /*
+             * أربعة من حقول الملف أعمدةٌ في `projects` لا في `project_profiles`
+             * (الاسم والقطاع والمجال والمرحلة). `writeProfile` تفحص fillable
+             * الملف وحده، فكانت تُسقطها صامتةً: يكتب صاحب النشاط قطاعه لسدّ
+             * فجوة، فيُحفظ في الذاكرة ويبقى عمود المشروع فارغًا.
+             */
+            $projectUpdates = [];
+
+            foreach ($answers as $key => $value) {
+                if ($value === null || $value === '' || $value === []) {
+                    continue;
+                }
+
+                $key = (string) $key;
+                $this->knowledge->record($project, $key, $value, 'profile');
+
+                /*
+                 * نوع الحقل يُقرأ من الملف أولًا ثم من حقول الأدوات: المفتاح
+                 * الواحد قد يكون سؤال ملف وسؤال أداة معًا، ونوع الملف هو ما
+                 * يقيسه `AnswerFitnessScorer` في المسار الآخر — فاختلاف النوع
+                 * بين البابين يعطي درجتين للجواب نفسه.
+                 */
+                $type = ProfileQuestions::measurableType($key)
+                    ?? ($fields->has($key) ? (string) $fields->get($key)->type : null);
+
+                if ($type !== null) {
+                    $this->fitness->score($project, $key, $value, $type);
+                }
+
+                $profileKey = ProfileQuestions::find($key) !== null
+                    ? $key
+                    : $fields->get($key)?->profile_key;
+
+                if ($profileKey !== null) {
+                    if (in_array($profileKey, ['name', 'sector', 'industry', 'stage'], true)) {
+                        $projectUpdates[$profileKey] = $value;
+                    } else {
+                        $profileUpdates[$profileKey] = $value;
+                    }
+                }
+
+                $saved[] = $key;
+            }
+
+            if ($profileUpdates !== []) {
+                $this->writeProfile($project, $profileUpdates);
+            }
+
+            if ($projectUpdates !== []) {
+                $project->forceFill($projectUpdates)->save();
+            }
+        });
+
+        return $saved;
+    }
+
+    /**
      * ما يعرفه المشروع بالفعل، معروضًا بلغة المستخدم.
      *
      * @param  Collection<int, ToolField>  $fields

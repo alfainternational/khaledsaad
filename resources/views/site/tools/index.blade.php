@@ -7,66 +7,73 @@
 @section('content')
     @include('partials.site-header')
 
-    <main id="main-content">
-        <section class="page-hero">
-            <div class="container page-hero__inner">
-                <p class="eyebrow">اختر الأولوية</p>
-                <h1>ما الذي تريد فهمه أو تحسينه الآن؟</h1>
-                <p class="page-hero__lead">
-                    اختر الحالة الأقرب إلى وضع مشروعك. تجيب عن أسئلة عن نشاطك، ثم تخرج بفجواتك
-                    وأولوياتك وخطوة تالية تنفّذها أو تناقشها مع فريقك.
-                </p>
-                {{-- الإشارة القطاعية هنا لا في الهيرو وحده: من يصل من بحث عن أداة
-                     بعينها لا يمر على الرئيسة، فيفوته التخصص كله. --}}
-                <p class="page-hero__lead">
-                    وإن كان مشروعك في
-                    @foreach (\App\Modules\Shared\Sectors\Sector::SPECIALIZED as $sectorKey)
-                        <a href="{{ route('sectors.show', $sectorKey) }}">{{ \App\Modules\Shared\Sectors\Sector::label($sectorKey) }}</a>@if (! $loop->last)@if ($loop->remaining === 1) أو @else، @endif @endif
-                    @endforeach
-                    فداخل كل تشخيص أسئلة وبنود فحص تخص قطاعك وحده.
-                </p>
+    @php
+        $availableTools = collect($tools)->where('is_runnable', true)->values();
+        $comingSoonTools = collect($tools)->where('is_runnable', false)->values();
+    @endphp
 
-                <div class="page-hero__actions">
-                    @auth
-                        <a class="button button--primary button--large" href="{{ route('app.dashboard') }}">تابع من لوحتك <span aria-hidden="true">←</span></a>
-                    @else
-                        <a class="button button--primary button--large" href="#الحالات">اختر تشخيصك <span aria-hidden="true">←</span></a>
-                        <a class="button button--ghost button--large" href="{{ route('login') }}">تسجيل الدخول</a>
-                    @endauth
+    <main id="main-content">
+        <section class="page-hero tools-index-hero">
+            <div class="container tools-index-hero__inner">
+                <div class="tools-index-hero__copy">
+                    <p class="eyebrow">اختر الأولوية</p>
+                    <h1>ما الذي تريد فهمه أو تحسينه الآن؟</h1>
+                    <p class="page-hero__lead">
+                        اختر الحالة الأقرب إلى وضع مشروعك. تجيب عن أسئلة عن نشاطك، ثم تخرج بفجواتك
+                        وأولوياتك وخطوة تالية تنفّذها أو تناقشها مع فريقك.
+                    </p>
+                    <p class="tools-index-hero__sector-note">
+                        وإن كان مشروعك في
+                        @foreach (\App\Modules\Shared\Sectors\Sector::SPECIALIZED as $sectorKey)
+                            <a href="{{ route('sectors.show', $sectorKey) }}">{{ \App\Modules\Shared\Sectors\Sector::label($sectorKey) }}</a>@if (! $loop->last)@if ($loop->remaining === 1) أو @else، @endif @endif
+                        @endforeach
+                        فداخل كل تشخيص أسئلة وبنود فحص تخص قطاعك وحده.
+                    </p>
+
+                    <div class="page-hero__actions">
+                        @auth
+                            <a class="button button--primary button--large" href="{{ route('app.dashboard') }}">تابع من لوحتك <span aria-hidden="true">←</span></a>
+                        @else
+                            <a class="button button--primary button--large" href="#التشخيصات-المتاحة">اختر تشخيصك <span aria-hidden="true">←</span></a>
+                            <a class="button button--ghost button--large" href="{{ route('login') }}">تسجيل الدخول</a>
+                        @endauth
+                    </div>
                 </div>
+
+                <figure class="tools-index-hero__visual" aria-hidden="true">
+                    <img src="{{ asset('assets/design/tools-diagnosis-selector.png') }}?v=1"
+                        alt="" width="1536" height="1024" loading="eager" fetchpriority="high" decoding="async">
+                </figure>
             </div>
         </section>
 
         <section class="section catalog-section" id="الحالات">
-            <div class="container">
-                <div class="catalog-grid public-card-grid">
-                    @foreach ($tools as $tool)
-                        <a href="{{ route('tools.show', $tool['key']) }}" @class(['catalog-card', 'catalog-card--soon' => ! $tool['is_runnable']])>
-                            <div class="catalog-card__head">
-                                <span class="catalog-card__category">{{ $tool['category'] }}</span>
-                                @unless ($tool['is_runnable'])
-                                    <span class="pill pill--soon">قريبًا</span>
-                                @endunless
-                            </div>
+            <div class="container tools-catalog">
+                <section class="tools-catalog-group" aria-labelledby="available-tools-title">
+                    <header class="tools-catalog-group__head">
+                        <div><p class="eyebrow">متاح الآن</p><h2 id="available-tools-title">ابدأ من المشكلة الأقرب إلى مشروعك</h2></div>
+                        <p>{{ $availableTools->count() }} تشخيصات جاهزة، وكل واحد منها يوضح مدته وما الذي ستخرج به.</p>
+                    </header>
+                    <div class="catalog-grid public-card-grid tools-catalog-grid tools-catalog-grid--available" id="التشخيصات-المتاحة">
+                        @foreach ($availableTools as $tool)
+                            @include('site.tools._catalog-card', ['tool' => $tool, 'featured' => $loop->first])
+                        @endforeach
+                    </div>
+                </section>
 
-                            @if ($tool['pain'])
-                                <p class="catalog-card__pain">«{{ $tool['pain'] }}»</p>
-                            @endif
-
-                            <h2>{{ $tool['title'] }}</h2>
-                            <p class="catalog-card__desc">{{ $tool['promise'] ?: $tool['description'] }}</p>
-
-                            {{-- نفس صيغة بطاقة اللوحة: «اعرف التفاصيل وابدأ» — الزائر
-                                 والمشترك يقرآن الفعل نفسه فلا تتبدّل اللغة عند التسجيل. --}}
-                            <span class="catalog-card__link">
-                                اعرف التفاصيل وابدأ <b aria-hidden="true">←</b>
-                                @if ($tool['duration_minutes'])
-                                    <em>{{ $tool['duration_minutes'] }} دقائق تقريبًا</em>
-                                @endif
-                            </span>
-                        </a>
-                    @endforeach
-                </div>
+                @if ($comingSoonTools->isNotEmpty())
+                    <section class="tools-catalog-group tools-catalog-group--soon" aria-labelledby="coming-tools-title">
+                        <header class="tools-catalog-group__head">
+                            <div><p class="eyebrow">قريبًا</p><h2 id="coming-tools-title">تشخيصات تُستكمل تباعًا</h2></div>
+                            <p>يمكنك قراءة مخرج كل تشخيص الآن، وتظهر إمكانية البدء فور اكتماله.</p>
+                        </header>
+                        <div class="catalog-grid public-card-grid tools-catalog-grid tools-catalog-grid--soon">
+                            @foreach ($comingSoonTools as $tool)
+                                @include('site.tools._catalog-card', ['tool' => $tool])
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
             </div>
         </section>
 
@@ -78,10 +85,10 @@
                     description="تبدأ بالتحدي الأقرب إلى مشروعك، ثم تحفظ النتيجة وتتابع أولوياتك من مكان واحد."
                 />
                 <ol class="journey-steps">
-                    <li><span>01</span><h3>ابدأ مباشرة</h3><p>ابدأ التشخيص من دون إنشاء حساب ومن دون بطاقة دفع.</p></li>
-                    <li><span>02</span><h3>صف واقع مشروعك</h3><p>أجب عن أسئلة عن نشاطك، وبجانب كل سؤال سبب طرحه وأثره في النتيجة.</p></li>
-                    <li><span>03</span><h3>احفظ ما أنجزته</h3><p>أنشئ حسابك بعد التجربة، وتنتقل إجاباتك معك كما هي.</p></li>
-                    <li><span>04</span><h3>رتّب أولوياتك</h3><p>راجع فجواتك وقائمة الإصلاح، وحوّل ما تختاره إلى مهام لها مواعيد.</p></li>
+                    <li><x-section-icon name="enter" /><span>01</span><h3>ابدأ مباشرة</h3><p>ابدأ التشخيص من دون إنشاء حساب ومن دون بطاقة دفع.</p></li>
+                    <li><x-section-icon name="answers" /><span>02</span><h3>صف واقع مشروعك</h3><p>أجب عن أسئلة عن نشاطك، وبجانب كل سؤال سبب طرحه وأثره في النتيجة.</p></li>
+                    <li><x-section-icon name="account" /><span>03</span><h3>احفظ ما أنجزته</h3><p>أنشئ حسابك بعد التجربة، وتنتقل إجاباتك معك كما هي.</p></li>
+                    <li><x-section-icon name="review" /><span>04</span><h3>رتّب أولوياتك</h3><p>راجع فجواتك وقائمة الإصلاح، وحوّل ما تختاره إلى مهام لها مواعيد.</p></li>
                 </ol>
 
                 <div class="cta-band">

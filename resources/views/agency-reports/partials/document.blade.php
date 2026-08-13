@@ -88,7 +88,7 @@
 </section>
 
 <section class="card">
-    <h2 class="section-title">الهدف الذي سنعمل عليه</h2>
+    <h2 class="section-title">الهدف المتفق عليه</h2>
     <p><b>الهدف الأساسي:</b> {{ $brief['goal']['primary'] }}</p>
     <p><b>تعريف النجاح:</b> {{ $brief['goal']['success_metric'] }}</p>
     @if ($brief['goal']['period'])<p><b>ما نريد تغييره خلال 90 يومًا:</b> {{ $brief['goal']['period'] }}</p>@endif

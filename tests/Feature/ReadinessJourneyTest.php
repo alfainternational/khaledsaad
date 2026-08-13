@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\AiReadiness\Contracts\PageFetcher;
 use App\Modules\Brain\BrainReader;
 use App\Services\Projects\ProjectService;
+use App\Support\Experience\Experience;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\Test;
@@ -112,7 +113,10 @@ class ReadinessJourneyTest extends TestCase
         [, $project] = $this->ownedProject('https://example.test');
 
         // عزل مساحات العمل يمرّ عبر ProjectOwnership وحدها، فلا مسار وصول ثانٍ.
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
+        ]))
             ->get(route('app.readiness.show', $project))
             ->assertNotFound();
     }
@@ -141,7 +145,10 @@ class ReadinessJourneyTest extends TestCase
      */
     private function ownedProject(?string $website): array
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
+        ]);
         $project = app(ProjectService::class)->create($user, [
             'name' => 'متجر الرحلة',
             'website' => $website,

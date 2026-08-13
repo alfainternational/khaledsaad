@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="{{ $appLocales->htmlLang() }}" dir="{{ $appLocales->direction() }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,23 +15,29 @@
         <link rel="apple-touch-icon" href="{{ asset('assets/brand/khaled-saad-mark.png') }}">
         @include('partials.theme')
         @include('partials.font')
+        @include('partials.insights')
+        @include('partials.js-translations')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('head')
     </head>
-    <body class="panel" data-notifications-feed="{{ route('app.notifications.index') }}">
+    @php($interfaceFamily = trim($__env->yieldContent('interface_family', $isAdminArea ? 'admin' : 'workspace')))
+    <body class="panel" data-interface-system="v2" data-interface-family="{{ $interfaceFamily }}" data-notifications-feed="{{ route('app.notifications.index') }}">
         <a class="skip-link" href="#main-content">تجاوز إلى المحتوى</a>
 
         @php($user = auth()->user())
         @php($panelUnread = $user->unreadNotifications()->count())
         @php($layoutFamily = trim($__env->yieldContent('layout', 'index')))
+        @php($activeExperience = $user->activeExperience() ?? \App\Support\Experience\Experience::BUSINESS)
+        @php($isLearningWorkspace = ! $isAdminArea && $activeExperience === \App\Support\Experience\Experience::LEARNING)
 
         {{-- السايدبار: العمود الثابت للتنقل في اللوحتين --}}
         <aside id="panel-sidebar" class="panel__side">
             <div class="panel__brand">
                 <a href="{{ $isAdminArea ? route('admin.dashboard') : route('app.dashboard') }}" aria-label="{{ $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم' }}">
-                    <x-brand-logo light />
+                    <x-brand-logo class="panel__brand-logo--on-light" />
+                    <x-brand-logo light class="panel__brand-logo--on-dark" />
                 </a>
-                <span class="panel__brand-context">{{ $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم' }}</span>
+                <span class="panel__brand-context">{{ $isAdminArea ? __('لوحة الإدارة') : ($isLearningWorkspace ? __('مسار التعلم') : __('تحسين المشروع')) }}</span>
             </div>
 
             @include('partials.panel-nav')
@@ -77,26 +83,43 @@
                 </button>
 
                 <div class="panel__top-title">
-                    <small>{{ $isAdminArea ? 'الإدارة' : 'مساحة العمل' }}</small>
+                    <small>{{ $isAdminArea ? __('الإدارة') : ($isLearningWorkspace ? __('التعلم بالتطبيق') : __('مساحة العمل')) }}</small>
                     <strong>@yield('title', $isAdminArea ? 'لوحة الإدارة' : 'لوحة التحكم')</strong>
                 </div>
 
                 <div class="panel__top-actions">
-                    @unless ($isAdminArea)
+                    @if (! $isAdminArea && ! $isLearningWorkspace)
                         <a href="{{ route('app.search') }}" class="theme-toggle" aria-label="البحث في مشاريعك وتقاريرك">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
                         </a>
-                    @endunless
-                    @include('partials.theme-toggle')
-                    <a href="{{ route('app.notifications.index') }}" class="bell" aria-label="الإشعارات">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-                        @if ($panelUnread > 0)
-                            <span class="bell__count">{{ $panelUnread > 9 ? '9+' : $panelUnread }}</span>
-                        @endif
-                    </a>
+                    @endif
+                    <div class="panel__desktop-tools">
+                        @include('partials.language-switcher')
+                        @include('partials.theme-toggle')
+                        <a href="{{ route('app.notifications.index') }}" class="bell" aria-label="{{ __('الإشعارات') }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                            @if ($panelUnread > 0)
+                                <span class="bell__count">{{ $panelUnread > 9 ? '9+' : $panelUnread }}</span>
+                            @endif
+                        </a>
+                    </div>
 
-                    @if (! $isAdminArea)
-                        <a href="{{ route('app.projects.create') }}" class="btn btn--primary btn--sm panel__top-cta">أضف مشروعًا</a>
+                    <details class="panel__mobile-tools">
+                        <summary aria-label="{{ __('أدوات الحساب') }}">•••</summary>
+                        <div class="panel__mobile-tools-menu">
+                            @include('partials.language-switcher')
+                            <div class="panel__mobile-tools-row">
+                                @include('partials.theme-toggle')
+                                <a href="{{ route('app.notifications.index') }}" class="bell" aria-label="{{ __('الإشعارات') }}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                                    @if ($panelUnread > 0)<span class="bell__count">{{ $panelUnread > 9 ? '9+' : $panelUnread }}</span>@endif
+                                </a>
+                            </div>
+                        </div>
+                    </details>
+
+                    @if (! $isAdminArea && ! $isLearningWorkspace)
+                        <a href="{{ route('app.projects.create') }}" class="btn btn--primary btn--sm panel__top-cta">{{ __('أضف مشروعًا') }}</a>
                     @endif
                 </div>
             </header>
@@ -114,7 +137,13 @@
 
             <main id="main-content"
                 class="panel__main layout-page layout-page--{{ in_array($layoutFamily, ['reading', 'auth'], true) ? 'reading' : (in_array($layoutFamily, ['form', 'wizard'], true) ? 'form' : 'operational') }}"
-                data-layout="{{ $layoutFamily }}">
+                data-layout="{{ $layoutFamily }}"
+                {{-- الجمهور يحدّد الكثافة لا الهوية: اللوحتان تتشاركان التوكيد
+                     وألوان تدرّج الدليل وسُلَّم الطباعة، وتختلفان في التنفّس
+                     ونصف القطر وحدهما. مساحة العمل تُقرأ من مستخدم يزورها
+                     أسبوعيًّا، ولوحة الإدارة يقرأها من يقضي فيها يومه فالكثافة
+                     عنده ميزة لا عبء. --}}
+                data-audience="{{ $isAdminArea ? 'admin' : 'workspace' }}">
                 @if (session('status'))
                     <p class="alert alert--success" role="status">{{ session('status') }}</p>
                 @endif

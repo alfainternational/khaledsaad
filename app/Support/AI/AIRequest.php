@@ -29,6 +29,20 @@ final class AIRequest
         // إنقاذ: حين يفشل التحقق نهائيًا، احتفظ بعناصر المصفوفة الصالحة بدل
         // إسقاط المخرج كله. مفيد للخلاصة: نبقي النتائج السليمة ونتجاهل المعطوبة.
         public readonly bool $salvage = false,
+        /*
+         * لغة المخرَج. `null` تعني لغة الطلب الحالية — وهو ما نريده في كل
+         * استدعاء يقرأ مخرجه إنسان. تُمرَّر صراحةً حين يُنفَّذ الاستدعاء
+         * خارج دورة الطلب (مهمة في طابور تحمل لغة صاحبها).
+         */
+        public readonly ?string $outputLocale = null,
+        /*
+         * استدعاء لا يُملى عليه لغة إطلاقًا.
+         *
+         * موضعان لا ثالث لهما: المترجم — يحدّد لغته بنفسه وحقنُ توجيهٍ
+         * فيه يجعله يترجم إلى لغة الواجهة لا إلى اللغة المطلوبة؛ وأي
+         * استعلام قياس، لأن تغيير لغة السؤال يقيس سؤالًا آخر (§٤.٢).
+         */
+        public readonly bool $localeNeutral = false,
     ) {
         if ($messages === []) {
             throw new InvalidArgumentException('طلب الذكاء الاصطناعي يحتاج رسالة واحدة على الأقل.');
@@ -49,8 +63,15 @@ final class AIRequest
      * @param  array<int, array{role: string, content: string}>  $messages
      * @param  array<string, mixed>  $schema
      */
-    public static function json(array $messages, array $schema, string $tier = 'standard', ?string $stage = null, bool $salvage = false): self
-    {
+    public static function json(
+        array $messages,
+        array $schema,
+        string $tier = 'standard',
+        ?string $stage = null,
+        bool $salvage = false,
+        ?string $outputLocale = null,
+        bool $localeNeutral = false,
+    ): self {
         return new self(
             messages: $messages,
             tier: $tier,
@@ -58,15 +79,28 @@ final class AIRequest
             jsonSchema: $schema,
             stage: $stage,
             salvage: $salvage,
+            outputLocale: $outputLocale,
+            localeNeutral: $localeNeutral,
         );
     }
 
     /**
      * @param  array<int, array{role: string, content: string}>  $messages
      */
-    public static function text(array $messages, string $tier = 'economy', ?string $stage = null): self
-    {
-        return new self(messages: $messages, tier: $tier, stage: $stage);
+    public static function text(
+        array $messages,
+        string $tier = 'economy',
+        ?string $stage = null,
+        ?string $outputLocale = null,
+        bool $localeNeutral = false,
+    ): self {
+        return new self(
+            messages: $messages,
+            tier: $tier,
+            stage: $stage,
+            outputLocale: $outputLocale,
+            localeNeutral: $localeNeutral,
+        );
     }
 
     public function withMessages(array $messages): self
@@ -81,6 +115,8 @@ final class AIRequest
             maxTokens: $this->maxTokens,
             stage: $this->stage,
             salvage: $this->salvage,
+            outputLocale: $this->outputLocale,
+            localeNeutral: $this->localeNeutral,
         );
     }
 }

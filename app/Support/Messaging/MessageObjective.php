@@ -18,20 +18,20 @@ enum MessageObjective: string
     public function label(): string
     {
         return match ($this) {
-            self::Attention => 'جذب الانتباه',
-            self::Trust => 'بناء الثقة',
-            self::Objection => 'معالجة اعتراض',
-            self::Action => 'دفع إلى إجراء',
+            self::Attention => __('جذب الانتباه'),
+            self::Trust => __('بناء الثقة'),
+            self::Objection => __('معالجة اعتراض'),
+            self::Action => __('دفع إلى إجراء'),
         };
     }
 
     public function instruction(): string
     {
         return match ($this) {
-            self::Attention => 'أوقف التمرير بجملة تخص وجعها هي — لا تطلب شراءً بعد.',
-            self::Trust => 'قدّم دليلًا ملموسًا أو تجربة مشابهة لحالتها، ولا تعِد بما لا يُثبت.',
-            self::Objection => 'واجه اعتراضها المحدد صراحةً وأجب عنه في الرسالة نفسها.',
-            self::Action => 'اطلب إجراءً واحدًا واضحًا بلا خيارات متعددة.',
+            self::Attention => __('أوقف التمرير بجملة تخص وجعها هي — لا تطلب شراءً بعد.'),
+            self::Trust => __('قدّم دليلًا ملموسًا أو تجربة مشابهة لحالتها، ولا تعِد بما لا يُثبت.'),
+            self::Objection => __('واجه اعتراضها المحدد صراحةً وأجب عنه في الرسالة نفسها.'),
+            self::Action => __('اطلب إجراءً واحدًا واضحًا بلا خيارات متعددة.'),
         };
     }
 

@@ -44,7 +44,7 @@
             <label class="field">
                 <span class="field__label">المجموعة</span>
                 <select name="group">
-                    @foreach (['core' => 'الأساس', 'reports' => 'التقارير', 'growth' => 'محرك النمو', 'support' => 'الدعم والخدمة', 'general' => 'عام'] as $value => $label)
+                    @foreach (['core' => __('الأساس'), 'reports' => __('التقارير'), 'growth' => __('محرك النمو'), 'support' => __('الدعم والخدمة'), 'general' => __('عام')] as $value => $label)
                         <option value="{{ $value }}" @selected(old('group', $feature->group) === $value)>{{ $label }}</option>
                     @endforeach
                 </select>

@@ -147,7 +147,7 @@ class GeoPackGenerator
             ],
             [
                 'question' => "أين يقدم {$name} خدماته؟",
-                'answer' => $facts['geography'] ?: 'يخدم عملاءه حيث يتواجدون.',
+                'answer' => $facts['geography'] ?: __('يخدم عملاءه حيث يتواجدون.'),
             ],
             [
                 'question' => "ما الذي يميز {$name}؟",
@@ -157,7 +157,7 @@ class GeoPackGenerator
                 'question' => "كيف أتواصل مع {$name}؟",
                 'answer' => $facts['website']
                     ? "عبر موقعه الرسمي: {$facts['website']}."
-                    : 'عبر قنواته الرسمية المعلنة.',
+                    : __('عبر قنواته الرسمية المعلنة.'),
             ],
             [
                 'question' => "لمن يناسب {$name}؟",
@@ -234,7 +234,7 @@ class GeoPackGenerator
             '',
             "> {$composed['summary']}",
             '',
-            '## حقائق أساسية',
+            __('## حقائق أساسية'),
         ];
 
         foreach ([
@@ -249,7 +249,7 @@ class GeoPackGenerator
         }
 
         $lines[] = '';
-        $lines[] = '## أسئلة شائعة';
+        $lines[] = __('## أسئلة شائعة');
 
         foreach ($composed['faq'] as $entry) {
             $lines[] = '';
@@ -259,7 +259,7 @@ class GeoPackGenerator
 
         if ($composed['credibility_signals'] !== []) {
             $lines[] = '';
-            $lines[] = '## إشارات موثوقية';
+            $lines[] = __('## إشارات موثوقية');
 
             foreach ($composed['credibility_signals'] as $signal) {
                 $lines[] = "- {$signal}";

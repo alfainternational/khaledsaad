@@ -10,7 +10,8 @@ class Finding extends Model
 {
     protected $fillable = [
         'report_id', 'category', 'title', 'description', 'severity',
-        'evidence', 'confidence', 'is_assumption', 'sort_order',
+        'evidence', 'evidence_answer_id', 'evidence_quote',
+        'confidence', 'is_assumption', 'sort_order',
     ];
 
     protected function casts(): array
@@ -26,6 +27,11 @@ class Finding extends Model
     public function recommendations(): HasMany
     {
         return $this->hasMany(Recommendation::class);
+    }
+
+    public function evidenceAnswer(): BelongsTo
+    {
+        return $this->belongsTo(ToolRunAnswer::class, 'evidence_answer_id');
     }
 
     public function severityLabel(): string

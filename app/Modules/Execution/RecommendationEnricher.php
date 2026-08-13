@@ -63,7 +63,7 @@ class RecommendationEnricher
         $raw = $payload['action_steps'] ?? null;
 
         if (! is_array($raw)) {
-            return $this->examples->fallbackSteps();
+            return [];
         }
 
         $steps = [];
@@ -94,7 +94,7 @@ class RecommendationEnricher
 
         // خطوة واحدة ليست تسلسلًا؛ من كان له مسار حقيقي كتب اثنتين فأكثر.
         if (count($steps) < 2) {
-            return $this->examples->fallbackSteps();
+            return [];
         }
 
         return array_slice($steps, 0, self::MAX_STEPS);

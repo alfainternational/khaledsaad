@@ -6,6 +6,7 @@ use App\Models\Report;
 use App\Models\ToolRun;
 use App\Models\User;
 use App\Modules\Diagnosis\DeterministicScorer;
+use App\Modules\Reporting\Publication\ReportPublicationGate;
 use App\Support\AI\JsonSchemaValidator;
 use Illuminate\Validation\ValidationException;
 
@@ -24,6 +25,7 @@ class ManualReportService
         private readonly DeterministicScorer $scorer,
         private readonly ReportComposer $composer,
         private readonly JsonSchemaValidator $validator,
+        private readonly ReportPublicationGate $publication,
     ) {}
 
     /**
@@ -131,11 +133,20 @@ class ManualReportService
 
         $report->forceFill([
             'review_mode' => 'manual',
+            'provenance' => 'signed',
             'reviewed_by' => $reviewer->id,
             'reviewed_at' => now(),
-            'status' => 'published',
-            'published_at' => now(),
+            'authored_by' => $reviewer->id,
+            'authored_at' => now(),
         ])->save();
+
+        $report->humanTraces()->create([
+            'type' => 'note',
+            'body' => 'استيراد ومراجعة تقرير يدوي قبل الإصدار.',
+            'created_by' => $reviewer->id,
+        ]);
+
+        $this->publication->publish($report);
 
         $run->forceFill([
             'status' => ToolRun::STATUS_COMPLETED,
@@ -200,6 +211,7 @@ class ManualReportService
             // المعايير من المصدر الموحّد نفسه الذي يقرأه التوليد الآلي —
             // نسختان لمعيار واحد تعنيان انجرافًا حتميًّا (حدث فعلًا وأُصلح).
             PipelineSchemas::classificationRubric(),
+            PipelineSchemas::executabilityRubric(),
         ]);
     }
 }

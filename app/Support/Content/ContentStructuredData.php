@@ -8,10 +8,88 @@ class ContentStructuredData
 {
     public function personJson(): string
     {
+        return $this->siteJson();
+    }
+
+    /**
+     * الرسم البياني الافتراضي لكل صفحة عامة.
+     *
+     * كان يقتصر على `Person`. والشخص وحده لا يكفي محرك بحث ولا نموذج
+     * لغويًّا: كلاهما يسأل «ما هذا الموقع، ومن يقف خلفه، وكيف أبحث فيه،
+     * وبأي لغة هذه الصفحة؟» — وأربعتها في `WebSite` و`Organization`
+     * و`SearchAction` و`inLanguage`، لا في `Person`.
+     *
+     * `SearchAction` تحديدًا هي ما يجعل جوجل يعرض مربّع بحث داخل نتيجة
+     * الموقع، وهي أيضًا ما يخبر النماذج أن للمكتبة بحثًا يمكن توجيه
+     * القارئ إليه بدل تعداد الروابط.
+     */
+    public function siteJson(): string
+    {
         return $this->encode([
             '@context' => 'https://schema.org',
-            '@graph' => [$this->personNode()],
+            '@graph' => [
+                $this->personNode(),
+                $this->organizationNode(),
+                $this->webSiteNode(),
+            ],
         ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function organizationNode(): array
+    {
+        return array_filter([
+            '@type' => 'Organization',
+            '@id' => url('/').'#organization',
+            'name' => config('brand.name'),
+            'alternateName' => config('brand.name_en'),
+            'url' => url('/'),
+            'description' => config('brand.tagline'),
+            'logo' => [
+                '@type' => 'ImageObject',
+                '@id' => url('/').'#logo',
+                'url' => asset('assets/brand/khaled-saad-approved.png'),
+                'caption' => config('brand.name'),
+            ],
+            'image' => ['@id' => url('/').'#logo'],
+            'founder' => ['@id' => url('/').'#person'],
+            'areaServed' => ['@type' => 'Country', 'name' => 'SA'],
+            'knowsLanguage' => array_values(app(\App\Modules\Shared\I18n\LocaleRegistry::class)->enabled()),
+            'contactPoint' => array_filter([
+                '@type' => 'ContactPoint',
+                'contactType' => 'customer support',
+                'telephone' => config('brand.contact.phone'),
+                'availableLanguage' => array_values(app(\App\Modules\Shared\I18n\LocaleRegistry::class)->enabled()),
+            ]),
+            'sameAs' => array_values(array_filter([
+                config('brand.contact.linkedin'),
+                config('brand.contact.x'),
+            ])),
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function webSiteNode(): array
+    {
+        return [
+            '@type' => 'WebSite',
+            '@id' => url('/').'#website',
+            'url' => url('/'),
+            'name' => config('brand.name'),
+            'description' => config('brand.tagline'),
+            'publisher' => ['@id' => url('/').'#organization'],
+            // لغة الصفحة المعروضة لا لغة المصدر: صفحة إنجليزية تُعلن `en`
+            // وإلا ناقض الوسمُ `<html lang>` نفسَه.
+            'inLanguage' => app()->getLocale(),
+            'potentialAction' => [
+                '@type' => 'SearchAction',
+                'target' => [
+                    '@type' => 'EntryPoint',
+                    'urlTemplate' => route('content.index').'?q={search_term_string}',
+                ],
+                'query-input' => 'required name=search_term_string',
+            ],
+        ];
     }
 
     /** @param array<string, mixed> $learning */
@@ -21,6 +99,15 @@ class ContentStructuredData
         $description = $content->seo_description ?: $content->excerpt;
         $imagePath = $content->learning_meta['cover']['og'] ?? $content->cover_image_path;
         $image = $this->absoluteUrl($imagePath);
+
+        /*
+         * لغة المادة نفسها لا لغة الواجهة.
+         *
+         * كانت `'ar'` ثابتة. ولو بقيت بعد أن صار للمحتوى لغة، لأعلن درسٌ
+         * إنجليزيّ أنه عربي — فيُعرض لقارئ عربي في نتائج البحث ولا يُعرض
+         * لمن كُتب له. وسمٌ خاطئ أسوأ من غيابه: جوجل يثق به.
+         */
+        $language = $content->locale ?: app()->getLocale();
         $graph = [
             $this->personNode(),
             [
@@ -30,7 +117,7 @@ class ContentStructuredData
                 'description' => $description,
                 'url' => $url,
                 'mainEntityOfPage' => $url,
-                'inLanguage' => 'ar',
+                'inLanguage' => $language,
                 'image' => $image ? [
                     '@type' => 'ImageObject',
                     'url' => $image,
@@ -56,7 +143,7 @@ class ContentStructuredData
                 '@id' => $seriesId,
                 'name' => $content->learning_meta['series'] ?? 'تعلم التسويق',
                 'url' => route('content.index', ['category' => $content->category?->slug]),
-                'inLanguage' => 'ar',
+                'inLanguage' => $language,
                 'numberOfItems' => $learning['total'],
             ];
             $graph[] = [
@@ -65,7 +152,7 @@ class ContentStructuredData
                 'name' => $content->title,
                 'description' => $description,
                 'url' => $url,
-                'inLanguage' => 'ar',
+                'inLanguage' => $language,
                 'learningResourceType' => 'درس تطبيقي',
                 'educationalLevel' => 'مبتدئ إلى متوسط',
                 'timeRequired' => $content->duration_minutes ? 'PT'.$content->duration_minutes.'M' : null,

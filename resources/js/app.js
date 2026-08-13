@@ -2,6 +2,7 @@ import './bootstrap';
 import './content-cover';
 import './content-resources';
 import './content-learning';
+import { t } from './i18n';
 
 if (document.querySelector('[data-content-editor]')) {
     import('./content-editor');
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toggle && menu) {
         const closeMenu = () => {
             toggle.setAttribute('aria-expanded', 'false');
-            toggle.setAttribute('aria-label', 'فتح القائمة');
+            toggle.setAttribute('aria-label', t('فتح القائمة'));
             menu.hidden = true;
         };
 
@@ -24,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isOpen = toggle.getAttribute('aria-expanded') === 'true';
 
             toggle.setAttribute('aria-expanded', String(!isOpen));
-            toggle.setAttribute('aria-label', isOpen ? 'فتح القائمة' : 'إغلاق القائمة');
+            toggle.setAttribute('aria-label', isOpen ? t('فتح القائمة') : t('إغلاق القائمة'));
             menu.hidden = isOpen;
         });
 
@@ -56,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (inFlight) return;
             inFlight = true;
             note.hidden = false;
-            note.textContent = 'يحفظ الآن…';
+            note.textContent = t('يحفظ الآن…');
 
             fetch(form.action, {
                 method: 'POST',
@@ -69,10 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
             })
                 .then((response) => (response.ok ? response.json() : Promise.reject()))
                 .then((payload) => {
-                    note.textContent = 'حُفظت إجاباتك تلقائيًا — ' + (payload.saved_at ?? '');
+                    note.textContent = t('حُفظت إجاباتك تلقائيًا — :at', { at: payload.saved_at ?? '' });
                 })
                 .catch(() => {
-                    note.textContent = 'تعذّر الحفظ التلقائي — إجاباتك تُحفظ عند الضغط على متابعة.';
+                    note.textContent = t('تعذّر الحفظ التلقائي — إجاباتك تُحفظ عند الضغط على متابعة.');
                 })
                 .finally(() => {
                     inFlight = false;
@@ -176,10 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.clipboard
             .writeText(button.dataset.copyLink)
             .then(() => {
-                button.textContent = 'نُسخ الرابط ✓';
+                button.textContent = t('نُسخ الرابط ✓');
             })
             .catch(() => {
-                window.prompt('انسخ الرابط يدويًا:', button.dataset.copyLink);
+                window.prompt(t('انسخ الرابط يدويًا:'), button.dataset.copyLink);
             })
             .finally(() => {
                 setTimeout(() => {
@@ -197,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tip = document.createElement('div');
         tip.className = 'tour-tip';
         tip.setAttribute('role', 'dialog');
-        tip.setAttribute('aria-label', 'جولة تعريفية');
+        tip.setAttribute('aria-label', t('جولة تعريفية'));
         document.body.appendChild(tip);
 
         const done = () => {
@@ -219,13 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const skip = document.createElement('button');
             skip.type = 'button';
             skip.className = 'btn btn--ghost btn--sm';
-            skip.textContent = 'تخطَّ';
+            skip.textContent = t('تخطَّ');
             skip.addEventListener('click', done);
 
             const next = document.createElement('button');
             next.type = 'button';
             next.className = 'btn btn--primary btn--sm';
-            next.textContent = index === tourSteps.length - 1 ? 'فهمت' : 'التالي';
+            next.textContent = index === tourSteps.length - 1 ? t('فهمت') : t('التالي');
             next.addEventListener('click', () => {
                 index += 1;
                 index >= tourSteps.length ? done() : show();
@@ -257,8 +258,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (notifyToggle && 'Notification' in window) {
         const refreshLabel = () => {
             notifyToggle.textContent = Notification.permission === 'granted'
-                ? 'تنبيهات المتصفح مفعّلة على هذا الجهاز'
-                : 'فعّل تنبيهات المتصفح على هذا الجهاز';
+                ? t('تنبيهات المتصفح مفعّلة على هذا الجهاز')
+                : t('فعّل تنبيهات المتصفح على هذا الجهاز');
             notifyToggle.disabled = Notification.permission === 'granted';
         };
 
@@ -303,6 +304,26 @@ document.addEventListener('DOMContentLoaded', () => {
      * فيبقى المستخدم أمام زرّ لا يفعل شيئًا.
      */
     document.addEventListener('click', (event) => {
+        const templateButton = event.target.closest('[data-copy-template]');
+        if (templateButton) {
+            const template = templateButton.closest('.recommendation-template');
+            const paragraphs = template?.querySelectorAll('p') ?? [];
+            const text = [...paragraphs].map((node) => node.textContent?.trim() ?? '').filter(Boolean).join('\n');
+            const original = templateButton.textContent;
+            const done = () => {
+                templateButton.textContent = t('تم النسخ');
+                setTimeout(() => { templateButton.textContent = original; }, 1600);
+            };
+
+            if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(() => selectFallback(template));
+            } else if (template) {
+                selectFallback(template);
+            }
+
+            return;
+        }
+
         const button = event.target.closest('[data-copy-example]');
 
         if (!button) {

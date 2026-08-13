@@ -26,16 +26,18 @@ class WebAppJourneyTest extends TestCase
     public function a_visitor_can_register_and_reach_the_dashboard(): void
     {
         $this->post(route('register'), [
+            'experience' => 'business',
             'name' => 'خالد',
             'email' => 'khaled@example.test',
             'password' => 'password-1234',
             'password_confirmation' => 'password-1234',
-        ])->assertRedirect(route('app.dashboard'));
+        ])->assertRedirect(route('app.projects.create'));
 
         $this->assertAuthenticated();
+        $this->post(route('app.projects.store'), ['name' => 'مشروع خالد'])->assertRedirect();
         $this->get(route('app.dashboard'))
             ->assertOk()
-            ->assertSee('ملخص مشاريعك وخطوتك التالية')
+            ->assertSee('ما أهم شيء أفعله الآن لتحسين مشروعي؟')
             ->assertSee('data-layout="dashboard"', false)
             ->assertSee('layout-metrics', false)
             ->assertSee('layout-main-aside', false);

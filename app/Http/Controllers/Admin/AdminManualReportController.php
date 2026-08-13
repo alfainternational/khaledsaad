@@ -89,7 +89,7 @@ class AdminManualReportController extends Controller
 
         if (! is_array($decoded)) {
             throw ValidationException::withMessages([
-                'payload' => 'المحتوى ليس JSON صالحًا. الصق الكائن كاملًا كما أعادته الأداة.',
+                'payload' => __('المحتوى ليس JSON صالحًا. الصق الكائن كاملًا كما أعادته الأداة.'),
             ]);
         }
 

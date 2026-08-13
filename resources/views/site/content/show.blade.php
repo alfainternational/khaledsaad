@@ -35,7 +35,11 @@
         @if ($learning['enabled'])
             <div class="learning-progress" data-reading-progress aria-hidden="true"><span></span></div>
         @endif
-        <article @class(['content-page', 'content-page--learning' => $learning['enabled']])
+        <article @class([
+            'content-page',
+            'content-page--learning' => $learning['enabled'],
+            'content-page--course-gallery' => $learningGallery['enabled'] ?? false,
+        ])
             @if ($learning['enabled']) data-learning-article data-progress-key="{{ $learning['progress_key'] }}" @endif>
             <header class="content-page__hero">
                 @if ($coverUrl)
@@ -83,12 +87,53 @@
                                     <span data-learning-feedback role="status" aria-live="polite"></span>
                                 </div>
                             @endif
+                            @include('site.content._marketing-course-gallery')
                             <div class="content-prose">
                                 @if ($content->video_url)
                                     <div class="content-video"><a href="{{ $content->video_url }}" target="_blank" rel="noopener noreferrer">مشاهدة الفيديو التعليمي <span>↗</span></a></div>
                                 @endif
 
-                                {!! $content->body_html !!}
+                                @inject('localeRegistry', 'App\Modules\Shared\I18n\LocaleRegistry')
+
+                                {{--
+                                    الفجوة تُعلن ولا تُخفى: درس بلا ترجمة يبقى
+                                    بالعربية، ويقول ذلك بدل أن يبدو عطلًا في
+                                    مبدّل اللغة.
+                                --}}
+                                @if ($content->displayLocale() !== app()->getLocale())
+                                    <p class="content-locale-note" role="note">
+                                        هذا الدرس متاح بلغته الأصلية فقط حتى الآن.
+                                    </p>
+                                @elseif ($content->hasStaleTranslation())
+                                    <p class="content-locale-note" role="note">
+                                        تُرجم هذا الدرس قبل آخر تحديث على نصّه الأصلي.
+                                    </p>
+                                @endif
+
+                                {{--
+                                    لغة الكتلة واتجاهها يتبعان لغة المحتوى لا لغة
+                                    الصفحة: نصّ عربي داخل صفحة إنجليزية يجب أن
+                                    يُعرض RTL ويقرأه قارئ الشاشة بلفظ عربي.
+                                --}}
+                                <div lang="{{ $localeRegistry->htmlLang($content->displayLocale()) }}"
+                                     dir="{{ $localeRegistry->direction($content->displayLocale()) }}">
+                                    @if ($learningGallery['enabled'] ?? false)
+                                        <details class="marketing-workshop-reference" data-workshop-reference>
+                                            <summary>
+                                                <span>
+                                                    <small>المحتوى المرجعي الكامل</small>
+                                                    <strong>الورشة التطبيقية الكاملة</strong>
+                                                </span>
+                                                <span aria-hidden="true">＋</span>
+                                            </summary>
+                                            <div class="marketing-workshop-reference__body">
+                                                {!! $content->body_html !!}
+                                            </div>
+                                        </details>
+                                    @else
+                                        {!! $content->body_html !!}
+                                    @endif
+                                </div>
 
                                 @if ($content->type === 'course')
                                     @include('site.content._curriculum')
@@ -120,12 +165,16 @@
                                     </aside>
                                 @endif
                             </div>
+                            @unless ($learningGallery['enabled'] ?? false)
+                                @include('site.content._learning-applications')
+                            @endunless
                             @include('site.content._learning-navigation')
                         @else
                             @include('site.content._gate')
                         @endif
                     </div>
 
+                    @unless ($learningGallery['enabled'] ?? false)
                     <aside class="content-reading-sidebar">
                         @include('site.content._learning-outline')
                         <section class="content-info-card">
@@ -155,6 +204,7 @@
                             </section>
                         @endif
                     </aside>
+                    @endunless
                 </div>
             </div>
         </article>

@@ -8,7 +8,7 @@ use App\Modules\AiReadiness\SiteAuditResult;
 use App\Modules\Shared\Sectors\Sector;
 use App\Support\Kpis\KpiTemplates;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 /**
  * بوابة التخصص القطاعي الثلاثي (مواصفة SECTOR-SPECIALIZATION.md).

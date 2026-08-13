@@ -15,6 +15,36 @@
     @if ($errors->any()) <div class="alert alert--error">{{ $errors->first() }}</div> @endif
     @if (session('success')) <div class="alert alert--success">{{ session('success') }}</div> @endif
 
+    @if ($content->exists && str_starts_with((string) $content->source_key, 'marketing-course-'))
+        <section class="card layout-flow" aria-labelledby="lesson-update-title">
+            <div>
+                <p class="eyebrow">تحديث الدرس بالذكاء الاصطناعي</p>
+                <h2 id="lesson-update-title">مسودة تحديث ذكية</h2>
+                <p class="muted">يقرأ النظام الدرس كاملًا وتطبيقاته والمصادر التي تحددها، ثم ينشئ مسودة مراجعة فقط. لا يتغير المنشور تلقائيًا.</p>
+            </div>
+            <form method="POST" action="{{ route('admin.content.learning-update', $content) }}" class="form layout-flow">
+                @csrf
+                <label class="field">
+                    <span class="field__label">مصادر التحديث الموثوقة — رابط في كل سطر</span>
+                    <textarea name="sources" rows="3" dir="ltr" required></textarea>
+                </label>
+                <label class="field">
+                    <span class="field__label">ما الجزء الذي تريد تحديثه؟</span>
+                    <textarea name="notes" rows="2"></textarea>
+                </label>
+                <button type="submit" class="btn btn--ghost">أنشئ مسودة للمراجعة</button>
+            </form>
+            @foreach ($content->learningUpdateDrafts as $draft)
+                <details class="card">
+                    <summary><strong>{{ $draft->summary }}</strong> · {{ $draft->generated_at->translatedFormat('d F Y H:i') }}</summary>
+                    <p><strong>التغييرات:</strong> {{ implode('، ', $draft->changes) }}</p>
+                    <p><strong>المصادر:</strong> {{ implode('، ', $draft->sources) }}</p>
+                    <textarea rows="12" dir="rtl" readonly>{{ $draft->proposed_body_html }}</textarea>
+                </details>
+            @endforeach
+        </section>
+    @endif
+
     <form method="POST" action="{{ $content->exists ? route('admin.content.update', $content) : route('admin.content.store') }}" class="form content-form content-form--fluid" data-content-form>
         @csrf
         @if ($content->exists) @method('PUT') @endif
@@ -23,7 +53,7 @@
             <label class="field">
                 <span class="field__label">النوع</span>
                 <select name="type" required>
-                    @foreach (['article' => 'مقال', 'lesson' => 'درس', 'lecture' => 'محاضرة', 'course' => 'دورة'] as $value => $label)
+                    @foreach (['article' => __('مقال'), 'lesson' => __('درس'), 'lecture' => __('محاضرة'), 'course' => __('دورة')] as $value => $label)
                         <option value="{{ $value }}" @selected(old('type', $content->type) === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
@@ -166,7 +196,7 @@
             <label class="field">
                 <span class="field__label">الحالة</span>
                 <select name="status">
-                    @foreach (['draft' => 'مسودة', 'scheduled' => 'مجدول', 'published' => 'منشور', 'archived' => 'مؤرشف'] as $value => $label)
+                    @foreach (['draft' => __('مسودة'), 'scheduled' => __('مجدول'), 'published' => __('منشور'), 'archived' => __('مؤرشف')] as $value => $label)
                         <option value="{{ $value }}" @selected(old('status', $content->status) === $value)>{{ $label }}</option>
                     @endforeach
                 </select>

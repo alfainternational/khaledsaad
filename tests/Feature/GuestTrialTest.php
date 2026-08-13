@@ -103,6 +103,7 @@ class GuestTrialTest extends TestCase
         ]);
 
         $this->post(route('register'), [
+            'experience' => 'business',
             'name' => 'خالد',
             'email' => 'guest@example.test',
             'password' => 'password-1234',
@@ -113,6 +114,9 @@ class GuestTrialTest extends TestCase
 
         $user = auth()->user();
         $workspace = Workspace::firstOrFail();
+
+        $this->assertTrue($user->hasBusinessExperience());
+        $this->assertFalse($user->hasLearningExperience());
 
         // المساحة نفسها انتقلت: لا نسخة، ولا رابط مكسور.
         $this->assertSame($user->id, $workspace->owner_id);

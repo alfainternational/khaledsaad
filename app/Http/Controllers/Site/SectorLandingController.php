@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\I18n\TranslatedConfig;
 use App\Modules\Shared\Sectors\Sector;
 use App\Modules\Shared\Sectors\SectorCapabilities;
 use Illuminate\View\View;
@@ -28,7 +29,7 @@ class SectorLandingController extends Controller
     public function index(): View
     {
         return view('site.sectors.index', [
-            'brand' => config('brand'),
+            'brand' => TranslatedConfig::get('brand'),
             'sectors' => array_map(
                 fn (string $sector) => $this->capabilities->for($sector),
                 Sector::SPECIALIZED,
@@ -43,7 +44,7 @@ class SectorLandingController extends Controller
         abort_unless(Sector::isSpecialized($sector), 404);
 
         return view('site.sectors.show', [
-            'brand' => config('brand'),
+            'brand' => TranslatedConfig::get('brand'),
             'capabilities' => $this->capabilities->for($sector),
             'otherSectors' => array_values(array_diff(Sector::SPECIALIZED, [$sector])),
         ]);

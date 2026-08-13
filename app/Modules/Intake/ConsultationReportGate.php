@@ -11,6 +11,10 @@ class ConsultationReportGate
     {
         $errors = [];
         foreach (($snapshot['priorities'] ?? []) as $index => $item) {
+            if (($item['degraded'] ?? false) === true) {
+                continue;
+            }
+
             foreach (['title', 'description', 'root_cause', 'commercial_impact', 'action_steps', 'owner_role', 'resources', 'timeframe', 'kpi_definition', 'kpi_source', 'success_condition', 'stop_condition', 'risks', 'confidence', 'source_report_id'] as $field) {
                 if (! array_key_exists($field, $item) || $item[$field] === null || $item[$field] === '' || $item[$field] === []) {
                     $errors["priorities.{$index}.{$field}"] = 'حقل مطلوب في عقد التوصية التنفيذية.';
@@ -21,6 +25,16 @@ class ConsultationReportGate
             }
             if (($item['confidence'] ?? -1) < 0 || ($item['confidence'] ?? 101) > 100) {
                 $errors["priorities.{$index}.confidence"] = 'الثقة يجب أن تكون بين 0 و100.';
+            }
+
+            // عقد v2 يضاف حين يكون التقرير المصدر قد دخل النظام الجديد.
+            // تقارير التجربة القديمة تُقبل في المعاينة قبل تنفيذ أمر الانتقال.
+            if (! empty($item['objective_id'])) {
+                foreach (['deliverable', 'done_when', 'first_five_minutes', 'expected_failure', 'duration_days', 'metric', 'template'] as $field) {
+                    if (! array_key_exists($field, $item) || blank($item[$field])) {
+                        $errors["priorities.{$index}.{$field}"] = 'حقل مطلوب في عقد التقرير الموحد.';
+                    }
+                }
             }
         }
 

@@ -30,9 +30,9 @@ enum EvidenceLevel: string
     public function label(): string
     {
         return match ($this) {
-            self::Measured => 'مقيس',
-            self::Derived => 'محسوب',
-            self::Inferred => 'فرضية',
+            self::Measured => __('مقيس'),
+            self::Derived => __('محسوب'),
+            self::Inferred => __('فرضية'),
         };
     }
 

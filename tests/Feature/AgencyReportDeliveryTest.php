@@ -12,6 +12,7 @@ use App\Models\ToolRun;
 use App\Models\User;
 use App\Modules\Reporting\AgencyReportService;
 use App\Services\Projects\ProjectService;
+use App\Support\Experience\Experience;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -111,7 +112,7 @@ class AgencyReportDeliveryTest extends TestCase
             ->assertJsonStructure(['data' => ['uuid', 'title', 'snapshot']]);
 
         $report = AgencyReport::firstOrFail();
-        $stranger = User::factory()->create();
+        $stranger = $this->businessUser();
         Sanctum::actingAs($stranger);
 
         $this->getJson(route('api.v1.agency-reports.show', $report))->assertNotFound();
@@ -123,7 +124,7 @@ class AgencyReportDeliveryTest extends TestCase
      */
     private function readyProject(): array
     {
-        $user = User::factory()->create();
+        $user = $this->businessUser();
         $project = app(ProjectService::class)->create($user, [
             'name' => 'مشروع جاهز للوكالة',
             'industry' => 'خدمات',
@@ -188,5 +189,13 @@ class AgencyReportDeliveryTest extends TestCase
         }
 
         return [$user, $project];
+    }
+
+    private function businessUser(): User
+    {
+        return User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
+        ]);
     }
 }

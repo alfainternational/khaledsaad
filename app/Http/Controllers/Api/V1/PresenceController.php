@@ -64,7 +64,7 @@ class PresenceController extends Controller
         if ($budget->remaining() < $needed) {
             return response()->json([
                 'message' => sprintf(
-                    'بلغت مساحتك سقف استعلامات هذا الشهر (%d من %d). الاستطلاع يحتاج %d استعلامًا.',
+                    __('بلغت مساحتك سقف استعلامات هذا الشهر (%d من %d). الاستطلاع يحتاج %d استعلامًا.'),
                     $budget->committed(),
                     $budget->monthly_limit,
                     $needed,

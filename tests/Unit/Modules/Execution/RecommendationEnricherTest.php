@@ -7,7 +7,7 @@ use App\Modules\Execution\ExampleContext;
 use App\Modules\Execution\RecommendationEnricher;
 use App\Modules\Execution\WorkedExample;
 use App\Modules\Shared\Sectors\Sector;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 /**
  * الضمان الذي جاء المُثري لأجله: لا توصية تصل بلا خطوة ولا بلا مثال.
@@ -73,7 +73,7 @@ class RecommendationEnricherTest extends TestCase
         ], $this->context);
 
         $this->assertNotSame([$description], $result['action_steps']);
-        $this->assertGreaterThanOrEqual(2, count($result['action_steps']));
+        $this->assertSame([], $result['action_steps']);
     }
 
     public function test_missing_example_falls_back_to_deterministic_and_declares_source(): void

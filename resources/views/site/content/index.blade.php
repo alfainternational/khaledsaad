@@ -32,6 +32,8 @@
 
         <section class="content-discovery section">
             <div class="container">
+                {{-- المكتبة عربية بالكامل اليوم؛ القارئ بلغة أخرى يعرف ذلك قبل أن يفتح مادة. --}}
+                <x-content-language :locale="$appLocales->source()" kind="library" />
                 <nav class="content-type-tabs" data-content-type-tabs aria-label="أنواع المحتوى">
                     <a href="{{ route('content.index', $queryBase) }}" @class(['is-active' => $type === null])>
                         <span class="content-type-tabs__icon">@include('site.content._icon', ['name' => 'folder'])</span>
@@ -90,7 +92,7 @@
                                         <p>{{ $item->excerpt }}</p>
                                         <div class="content-card__footer">
                                             <time datetime="{{ $item->published_at?->toDateString() }}">{{ $item->published_at?->translatedFormat('d M Y') }}</time>
-                                            <a href="{{ route('content.show', $item) }}" aria-label="اقرأ {{ $item->title }}">اقرأ <span>←</span></a>
+                                            <a href="{{ route('content.show', $item) }}" aria-label="{{ __('اقرأ :title', ['title' => $item->title]) }}">اقرأ <span>←</span></a>
                                         </div>
                                     </div>
                                 </article>

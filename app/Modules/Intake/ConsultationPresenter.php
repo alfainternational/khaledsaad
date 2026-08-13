@@ -9,6 +9,26 @@ use App\Models\QuestionVersion;
 class ConsultationPresenter
 {
     /** @return array<string,mixed> */
+    public function api(ConsultationSession $session): array
+    {
+        $payload = $this->show($session);
+
+        if (is_array($payload['question'])) {
+            $payload['question']['validation'] = (object) ($payload['question']['validation'] ?? []);
+        }
+
+        foreach (['facts', 'estimates', 'unknowns', 'weak_inputs'] as $group) {
+            $payload['review'][$group] = array_map(function (array $item): array {
+                $item['validation'] = (object) ($item['validation'] ?? []);
+
+                return $item;
+            }, $payload['review'][$group] ?? []);
+        }
+
+        return $payload;
+    }
+
+    /** @return array<string,mixed> */
     public function show(ConsultationSession $session): array
     {
         $session->loadMissing([

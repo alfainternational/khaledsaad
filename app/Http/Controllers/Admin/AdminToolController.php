@@ -67,12 +67,12 @@ class AdminToolController extends Controller
         $definition = $this->validatedDefinition($request);
 
         if (Tool::where('key', $definition['key'])->exists()) {
-            throw ValidationException::withMessages(['key' => 'مفتاح الأداة مستخدم بالفعل.']);
+            throw ValidationException::withMessages(['key' => __('مفتاح الأداة مستخدم بالفعل.')]);
         }
 
         $tool = $this->builder->sync($definition);
 
-        return redirect()->route('admin.tools.show', $tool->key)->with('status', 'أُنشئت الأداة.');
+        return redirect()->route('admin.tools.show', $tool->key)->with('status', __('أُنشئت الأداة.'));
     }
 
     /**
@@ -140,7 +140,7 @@ class AdminToolController extends Controller
 
         AuditLog::write('tool.release', $tool, ['output' => trim(Artisan::output())]);
 
-        return back()->with('status', 'صدر إصدار جديد ببرومبتات غير مقفلة، وصار هو الفعّال.');
+        return back()->with('status', __('صدر إصدار جديد ببرومبتات غير مقفلة، وصار هو الفعّال.'));
     }
 
     public function edit(Tool $tool): View
@@ -180,18 +180,18 @@ class AdminToolController extends Controller
 
         $this->builder->sync($definition);
 
-        return redirect()->route('admin.tools.show', $tool->key)->with('status', 'حُدّثت الأداة.');
+        return redirect()->route('admin.tools.show', $tool->key)->with('status', __('حُدّثت الأداة.'));
     }
 
     public function destroy(Tool $tool): RedirectResponse
     {
         if ($tool->currentVersion?->toolRuns()->exists()) {
-            return back()->withErrors(['tool' => 'لا يمكن حذف أداة استُخدمت. أخفِها بدل الحذف.']);
+            return back()->withErrors(['tool' => __('لا يمكن حذف أداة استُخدمت. أخفِها بدل الحذف.')]);
         }
 
         $tool->delete();
 
-        return redirect()->route('admin.tools.index')->with('status', 'حُذفت الأداة.');
+        return redirect()->route('admin.tools.index')->with('status', __('حُذفت الأداة.'));
     }
 
     public function updateStatus(Request $request, Tool $tool): RedirectResponse
@@ -201,12 +201,12 @@ class AdminToolController extends Controller
         ]);
 
         if ($data['status'] === Tool::STATUS_PUBLISHED && $tool->current_version_id === null) {
-            return back()->withErrors(['status' => 'لا يمكن نشر أداة بلا إصدار جاهز.']);
+            return back()->withErrors(['status' => __('لا يمكن نشر أداة بلا إصدار جاهز.')]);
         }
 
         $tool->update(['status' => $data['status']]);
 
-        return back()->with('status', 'حُدّثت حالة الأداة.');
+        return back()->with('status', __('حُدّثت حالة الأداة.'));
     }
 
     public function updatePrompt(Request $request, Tool $tool, PromptVersion $prompt): RedirectResponse
@@ -214,7 +214,7 @@ class AdminToolController extends Controller
         abort_unless($prompt->tool_version_id === $tool->current_version_id, 404);
 
         if ($prompt->locked_at !== null) {
-            return back()->withErrors(['prompt' => 'هذا البرومبت مقفل بعد الاستخدام (BR-012) ولا يُعدّل.']);
+            return back()->withErrors(['prompt' => __('هذا البرومبت مقفل بعد الاستخدام (BR-012) ولا يُعدّل.')]);
         }
 
         $data = $request->validate([
@@ -226,7 +226,7 @@ class AdminToolController extends Controller
 
         AuditLog::write('prompt.update', $prompt, ['tool' => $tool->key, 'stage' => $prompt->stage]);
 
-        return back()->with('status', 'حُدّث البرومبت.');
+        return back()->with('status', __('حُدّث البرومبت.'));
     }
 
     /**
@@ -284,7 +284,7 @@ class AdminToolController extends Controller
         $decoded = json_decode($raw, true);
 
         if (! is_array($decoded)) {
-            throw ValidationException::withMessages([$field => 'صيغة JSON غير صحيحة في هذا الحقل.']);
+            throw ValidationException::withMessages([$field => __('صيغة JSON غير صحيحة في هذا الحقل.')]);
         }
 
         return $decoded;
@@ -299,14 +299,14 @@ class AdminToolController extends Controller
     private function starterPrompts(array $sectionPlan): array
     {
         $prompts = [
-            'gaps' => 'افحص البيانات واستخرج النواقص والتعارضات. أعد كائن JSON بالمفتاحين missing وconflicts فقط.',
-            'consistency' => 'راجع الأقسام وابحث عن التناقض والتكرار والأرقام غير المسندة. أعد قائمة issues فقط.',
-            'synthesis' => 'ركّب التقرير النهائي: نتائج وتوصيات وخطوة تالية. الدرجة محسوبة مسبقًا فلا تعد حسابها.',
+            'gaps' => __('افحص البيانات واستخرج النواقص والتعارضات. أعد كائن JSON بالمفتاحين missing وconflicts فقط.'),
+            'consistency' => __('راجع الأقسام وابحث عن التناقض والتكرار والأرقام غير المسندة. أعد قائمة issues فقط.'),
+            'synthesis' => __('ركّب التقرير النهائي: نتائج وتوصيات وخطوة تالية. الدرجة محسوبة مسبقًا فلا تعد حسابها.'),
         ];
 
         foreach ($sectionPlan as $section) {
             if (isset($section['key'])) {
-                $prompts['section:'.$section['key']] = 'حلل هذا القسم واكتب headline ثم points. علّم الترجيحات بـ is_assumption = true.';
+                $prompts['section:'.$section['key']] = __('حلل هذا القسم واكتب headline ثم points. علّم الترجيحات بـ is_assumption = true.');
             }
         }
 
@@ -348,9 +348,9 @@ class AdminToolController extends Controller
             'pain' => '', 'promise' => '', 'audience' => '', 'duration_minutes' => 10,
             'category' => '', 'sort_order' => 0, 'status' => 'coming_soon', 'credit_cost' => 5,
             'output_schema' => $this->pretty(PipelineSchemas::synthesis()),
-            'scoring_rules' => $this->pretty(['rules' => [['field' => 'example', 'label' => 'مثال', 'type' => 'present', 'weight' => 10]]]),
-            'section_plan' => $this->pretty([['key' => 'overview', 'title' => 'نظرة عامة', 'tier' => 'standard']]),
-            'fields' => $this->pretty([['key' => 'example', 'label' => 'سؤال مثال', 'type' => 'textarea', 'step' => 1, 'step_title' => 'الخطوة الأولى', 'required' => true, 'why' => 'لماذا نسأل هذا']]),
+            'scoring_rules' => $this->pretty(['rules' => [['field' => 'example', 'label' => __('مثال'), 'type' => 'present', 'weight' => 10]]]),
+            'section_plan' => $this->pretty([['key' => 'overview', 'title' => __('نظرة عامة'), 'tier' => 'standard']]),
+            'fields' => $this->pretty([['key' => 'example', 'label' => __('سؤال مثال'), 'type' => 'textarea', 'step' => 1, 'step_title' => __('الخطوة الأولى'), 'required' => true, 'why' => __('لماذا نسأل هذا')]]),
         ];
     }
 

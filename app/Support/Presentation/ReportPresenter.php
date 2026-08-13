@@ -18,25 +18,69 @@ class ReportPresenter
      */
     public function full(Report $report): array
     {
-        $report->loadMissing(['sections', 'findings.recommendations.task', 'toolRun.toolVersion.tool', 'project']);
+        $report->loadMissing(['sections', 'findings.recommendations.task', 'findings.recommendations.objective', 'findings.recommendations.metricObjective', 'findings.recommendations.template.objective', 'scoringItems', 'humanTraces', 'toolRun.toolVersion.tool', 'project']);
 
         // قائمة المنافسين تُقرأ حيّة لا من لقطة التقرير: تأكيد/استبعاد يظهر فورًا.
         $competitorView = $this->competitors->forReport($report->project);
+        $confirmation = collect($report->assumptions ?? [])->first();
+        if (is_array($confirmation)) {
+            $confirmation = $confirmation['text'] ?? $confirmation['title'] ?? null;
+        }
+        if (! is_string($confirmation) || trim($confirmation) === '') {
+            $confirmation = $report->findings->firstWhere('is_assumption', true)?->title;
+        }
 
         return [
             'id' => $report->id,
             'title' => $report->title,
+            // لغة نصّ التقرير — تُعلَن للقارئ حين تختلف عن لغة واجهته،
+            // وتحدّد اتجاه صفحة الـPDF وخطّها.
+            'locale' => $report->locale ?: 'ar',
             'status' => $report->status,
             'score' => $report->score,
+            'score_equation' => [
+                'raw' => (float) ($report->score_raw ?? $report->scoringItems->sum('points')),
+                'max' => (float) ($report->score_max ?? $report->scoringItems->sum('weight')),
+                'value' => (float) $report->score,
+            ],
             'score_band' => $report->score_band,
             'summary' => $report->summary,
+            'executive_summary' => [
+                'current_state' => $report->summary,
+                'top_issues' => $report->findings
+                    ->sortBy('sort_order')
+                    ->take(3)
+                    ->pluck('title')
+                    ->values()
+                    ->all(),
+                'this_week' => $report->next_step,
+                'needs_confirmation' => $confirmation,
+            ],
             // توثيق أن التقرير رُوجع بشريًا: بيان صادق موجز، لا لافتة تمدح.
             // الإحساس البشري يجيء من نص التقرير نفسه (تعليمات المُراجِع)، لا
             // من جملة تدّعي أنها مكتوبة بيد.
-            'is_manually_reviewed' => $report->review_mode === 'manual',
+            'is_manually_reviewed' => in_array($report->provenance, ['signed', 'hybrid'], true),
             'reviewed_at' => $report->reviewed_at?->locale('ar')->translatedFormat('j F Y'),
-            'reviewer_name' => $report->review_mode === 'manual' ? config('brand.name', 'خالد سعد') : null,
+            'reviewer_name' => in_array($report->provenance, ['signed', 'hybrid'], true) ? config('brand.name', 'خالد سعد') : null,
+            'provenance_type' => $report->provenance ?: 'automated',
+            'provenance_label' => \App\Modules\Reporting\Publication\Provenance::tryFrom($report->provenance ?: 'automated')?->label(),
+            'validation_status' => $report->validation_status,
+            'schema_version' => $report->schema_version,
+            'human_traces' => $report->humanTraces->map->only(['type', 'body', 'created_at'])->values()->all(),
             'assumptions' => $report->assumptions ?? [],
+            /*
+             * الفجوات المفتوحة وحدها: ما سُدَّ منها يبقى في العمود ولا يُعرض.
+             * الويب والتطبيق يقرآن هذا المفتاح نفسه، فلا يفترق البابان.
+             */
+            'open_gaps' => collect($report->declared_gaps ?? [])
+                ->filter(fn ($gap) => is_array($gap) && ($gap['answered_at'] ?? null) === null)
+                ->map(fn (array $gap) => [
+                    'key' => (string) ($gap['key'] ?? ''),
+                    'label' => (string) ($gap['label'] ?? ''),
+                    'why' => $gap['why'] ?? null,
+                ])
+                ->values()
+                ->all(),
             'next_step' => $report->next_step,
             'project' => ['name' => $report->project->name, 'slug' => $report->project->slug],
             // يحتاجه زر إعادة طلب التحليل الموسع في الويب والتطبيق معًا.
@@ -76,11 +120,31 @@ class ReportPresenter
                 'confidence' => $finding->confidence,
                 'is_assumption' => $finding->is_assumption,
                 // التسمية الظاهرة للمستخدم: الفصل بين الدليل والافتراض ليس تفصيلًا تقنيًا.
-                'basis_label' => $finding->is_assumption ? 'افتراض' : 'مدعوم بدليل',
+                'basis_label' => $finding->is_assumption ? __('افتراض') : __('مدعوم بدليل'),
                 'recommendations' => $finding->recommendations->map(fn ($recommendation) => [
                     'id' => $recommendation->id,
                     'title' => $recommendation->title,
                     'description' => $recommendation->description,
+                    'objective_id' => $recommendation->objective?->slug,
+                    'deliverable' => $recommendation->deliverable,
+                    'done_when' => $recommendation->done_when,
+                    'first_five_minutes' => $recommendation->first_five_minutes,
+                    'expected_failure' => $recommendation->expected_failure,
+                    'duration_days' => $recommendation->duration_days,
+                    'metric' => [
+                        'label' => $recommendation->kpi_hint,
+                        'objective_id' => $recommendation->metricObjective?->slug,
+                    ],
+                    'template' => $recommendation->template_payload ?: ($recommendation->template ? [
+                        'objective_id' => $recommendation->template->objective?->slug,
+                        'kind' => $recommendation->template->kind,
+                        'title' => $recommendation->template->title,
+                        'blocks' => $recommendation->template->body['blocks'] ?? [],
+                        'tips' => $recommendation->template->body['tips'] ?? [],
+                        'is_hypothesis' => (bool) $recommendation->template->is_hypothesis,
+                    ] : null),
+                    'degraded' => (bool) $recommendation->degraded,
+                    'degrade_reason' => $recommendation->degrade_reason,
                     'root_cause' => $recommendation->root_cause,
                     'commercial_impact' => $recommendation->commercial_impact,
                     'action_steps' => $recommendation->action_steps ?? [],
@@ -125,6 +189,8 @@ class ReportPresenter
      */
     public function card(Report $report): array
     {
+        $report->loadMissing('toolRun.toolVersion.tool');
+
         return [
             'id' => $report->id,
             'title' => $report->title,
@@ -132,6 +198,10 @@ class ReportPresenter
             'score_band' => $report->score_band,
             'status' => $report->status,
             'created_at' => $report->created_at?->toIso8601String(),
+            'tool' => [
+                'key' => $report->toolRun->toolVersion->tool->key,
+                'title' => $report->toolRun->toolVersion->tool->title,
+            ],
         ];
     }
 
@@ -201,7 +271,7 @@ class ReportPresenter
             'label' => match (true) {
                 $delta > 0 => "درجتك ارتفعت {$delta} نقطة منذ آخر مرة — تعبك واضح فيها",
                 $delta < 0 => 'درجتك تراجعت '.abs($delta).' نقطة منذ آخر مرة — تستحق وقفة',
-                default => 'درجتك ثابتة منذ آخر تقرير — لم يتغيّر شيء',
+                default => __('درجتك ثابتة منذ آخر تقرير — لم يتغيّر شيء'),
             },
             'days_between' => $previous->created_at?->diffInDays($current->created_at) ?? 0,
         ];

@@ -8,6 +8,7 @@ use App\Models\Content;
 use App\Models\ContentCategory;
 use App\Models\ContentResource;
 use App\Services\Content\ContentHtmlSanitizer;
+use App\Services\Content\MarketingLessonUpdateDraftService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,10 @@ use Illuminate\View\View;
 
 class AdminContentController extends Controller
 {
-    public function __construct(private readonly ContentHtmlSanitizer $sanitizer) {}
+    public function __construct(
+        private readonly ContentHtmlSanitizer $sanitizer,
+        private readonly MarketingLessonUpdateDraftService $lessonUpdates,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -60,17 +64,37 @@ class AdminContentController extends Controller
 
         cache()->forget('sitemap.xml');
 
-        return redirect()->route('admin.content.edit', $content)->with('success', 'حُفظ المحتوى.');
+        return redirect()->route('admin.content.edit', $content)->with('success', __('حُفظ المحتوى.'));
     }
 
     public function edit(Content $content): View
     {
+        $content->load('learningUpdateDrafts');
         $categories = ContentCategory::query()
             ->where(fn ($query) => $query->active()->orWhere('id', $content->category_id))
             ->ordered()
             ->get();
 
         return view('admin.content.form', compact('content', 'categories'));
+    }
+
+    public function draftLearningUpdate(Request $request, Content $content): RedirectResponse
+    {
+        $data = $request->validate([
+            'sources' => ['required', 'string', 'max:5000'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+        $sources = collect(preg_split('/\R/u', $data['sources']))
+            ->map(fn (string $source) => trim($source))
+            ->filter()
+            ->take(10)
+            ->each(fn (string $source) => abort_unless(filter_var($source, FILTER_VALIDATE_URL), 422))
+            ->values()->all();
+
+        $this->lessonUpdates->create($content, $request->user(), $sources, $data['notes'] ?? null);
+
+        return redirect()->route('admin.content.edit', $content)
+            ->with('success', __('أُنشئت مسودة تحديث ذكية للمراجعة. لم يتغير النص المنشور.'));
     }
 
     public function update(ContentRequest $request, Content $content): RedirectResponse
@@ -84,7 +108,7 @@ class AdminContentController extends Controller
 
         cache()->forget('sitemap.xml');
 
-        return redirect()->route('admin.content.edit', $content)->with('success', 'حُدّث المحتوى.');
+        return redirect()->route('admin.content.edit', $content)->with('success', __('حُدّث المحتوى.'));
     }
 
     public function archive(Content $content): RedirectResponse
@@ -92,7 +116,7 @@ class AdminContentController extends Controller
         $content->update(['status' => Content::STATUS_ARCHIVED]);
         cache()->forget('sitemap.xml');
 
-        return back()->with('success', 'نُقل المحتوى إلى الأرشيف.');
+        return back()->with('success', __('نُقل المحتوى إلى الأرشيف.'));
     }
 
     public function restore(Content $content): RedirectResponse
@@ -100,7 +124,7 @@ class AdminContentController extends Controller
         $content->update(['status' => Content::STATUS_DRAFT]);
         cache()->forget('sitemap.xml');
 
-        return back()->with('success', 'أُعيد المحتوى من الأرشيف.');
+        return back()->with('success', __('أُعيد المحتوى من الأرشيف.'));
     }
 
     private function payload(ContentRequest $request): array

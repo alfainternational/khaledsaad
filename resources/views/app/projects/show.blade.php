@@ -23,24 +23,25 @@
         </div>
     </header>
 
+    @if ($project['description_needs_attention'])
+        <section class="alert alert--info">
+            <strong>{{ __('وصف المشروع يحتاج توضيحًا قبل الاعتماد عليه في التشخيصات والتقارير.') }}</strong>
+            <a href="{{ route('app.projects.edit', $project['slug']) }}" class="btn btn--ghost btn--sm">
+                {{ __('أكمل وصف المشروع') }}
+            </a>
+        </section>
+    @endif
+
     <div class="layout-main-aside">
     <div class="layout-flow">
     <section class="learning-project-card" aria-labelledby="learning-project-heading">
         <div>
-            <p class="eyebrow">خطوتك التسويقية التالية</p>
-            @if ($learningNext['exercise'])
-                <h2 id="learning-project-heading">{{ $learningNext['exercise']['title'] }}</h2>
-                <p>{{ $learningNext['reason'] }}</p>
-                <p><strong>ستحصل على:</strong> {{ $learningNext['exercise']['deliverable'] }}</p>
-            @else
-                <h2 id="learning-project-heading">أكملت جميع مهام الدروس</h2>
-                <p>يمكنك مراجعة نتائجك وتحسين أي إجابة تريد رفع درجتها.</p>
-            @endif
+            <p class="eyebrow">{{ __('معرفة مرتبطة بعملك') }}</p>
+            <h2 id="learning-project-heading">{{ __('لفهم الفجوة قبل تنفيذها') }}</h2>
+            <p>{{ __('استكشف درسًا يشرح المبدأ، دون إنشاء تقدم دورة أو تطبيق تعليمي داخل وضع الأعمال.') }}</p>
         </div>
-        <a href="{{ $learningNext['exercise']
-            ? route('app.learning.marketing.exercise', [$project['slug'], $learningNext['exercise']['key']])
-            : route('app.learning.marketing.index', $project['slug']) }}" class="btn btn--primary">
-            {{ $learningNext['exercise'] ? 'ابدأ المهمة' : 'راجع النتائج' }}
+        <a href="{{ route('content.index', ['type' => 'article']) }}" class="btn btn--ghost">
+            {{ __('استكشف الدروس') }}
         </a>
     </section>
 
@@ -68,7 +69,7 @@
             <article class="card card--link">
                 <p class="eyebrow">مقيس من موقعك</p>
                 <h3>الجاهزية للذكاء الاصطناعي</h3>
-                <p class="muted">نفحص موقعك كما تقرأه النماذج، ونقرأ سجل خادمك لنعرف أي بوت زارك فعلًا.</p>
+                <p class="muted">أفحص موقعك كما تقرأه النماذج، وأقرأ سجل خادمك لأعرف أي بوت زارك فعلًا.</p>
                 <a href="{{ route('app.readiness.show', $project['slug']) }}" class="btn btn--ghost btn--sm">افحص موقعي</a>
             </article>
 
@@ -83,7 +84,7 @@
             <article class="card card--link">
                 <p class="eyebrow">مقيس من إجابات النماذج</p>
                 <h3>حضورك في الإجابات</h3>
-                <p class="muted">نسأل النماذج أسئلة عميلك بلسانه، ونعدّ كم مرة ذُكرت أنت ومن ظهر بدلًا منك.</p>
+                <p class="muted">أسأل النماذج أسئلة عميلك بلسانه، وأعدّ كم مرة ذُكرت أنت ومن ظهر بدلًا منك.</p>
                 @feature(\App\Support\Billing\FeatureKey::DIAGNOSIS_FULL)
                     <a href="{{ route('app.presence.show', $project['slug']) }}" class="btn btn--ghost btn--sm">افتح التقرير</a>
                 @else
@@ -118,15 +119,33 @@
     <section aria-labelledby="reports-heading">
         <h2 id="reports-heading" class="section-title">التقارير</h2>
 
-        @if ($project['reports'] === [])
+        @if ($project['report_groups'] === [])
             <p class="muted">لا توجد تقارير لهذا المشروع بعد. ابدأ أحد التشخيصات لإنشاء التقرير الأول.</p>
         @else
             <ul class="list">
-                @foreach ($project['reports'] as $report)
+                @foreach ($project['report_groups'] as $group)
+                    @php($report = $group['latest'])
                     <li class="list__item">
-                        <a href="{{ route('app.reports.show', $report['id']) }}">{{ $report['title'] }}</a>
+                        <div>
+                            <strong>{{ $group['tool_title'] }}</strong>
+                            <a href="{{ route('app.reports.show', $report['id']) }}">{{ __('أحدث نتيجة: :title', ['title' => $report['title']]) }}</a>
+                        </div>
                         <span class="score-chip">{{ $report['score'] }}/100</span>
                         <time class="muted">{{ \Illuminate\Support\Carbon::parse($report['created_at'])->translatedFormat('j F Y') }}</time>
+                        @if ($group['history'] !== [])
+                            <details>
+                                <summary>{{ trans_choice('{1} نسخة سابقة|[2,*] :count نسخ سابقة', $group['versions_count'] - 1, ['count' => $group['versions_count'] - 1]) }}</summary>
+                                <ol class="timeline">
+                                    @foreach ($group['history'] as $previous)
+                                        <li>
+                                            <a href="{{ route('app.reports.show', $previous['id']) }}">{{ $previous['title'] }}</a>
+                                            <span class="score-chip">{{ $previous['score'] }}/100</span>
+                                            <time>{{ \Illuminate\Support\Carbon::parse($previous['created_at'])->translatedFormat('j F Y') }}</time>
+                                        </li>
+                                    @endforeach
+                                </ol>
+                            </details>
+                        @endif
                     </li>
                 @endforeach
             </ul>
@@ -152,7 +171,7 @@
                         @endif
                         <form method="POST" action="{{ route('app.kpis.record', $kpi['id']) }}" class="inline-form">
                             @csrf
-                            <input type="number" step="any" name="value" required aria-label="قراءة جديدة لـ{{ $kpi['name'] }}">
+                            <input type="number" step="any" name="value" required aria-label="{{ __('قراءة جديدة لـ:kpi', ['kpi' => $kpi['name']]) }}">
                             <button type="submit" class="btn btn--ghost btn--sm">سجّل</button>
                         </form>
                     </li>
@@ -201,7 +220,7 @@
                 <input type="number" step="any" name="target" placeholder="هدفك" aria-label="الهدف">
                 <button type="submit" class="btn btn--primary btn--sm">أضف المؤشر</button>
             </div>
-            <span class="field__help">«رقمك الآن» خط البداية، و«هدفك» ما تريد الوصول إليه — ونحسب لك نسبة التقدم بينهما.</span>
+            <span class="field__help">«رقمك الآن» خط البداية، و«هدفك» ما تريد الوصول إليه — وتُحسب لك نسبة التقدم بينهما.</span>
         </form>
     </section>
 

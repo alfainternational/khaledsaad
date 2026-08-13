@@ -75,6 +75,14 @@ class FeatureSeeder extends Seeder
                 'default_enabled' => false,
             ],
             [
+                'key' => FeatureKey::LEARNING_MARKETING,
+                'name' => 'التعلم التسويقي التطبيقي',
+                'description' => 'الدروس العشرون وتطبيقاتها ومراجعة الإجابات.',
+                'group' => 'core', 'type' => Feature::TYPE_BOOLEAN,
+                'enforcement' => Feature::ENFORCEMENT_GATE,
+                'default_enabled' => true,
+            ],
+            [
                 'key' => FeatureKey::REPORTS_PDF,
                 'name' => 'تصدير PDF',
                 'description' => 'تنزيل التقرير ملفًا جاهزًا للمشاركة.',
@@ -160,6 +168,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::PROJECTS_LIMIT => 1,
                 FeatureKey::TOOL_RUNS_MONTHLY => 3,
                 FeatureKey::COMPETITORS_LIMIT => 3,
+                FeatureKey::LEARNING_MARKETING => true,
             ],
             'individual' => [
                 FeatureKey::PROJECTS_LIMIT => 3,
@@ -169,6 +178,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::KPI_TRACKING => true,
                 FeatureKey::WATCHERS_LIMIT => 2,
                 FeatureKey::DIAGNOSIS_FULL => true,
+                FeatureKey::LEARNING_MARKETING => true,
             ],
             'professional' => [
                 FeatureKey::PROJECTS_LIMIT => 10,
@@ -181,6 +191,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::DIAGNOSIS_FULL => true,
                 FeatureKey::GROWTH_PULSE => true,
                 FeatureKey::GROWTH_GEO => true,
+                FeatureKey::LEARNING_MARKETING => true,
                 'support.priority' => true,
             ],
             'team' => [
@@ -196,6 +207,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::GROWTH_PULSE => true,
                 FeatureKey::GROWTH_GEO => true,
                 FeatureKey::AUDIENCE_LAB => true,
+                FeatureKey::LEARNING_MARKETING => true,
                 'support.priority' => true,
                 'support.onboarding' => true,
             ],

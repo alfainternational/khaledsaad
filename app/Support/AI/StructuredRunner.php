@@ -6,6 +6,7 @@ use App\Contracts\AI\ArtificialIntelligenceGateway;
 use App\Exceptions\AIInvalidOutputException;
 use App\Models\AiUsageRecord;
 use App\Models\ToolRun;
+use App\Modules\Shared\I18n\GenerationLocale;
 
 /**
  * الطبقة التي تفصل «استدعاء نموذج» عن «الحصول على بيانات صالحة».
@@ -18,6 +19,7 @@ class StructuredRunner
     public function __construct(
         private readonly ArtificialIntelligenceGateway $gateway,
         private readonly JsonSchemaValidator $validator,
+        private readonly GenerationLocale $generationLocale,
     ) {}
 
     /**
@@ -29,6 +31,15 @@ class StructuredRunner
     {
         $maxAttempts = max(1, (int) config('ai.schema_retries', 2) + 1);
         $violations = [];
+
+        /*
+         * التوجيه يُطبَّق على الطلب الأصلي مرة واحدة قبل أي محاولة، لأن
+         * `correct()` تعيد البناء من `$request` لا من المحاولة السابقة —
+         * فلو حُقن على `$current` وحده لسقط عند أول إعادة محاولة، وخرج
+         * التقرير عربيًّا كلما احتاج المخطط تصحيحًا. عطلٌ متقطّع بطبيعته:
+         * يظهر في التقارير التي فشل تحققها أولًا فقط.
+         */
+        $request = $this->withOutputLanguage($request);
         $current = $request;
 
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
@@ -79,6 +90,49 @@ class StructuredRunner
             'تعذر الحصول على مخرج مطابق للمخطط بعد استنفاد المحاولات.',
             $violations,
         );
+    }
+
+    /**
+     * إضافة توجيه لغة المخرَج إلى رسالة النظام.
+     *
+     * يُضاف **في آخر** رسالة النظام لا في أولها: النماذج تُرجّح آخر تعليمة
+     * عند التعارض، والبرومبتات هنا تحمل في وسطها «اكتب بلهجة بيضاء عربية».
+     * توجيهٌ يسبقها يخسر المنافسة معها بصمت.
+     *
+     * وحين لا توجد رسالة نظام تُضاف واحدة في المقدمة — أفضل من إلحاقها
+     * برسالة المستخدم حيث تختلط بالبيانات، وقاعدة البرومبت رقم ٩ تأمر
+     * النموذج بتجاهل التعليمات القادمة داخل البيانات.
+     */
+    private function withOutputLanguage(AIRequest $request): AIRequest
+    {
+        if ($request->localeNeutral) {
+            return $request;
+        }
+
+        $directive = $this->generationLocale->directive($request->outputLocale);
+
+        if ($directive === '') {
+            return $request;
+        }
+
+        $messages = $request->messages;
+        $lastSystem = null;
+
+        foreach ($messages as $index => $message) {
+            if (($message['role'] ?? '') === 'system') {
+                $lastSystem = $index;
+            }
+        }
+
+        if ($lastSystem === null) {
+            array_unshift($messages, ['role' => 'system', 'content' => $directive]);
+
+            return $request->withMessages($messages);
+        }
+
+        $messages[$lastSystem]['content'] = $messages[$lastSystem]['content']."\n\n".$directive;
+
+        return $request->withMessages($messages);
     }
 
     /**

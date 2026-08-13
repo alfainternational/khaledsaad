@@ -14,6 +14,7 @@ class AgencyReport extends Model
         'source_report_ids', 'visibility', 'snapshot', 'generated_at',
         'pdf_path', 'pdf_generated_at',
         'share_token', 'share_created_at', 'share_expires_at', 'share_revoked_at',
+        'provenance', 'validation_status', 'schema_version',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class AgencyReport extends Model
             'share_created_at' => 'datetime',
             'share_expires_at' => 'datetime',
             'share_revoked_at' => 'datetime',
+            'schema_version' => 'integer',
         ];
     }
 

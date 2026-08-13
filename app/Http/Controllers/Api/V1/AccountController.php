@@ -104,7 +104,7 @@ class AccountController extends Controller
     {
         if ($plan->price > 0) {
             return response()->json([
-                'message' => 'هذه خطة مدفوعة. اخترها من صفحة الخطط ثم أكمل الدفع.',
+                'message' => __('هذه خطة مدفوعة. اخترها من صفحة الخطط ثم أكمل الدفع.'),
             ], 422);
         }
 
@@ -151,7 +151,7 @@ class AccountController extends Controller
     private function beginCheckout(Request $request, callable $starter): JsonResponse
     {
         if (! $this->gateways->hasActiveGateway()) {
-            return response()->json(['message' => 'الدفع الإلكتروني غير متاح حاليًا. حاول مرة أخرى لاحقًا.'], 422);
+            return response()->json(['message' => __('الدفع الإلكتروني غير متاح حاليًا. حاول مرة أخرى لاحقًا.')], 422);
         }
 
         $workspace = $request->user()->primaryWorkspace();
@@ -160,7 +160,7 @@ class AccountController extends Controller
             : $this->gateways->defaultGateway();
 
         if ($gateway === null) {
-            return response()->json(['message' => 'وسيلة الدفع المختارة غير متاحة.'], 422);
+            return response()->json(['message' => __('وسيلة الدفع المختارة غير متاحة.')], 422);
         }
 
         $urls = fn (Payment $payment) => [
@@ -180,7 +180,7 @@ class AccountController extends Controller
                 return response()->json(['data' => [
                     'completed' => false,
                     'pending_approval' => true,
-                    'message' => $session->message ?? 'سجّلنا طلبك. سيُعتمد رصيدك فور تأكيد التحويل.',
+                    'message' => $session->message ?? __('سجّلنا طلبك. سيُعتمد رصيدك فور تأكيد التحويل.'),
                 ]]);
             }
 
@@ -188,7 +188,7 @@ class AccountController extends Controller
 
             return response()->json(['data' => [
                 'completed' => $paid,
-                'message' => $paid ? 'تم اعتماد الدفع وأُضيف رصيدك.' : 'سجّلنا طلبك وهو قيد المراجعة.',
+                'message' => $paid ? __('تم اعتماد الدفع وأُضيف رصيدك.') : __('سجّلنا طلبك وهو قيد المراجعة.'),
             ]]);
         }
 
@@ -230,7 +230,7 @@ class AccountController extends Controller
             'data' => $user->notifications()->latest()->limit(50)->get()
                 ->map(fn ($notification) => [
                     'id' => $notification->id,
-                    'title' => $notification->data['title'] ?? 'إشعار',
+                    'title' => $notification->data['title'] ?? __('إشعار'),
                     'body' => $notification->data['body'] ?? '',
                     'url' => $notification->data['url'] ?? null,
                     'read' => $notification->read_at !== null,
@@ -267,7 +267,7 @@ class AccountController extends Controller
         // نفس ترتيب الويب: الملكية أولًا، ثم الاستحقاق.
         if (! $this->entitlements->allows($report->project->workspace, FeatureKey::REPORTS_PDF)) {
             return response()->json([
-                'message' => 'تصدير PDF غير متاح في خطتك الحالية.',
+                'message' => __('تصدير PDF غير متاح في خطتك الحالية.'),
                 'feature' => FeatureKey::REPORTS_PDF,
             ], 403);
         }

@@ -27,7 +27,7 @@
         <section class="empty">
             <h2>جمهورك الاصطناعي لم يُبنَ بعد</h2>
             <p class="muted">
-                نبني من ملف مشروعك وشرائح جمهورك 3–4 شخصيات واقعية: المتحمس،
+                تُبنى من ملف مشروعك وشرائح جمهورك 3–4 شخصيات واقعية: المتحمس،
                 المتردد، الحساس للسعر — ثم تعرض عليهم أي رسالة، فيعيدها كلٌّ
                 منهم مكتوبة بلسانه.
             </p>
@@ -38,7 +38,7 @@
             <p class="alert alert--info">
                 @include('app.partials.evidence-badge', [
                     'level' => $panel->evidenceLevel(),
-                    'note' => 'شخصيات مبنية على وصف مشروعك لا عملاء حقيقيين — الدرجات ترتّب الصياغات ولا تتنبأ بالأداء.',
+                    'note' => __('شخصيات مبنية على وصف مشروعك لا عملاء حقيقيين — الدرجات ترتّب الصياغات ولا تتنبأ بالأداء.'),
                 ])
             </p>
             <div class="card-grid">
@@ -57,8 +57,8 @@
             <form method="POST" action="{{ route('app.audience.test', $project) }}" class="stack">
                 @csrf
                 <textarea name="message" rows="4" required minlength="10" maxlength="1000"
-                    placeholder="الصق نص إعلانك أو منشورك أو رسالتك كما ستنشرها فعلًا…"
-                    aria-label="الرسالة المطلوب اختبارها">{{ old('message') }}</textarea>
+                    placeholder="{{ __('الصق نص إعلانك أو منشورك أو رسالتك كما ستنشرها فعلًا…') }}"
+                    aria-label="{{ __('الرسالة المطلوب اختبارها') }}">{{ old('message') }}</textarea>
                 <button type="submit" class="btn btn--primary">اعرضها على الجمهور</button>
                 <span class="field__help">
                     الاختبار يستغرق نحو دقيقة — تخرج بدرجة واعتراض صريح
@@ -126,7 +126,7 @@
                 form.addEventListener('submit', function () {
                     form.querySelectorAll('[data-once]').forEach(function (button) {
                         button.disabled = true;
-                        button.textContent = 'جارٍ التوليد…';
+                        button.textContent = @js(__('جارٍ التوليد…'));
                     });
                 });
             });
@@ -142,7 +142,7 @@
                     // الزاوية التعليمية خارج الاقتباس عمدًا، فما يُنسخ نصُّ الرسالة وحده.
                     navigator.clipboard.writeText(source.textContent.trim()).then(function () {
                         var original = button.textContent;
-                        button.textContent = 'نُسخت';
+                        button.textContent = @js(__('نُسخت'));
                         setTimeout(function () { button.textContent = original; }, 2000);
                     });
                 });

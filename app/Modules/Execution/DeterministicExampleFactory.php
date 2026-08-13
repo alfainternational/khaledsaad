@@ -340,10 +340,6 @@ class DeterministicExampleFactory
             $steps,
         ), fn (string $step) => $step !== ''));
 
-        if ($steps === []) {
-            $steps = $this->fallbackSteps();
-        }
-
         foreach ($steps as $index => $step) {
             $lines[] = ($index + 1).') '.$step;
         }
@@ -356,7 +352,7 @@ class DeterministicExampleFactory
             title: 'خطوات تنفيذ مرتّبة لهذه التوصية',
             body: implode("\n", $lines),
             notes: [
-                'هذه خطوات مرتّبة لا نصٌّ جاهز للنسخ — اطلب تطوير المهمة للحصول على مثال مكتوب بحالتك.',
+                'هذه ورقة تنفيذ أولية؛ إن كانت الخطوات فارغة فالتوصية ناقصة ولا تُنشر كإجراء.',
                 'خطوة واحدة في اليوم أفضل من أربع في يوم ثم انقطاع أسبوعين.',
             ],
         );
@@ -373,12 +369,7 @@ class DeterministicExampleFactory
      */
     public function fallbackSteps(): array
     {
-        return [
-            'اكتب في سطر واحد الوضع الحالي عندك في هذه النقطة، بصراحة وبلا تجميل.',
-            'حدّد أصغر تغيير ممكن ينقلك خطوة للأمام هذا الأسبوع.',
-            'نفّذه على حالة واحدة فقط (عميل واحد، صفحة واحدة، قناة واحدة).',
-            'سجّل ما حصل بعد أسبوع: ماذا تغيّر ومَن لاحظ.',
-        ];
+        return [];
     }
 
     /**

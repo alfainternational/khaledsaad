@@ -14,6 +14,7 @@ use App\Services\Billing\Entitlements;
 use App\Services\Billing\SubscriptionManager;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ToolRunService;
+use App\Support\Experience\Experience;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -68,7 +69,7 @@ class ReportPdfTest extends TestCase
         $report = $this->report();
         $this->onAPlanWithPdf($report);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($this->businessUser())
             ->get(route('app.reports.pdf', $report->id))
             ->assertNotFound();
     }
@@ -88,7 +89,7 @@ class ReportPdfTest extends TestCase
 
     private function report(): Report
     {
-        $user = User::factory()->create();
+        $user = $this->businessUser();
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع PDF']);
         $tool = Tool::where('key', 'marketing-score')->firstOrFail();
         $run = app(ToolRunService::class)->start($project, $tool, $user);
@@ -128,5 +129,13 @@ class ReportPdfTest extends TestCase
         ]);
 
         return $report->fresh();
+    }
+
+    private function businessUser(): User
+    {
+        return User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
+        ]);
     }
 }

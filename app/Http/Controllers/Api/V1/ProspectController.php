@@ -104,7 +104,7 @@ class ProspectController extends Controller
             ->orderBy('id')->get();
 
         if ($prospects->isEmpty()) {
-            return response()->json(['message' => 'أضف عميلًا متوقعًا أولًا.'], 422);
+            return response()->json(['message' => __('أضف عميلًا متوقعًا أولًا.')], 422);
         }
 
         $outcome = $this->messages->generate(
@@ -116,7 +116,7 @@ class ProspectController extends Controller
         );
 
         if ($outcome['messages'] === []) {
-            return response()->json(['message' => 'تعذّر التوليد الآن. بياناتك لم تتأثر.'], 503);
+            return response()->json(['message' => __('تعذّر التوليد الآن. بياناتك لم تتأثر.')], 503);
         }
 
         return response()->json([
@@ -132,7 +132,7 @@ class ProspectController extends Controller
         $this->authorizeProject($request, $project);
 
         if ($message->project_id !== $project->id) {
-            return response()->json(['message' => 'غير موجود.'], 404);
+            return response()->json(['message' => __('غير موجود.')], 404);
         }
 
         $message->update(['status' => ProspectMessage::STATUS_SENT, 'sent_at' => now()]);
@@ -145,7 +145,7 @@ class ProspectController extends Controller
         $this->authorizeProject($request, $project);
 
         if ($prospect->project_id !== $project->id) {
-            return response()->json(['message' => 'غير موجود.'], 404);
+            return response()->json(['message' => __('غير موجود.')], 404);
         }
 
         $validated = $request->validate([

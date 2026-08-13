@@ -48,8 +48,8 @@ class SecurityController extends Controller
         ])->save();
 
         return back()->with('status', $request->user()->two_factor_email_enabled
-            ? 'فُعّلت خطوة التحقق بالبريد — سيصلك رمز مع كل دخول.'
-            : 'أُلغيت خطوة التحقق بالبريد.');
+            ? __('فُعّلت خطوة التحقق بالبريد — سيصلك رمز مع كل دخول.')
+            : __('أُلغيت خطوة التحقق بالبريد.'));
     }
 
     public function logoutOthers(Request $request): RedirectResponse
@@ -57,7 +57,7 @@ class SecurityController extends Controller
         $request->validate(['password' => 'required|string']);
 
         if (! Hash::check($request->string('password'), $request->user()->password)) {
-            throw ValidationException::withMessages(['password' => 'كلمة المرور غير صحيحة.']);
+            throw ValidationException::withMessages(['password' => __('كلمة المرور غير صحيحة.')]);
         }
 
         Auth::logoutOtherDevices($request->string('password'));
@@ -67,28 +67,28 @@ class SecurityController extends Controller
             ->where('id', '!=', $request->session()->getId())
             ->delete();
 
-        return back()->with('status', 'سُجّل خروجك من كل الأجهزة الأخرى.');
+        return back()->with('status', __('سُجّل خروجك من كل الأجهزة الأخرى.'));
     }
 
     /** وصف مقروء بدل سلسلة الـ user agent الخام. */
     private function readableAgent(string $agent): string
     {
         $browser = match (true) {
-            str_contains($agent, 'Edg') => 'متصفح Edge',
-            str_contains($agent, 'Chrome') => 'متصفح Chrome',
-            str_contains($agent, 'Safari') && ! str_contains($agent, 'Chrome') => 'متصفح Safari',
-            str_contains($agent, 'Firefox') => 'متصفح Firefox',
-            default => 'متصفح غير معروف',
+            str_contains($agent, 'Edg') => __('متصفح Edge'),
+            str_contains($agent, 'Chrome') => __('متصفح Chrome'),
+            str_contains($agent, 'Safari') && ! str_contains($agent, 'Chrome') => __('متصفح Safari'),
+            str_contains($agent, 'Firefox') => __('متصفح Firefox'),
+            default => __('متصفح غير معروف'),
         };
 
         $device = match (true) {
-            str_contains($agent, 'iPhone') || str_contains($agent, 'iPad') => 'جهاز iOS',
-            str_contains($agent, 'Android') => 'جهاز أندرويد',
-            str_contains($agent, 'Windows') => 'جهاز ويندوز',
-            str_contains($agent, 'Macintosh') => 'جهاز ماك',
-            default => 'جهاز غير معروف',
+            str_contains($agent, 'iPhone') || str_contains($agent, 'iPad') => __('جهاز iOS'),
+            str_contains($agent, 'Android') => __('جهاز أندرويد'),
+            str_contains($agent, 'Windows') => __('جهاز ويندوز'),
+            str_contains($agent, 'Macintosh') => __('جهاز ماك'),
+            default => __('جهاز غير معروف'),
         };
 
-        return $browser.' على '.$device;
+        return __(':browser على :device', ['browser' => $browser, 'device' => $device]);
     }
 }

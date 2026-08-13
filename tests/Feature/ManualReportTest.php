@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ManualReportService;
 use App\Services\Tools\ToolRunService;
+use App\Support\Experience\Experience;
 use Database\Seeders\PlanSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -125,8 +126,8 @@ class ManualReportTest extends TestCase
         $this->actingAs($user)
             ->get(route('app.reports.show', $report->id))
             ->assertOk()
-            ->assertSee('مراجعة يدوية بواسطة خالد سعد')
-            ->assertSee('راجعه وكتبه بنفسه');
+            ->assertSee('تحليل موقّع من خالد سعد')
+            ->assertSee('استيراد ومراجعة تقرير يدوي قبل الإصدار');
     }
 
     #[Test]
@@ -136,14 +137,22 @@ class ManualReportTest extends TestCase
 
         // نفس التركيب لكن بلا مراجعة بشرية: مخرج تلقائي.
         $report = app(ManualReportService::class)->import($run, $this->payload(), User::factory()->create(['is_admin' => true]));
-        $report->forceFill(['review_mode' => 'auto', 'reviewed_by' => null, 'reviewed_at' => null])->save();
+        $report->forceFill([
+            'review_mode' => 'auto',
+            'provenance' => 'automated',
+            'reviewed_by' => null,
+            'reviewed_at' => null,
+            'authored_by' => null,
+            'authored_at' => null,
+        ])->save();
+        $report->humanTraces()->delete();
 
         // العميل يجب أن يميّز: التلقائي لا يدّعي أن إنسانًا راجعه.
         $this->actingAs($user)
             ->get(route('app.reports.show', $report->id))
             ->assertOk()
-            ->assertDontSee('مراجعة يدوية بواسطة خالد سعد')
-            ->assertDontSee('راجعه وكتبه بنفسه');
+            ->assertSee('تحليل آلي بقواعد ثابتة')
+            ->assertDontSee('تحليل موقّع من خالد سعد');
     }
 
     #[Test]
@@ -166,7 +175,10 @@ class ManualReportTest extends TestCase
      */
     private function completedRun(): array
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
+        ]);
         $project = app(ProjectService::class)->create($user, ['name' => 'متجر عسل']);
         $tool = Tool::where('key', 'marketing-score')->firstOrFail();
         $svc = app(ToolRunService::class);
@@ -193,11 +205,23 @@ class ManualReportTest extends TestCase
             'severity' => 'high',
             'is_assumption' => false,
             'evidence' => 'من إجابته عن حالة القياس.',
+            'evidence_answer_ref' => 'tracking_maturity',
             'recommendations' => [[
+                'objective_id' => 'establish-measurement-baseline',
                 'title' => 'خطوة تنفيذية واضحة',
                 'description' => 'نفّذ هذه الخطوة خلال هذا الأسبوع بشكل محدد وقابل للقياس.',
                 'impact' => 'high',
                 'effort' => 'low',
+                'duration_days' => 7,
+                'deliverable' => 'ورقة خط أساس مكتملة',
+                'done_when' => 'توجد قيمة بداية ومصدر وتاريخ يمكن فحصها.',
+                'first_five_minutes' => 'افتح ورقة جديدة واكتب اسم المؤشر ومصدره.',
+                'expected_failure' => 'قد تبحث عن أداة جديدة؛ ابدأ بالبيانات المتاحة اليوم.',
+                'metric' => ['label' => 'اكتمال خط الأساس', 'objective_id' => 'establish-measurement-baseline'],
+                'action_steps' => [
+                    'اكتب قيمة المؤشر الحالية ومصدرها وتاريخ جمعها في صف واحد.',
+                    'حدّد موعد المراجعة التالية والمسؤول عن تحديث القيمة أسبوعيًا.',
+                ],
             ]],
         ];
 

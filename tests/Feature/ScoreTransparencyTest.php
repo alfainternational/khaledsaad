@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ManualReportService;
 use App\Services\Tools\ToolRunService;
+use App\Support\Experience\Experience;
 use Database\Seeders\PlanSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -135,7 +136,10 @@ class ScoreTransparencyTest extends TestCase
      */
     private function reportForCompletedRun(): array
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
+        ]);
         $project = app(ProjectService::class)->create($user, ['name' => 'متجر عسل']);
         $tool = Tool::where('key', 'marketing-score')->firstOrFail();
         $svc = app(ToolRunService::class);

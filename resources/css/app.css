@@ -4,42 +4,121 @@
 @import './public-pages.css';
 @import './content-editor.css';
 @import './content-library.css';
+@import './hero-v2.css';
+@import './shell-v2.css';
+@import './sections-v2.css';
+@import './reference-ui.css';
+@import './interface-system.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* ==========================================================================
+   قفل التصميم — «الوضوح الطبي». المرجع الكامل: STYLESEED.md
+   كل قيمة هنا مقيسة بنسبة تباينها لا مختارة بالذوق. أسماء الرموز محفوظة كما
+   هي لأن ١٠٬٨٩٣ سطرًا تقرأ منها — المتغيّر هو القيمة لا الاسم، فيرث النظام
+   كله الاتجاه الجديد دون لمس مكوّن واحد.
+   ========================================================================== */
+
 @theme {
-    --font-sans: 'Hacen Tunisia', Tahoma, Arial, sans-serif;
-    --color-brand-cyan: #09d7e5;
-    --color-brand-blue: #2575ff;
+    --font-sans: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --color-brand-cyan: #0b6b78;
+    --color-brand-blue: #134fc4;
     --color-brand-navy: #071f5b;
-    --color-brand-orange: #ff9b27;
-    --color-brand-red: #ff4b12;
+    --color-brand-orange: #b45309;
+    --color-brand-red: #b42318;
 }
 
 :root {
     color-scheme: light;
-    --brand-cyan: #09d7e5;
-    --brand-blue: #2575ff;
+
+    /* — اللون: مرساة واحدة —
+       التوكيد كله يمرّ عبر --brand-blue. كان #2575ff بنسبة 4.14 (دون الحدّ
+       للنص العادي)، وصار #134fc4 بنسبة 7.14 مع أبيض فوقه بنفس النسبة. */
+    --brand-cyan: #0b6b78;
+    --brand-blue: #134fc4;
     --brand-navy: #071f5b;
-    --brand-orange: #ff9b27;
-    --brand-red: #ff4b12;
-    --brand-gradient: linear-gradient(135deg, var(--brand-cyan), var(--brand-blue) 52%, #4e58e8);
-    --warm-gradient: linear-gradient(135deg, var(--brand-red), var(--brand-orange));
+    --brand-orange: #b45309;
+    --brand-red: #b42318;
+
+    /* التوكيد الهادئ: خلفية بدل الظل لتمييز الكتل المهمة */
+    --accent-quiet: #ebf1fe;
+    --accent-hover: #0f3fa1;
+
+    /* التدرّجات الزخرفية أُلغيت: نظام قياس لا يتزيّن. الاسم باقٍ فترثه الـ١١
+       استعمالًا القائمة تلقائيًّا، والقيمة صارت لونًا مسطّحًا واحدًا. */
+    --brand-gradient: linear-gradient(0deg, var(--brand-blue), var(--brand-blue));
+    --warm-gradient: linear-gradient(0deg, var(--brand-orange), var(--brand-orange));
+
     --surface: #ffffff;
-    --surface-soft: #f5f9ff;
-    --surface-warm: #fff8f2;
-    --ink: #071a38;
-    --muted: #5d6b82;
-    --line: #dfe8f5;
-    --radius-sm: 0.8rem;
-    --radius-md: 1.25rem;
-    --radius-lg: 2rem;
-    --radius-xl: 2.7rem;
-    --shadow-card: 0 24px 70px rgba(7, 31, 91, 0.1);
-    --shadow-soft: 0 12px 40px rgba(7, 31, 91, 0.08);
+    --surface-soft: #f5f8fc;
+    /* لوحة الهيرو ليست بيضاء نقيّة: الجسم البطل أبيض (جلد ومعدن فاتح)،
+       وعلى #ffffff يختفي تمامًا. الفارق الطفيف هو ما يجعله جسمًا لا فراغًا. */
+    --hero-canvas: #ececea;
+    --surface-warm: #fdf8f3;
+    --ink: #0a1b33;
+    --ink-soft: #334862;
+    /* كان #5d6b82، والرمادي الأفتح #93a2bb كان يهبط إلى 2.58 — فشل صريح */
+    --muted: #4a5a72;
+    --line: #e2e8f2;
+    --line-strong: #cbd5e6;
+
+    /* — تدرّج الدليل (§٤.١ من الدستور): ألوان دلالية لا زخرفية — */
+    --evidence-measured: #0b7a66;
+    --evidence-derived: #134fc4;
+    --evidence-inferred: #b45309;
+
+    /* خلفيات الحالة: كانت مكتوبة مباشرة فبقيت فاتحة في الوضع الداكن،
+       فتظهر كتلة بيضاء يكتب فوقها نص فاتح — أسوأ تباين في الموقع. */
+    --tint-good: #e7f8ef;
+    --tint-warn: #fdf3e0;
+    --tint-bad: #fdeceb;
+    --tint-info: #ebf1fe;
+
+    /* ألوان النص فوق تلك الخلفيات — تنقلب مع الوضع، بعكس القيم المباشرة
+       التي كانت تبقى داكنة فتختفي على السطح الداكن. */
+    --on-tint-good: #0b5d34;
+    --on-tint-warn: #8a4b06;
+    --on-tint-bad: #8d1d13;
+
+    /* الكحلي نصًّا شيء والكحلي خلفيةً شيء آخر: الأول يجب أن ينقلب في الوضع
+       الداكن (١١٥ استعمالًا كان يبقى #071f5b فوق سطح داكن بنسبة 1.21)،
+       والثاني يبقى كما هو لأنه سطح داكن أصلًا. */
+    --ink-brand: #071f5b;
+
+    /* — الشكل: شخصية واحدة لنصف القطر بدل ١٥ قيمة متفرّقة — */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.875rem;
+    --radius-lg: 1.25rem;
+    --radius-xl: 1.5rem;
+    --radius-pill: 999px;
+
+    /* — الظل: الفصل الأساسي بخط رفيع، والظل للعائم فعلًا فقط.
+         كان أثقلها 0 24px 70px على بطاقات ساكنة لا ترتفع عن شيء. — */
+    --shadow-none: none;
+    --shadow-sm: 0 1px 2px rgba(10, 27, 51, 0.06);
+    --shadow-md: 0 4px 12px rgba(10, 27, 51, 0.08);
+    --shadow-lg: 0 12px 32px rgba(10, 27, 51, 0.12);
+    --shadow-card: var(--shadow-sm);
+    --shadow-soft: var(--shadow-sm);
+
+    /* — سُلَّم المقاس: الأرضية 13px. كان ٧٧٪ من نصوص الصفحة تحتها — */
+    --fs-display: clamp(2rem, 4.2vw, 3.25rem);
+    --fs-h1: clamp(1.75rem, 3vw, 2.5rem);
+    --fs-h2: clamp(1.375rem, 2.2vw, 1.75rem);
+    --fs-h3: 1.1875rem;
+    --fs-body: 1.0625rem;
+    --fs-sm: 0.9375rem;
+    --fs-xs: 0.8125rem;
+
+    /* — الإيقاع العربي: النص 1.75 والعناوين 1.28–1.45 (كان 1.16) — */
+    --lh-display: 1.28;
+    --lh-heading: 1.35;
+    --lh-body: 1.75;
+
+    --tap-min: 2.75rem;
     --container: 1200px;
 }
 
@@ -62,8 +141,10 @@ body {
     color: var(--ink);
     background: var(--surface);
     font-family: var(--font-sans);
-    font-size: 1rem;
-    line-height: 1.75;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    /* العربية متصلة الحروف: أي تباعد يكسر الوصلات، فيُصفَّر صراحةً */
+    letter-spacing: 0;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
 }
@@ -115,7 +196,7 @@ svg {
        الشاشة — وهو ما كان يترك ~5 سم فراغًا على كل جانب بعد إلغاء سقفنا. */
     max-width: none;
     margin-inline: auto;
-    padding-inline: clamp(0.75rem, 1.5vw, 2.3rem);
+    padding-inline: var(--ui-page-inline);
 }
 
 .skip-link {
@@ -124,7 +205,7 @@ svg {
     inset-block-start: 0.8rem;
     inset-inline-start: 1rem;
     padding: 0.7rem 1rem;
-    border-radius: 0.6rem;
+    border-radius: var(--radius-sm);
     color: #fff;
     background: var(--brand-navy);
     transform: translateY(-160%);
@@ -141,7 +222,7 @@ svg {
     gap: 0.65rem;
     margin: 0 0 1rem;
     color: var(--brand-blue);
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 800;
     letter-spacing: 0.045em;
     text-transform: uppercase;
@@ -162,7 +243,7 @@ svg {
     gap: 0.65rem;
     padding: 0.75rem 1.2rem;
     border: 1px solid transparent;
-    border-radius: 0.75rem;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 800;
     line-height: 1;
@@ -176,34 +257,34 @@ svg {
 .button--primary {
     color: #fff;
     background: linear-gradient(135deg, #174de8, var(--brand-blue));
-    box-shadow: 0 12px 28px rgba(37, 117, 255, 0.24);
+    box-shadow: var(--shadow-sm);
 }
 
 .button--primary:hover {
-    box-shadow: 0 16px 34px rgba(37, 117, 255, 0.34);
+    box-shadow: var(--shadow-sm);
 }
 
 .button--ghost {
     border-color: rgba(7, 31, 91, 0.14);
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     background: rgba(255, 255, 255, 0.65);
 }
 
 .button--ghost:hover {
     border-color: var(--brand-blue);
-    background: #fff;
+    background: var(--surface);
 }
 
 .button--light {
-    color: var(--brand-navy);
-    background: #fff;
-    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.18);
+    color: var(--ink-brand);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
 }
 
 .button--large {
     min-height: 3.45rem;
     padding-inline: 1.45rem;
-    border-radius: 0.9rem;
+    border-radius: var(--radius-md);
     font-size: 0.96rem;
 }
 
@@ -251,7 +332,7 @@ svg {
     inset-block-start: 0;
     border-bottom: 1px solid rgba(223, 232, 245, 0.78);
     background: rgba(255, 255, 255, 0.88);
-    box-shadow: 0 8px 30px rgba(7, 31, 91, 0.035);
+    box-shadow: var(--shadow-sm);
     backdrop-filter: blur(18px);
 }
 
@@ -275,7 +356,7 @@ svg {
 
 .desktop-nav a {
     position: relative;
-    color: #40516a;
+    color: var(--muted);
     font-size: 0.87rem;
     font-weight: 700;
     transition: color 180ms ease;
@@ -283,7 +364,7 @@ svg {
 
 .desktop-nav a::after {
     position: absolute;
-    right: 0;
+    inset-inline-start: 0;
     bottom: -0.5rem;
     width: 0;
     height: 2px;
@@ -293,7 +374,7 @@ svg {
 }
 
 .desktop-nav a:hover {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .desktop-nav a:hover::after {
@@ -307,7 +388,7 @@ svg {
 }
 
 .nav-login {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 0.85rem;
     font-weight: 800;
     white-space: nowrap;
@@ -339,16 +420,14 @@ svg {
 .hero::after {
     position: absolute;
     z-index: 0;
-    right: -15%;
+    inset-inline-start: -15%;
     bottom: -24rem;
     width: 52rem;
     height: 52rem;
     border: 1px solid rgba(37, 117, 255, 0.15);
     border-radius: 50%;
     content: '';
-    box-shadow:
-        0 0 0 7rem rgba(37, 117, 255, 0.025),
-        0 0 0 14rem rgba(9, 215, 229, 0.018);
+    box-shadow: var(--shadow-sm);
 }
 
 .hero-orb {
@@ -361,7 +440,7 @@ svg {
 
 .hero-orb--blue {
     top: 5rem;
-    right: 3%;
+    inset-inline-start: 3%;
     width: 14rem;
     height: 14rem;
     background: rgba(9, 215, 229, 0.08);
@@ -369,7 +448,7 @@ svg {
 
 .hero-orb--orange {
     bottom: 9rem;
-    left: 2%;
+    inset-inline-end: 2%;
     width: 9rem;
     height: 9rem;
     background: rgba(255, 155, 39, 0.08);
@@ -393,28 +472,31 @@ svg {
 .hero-copy h1 {
     max-width: 26ch;
     margin: 0;
-    color: var(--brand-navy);
-    font-size: clamp(2rem, 3.2vw, 3.35rem);
-    font-weight: 950;
-    letter-spacing: -0.045em;
-    line-height: 1.16;
+    color: var(--ink-brand);
+    font-size: var(--fs-display);
+    font-weight: 700;
+    /* كان -0.045em: تباعد سالب على نص عربي يقارب الحروف حتى تكاد تتداخل
+       وصلاتها. العربية متصلة أصلًا فلا تحتمل ضغطًا أفقيًّا. */
+    letter-spacing: 0;
+    /* كان 1.16 — يخنق النقاط والمدّات فوق السطر وتحته */
+    line-height: var(--lh-display);
 }
 
+/* كان العنوان الفرعي تدرّجًا مقصوصًا على النص بلون شفاف: نسبة تباينه المقيسة
+   كانت 1.12، أي نصّ يكاد لا يُقاس أصلًا. الجملة الأهم في الموقع لا تُكتب
+   بلون زخرفي — تُكتب بلون التوكيد الوحيد. */
 .hero-copy h1 span {
     display: block;
     margin-top: 0.15em;
-    color: transparent;
-    background: linear-gradient(120deg, var(--brand-blue), #376fe0 42%, var(--brand-red) 78%, var(--brand-orange));
-    -webkit-background-clip: text;
-    background-clip: text;
+    color: var(--brand-blue);
 }
 
 .hero-lead {
     max-width: 38rem;
     margin: 1.6rem 0 0;
-    color: #4c5f79;
+    color: var(--muted);
     font-size: clamp(1.04rem, 1.7vw, 1.22rem);
-    line-height: 1.9;
+    line-height: var(--lh-body);
 }
 
 .hero-actions {
@@ -444,7 +526,7 @@ svg {
 }
 
 .hero-trust strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.45rem;
     font-weight: 900;
     line-height: 1.15;
@@ -452,7 +534,7 @@ svg {
 
 .hero-trust span {
     color: var(--muted);
-    font-size: 0.73rem;
+    font-size: 0.8125rem;
 }
 
 .hero-visual {
@@ -464,13 +546,14 @@ svg {
     position: absolute;
     z-index: 3;
     top: 50%;
+    /* توسيط فيزيائي: يعمل مع translate في الاتجاهين، والمنطقي يكسره لأن transform لا ينعكس. */
     right: 50%;
     width: min(100%, 37rem);
     overflow: hidden;
     border: 1px solid rgba(7, 31, 91, 0.11);
-    border-radius: 1.7rem;
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 40px 95px rgba(7, 31, 91, 0.18);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
     transform: translate(50%, -50%) rotate(-1deg);
     backdrop-filter: blur(14px);
 }
@@ -482,8 +565,8 @@ svg {
     justify-content: space-between;
     padding: 0 1.35rem;
     border-bottom: 1px solid var(--line);
-    color: var(--brand-navy);
-    font-size: 0.78rem;
+    color: var(--ink-brand);
+    font-size: 0.8125rem;
     font-weight: 800;
 }
 
@@ -491,8 +574,8 @@ svg {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    color: #0c8a75;
-    font-size: 0.68rem;
+    color: var(--evidence-measured);
+    font-size: 0.8125rem;
 }
 
 .live-dot::before {
@@ -501,7 +584,7 @@ svg {
     border-radius: 50%;
     content: '';
     background: #12c89b;
-    box-shadow: 0 0 0 5px rgba(18, 200, 155, 0.12);
+    box-shadow: var(--shadow-sm);
 }
 
 .score-panel {
@@ -529,7 +612,7 @@ svg {
     inset: 0.58rem;
     border-radius: 50%;
     content: '';
-    background: #fff;
+    background: var(--surface);
 }
 
 .score-ring strong,
@@ -539,7 +622,7 @@ svg {
 }
 
 .score-ring strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 2rem;
     font-weight: 950;
     line-height: 1;
@@ -548,24 +631,24 @@ svg {
 .score-ring span {
     margin-top: 0.25rem;
     color: var(--muted);
-    font-size: 0.62rem;
+    font-size: 0.8125rem;
 }
 
 .status-label {
     display: inline-flex;
     margin: 0 0 0.65rem;
     padding: 0.28rem 0.62rem;
-    border-radius: 2rem;
-    color: #a84510;
-    background: #fff0e4;
-    font-size: 0.62rem;
+    border-radius: var(--radius-xl);
+    color: var(--on-tint-warn);
+    background: var(--tint-warn);
+    font-size: 0.8125rem;
     font-weight: 800;
 }
 
 .score-panel h2 {
     max-width: 18rem;
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.03rem;
     font-weight: 850;
     line-height: 1.55;
@@ -584,8 +667,8 @@ svg {
     gap: 0.8rem;
     padding: 0.85rem;
     border: 1px solid #e9eef7;
-    border-radius: 0.9rem;
-    background: #fbfdff;
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
 }
 
 .finding-rank {
@@ -593,10 +676,10 @@ svg {
     width: 2rem;
     height: 2rem;
     place-content: center;
-    border-radius: 0.55rem;
+    border-radius: var(--radius-sm);
     color: var(--brand-blue);
-    background: #eaf2ff;
-    font-size: 0.66rem;
+    background: var(--surface-soft);
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
@@ -605,20 +688,20 @@ svg {
 }
 
 .mini-findings strong {
-    color: var(--brand-navy);
-    font-size: 0.76rem;
+    color: var(--ink-brand);
+    font-size: 0.8125rem;
 }
 
 .mini-findings small {
     color: var(--muted);
-    font-size: 0.58rem;
+    font-size: 0.8125rem;
 }
 
 .finding-meter {
     height: 0.32rem;
     overflow: hidden;
-    border-radius: 1rem;
-    background: #e8eef7;
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
 }
 
 .finding-meter i {
@@ -633,9 +716,9 @@ svg {
     justify-content: space-around;
     padding: 0.85rem 1rem;
     border-top: 1px solid var(--line);
-    color: #66758a;
-    background: #f8fbff;
-    font-size: 0.61rem;
+    color: var(--muted);
+    background: var(--surface-soft);
+    font-size: 0.8125rem;
     font-weight: 700;
 }
 
@@ -647,33 +730,33 @@ svg {
     gap: 0.7rem;
     padding: 0.85rem 1rem;
     border: 1px solid rgba(7, 31, 91, 0.08);
-    border-radius: 0.9rem;
-    background: rgba(255, 255, 255, 0.96);
+    border-radius: var(--radius-md);
+    background: var(--surface);
     box-shadow: var(--shadow-soft);
 }
 
 .floating-note span,
 .floating-note small {
     color: var(--muted);
-    font-size: 0.58rem;
+    font-size: 0.8125rem;
 }
 
 .floating-note strong {
     display: block;
-    color: var(--brand-navy);
-    font-size: 0.7rem;
+    color: var(--ink-brand);
+    font-size: 0.8125rem;
 }
 
 .floating-note--top {
     top: 2.3rem;
-    left: -1rem;
+    inset-inline-end: -1rem;
     display: grid;
     max-width: 12rem;
     border-top: 3px solid var(--brand-orange);
 }
 
 .floating-note--bottom {
-    right: -1.7rem;
+    inset-inline-start: -1.7rem;
     bottom: 2.5rem;
 }
 
@@ -683,7 +766,7 @@ svg {
     flex: 0 0 auto;
     border-radius: 50%;
     background: var(--brand-gradient);
-    box-shadow: 0 0 0 6px rgba(9, 215, 229, 0.12);
+    box-shadow: var(--shadow-sm);
 }
 
 .hero-strip {
@@ -695,8 +778,8 @@ svg {
     justify-content: center;
     gap: clamp(0.8rem, 2.4vw, 2.2rem);
     border-top: 1px solid rgba(7, 31, 91, 0.09);
-    color: #52627a;
-    font-size: 0.72rem;
+    color: var(--muted);
+    font-size: 0.8125rem;
     font-weight: 800;
 }
 
@@ -723,10 +806,10 @@ svg {
 
 .section-heading h2 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: clamp(2rem, 4.2vw, 3.6rem);
     font-weight: 950;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
     line-height: 1.18;
 }
 
@@ -751,7 +834,7 @@ svg {
 }
 
 .problems-section {
-    background: #fff;
+    background: var(--surface);
 }
 
 .problem-grid {
@@ -767,7 +850,7 @@ svg {
     padding: 1.65rem;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--surface);
     transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
@@ -779,7 +862,7 @@ svg {
 
 .problem-card::after {
     position: absolute;
-    left: -2.5rem;
+    inset-inline-end: -2.5rem;
     bottom: -3rem;
     width: 8rem;
     height: 8rem;
@@ -791,9 +874,9 @@ svg {
 .problem-card__number {
     position: absolute;
     top: 1.15rem;
-    left: 1.25rem;
+    inset-inline-end: 1.25rem;
     color: #c7d1df;
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
@@ -802,7 +885,7 @@ svg {
     width: 2.6rem;
     height: 2.6rem;
     margin-bottom: 2.4rem;
-    border-radius: 0.8rem;
+    border-radius: var(--radius-md);
     background: linear-gradient(135deg, #e6faff, #e9efff);
 }
 
@@ -819,7 +902,7 @@ svg {
 }
 
 .problem-card__icon::after {
-    right: 0.55rem;
+    inset-inline-start: 0.55rem;
     bottom: 0.45rem;
     width: 0.65rem;
     height: 2px;
@@ -829,7 +912,7 @@ svg {
 
 .problem-card h3 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.15rem;
     font-weight: 900;
 }
@@ -866,17 +949,17 @@ svg {
 
 .insight-banner p {
     margin: 0;
-    color: #52617a;
+    color: var(--muted);
     font-size: 0.86rem;
 }
 
 .insight-banner strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .insight-banner a {
     color: var(--brand-blue);
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 900;
     white-space: nowrap;
 }
@@ -919,7 +1002,7 @@ svg {
     padding: 1.7rem;
     border: 1px solid rgba(7, 31, 91, 0.08);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--surface);
     transition: transform 220ms ease, box-shadow 220ms ease;
 }
 
@@ -930,13 +1013,13 @@ svg {
 
 .service-card > span {
     color: var(--brand-blue);
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     font-weight: 950;
 }
 
 .service-card h3 {
     margin: 2.6rem 0 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.25rem;
     font-weight: 900;
 }
@@ -949,7 +1032,7 @@ svg {
 
 .service-card > i {
     position: absolute;
-    left: 1.4rem;
+    inset-inline-end: 1.4rem;
     bottom: 1.2rem;
     display: grid;
     width: 2.15rem;
@@ -964,7 +1047,7 @@ svg {
 .service-card::after {
     position: absolute;
     top: -3rem;
-    left: -3rem;
+    inset-inline-end: -3rem;
     width: 8rem;
     height: 8rem;
     border-radius: 50%;
@@ -1024,7 +1107,7 @@ svg {
 .method-quote span {
     position: absolute;
     top: -1.2rem;
-    right: 1.2rem;
+    inset-inline-start: 1.2rem;
     color: var(--brand-orange);
     font-family: inherit;
     font-size: 4rem;
@@ -1050,7 +1133,7 @@ svg {
 .method-steps::before {
     position: absolute;
     top: 2.9rem;
-    right: 1.35rem;
+    inset-inline-start: 1.35rem;
     bottom: 2.9rem;
     width: 1px;
     content: '';
@@ -1079,7 +1162,7 @@ svg {
     border-radius: 50%;
     color: var(--brand-cyan);
     background: #061a48;
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
@@ -1097,7 +1180,7 @@ svg {
 }
 
 .tools-section {
-    background: #fff;
+    background: var(--surface);
 }
 
 .tools-grid {
@@ -1113,7 +1196,7 @@ svg {
     padding: 1.4rem;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--surface);
     transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
@@ -1138,16 +1221,16 @@ svg {
 
 .tool-card__head span {
     padding: 0.27rem 0.55rem;
-    border-radius: 2rem;
+    border-radius: var(--radius-xl);
     color: var(--brand-blue);
-    background: #ebf3ff;
-    font-size: 0.58rem;
+    background: var(--surface-soft);
+    font-size: 0.8125rem;
     font-weight: 850;
 }
 
 .tool-card__head i {
     color: #b8c5d7;
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
     font-style: normal;
     font-weight: 900;
 }
@@ -1181,13 +1264,13 @@ svg {
 .tool-card__symbol span:nth-child(2) {
     inset: 0.8rem;
     border: 5px solid var(--brand-blue);
-    border-left-color: var(--brand-cyan);
+    border-inline-end-color: var(--brand-cyan);
 }
 
 .tool-card__symbol span:nth-child(3) {
     inset: 1.85rem;
     background: var(--brand-orange);
-    box-shadow: 0 0 0 5px rgba(255, 155, 39, 0.12);
+    box-shadow: var(--shadow-sm);
 }
 
 .tool-card--featured .tool-card__symbol span:nth-child(1) {
@@ -1196,13 +1279,13 @@ svg {
 
 .tool-card--featured .tool-card__symbol span:nth-child(2) {
     border-color: #fff;
-    border-left-color: var(--brand-cyan);
+    border-inline-end-color: var(--brand-cyan);
 }
 
 .tool-card__name {
     margin: 1.5rem 0 0.15rem;
     color: var(--brand-blue);
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
     font-weight: 900;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -1210,7 +1293,7 @@ svg {
 
 .tool-card h3 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.08rem;
     font-weight: 900;
 }
@@ -1218,7 +1301,7 @@ svg {
 .tool-card > p:last-child {
     margin: 0.55rem 0 0;
     color: var(--muted);
-    font-size: 0.77rem;
+    font-size: 0.8125rem;
 }
 
 .tool-card--featured .tool-card__name {
@@ -1263,7 +1346,7 @@ svg {
     display: flex;
     align-items: center;
     gap: 0.7rem;
-    color: #43536a;
+    color: var(--muted);
     font-size: 0.86rem;
 }
 
@@ -1273,9 +1356,9 @@ svg {
     height: 1.65rem;
     place-content: center;
     border-radius: 50%;
-    color: #087a6b;
-    background: #ddf8f1;
-    font-size: 0.65rem;
+    color: var(--on-tint-good);
+    background: var(--tint-good);
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
@@ -1284,7 +1367,7 @@ svg {
     padding: 1.5rem;
     border: 1px solid rgba(7, 31, 91, 0.1);
     border-radius: var(--radius-lg);
-    background: #fff;
+    background: var(--surface);
     box-shadow: var(--shadow-card);
 }
 
@@ -1292,7 +1375,7 @@ svg {
     position: absolute;
     z-index: -1;
     top: 3rem;
-    right: -3rem;
+    inset-inline-start: -3rem;
     width: 11rem;
     height: 11rem;
     border-radius: 50%;
@@ -1316,19 +1399,19 @@ svg {
 .sample-report__header small,
 .sample-report__header > span {
     color: var(--muted);
-    font-size: 0.6rem;
+    font-size: 0.8125rem;
 }
 
 .sample-report__header strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 0.9rem;
 }
 
 .sample-report__header > span {
     padding: 0.3rem 0.6rem;
-    border-radius: 2rem;
+    border-radius: var(--radius-xl);
     color: var(--brand-blue);
-    background: #edf4ff;
+    background: var(--surface-soft);
     font-weight: 800;
 }
 
@@ -1341,7 +1424,7 @@ svg {
 }
 
 .sample-report__score > strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 3.4rem;
     font-weight: 950;
     line-height: 1;
@@ -1349,21 +1432,21 @@ svg {
 
 .sample-report__score > strong small {
     color: var(--muted);
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
 }
 
 .sample-report__score > div {
     display: grid;
     gap: 0.55rem;
     color: var(--muted);
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
 }
 
 .report-bar {
     height: 0.55rem;
     overflow: hidden;
-    border-radius: 2rem;
-    background: #e8eef8;
+    border-radius: var(--radius-xl);
+    background: var(--surface-soft);
 }
 
 .report-bar i {
@@ -1385,19 +1468,19 @@ svg {
     align-content: space-between;
     padding: 0.9rem;
     border: 1px solid var(--line);
-    border-radius: 0.9rem;
-    background: #fbfdff;
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
 }
 
 .sample-report__grid span,
 .sample-report__grid small {
     color: var(--muted);
-    font-size: 0.55rem;
+    font-size: 0.8125rem;
 }
 
 .sample-report__grid strong {
-    color: var(--brand-navy);
-    font-size: 0.76rem;
+    color: var(--ink-brand);
+    font-size: 0.8125rem;
 }
 
 .sample-report__next {
@@ -1405,23 +1488,23 @@ svg {
     gap: 0.35rem;
     margin-top: 0.8rem;
     padding: 1rem;
-    border-radius: 0.9rem;
+    border-radius: var(--radius-md);
     background: linear-gradient(90deg, #edf4ff, #f2fdff);
 }
 
 .sample-report__next span {
     color: var(--brand-blue);
-    font-size: 0.58rem;
+    font-size: 0.8125rem;
     font-weight: 850;
 }
 
 .sample-report__next strong {
-    color: var(--brand-navy);
-    font-size: 0.76rem;
+    color: var(--ink-brand);
+    font-size: 0.8125rem;
 }
 
 .about-section {
-    background: #fff;
+    background: var(--surface);
 }
 
 .about-intro {
@@ -1450,7 +1533,7 @@ svg {
 .about-monogram::before {
     position: absolute;
     top: -5rem;
-    right: -5rem;
+    inset-inline-start: -5rem;
     width: 13rem;
     height: 13rem;
     border-radius: 50%;
@@ -1462,7 +1545,7 @@ svg {
 .about-monogram::after {
     position: absolute;
     bottom: -4rem;
-    left: -4rem;
+    inset-inline-end: -4rem;
     width: 10rem;
     height: 10rem;
     border-radius: 50%;
@@ -1481,7 +1564,7 @@ svg {
 
 .about-monogram > span {
     position: absolute;
-    right: 1.5rem;
+    inset-inline-start: 1.5rem;
     bottom: 0.7rem;
     color: rgba(255, 255, 255, 0.08);
     font-size: 7rem;
@@ -1491,16 +1574,16 @@ svg {
 
 .about-copy h2 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: clamp(2.2rem, 4.5vw, 3.8rem);
     font-weight: 950;
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
     line-height: 1.1;
 }
 
 .about-copy .about-lead {
     margin: 1.2rem 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.1rem;
     font-weight: 750;
     line-height: 1.8;
@@ -1538,7 +1621,7 @@ svg {
 .profile-card {
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--surface);
 }
 
 .timeline-panel {
@@ -1557,14 +1640,14 @@ svg {
 .panel-heading span,
 .panel-heading small {
     color: var(--brand-blue);
-    font-size: 0.62rem;
+    font-size: 0.8125rem;
     font-weight: 850;
 }
 
 .panel-heading h3 {
     max-width: 32rem;
     margin: 0.35rem 0 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.1rem;
     font-weight: 900;
 }
@@ -1580,7 +1663,7 @@ svg {
 .experience-timeline::before {
     position: absolute;
     top: 2.2rem;
-    right: 0.36rem;
+    inset-inline-start: 0.36rem;
     bottom: 2.2rem;
     width: 1px;
     content: '';
@@ -1609,26 +1692,26 @@ svg {
     border: 3px solid #fff;
     border-radius: 50%;
     background: var(--brand-blue);
-    box-shadow: 0 0 0 1px rgba(37, 117, 255, 0.5);
+    box-shadow: var(--shadow-sm);
 }
 
 .experience-timeline small,
 .experience-timeline li div > span {
     color: var(--muted);
-    font-size: 0.62rem;
+    font-size: 0.8125rem;
 }
 
 .experience-timeline h4 {
     margin: 0.2rem 0 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 0.94rem;
     font-weight: 900;
 }
 
 .experience-timeline p {
     margin: 0.12rem 0;
-    color: #465970;
-    font-size: 0.74rem;
+    color: var(--muted);
+    font-size: 0.8125rem;
     font-weight: 700;
 }
 
@@ -1650,7 +1733,7 @@ svg {
 
 .profile-card--education::after {
     position: absolute;
-    left: -2.5rem;
+    inset-inline-end: -2.5rem;
     bottom: -3.5rem;
     width: 9rem;
     height: 9rem;
@@ -1663,7 +1746,7 @@ svg {
     display: block;
     margin-bottom: 1.2rem;
     color: var(--brand-blue);
-    font-size: 0.62rem;
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
@@ -1678,7 +1761,7 @@ svg {
     place-content: center;
     margin-bottom: 1.4rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 0.7rem;
+    border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -1686,7 +1769,7 @@ svg {
     position: relative;
     z-index: 1;
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1rem;
     font-weight: 900;
 }
@@ -1700,14 +1783,14 @@ svg {
     z-index: 1;
     margin: 0.3rem 0;
     color: inherit;
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
 }
 
 .profile-card small {
     position: relative;
     z-index: 1;
     color: inherit;
-    font-size: 0.62rem;
+    font-size: 0.8125rem;
     opacity: 0.65;
 }
 
@@ -1726,14 +1809,14 @@ svg {
     height: 1.65rem;
     place-content: center;
     border-radius: 50%;
-    color: #087a6b;
-    background: #ddf8f1;
-    font-size: 0.58rem;
+    color: var(--on-tint-good);
+    background: var(--tint-good);
+    font-size: 0.8125rem;
 }
 
 .credential strong {
-    color: var(--brand-navy);
-    font-size: 0.72rem;
+    color: var(--ink-brand);
+    font-size: 0.8125rem;
 }
 
 .skill-cloud {
@@ -1745,10 +1828,10 @@ svg {
 .skill-cloud span {
     padding: 0.38rem 0.65rem;
     border: 1px solid var(--line);
-    border-radius: 2rem;
-    color: #4d5e76;
-    background: #fafcff;
-    font-size: 0.6rem;
+    border-radius: var(--radius-xl);
+    color: var(--muted);
+    background: var(--surface-soft);
+    font-size: 0.8125rem;
     font-weight: 700;
 }
 
@@ -1771,7 +1854,7 @@ svg {
     margin: 0;
     font-size: clamp(2.3rem, 4.5vw, 3.8rem);
     font-weight: 950;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
     line-height: 1.13;
 }
 
@@ -1801,7 +1884,7 @@ svg {
 
 .principles-grid span {
     color: var(--brand-cyan);
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
@@ -1814,7 +1897,7 @@ svg {
 .principles-grid p {
     margin: 0.45rem 0 0;
     color: rgba(255, 255, 255, 0.57);
-    font-size: 0.74rem;
+    font-size: 0.8125rem;
 }
 
 .knowledge-section {
@@ -1835,7 +1918,7 @@ svg {
     overflow: hidden;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--surface);
     transition: transform 220ms ease, box-shadow 220ms ease;
 }
 
@@ -1879,7 +1962,7 @@ svg {
     height: 9rem;
     border: 1px solid rgba(255, 255, 255, 0.28);
     border-radius: 50%;
-    box-shadow: 0 0 0 2.5rem rgba(255, 255, 255, 0.04), 0 0 0 5rem rgba(255, 255, 255, 0.025);
+    box-shadow: var(--shadow-sm);
 }
 
 .knowledge-card > small,
@@ -1893,14 +1976,14 @@ svg {
     display: block;
     margin-top: 1.25rem;
     color: var(--brand-blue);
-    font-size: 0.6rem;
+    font-size: 0.8125rem;
     font-weight: 850;
 }
 
 .knowledge-card h3 {
     margin-top: 0.35rem;
     margin-bottom: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.1rem;
     font-weight: 900;
 }
@@ -1910,7 +1993,7 @@ svg {
     margin-top: 0.45rem;
     margin-bottom: 0;
     color: var(--muted);
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
 }
 
 .knowledge-card__link {
@@ -1920,8 +2003,8 @@ svg {
     margin-top: 1rem;
     padding-block: 0.9rem 1.15rem;
     border-top: 1px solid var(--line);
-    color: var(--brand-navy);
-    font-size: 0.65rem;
+    color: var(--ink-brand);
+    font-size: 0.8125rem;
     font-weight: 850;
 }
 
@@ -1930,7 +2013,7 @@ svg {
 }
 
 .faq-section {
-    background: #fff;
+    background: var(--surface);
 }
 
 .faq-layout {
@@ -1954,18 +2037,18 @@ svg {
     gap: 0.35rem;
     padding: 1rem 1.15rem;
     border: 1px solid var(--line);
-    border-radius: 0.9rem;
+    border-radius: var(--radius-md);
     background: var(--surface-soft);
 }
 
 .faq-contact span {
     color: var(--muted);
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
 }
 
 .faq-contact a {
     color: var(--brand-blue);
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
     font-weight: 850;
 }
 
@@ -1985,7 +2068,7 @@ svg {
     gap: 1rem;
     cursor: pointer;
     list-style: none;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1rem;
     font-weight: 850;
 }
@@ -2007,6 +2090,7 @@ svg {
 .faq-item summary i::after {
     position: absolute;
     top: 50%;
+    /* توسيط فيزيائي: يعمل مع translate في الاتجاهين، والمنطقي يكسره لأن transform لا ينعكس. */
     right: 50%;
     width: 0.7rem;
     height: 1px;
@@ -2028,7 +2112,7 @@ svg {
 
 .faq-item[open] summary i::before,
 .faq-item[open] summary i::after {
-    background: #fff;
+    background: var(--surface);
 }
 
 .faq-item[open] summary i::after {
@@ -2044,7 +2128,7 @@ svg {
 
 .diagnosis-section {
     padding-block: 0 6rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .diagnosis-card {
@@ -2062,12 +2146,12 @@ svg {
         linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
         linear-gradient(135deg, #0c43c8, #071f5b 65%);
     background-size: 48px 48px, 48px 48px, auto;
-    box-shadow: 0 35px 90px rgba(7, 31, 91, 0.22);
+    box-shadow: var(--shadow-sm);
 }
 
 .diagnosis-card__glow {
     position: absolute;
-    left: -4rem;
+    inset-inline-end: -4rem;
     bottom: -8rem;
     width: 24rem;
     height: 24rem;
@@ -2091,7 +2175,7 @@ svg {
     margin: 0;
     font-size: clamp(2.4rem, 5.2vw, 4.7rem);
     font-weight: 950;
-    letter-spacing: -0.055em;
+    letter-spacing: 0;
     line-height: 1.06;
 }
 
@@ -2112,7 +2196,7 @@ svg {
 .diagnosis-actions > span {
     max-width: 18rem;
     color: rgba(255, 255, 255, 0.56);
-    font-size: 0.64rem;
+    font-size: 0.8125rem;
 }
 
 .diagnosis-card__mark {
@@ -2138,7 +2222,14 @@ svg {
     max-width: 20rem;
     margin: 1.25rem 0 0;
     color: rgba(255, 255, 255, 0.55);
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
+}
+
+/* سطر المكان: تابعٌ للجملة التي فوقه لا فقرة مستقلة، فيقترب منها ويخفت
+   قليلًا. كان هذا المحتوى عمودًا كاملًا بعنوان «المقر» — أي لافتة مكتب. */
+.footer-brand__where {
+    margin-block-start: 0.5rem !important;
+    opacity: 0.85;
 }
 
 .footer-links {
@@ -2156,14 +2247,14 @@ svg {
 .footer-links strong {
     margin-bottom: 0.45rem;
     color: var(--brand-cyan);
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
 .footer-links a,
 .footer-links span {
     color: rgba(255, 255, 255, 0.57);
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
     transition: color 180ms ease;
 }
 
@@ -2179,7 +2270,7 @@ svg {
     gap: 2rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.38);
-    font-size: 0.61rem;
+    font-size: 0.8125rem;
 }
 
 .js .reveal {
@@ -2236,8 +2327,8 @@ svg {
         height: 2.75rem;
         padding: 0.72rem;
         border: 1px solid var(--line);
-        border-radius: 0.75rem;
-        background: #fff;
+        border-radius: var(--radius-md);
+        background: var(--surface);
         cursor: pointer;
     }
 
@@ -2246,7 +2337,7 @@ svg {
         width: 100%;
         height: 2px;
         margin: auto;
-        border-radius: 1rem;
+        border-radius: var(--radius-md);
         background: var(--brand-navy);
         transition: transform 180ms ease, opacity 180ms ease;
     }
@@ -2267,7 +2358,7 @@ svg {
         display: block;
         border-top: 1px solid var(--line);
         background: color-mix(in srgb, var(--surface) 96%, transparent);
-        box-shadow: 0 18px 35px rgba(7, 31, 91, 0.09);
+        box-shadow: var(--shadow-sm);
         backdrop-filter: blur(18px);
     }
 
@@ -2338,11 +2429,11 @@ svg {
     }
 
     .floating-note--top {
-        left: 0;
+        inset-inline-end: 0;
     }
 
     .floating-note--bottom {
-        right: 0;
+        inset-inline-start: 0;
     }
 
     .hero-strip {
@@ -2413,7 +2504,7 @@ svg {
 
     .diagnosis-card__mark {
         position: absolute;
-        left: 3rem;
+        inset-inline-end: 3rem;
         bottom: 2rem;
         opacity: 0.16;
     }
@@ -2426,7 +2517,7 @@ svg {
 
 @media (max-width: 760px) {
     .container {
-        padding-inline: clamp(1rem, 4vw, 1.25rem);
+        padding-inline: var(--ui-page-inline);
     }
 
     .brand-logo__image {
@@ -2589,7 +2680,7 @@ svg {
     .diagnosis-card {
         min-height: 28rem;
         padding: 2rem 1.4rem;
-        border-radius: 1.7rem;
+        border-radius: var(--radius-xl);
     }
 
     .diagnosis-card h2 {
@@ -2632,7 +2723,7 @@ svg {
     overflow: hidden;
     height: 0.55rem;
     border-radius: 999px;
-    background: #dfe8f5;
+    background: var(--surface-soft);
 }
 
 .consultation-progress > span {
@@ -2670,7 +2761,7 @@ svg {
 .consultation-failure-reasons li { color: var(--muted); line-height: 1.6; }
 .consultation-review-group { padding-block: 0.75rem; border-bottom: 1px solid var(--line); }
 .consultation-review-group:last-child { border-bottom: 0; }
-.consultation-conflicts .card--warning { margin-block: 0.75rem; border-color: #f2b47c; background: #fff8f2; }
+.consultation-conflicts .card--warning { margin-block: 0.75rem; border-color: #f2b47c; background: var(--tint-warn); }
 .consultation-conflicts textarea,
 .admin-question textarea { display: block; width: 100%; min-height: 5rem; margin-block: 0.4rem 0.75rem; }
 .consultation-data-actions,
@@ -2678,7 +2769,7 @@ svg {
 .consultation-data-actions { margin-block-start: 1.5rem; padding-block: 1rem; border-top: 1px solid var(--line); }
 .consultation-data-actions form,
 .consultation-file form { margin: 0; }
-.link-button { appearance: none; border: 0; padding: 0; background: none; color: #a22b23; text-decoration: underline; cursor: pointer; font: inherit; }
+.link-button { appearance: none; border: 0; padding: 0; background: none; color: var(--on-tint-bad); text-decoration: underline; cursor: pointer; font: inherit; }
 .consultation-evidence form { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .consultation-file { padding-block: 0.6rem; border-bottom: 1px solid var(--line); }
 .admin-question { padding-block: 1rem; border-top: 1px solid var(--line); }
@@ -2700,7 +2791,7 @@ svg {
     }
 
     .hero-trust span {
-        font-size: 0.62rem;
+        font-size: 0.8125rem;
     }
 
     .hero-visual {
@@ -2712,7 +2803,7 @@ svg {
     }
 
     .result-window__top > span:first-child {
-        font-size: 0.68rem;
+        font-size: 0.8125rem;
     }
 
     .score-ring {
@@ -2772,7 +2863,7 @@ svg {
     align-items: flex-start;
 }
 
-.learning-progress {
+.marketing-learning-progress {
     min-inline-size: 8.5rem;
     padding: 1rem 1.25rem;
     border: 1px solid var(--line);
@@ -2781,17 +2872,17 @@ svg {
     text-align: center;
 }
 
-.learning-progress strong,
-.learning-progress span {
+.marketing-learning-progress strong,
+.marketing-learning-progress span {
     display: block;
 }
 
-.learning-progress strong {
+.marketing-learning-progress strong {
     color: var(--brand-blue);
     font-size: 1.35rem;
 }
 
-.learning-progress span {
+.marketing-learning-progress span {
     color: var(--text-muted);
     font-size: 0.82rem;
 }
@@ -2993,6 +3084,41 @@ svg {
     font-weight: 700;
 }
 
+.learning-ai-help {
+    display: grid;
+    gap: 1rem;
+    margin-block: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+}
+
+.learning-ai-help__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+}
+
+.learning-ai-help__head :where(.eyebrow, p) {
+    margin: 0;
+}
+
+.learning-ai-help__result {
+    padding-block-start: 1rem;
+    border-block-start: 1px solid var(--line);
+}
+
+.learning-ai-help__result > p {
+    margin-block: .65rem;
+}
+
+.learning-ai-help__result .chip {
+    color: var(--on-tint-warn);
+    background: var(--tint-warn);
+}
+
 .learning-saved-note,
 .learning-review-form small {
     color: var(--text-muted);
@@ -3059,7 +3185,7 @@ svg {
 
 .learning-score span {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
 }
 
 .learning-feedback-list {
@@ -3091,7 +3217,7 @@ svg {
 
 .learning-next-action {
     border-color: #f0b44d;
-    background: #fff9eb;
+    background: var(--tint-warn);
 }
 
 [data-theme="dark"] .learning-next-action {
@@ -3138,7 +3264,7 @@ svg {
 .learning-history__items span,
 .learning-history__items time {
     color: var(--text-muted);
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
 }
 
 .learning-result-actions {
@@ -3158,6 +3284,10 @@ svg {
 
     .learning-step-layout,
     .learning-result-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .learning-ai-help__head {
         grid-template-columns: 1fr;
     }
 
@@ -3181,7 +3311,7 @@ svg {
    ========================================================================== */
 
 .desktop-nav a.is-active {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .desktop-nav a.is-active::after {
@@ -3192,12 +3322,12 @@ svg {
 .tools-status {
     margin: -1rem 0 1.6rem;
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     text-align: center;
 }
 
 .tools-status b {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-weight: 900;
 }
 
@@ -3215,7 +3345,7 @@ svg {
 .tool-card__desc {
     margin: 0.55rem 0 0;
     color: var(--muted);
-    font-size: 0.77rem;
+    font-size: 0.8125rem;
 }
 
 .tool-card--featured .tool-card__desc {
@@ -3234,21 +3364,21 @@ svg {
 
 .tool-card__state b {
     padding: 0.2rem 0.5rem;
-    border-radius: 2rem;
-    color: #0a7d4f;
-    background: #e7f8ef;
-    font-size: 0.6rem;
+    border-radius: var(--radius-xl);
+    color: var(--on-tint-good);
+    background: var(--tint-good);
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
 .tool-card--soon .tool-card__state b {
-    color: #8a6a1f;
-    background: #fdf3e0;
+    color: var(--on-tint-warn);
+    background: var(--tint-warn);
 }
 
 .tool-card__state em {
     color: var(--brand-blue);
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
     font-style: normal;
     font-weight: 800;
 }
@@ -3286,9 +3416,9 @@ svg {
     gap: 0.5rem;
     padding: 0.45rem 0.85rem;
     border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 2rem;
+    border-radius: var(--radius-xl);
     color: rgba(255, 255, 255, 0.82);
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 700;
 }
 
@@ -3299,7 +3429,7 @@ svg {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.16);
     color: #fff;
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
     place-items: center;
 }
 
@@ -3313,10 +3443,10 @@ svg {
 .page-hero h1 {
     max-width: 20ch;
     margin: 0.6rem 0 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: clamp(2rem, 4.4vw, 3.4rem);
     font-weight: 950;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
     line-height: 1.08;
 }
 
@@ -3343,7 +3473,7 @@ svg {
 }
 
 .page-hero__facts strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.7rem;
     font-weight: 950;
     line-height: 1;
@@ -3351,7 +3481,7 @@ svg {
 
 .page-hero__facts span {
     color: var(--muted);
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
 }
 
 .page-hero__actions {
@@ -3366,7 +3496,7 @@ svg {
     align-items: center;
     gap: 0.5rem;
     color: var(--muted);
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
 }
 
 .crumbs a {
@@ -3375,13 +3505,13 @@ svg {
 }
 
 .crumbs b {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-weight: 800;
 }
 
 /* شبكة الأدوات في الصفحة العامة */
 .catalog-section {
-    background: #fff;
+    background: var(--surface);
 }
 
 .catalog-grid {
@@ -3396,7 +3526,7 @@ svg {
     padding: 1.4rem;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--surface);
     transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
 }
 
@@ -3420,34 +3550,34 @@ svg {
 
 .catalog-card__category {
     padding: 0.25rem 0.55rem;
-    border-radius: 2rem;
+    border-radius: var(--radius-xl);
     color: var(--brand-blue);
-    background: #ebf3ff;
-    font-size: 0.6rem;
+    background: var(--surface-soft);
+    font-size: 0.8125rem;
     font-weight: 850;
 }
 
 .pill {
     padding: 0.25rem 0.55rem;
-    border-radius: 2rem;
-    font-size: 0.6rem;
+    border-radius: var(--radius-xl);
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
 .pill--live {
-    color: #0a7d4f;
-    background: #e7f8ef;
+    color: var(--on-tint-good);
+    background: var(--tint-good);
 }
 
 .pill--soon {
-    color: #8a6a1f;
-    background: #fdf3e0;
+    color: var(--on-tint-warn);
+    background: var(--tint-warn);
 }
 
 .catalog-card__name {
     margin: 0 0 0.15rem;
     color: var(--brand-blue);
-    font-size: 0.62rem;
+    font-size: 0.8125rem;
     font-weight: 900;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -3455,7 +3585,7 @@ svg {
 
 .catalog-card h2 {
     margin: 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.08rem;
     font-weight: 900;
 }
@@ -3463,7 +3593,7 @@ svg {
 .catalog-card__desc {
     margin: 0.55rem 0 0;
     color: var(--muted);
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     line-height: 1.8;
 }
 
@@ -3471,7 +3601,7 @@ svg {
     margin-top: auto;
     padding-top: 1.2rem;
     color: var(--brand-blue);
-    font-size: 0.74rem;
+    font-size: 0.8125rem;
     font-weight: 800;
 }
 
@@ -3513,20 +3643,20 @@ svg {
 }
 
 .tool-hero__meta strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.35rem;
     font-weight: 950;
 }
 
 .tool-hero__meta span {
     color: var(--muted);
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
 }
 
 .tool-hero__note {
     margin-top: 1rem;
     color: var(--muted);
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
 }
 
 .tool-hero__panel {
@@ -3535,13 +3665,13 @@ svg {
     padding: 1.5rem;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--surface);
     box-shadow: var(--shadow-soft);
 }
 
 .panel-block h2 {
     margin: 0 0 0.8rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 0.92rem;
     font-weight: 900;
 }
@@ -3550,7 +3680,7 @@ svg {
     display: block;
     margin-top: 0.6rem;
     color: var(--muted);
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
 }
 
 .notice {
@@ -3563,14 +3693,14 @@ svg {
 }
 
 .notice strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 0.92rem;
 }
 
 .notice p {
     margin: 0.6rem 0 1.1rem;
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
 }
 
 /* معاينة أسئلة الأداة قبل التسجيل */
@@ -3588,18 +3718,18 @@ svg {
     padding: 1.3rem;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--surface);
 }
 
 .step-card__number {
     color: var(--brand-blue);
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
 .step-card h3 {
     margin: 0.4rem 0 0.9rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 0.95rem;
     font-weight: 900;
 }
@@ -3616,13 +3746,13 @@ svg {
     padding-inline-start: 0.9rem;
     border-inline-start: 2px solid var(--line);
     color: var(--muted);
-    font-size: 0.74rem;
+    font-size: 0.8125rem;
     line-height: 1.7;
 }
 
 /* كيف تسير التجربة */
 .how-section {
-    background: #fff;
+    background: var(--surface);
 }
 
 .journey-steps {
@@ -3643,13 +3773,13 @@ svg {
 
 .journey-steps span {
     color: var(--brand-blue);
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
 .journey-steps h3 {
     margin: 0.4rem 0 0.5rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1rem;
     font-weight: 900;
 }
@@ -3657,7 +3787,7 @@ svg {
 .journey-steps p {
     margin: 0;
     color: var(--muted);
-    font-size: 0.76rem;
+    font-size: 0.8125rem;
     line-height: 1.8;
 }
 
@@ -3733,17 +3863,20 @@ svg {
     width: 2.6rem;
     height: 2.6rem;
     margin-block-end: 0.9rem;
-    border-radius: 0.9rem;
+    border-radius: var(--radius-md);
     background: var(--surface-soft);
     color: var(--brand-blue);
-    font-size: 1.15rem;
-    font-weight: 800;
     place-items: center;
+}
+
+.sector-card__mark svg {
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
 }
 
 .sector-card__name {
     margin: 0 0 0.3rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.25rem;
 }
 
@@ -3783,16 +3916,45 @@ svg {
     font-size: 1.05rem;
 }
 
+/* الفجوة المُعلَنة تُقرأ فجوةً لا حقيقةً: بلا رقم عريض، وبنبرة خافتة. */
+.sector-card__facts-gap {
+    color: var(--muted);
+    font-style: italic;
+}
+
 .sector-card__link {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
     margin-block-start: auto;
+    min-block-size: 2.75rem;
     color: var(--brand-blue);
     font-size: 0.9rem;
     font-weight: 700;
     text-decoration: none;
 }
 
+/* يمدّ هدف النقر على البطاقة كاملة بدل سطر بارتفاع 27px.
+   البطاقة `position: relative` أصلًا، فيكفي امتداد الطبقة فوقها. */
+.sector-card__link::after {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    content: '';
+}
+
 .sector-card__link:hover {
     text-decoration: underline;
+}
+
+/* التركيز يظهر على البطاقة كلها لأنها هي ما سيُفتح فعلًا. */
+.sector-card:focus-within {
+    outline: 3px solid var(--brand-blue);
+    outline-offset: 2px;
+}
+
+.sector-card__link:focus-visible {
+    outline: none;
 }
 
 @media (max-width: 1080px) {
@@ -3897,7 +4059,7 @@ svg {
 .catalog-card__pain,
 .tool-card__pain {
     margin: 0 0 0.6rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 0.86rem;
     font-weight: 800;
     line-height: 1.7;
@@ -3913,13 +4075,13 @@ svg {
 }
 
 .catalog-card--soon .catalog-card__pain {
-    color: #40516a;
+    color: var(--muted);
 }
 
 .tool-hero__pain {
     max-width: 34rem;
     margin: 0 0 0.8rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: clamp(1.05rem, 2vw, 1.35rem);
     font-weight: 850;
     line-height: 1.7;
@@ -3929,7 +4091,7 @@ svg {
     display: block;
     margin-top: 0.3rem;
     color: var(--muted);
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     font-style: normal;
     font-weight: 600;
 }
@@ -3937,18 +4099,18 @@ svg {
 .step-card li em {
     display: block;
     margin-top: 0.25rem;
-    color: #7a879b;
-    font-size: 0.68rem;
+    color: var(--muted);
+    font-size: 0.8125rem;
     font-style: normal;
     line-height: 1.6;
 }
 
 .tool-card__head i {
     padding: 0.2rem 0.5rem;
-    border-radius: 2rem;
-    background: #fdf3e0;
-    color: #8a6a1f;
-    font-size: 0.58rem;
+    border-radius: var(--radius-xl);
+    background: var(--tint-warn);
+    color: var(--on-tint-warn);
+    font-size: 0.8125rem;
     font-style: normal;
     font-weight: 900;
 }
@@ -3970,16 +4132,16 @@ svg {
 
 .try-head h1 {
     margin: 0.4rem 0 0;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: clamp(1.6rem, 3.6vw, 2.4rem);
     font-weight: 900;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
 }
 
 .try-note {
     margin: 0;
     color: var(--muted);
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
 }
 
 .try-cta {
@@ -4022,11 +4184,11 @@ svg {
 .legal-updated {
     margin: 1rem 0 0;
     color: var(--muted);
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
 }
 
 .legal-section {
-    background: #fff;
+    background: var(--surface);
 }
 
 .legal-body {
@@ -4037,7 +4199,7 @@ svg {
 
 .legal-block h2 {
     margin: 0 0 0.7rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.2rem;
     font-weight: 900;
 }
@@ -4076,17 +4238,101 @@ svg {
     color-scheme: dark;
     --surface: #0b1220;
     --surface-soft: #101a2e;
+    --hero-canvas: #0d1524;
     --surface-warm: #17131f;
     --ink: #e8eefb;
-    --muted: #93a2bb;
-    --line: #23324d;
-    --shadow-card: 0 24px 70px rgba(0, 0, 0, 0.45);
-    --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.35);
+    /* كان #93a2bb بنسبة 7.25، وهو أفتح ممّا يلزم على سطح داكن وأخفت ممّا يلزم
+       عندما يُعاد استعماله على سطح فاتح. #a8b6ce يعطي 9.14 على الداكن. */
+    --muted: #a8b6ce;
+    --ink-soft: #c4d0e4;
+    --line: #22314c;
+    --line-strong: #33456a;
+
+    /* التوكيد يُفتح على الداكن وإلا هبط تحت الحدّ: 7.98 مقابل 2.1 للأزرق الفاتح */
+    --brand-blue: #7fa8ff;
+    --brand-cyan: #4bc6d6;
+    --brand-orange: #f5b570;
+    --brand-red: #ff9c92;
+    --accent-quiet: #16233c;
+    --accent-hover: #a3c1ff;
+    --brand-gradient: linear-gradient(0deg, #1d4ed8, #1d4ed8);
+    --warm-gradient: linear-gradient(0deg, #9a4a08, #9a4a08);
+
+    --evidence-measured: #3fcfa8;
+    --evidence-derived: #7fa8ff;
+    --evidence-inferred: #f5b570;
+
+    /* طبقات شفافة فوق السطح الداكن: تحفظ الدلالة دون كتلة فاتحة تحرق العين */
+    --tint-good: rgba(63, 207, 168, 0.12);
+    --tint-warn: rgba(245, 181, 112, 0.12);
+    --tint-bad: rgba(255, 156, 146, 0.12);
+    --tint-info: rgba(127, 168, 255, 0.12);
+
+    --on-tint-good: #3fcfa8;
+    --on-tint-warn: #f5b570;
+    --on-tint-bad: #ff9c92;
+
+    --ink-brand: #b9c9ee;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.55);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+    --shadow-card: var(--shadow-sm);
+    --shadow-soft: var(--shadow-sm);
 }
 
 :root[data-theme='dark'] img.theme-invertible,
 :root[data-theme='dark'] .hero-orb {
     opacity: 0.55;
+}
+
+/*
+ * مبدّل اللغة — بنفس ارتفاع مبدّل المظهر وبجواره.
+ *
+ * الرموز مكتوبة بلغتها («العربية» لا «Arabic»): من يبحث عن لغته يبحث عن
+ * شكلها لا عن اسمها في لغة لا يقرؤها. ولذلك `dir` على كل خيار بمفرده،
+ * وإلا انقلب ترتيب حروف العربية داخل شريط إنجليزي.
+ */
+.language-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.15rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+}
+
+.language-switcher__option {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.language-switcher__option:hover {
+    color: var(--ink);
+}
+
+.language-switcher__option.is-current {
+    background: var(--brand-blue);
+    color: #fff;
+}
+
+/*
+ * داخل بطاقة الحساب: البطاقة عمود مركزيّ لا شريط، فالمبدّل يُوسَّط تحتها
+ * بفاصل يفصله عن روابط «سجّل» و«نسيت كلمة المرور» — وإلا قُرئ كأحدها.
+ */
+.auth-card > .language-switcher {
+    display: flex;
+    justify-content: center;
+    margin-block-start: 1.25rem;
+    margin-inline: auto;
 }
 
 .theme-toggle {
@@ -4139,7 +4385,7 @@ svg {
     gap: 0.35rem;
     padding: 0.15rem 0.6rem;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     line-height: 1.6;
     border: 1px solid transparent;
@@ -4154,19 +4400,19 @@ svg {
 }
 
 .evidence-badge--measured {
-    color: #0c7a43;
+    color: var(--on-tint-good);
     background: rgba(18, 183, 106, 0.12);
     border-color: rgba(18, 183, 106, 0.35);
 }
 
 .evidence-badge--derived {
-    color: #1d5fd6;
+    color: var(--brand-blue);
     background: rgba(37, 117, 255, 0.12);
     border-color: rgba(37, 117, 255, 0.35);
 }
 
 .evidence-badge--inferred {
-    color: #b05c00;
+    color: var(--on-tint-warn);
     background: rgba(255, 155, 39, 0.14);
     border-color: rgba(255, 155, 39, 0.4);
 }
@@ -4185,7 +4431,7 @@ svg {
 }
 
 .freshness-line__gap {
-    color: #b05c00;
+    color: var(--on-tint-warn);
 }
 
 .gaps-diff {
@@ -4199,8 +4445,8 @@ svg {
     margin: 0;
 }
 
-.gaps-diff__closed b { color: #0c7a43; }
-.gaps-diff__new b { color: #b05c00; }
+.gaps-diff__closed b { color: var(--on-tint-good); }
+.gaps-diff__new b { color: var(--on-tint-warn); }
 
 :root[data-theme='dark'] .gaps-diff__closed b { color: #4ade9b; }
 :root[data-theme='dark'] .gaps-diff__new b { color: #ffb75e; }
@@ -4213,9 +4459,21 @@ svg {
    الواجهة العامة — موجة ٢: الأسعار، البرهان، عينة التقرير، مقارنة الأقران
    ========================================================================== */
 
+/* الهيرو النحيف نحيفٌ فعلًا.
+   `.hero` يحمل `min-height: calc(100vh - 5.25rem)` لأنه مصمَّم لهيرو الصفحة
+   الرئيسية الطويل. هذا المُعدِّل كان يعيد تعريف الحشو والمحاذاة **ولا يلمس
+   الارتفاع الأدنى**، فيرث شاشةً كاملة لمحتوى قِيس عند 184px — أي 632px فراغًا
+   ميّتًا عند 900px ارتفاعًا، و~820px عند 1080px. النتيجة أن الزائر كان يمرّر
+   شاشة كاملة قبل أن يرى أول بطاقة في صفحة وظيفتها اختيار قطاع.
+   والدائرة الزخرفية `::after` (52rem) مقيسة لهيرو طويل، فتطفو هنا في فراغ. */
 .hero--slim {
+    min-height: 0;
     padding-block: 4.5rem 2.5rem;
     text-align: center;
+}
+
+.hero--slim::after {
+    content: none;
 }
 
 .hero--slim .hero-lead {
@@ -4372,12 +4630,12 @@ svg {
 
 .try-peers--above {
     background: rgba(18, 183, 106, 0.1);
-    color: #0c7a43;
+    color: var(--on-tint-good);
 }
 
 .try-peers--below {
     background: rgba(255, 155, 39, 0.12);
-    color: #b05c00;
+    color: var(--on-tint-warn);
 }
 
 :root[data-theme='dark'] .try-peers--above { color: #4ade9b; }
@@ -4389,7 +4647,7 @@ svg {
 
 .autosave-note {
     margin: 0 0 0.75rem;
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     color: var(--muted);
 }
 
@@ -4406,7 +4664,7 @@ svg {
 .report-toc__list a {
     display: block;
     padding: 0.25rem 0.5rem;
-    border-radius: 0.4rem;
+    border-radius: var(--radius-sm);
     font-size: 0.85rem;
     color: var(--muted);
 }
@@ -4510,9 +4768,9 @@ svg {
 }
 
 .fix-matrix__cell--win { border-color: rgba(18, 183, 106, 0.5); }
-.fix-matrix__cell--win h3 { color: #0c7a43; }
+.fix-matrix__cell--win h3 { color: var(--on-tint-good); }
 .fix-matrix__cell--plan { border-color: rgba(37, 117, 255, 0.5); }
-.fix-matrix__cell--plan h3 { color: #1d5fd6; }
+.fix-matrix__cell--plan h3 { color: var(--brand-blue); }
 .fix-matrix__cell--later h3 { color: var(--muted); }
 .fix-matrix__cell--skip h3 { color: var(--muted); }
 
@@ -4588,7 +4846,7 @@ tr.is-problem td { color: var(--brand-red); }
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     background: var(--surface-soft);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     line-height: 1.8;
     white-space: pre-wrap;
     word-break: break-word;
@@ -4607,7 +4865,7 @@ tr.is-problem td { color: var(--brand-red); }
 }
 
 .impersonation-banner .btn {
-    background: #fff;
+    background: var(--surface);
     color: var(--brand-red);
     border: 0;
 }
@@ -4640,4 +4898,127 @@ tr.is-problem td { color: var(--brand-red); }
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* ==========================================================================
+   طبقة «الوضوح الطبي» الحاكمة — تُقرأ أخيرًا فتضبط ما تراكم قبلها.
+   المرجع: STYLESEED.md. لا تلمس أي محتوى نصي — تضبط الإيقاع فقط.
+   ========================================================================== */
+
+/* — ١. الهرمية الطباعية —
+   كانت ١٦٦ تصريح وزن بلا أثر لأن الخط ملف واحد. مع أربعة أوزان حقيقية صار
+   الوزن يعني شيئًا، فيُثبَّت هنا سُلَّم واضح بدل تسع قيم عشوائية. */
+h1, h2, h3, h4, h5, h6 {
+    letter-spacing: 0;
+    text-wrap: balance;
+}
+
+h1 {
+    font-size: var(--fs-h1);
+    line-height: var(--lh-display);
+    font-weight: 700;
+}
+
+h2 {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-heading);
+    font-weight: 600;
+}
+
+h3 {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-heading);
+    font-weight: 600;
+}
+
+h4, h5, h6 {
+    line-height: var(--lh-heading);
+    font-weight: 600;
+}
+
+p, li, dd {
+    text-wrap: pretty;
+}
+
+/* ملاحظة: العائلة تحمل ٤٠٠/٥٠٠/٦٠٠/٧٠٠ فقط. أي تصريح بـ800 أو 900 أو 950 في
+   الكود القديم يطابقه المتصفح تلقائيًّا بأقرب وزن متاح (٧٠٠) بلا عريض صناعي،
+   فلا حاجة لتعديل تلك التصريحات — صارت تعني شيئًا بعد أن كانت بلا أثر. */
+
+/* — ٢. الأرقام في واجهة قياس لا ترقص —
+   نفس الرقم في عمودين متتاليين يجب أن يشغل نفس العرض. */
+:where(table, .metric, .kpi, .score, [class*='-score'], [class*='-metric'], [class*='number'], time, .badge) {
+    font-variant-numeric: tabular-nums;
+}
+
+/* — ٣. أهداف اللمس: ٤٤px حدًّا أدنى —
+   كانت روابط التنقل بارتفاع 24px، و٤٣ هدفًا تحت الحدّ. لا تُطبَّق على الروابط
+   داخل الفقرات (تلك جزء من النص لا هدف مستقل). */
+:where(
+    .button, .btn, button, [role='button'],
+    .desktop-nav a, .mobile-menu a, .nav-actions a, .nav-login, .menu-toggle,
+    .panel__side a, .panel-nav a, .tab, .chip, .pagination a
+) {
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* الأزرار وحدها تُوسَّط أفقيًّا — روابط السايدبار تبقى محاذية للبداية */
+:where(.button, .btn, button, [role='button'], .pagination a) {
+    justify-content: center;
+}
+
+/* الروابط المستقلة (ليست داخل جملة) هي أهداف لمس كاملة الحقوق.
+   هذه تحديدًا كانت بارتفاع 23px: روابط التذييل والقطاعات وبطاقة التعريف
+   وشريط الأسئلة. تُكتب بانتقائية حقيقية لا بـ:where لأن قواعد قائمة
+   تعلن display عليها بالفعل. الروابط داخل الفقرات مستثناة عمدًا —
+   هي نص لا زر. */
+.text-link,
+.hero-strip a,
+.insight-banner a,
+.profile-links a,
+.faq-contact a,
+.footer-links a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap-min);
+}
+
+/* حقول الإدخال تلتزم الحدّ نفسه: أصغر من ذلك يصعب لمسه ويكبّر الخط عند
+   التركيز على iOS فيقفز التخطيط */
+:where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+    min-block-size: var(--tap-min);
+    font-size: max(1rem, var(--fs-sm));
+}
+
+/* مربّعات الاختيار كانت 13px — أصغر من أن تُلمس بإبهام. لا تُمدّ إلى 44px
+   لأن ذلك يشوّه الصفّ، بل تكبر إلى حدّ مريح ويبقى الوسم هدفًا كاملًا. */
+:where(input[type='checkbox'], input[type='radio']) {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    accent-color: var(--brand-blue);
+}
+
+/* — ٤. الفصل بالخط لا بالظل (جوهر الاتجاه) —
+   البطاقة التي لا ترتفع عن شيء لا ينبغي أن تُلقي ظلًّا. */
+:where(.card, .panel, .box, [class$='__card'], [class*='-card']) {
+    border: 1px solid var(--line);
+}
+
+/* — ٥. الانتقالات: قصيرة وهادفة — */
+:where(a, button, .button, .btn, .card, input, select, textarea) {
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* — ٦. تدرّج الدليل (§٤.١): لون دلالي واحد لكل مستوى، في الوضعين — */
+.evidence-badge--measured { color: var(--evidence-measured); }
+.evidence-badge--derived { color: var(--evidence-derived); }
+.evidence-badge--inferred { color: var(--evidence-inferred); }
+
+/* — ٧. التركيز موحّد على لون التوكيد الوحيد — */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--brand-blue);
+    outline-offset: 2px;
 }

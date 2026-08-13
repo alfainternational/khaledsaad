@@ -1,7 +1,13 @@
 @extends('layouts.app')
+@section('interface_family', 'reports')
 @section('layout', 'report')
 
 @section('title', $report['title'])
+
+@push('head')
+    <link rel="stylesheet" href="{{ asset('css/unified-report-contract.css') }}">
+    <script defer src="{{ asset('js/unified-report-contract.js') }}"></script>
+@endpush
 
 @section('content')
     <header class="page-head">
@@ -27,11 +33,15 @@
         </div>
     </header>
 
+    {{-- لغة نصّ التقرير حين تختلف عن لغة الواجهة — قبل أول سطر منه لا بعده. --}}
+    <x-content-language :locale="$report['locale'] ?? null" />
+
     <section id="report-summary" class="report-head">
         <article class="card card--score">
             <p class="eyebrow">الدرجة</p>
             <p class="score-big">{{ $report['score'] }}<small>/100</small></p>
             <p class="score-chip">{{ $report['score_band'] }}</p>
+            <x-score-equation :equation="$report['score_equation']" />
             @if ($comparison)
                 <p @class(['delta', 'delta--up' => $comparison['direction'] === 'up', 'delta--down' => $comparison['direction'] === 'down'])>
                     {{ $comparison['label'] }}
@@ -53,25 +63,41 @@
         </article>
 
         <article class="card">
+            <x-provenance-badge :type="$report['provenance_type']" :label="$report['provenance_label']" />
             @if ($report['is_manually_reviewed'])
-                {{-- بيان صادق موجز يخاطب خوف العميل: أنها ليست نتيجة آلة.
-                     بلا مدح ولا ادّعاء «متعوب عليه» — النص نفسه يثبت ذلك. --}}
+                {{-- بيان إسناد محايد؛ النص نفسه يثبت جودة المراجعة. --}}
                 <p class="verified-badge">
                     <b>مراجعة يدوية بواسطة {{ $report['reviewer_name'] }}</b>
                     <span>قُرئت إجاباتك ودُقّق هذا التحليل{{ $report['reviewed_at'] ? ' في '.$report['reviewed_at'] : '' }}.</span>
                 </p>
             @endif
+            <x-human-trace-list :traces="$report['human_traces']" />
 
-            <p class="eyebrow">الخلاصة</p>
-            <p>{{ $report['summary'] }}</p>
+            <p class="eyebrow">{{ __('ملخص تنفيذي') }}</p>
+            <h2>{{ __('الوضع الآن') }}</h2>
+            <p>{{ $report['executive_summary']['current_state'] }}</p>
 
-            @if ($report['next_step'])
+            @if ($report['executive_summary']['top_issues'] !== [])
+                <h3>{{ __('أهم 3 مشكلات') }}</h3>
+                <ol class="bullets">
+                    @foreach ($report['executive_summary']['top_issues'] as $issue)
+                        <li>{{ $issue }}</li>
+                    @endforeach
+                </ol>
+            @endif
+
+            @if ($report['executive_summary']['this_week'])
                 <div class="next-step">
-                    <p class="eyebrow">الخطوة التالية</p>
-                    <strong>{{ $report['next_step']['title'] }}</strong>
-                    <p class="muted">{{ $report['next_step']['description'] }}</p>
+                    <p class="eyebrow">{{ __('خطوة هذا الأسبوع') }}</p>
+                    <strong>{{ $report['executive_summary']['this_week']['title'] }}</strong>
+                    <p class="muted">{{ $report['executive_summary']['this_week']['description'] }}</p>
                 </div>
             @endif
+
+            <div class="next-step">
+                <p class="eyebrow">{{ __('معلومة تحتاج تأكيدًا') }}</p>
+                <p class="muted">{{ $report['executive_summary']['needs_confirmation'] ?? __('لا توجد معلومة معلّقة للتأكيد في هذا التقرير.') }}</p>
+            </div>
         </article>
     </section>
 
@@ -103,7 +129,7 @@
             @else
                 <p class="eyebrow">متابعة التقرير مفعّلة</p>
                 <p class="muted">
-                    سننبهك إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
+                    يصلك تنبيه إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
                     @if ($watcher->last_checked_at)
                         آخر فحص {{ $watcher->last_checked_at->diffForHumans() }}.
                     @endif
@@ -140,14 +166,40 @@
         </form>
     </div>
 
-    @if ($report['assumptions'] !== [])
+    @if ($report['assumptions'] !== [] || ($report['open_gaps'] ?? []) !== [])
         <section class="card card--warn">
             <h2 class="section-title">معلومات تحتاج إلى تأكيد منك</h2>
-            <ul class="bullets">
-                @foreach ($report['assumptions'] as $assumption)
-                    <li>{{ $assumption }}</li>
-                @endforeach
-            </ul>
+
+            {{--
+                الفجوة التي نعرف مفتاحها تُعرض ومعها بابها. كانت تُعرض نقطةً
+                صمّاء: يقرأ صاحب النشاط أن شيئًا ينقصه ولا يجد أين يكتبه.
+            --}}
+            @if (($report['open_gaps'] ?? []) !== [])
+                <ul class="bullets">
+                    @foreach ($report['open_gaps'] as $gap)
+                        <li>
+                            <strong>{{ $gap['label'] }}</strong>
+                            @if (! empty($gap['why'])) — {{ $gap['why'] }} @endif
+                        </li>
+                    @endforeach
+                </ul>
+
+                <a class="btn btn--primary" href="{{ route('app.reports.gaps.edit', $report['id']) }}">
+                    أكمل هذه المعلومات ({{ count($report['open_gaps']) }})
+                </a>
+            @endif
+
+            {{--
+                ما لا مفتاح له يبقى ملاحظة نصّية بلا زر: زرٌّ يفتح شاشة فارغة
+                أسوأ من غياب الزر.
+            --}}
+            @if ($report['assumptions'] !== [])
+                <ul class="bullets">
+                    @foreach ($report['assumptions'] as $assumption)
+                        <li>{{ $assumption }}</li>
+                    @endforeach
+                </ul>
+            @endif
         </section>
     @endif
 
@@ -194,6 +246,7 @@
                         <li class="recommendation">
                             <strong>{{ $recommendation['title'] }}</strong>
                             <p class="muted">{{ $recommendation['description'] }}</p>
+                            <x-recommendation-contract :recommendation="$recommendation" />
                             <p class="tags">
                                 <span>{{ $recommendation['impact_label'] }}</span>
                                 <span>{{ $recommendation['effort_label'] }}</span>
@@ -333,7 +386,7 @@
                                     <p class="score-row__share">
                                         هذا البند يساوي {{ $row['share'] }}٪ من درجتك
                                         @if (! empty($row['weight_tier']))
-                                            — بند <b>{{ $row['weight_tier'] }}</b> عندنا،
+                                            — بند <b>{{ $row['weight_tier'] }}</b> في المنهجية،
                                             الأثقل رقم {{ $row['weight_rank'] }} من {{ $row['weight_rank_of'] }} بندًا انطبقت عليك
                                         @endif
                                     </p>
@@ -398,7 +451,7 @@
                                     @endif
                                     <form method="POST" action="{{ route('app.competitors.dismiss', $competitor['id']) }}" class="competitor-list__x">
                                         @csrf
-                                        <button type="submit" aria-label="استبعاد {{ $competitor['name'] }}" title="استبعاد">×</button>
+                                        <button type="submit" aria-label="{{ __('استبعاد :name', ['name' => $competitor['name']]) }}" title="استبعاد">×</button>
                                     </form>
                                 </li>
                             @endforeach
@@ -410,7 +463,9 @@
                             <p>لم تضف منافسيك المحليين بعد. إضافتهم تساعد على مقارنة مشروعك بالجهات الأقرب إلى عملائك وسوقك.</p>
                             <form method="POST" action="{{ route('app.competitors.store', $report['project']['slug']) }}" class="competitor-add">
                                 @csrf
-                                <input type="text" name="names" placeholder="اسم منافس أو اسمين، أو @حسابهم" maxlength="500" required>
+                                {{-- النائب مغلَّف يدويًّا: قيمته تحمل `@`، والمغلّف الآلي يتخطّى
+                                     كل سمة فيها `@` لأنها في الغالب توجيه Blade لا نصّ. --}}
+                                <input type="text" name="names" placeholder="{{ __('اسم منافس أو اسمين، أو @حسابهم') }}" maxlength="500" required>
                                 <button type="submit" class="btn btn--primary btn--sm">أضِفهم</button>
                             </form>
                         </div>
@@ -497,7 +552,7 @@
 
     {{-- توقيع صادق في نهاية التقرير اليدوي: بيان من كتبه ومتى، بلا مبالغة. --}}
     @if ($report['is_manually_reviewed'])
-        <p class="report-sign">راجعه وكتبه بنفسه: {{ $report['reviewer_name'] }}@if ($report['reviewed_at']) · {{ $report['reviewed_at'] }}@endif</p>
+        <p class="report-sign">مراجعة موثّقة بواسطة {{ $report['reviewer_name'] }}@if ($report['reviewed_at']) · {{ $report['reviewed_at'] }}@endif</p>
     @endif
     </div>
 

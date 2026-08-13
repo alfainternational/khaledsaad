@@ -73,7 +73,7 @@ class MessageStudioController extends Controller
         $this->audience->buildPanel($project);
 
         return redirect()->route('app.messages.studio', $project)
-            ->with('status', 'لوحة جمهورك جاهزة — لكل شخصية تبويبها الآن.');
+            ->with('status', __('لوحة جمهورك جاهزة — لكل شخصية تبويبها الآن.'));
     }
 
     /**
@@ -86,7 +86,7 @@ class MessageStudioController extends Controller
         $panel = $project->personaPanel;
 
         if ($panel === null) {
-            return back()->withErrors(['studio' => 'ابنِ لوحة الجمهور أولًا.']);
+            return back()->withErrors(['studio' => __('ابنِ لوحة الجمهور أولًا.')]);
         }
 
         $validated = $request->validate([
@@ -125,14 +125,16 @@ class MessageStudioController extends Controller
         ]);
 
         if ($outcome['variants'] === []) {
-            return $redirect->withErrors(['studio' => 'تعذّر إنشاء الاقتراحات الآن. مسوداتك المحفوظة لم تتأثر.']);
+            return $redirect->withErrors(['studio' => __('تعذّر إنشاء الاقتراحات الآن. مسوداتك المحفوظة لم تتأثر.')]);
         }
 
         // نجاح جزئي يُعلن: من لم تُكتب رسالته يُسمّى ولا يُترك فراغًا صامتًا.
         return $outcome['failed'] === []
-            ? $redirect->with('status', 'كُتبت مسودة مستقلة لكل شخصية.')
-            : $redirect->with('status', 'كُتبت '.count($outcome['variants']).' مسودة. '
-                .count($outcome['failed']).' شخصية لم تكتمل — أعد المحاولة لها وحدها.');
+            ? $redirect->with('status', __('كُتبت مسودة مستقلة لكل شخصية.'))
+            : $redirect->with('status', __('كُتبت :written مسودة. :failed شخصية لم تكتمل — أعد المحاولة لها وحدها.', [
+                'written' => count($outcome['variants']),
+                'failed' => count($outcome['failed']),
+            ]));
     }
 
     /**
@@ -145,7 +147,7 @@ class MessageStudioController extends Controller
         $panel = $project->personaPanel;
 
         if ($panel === null) {
-            return back()->withErrors(['studio' => 'ابنِ لوحة الجمهور أولًا.']);
+            return back()->withErrors(['studio' => __('ابنِ لوحة الجمهور أولًا.')]);
         }
 
         $validated = $request->validate([
@@ -157,7 +159,7 @@ class MessageStudioController extends Controller
         ]);
 
         if ($this->profiles->findPersona($panel, $validated['persona_key']) === null) {
-            return back()->withErrors(['studio' => 'هذه الشخصية ليست في لوحة مشروعك.']);
+            return back()->withErrors(['studio' => __('هذه الشخصية ليست في لوحة مشروعك.')]);
         }
 
         $channel = MessageChannel::from($validated['channel']);
@@ -191,7 +193,7 @@ class MessageStudioController extends Controller
 
         return redirect()->route('app.messages.studio', [
             $project, 'channel' => $channel->value, 'objective' => $validated['objective'],
-        ])->with('status', 'حُفظت المسودة.');
+        ])->with('status', __('حُفظت المسودة.'));
     }
 
     public function test(Request $request, Project $project): RedirectResponse
@@ -201,7 +203,7 @@ class MessageStudioController extends Controller
         $panel = $project->personaPanel;
 
         if ($panel === null) {
-            return back()->withErrors(['studio' => 'ابنِ لوحة الجمهور أولًا.']);
+            return back()->withErrors(['studio' => __('ابنِ لوحة الجمهور أولًا.')]);
         }
 
         $validated = $request->validate([
@@ -216,22 +218,22 @@ class MessageStudioController extends Controller
                 MessageTestBatch::MODE_BATCH];
 
         if ($variants->isEmpty()) {
-            return back()->withErrors(['studio' => 'لا توجد رسالة صالحة للاختبار بعد.']);
+            return back()->withErrors(['studio' => __('لا توجد رسالة صالحة للاختبار بعد.')]);
         }
 
         try {
             $batch = $this->tests->test($panel, $variants, $request->user(), $mode);
         } catch (Throwable) {
             return back()->withErrors([
-                'studio' => 'تعذّر إجراء الاختبار الآن. رسائلك محفوظة ولم تُفقد.',
+                'studio' => __('تعذّر إجراء الاختبار الآن. رسائلك محفوظة ولم تُفقد.'),
             ]);
         }
 
         return redirect()->route('app.messages.studio', [
             $project, 'channel' => $validated['channel'] ?? null, 'objective' => $validated['objective'] ?? null,
         ])->with('status', $batch->status === MessageTestBatch::STATUS_PARTIAL
-            ? 'اكتملت بعض النتائج فقط — الشخصيات الناقصة مذكورة في الخلاصة.'
-            : 'جاهز — نتيجة كل شخصية على رسالتها هي.');
+            ? __('اكتملت بعض النتائج فقط — الشخصيات الناقصة مذكورة في الخلاصة.')
+            : __('جاهز — نتيجة كل شخصية على رسالتها هي.'));
     }
 
     /**
@@ -246,12 +248,12 @@ class MessageStudioController extends Controller
         }
 
         if (blank($result->revised_content)) {
-            return back()->withErrors(['studio' => 'لا يوجد تعديل مقترح لهذه النتيجة.']);
+            return back()->withErrors(['studio' => __('لا يوجد تعديل مقترح لهذه النتيجة.')]);
         }
 
         $this->tests->reviseFrom($result, $request->user());
 
-        return back()->with('status', 'أُنشئ إصدار جديد من التعديل المقترح — الإصدار المختبَر باقٍ كما هو.');
+        return back()->with('status', __('أُنشئ إصدار جديد من التعديل المقترح — الإصدار المختبَر باقٍ كما هو.'));
     }
 
     public function updateStatus(Request $request, Project $project, MessageVariant $variant): RedirectResponse
@@ -269,8 +271,8 @@ class MessageStudioController extends Controller
         $variant->update(['status' => $validated['status']]);
 
         return back()->with('status', $validated['status'] === MessageVariant::STATUS_APPROVED
-            ? 'اعتُمد هذا الإصدار.'
-            : 'أُرشف هذا الإصدار.');
+            ? __('اعتُمد هذا الإصدار.')
+            : __('أُرشف هذا الإصدار.'));
     }
 
     /**

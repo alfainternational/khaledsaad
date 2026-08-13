@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\Projects\ProjectService;
+use App\Support\Experience\Experience;
+use App\Support\Experience\ExperienceService;
 use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,12 +27,14 @@ class ConsultationApiTest extends TestCase
     public function web_and_api_share_the_same_session_and_answer_state(): void
     {
         $user = User::factory()->create();
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع موحد', 'stage' => 'growth']);
         Sanctum::actingAs($user);
 
         $created = $this->postJson(route('api.v1.consultations.store', $project), ['depth' => 'standard'])
             ->assertCreated()
             ->assertJsonPath('data.question.key', 'START-01');
+        $this->assertIsObject(json_decode($created->getContent())->data->question->validation);
         $uuid = $created->json('data.uuid');
 
         $this->putJson(route('api.v1.consultations.answer', [$uuid, 'START-01']), ['value' => 'مشروع قائم'])
@@ -46,6 +50,7 @@ class ConsultationApiTest extends TestCase
     public function the_api_lists_projects_with_their_latest_consultation(): void
     {
         $user = User::factory()->create();
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروعي', 'stage' => 'growth']);
         Sanctum::actingAs($user);
 
@@ -67,11 +72,13 @@ class ConsultationApiTest extends TestCase
     public function another_user_receives_not_found_for_the_session(): void
     {
         $owner = User::factory()->create();
+        $owner = app(ExperienceService::class)->selectInitial($owner, Experience::BUSINESS);
         $project = app(ProjectService::class)->create($owner, ['name' => 'خاص', 'stage' => 'growth']);
         Sanctum::actingAs($owner);
         $uuid = $this->postJson(route('api.v1.consultations.store', $project))->json('data.uuid');
 
-        Sanctum::actingAs(User::factory()->create());
+        $stranger = app(ExperienceService::class)->selectInitial(User::factory()->create(), Experience::BUSINESS);
+        Sanctum::actingAs($stranger);
         $this->getJson(route('api.v1.consultations.show', $uuid))->assertNotFound();
     }
 
@@ -79,6 +86,7 @@ class ConsultationApiTest extends TestCase
     public function project_page_makes_the_unified_consultation_the_primary_action(): void
     {
         $user = User::factory()->create();
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
         $project = app(ProjectService::class)->create($user, ['name' => 'واجهة موحدة', 'stage' => 'growth']);
 
         $this->actingAs($user)->get(route('app.projects.show', $project))

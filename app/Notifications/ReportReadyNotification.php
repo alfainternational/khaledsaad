@@ -31,11 +31,11 @@ class ReportReadyNotification extends Notification
 
         return (new MailMessage)
             ->subject('تقريرك جاهز — '.$this->report->title)
-            ->greeting('اكتمل تقريرك')
+            ->greeting(__('اكتمل تقريرك'))
             ->line("أصبح تقرير «{$this->report->title}» جاهزًا للمراجعة.")
             ->line("درجتك: {$this->report->score} من 100.")
-            ->action('افتح التقرير', $url)
-            ->line('راجع الأولويات، وحوّل التوصيات التي تختارها إلى مهام قابلة للمتابعة.');
+            ->action(__('افتح التقرير'), $url)
+            ->line(__('راجع الأولويات، وحوّل التوصيات التي تختارها إلى مهام قابلة للمتابعة.'));
     }
 
     /**
@@ -45,7 +45,7 @@ class ReportReadyNotification extends Notification
     {
         return [
             'type' => 'report_ready',
-            'title' => 'تقريرك جاهز',
+            'title' => __('تقريرك جاهز'),
             'body' => "انتهى تحليل «{$this->report->title}» بدرجة {$this->report->score}.",
             'report_id' => $this->report->id,
             'url' => route('app.reports.show', $this->report->id),

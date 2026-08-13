@@ -17,6 +17,14 @@
         @case('graduation-cap')
             <path d="m2 10 10-5 10 5-10 5z"/><path d="M6 12.5V17c3 2.5 9 2.5 12 0v-4.5M22 10v6"/>
             @break
+        @case('storefront')
+        @case('shopping-bag')
+            <path d="M4 8h16l-1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>
+            @break
+        @case('building')
+        @case('real-estate')
+            <path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M10 21v-5h4v5M9 10h.01M15 10h.01M9 13h.01M15 13h.01"/>
+            @break
         @case('megaphone')
             <path d="m3 11 15-6v14L3 13zM7 14l2 6h3l-1.5-7"/>
             @break

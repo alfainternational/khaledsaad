@@ -50,13 +50,13 @@ class ToolController extends Controller
 
         if ($tool->currentVersion?->toolRuns()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف أداة استُخدمت. يمكنك إخفاؤها بدلاً من حذفها.',
+                'message' => __('لا يمكن حذف أداة استُخدمت. يمكنك إخفاؤها بدلاً من حذفها.'),
             ], 409);
         }
 
         $tools->destroy($tool);
 
-        return response()->json(['message' => 'حُذفت الأداة.']);
+        return response()->json(['message' => __('حُذفت الأداة.')]);
     }
 
     public function updateStatus(Request $request, Tool $tool, AdminToolController $tools): JsonResponse
@@ -64,7 +64,7 @@ class ToolController extends Controller
         $this->confirm($request);
 
         if ($request->string('status')->toString() === Tool::STATUS_PUBLISHED && $tool->current_version_id === null) {
-            return response()->json(['message' => 'لا يمكن نشر أداة بلا إصدار جاهز.'], 422);
+            return response()->json(['message' => __('لا يمكن نشر أداة بلا إصدار جاهز.')], 422);
         }
 
         $tools->updateStatus($request, $tool);
@@ -82,7 +82,7 @@ class ToolController extends Controller
 
         if ($prompt->locked_at !== null) {
             return response()->json([
-                'message' => 'هذا البرومبت مقفل بعد الاستخدام. أنشئ إصدار أداة جديداً.',
+                'message' => __('هذا البرومبت مقفل بعد الاستخدام. أنشئ إصدار أداة جديداً.'),
             ], 409);
         }
 

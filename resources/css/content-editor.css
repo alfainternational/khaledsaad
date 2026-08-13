@@ -188,7 +188,7 @@
 }
 
 .content-cover__empty strong {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .content-cover__controls {
@@ -265,7 +265,7 @@
     gap: 0.2rem;
     padding: 0.2rem;
     border: 1px solid var(--line);
-    border-radius: 0.8rem;
+    border-radius: var(--radius-md);
     background: var(--surface);
 }
 
@@ -276,7 +276,7 @@
     place-items: center;
     padding: 0;
     border: 1px solid transparent;
-    border-radius: 0.6rem;
+    border-radius: var(--radius-sm);
     color: var(--ink);
     background: transparent;
     cursor: pointer;
@@ -286,7 +286,7 @@
 .content-editor-tool:hover,
 .content-editor-tool.is-active {
     border-color: color-mix(in srgb, var(--brand-blue) 35%, var(--line));
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     background: color-mix(in srgb, var(--brand-blue) 10%, var(--surface));
 }
 
@@ -328,7 +328,7 @@
     outline: none;
     color: var(--ink);
     background: var(--surface);
-    box-shadow: 0 8px 28px rgba(7, 31, 91, 0.06);
+    box-shadow: var(--shadow-sm);
     line-height: 1.95;
 }
 
@@ -347,7 +347,7 @@
 .content-editor-document h2,
 .content-editor-document h3 {
     margin-block: 1.8em 0.7em;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .content-editor-document blockquote {

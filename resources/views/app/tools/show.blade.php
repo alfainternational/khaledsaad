@@ -14,7 +14,7 @@
 
     <section class="split">
         <article class="card">
-            <p class="eyebrow">ماذا نطلب منك</p>
+            <p class="eyebrow">ماذا أطلب منك</p>
             <ul class="bullets">
                 @foreach ($tool['inputs'] as $input)
                     <li>{{ $input }}</li>
@@ -68,6 +68,7 @@
             <h2 class="section-title">
                 {{ ($engagement['state'] ?? 'new') === 'new' ? 'على أي مشروع نبدأ؟' : 'أو ابدأ من جديد على مشروع' }}
             </h2>
+            <p class="muted">{{ __('تكلفة هذا التشغيل: :count رصيد', ['count' => $tool['credit_cost']]) }}</p>
             <div class="run-launcher">
                 @foreach ($projects as $project)
                     <form method="POST" action="{{ route('app.runs.start', [$project['slug'], $tool['key']]) }}">

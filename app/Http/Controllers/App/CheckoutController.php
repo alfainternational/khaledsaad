@@ -49,7 +49,7 @@ class CheckoutController extends Controller
 
         return redirect()->route('app.billing')->with(
             'status',
-            $paid ? 'تم الدفع وأُضيف رصيدك.' : 'تعذّر تأكيد الدفع. لم يُخصم منك شيء.',
+            $paid ? __('تم الدفع وأُضيف رصيدك.') : __('تعذّر تأكيد الدفع. لم يُخصم منك شيء.'),
         );
     }
 
@@ -58,14 +58,14 @@ class CheckoutController extends Controller
         $this->assertOwner($request, $payment);
         $this->checkout->cancel($payment);
 
-        return redirect()->route('app.billing')->with('status', 'أُلغيت عملية الدفع.');
+        return redirect()->route('app.billing')->with('status', __('أُلغيت عملية الدفع.'));
     }
 
     private function start(Request $request, callable $starter): RedirectResponse
     {
         if (! $this->gateways->hasActiveGateway()) {
             return redirect()->route('app.billing')
-                ->withErrors(['gateway' => 'الدفع الإلكتروني غير متاح حاليًا. حاول مرة أخرى لاحقًا.']);
+                ->withErrors(['gateway' => __('الدفع الإلكتروني غير متاح حاليًا. حاول مرة أخرى لاحقًا.')]);
         }
 
         $workspace = $request->user()->primaryWorkspace();
@@ -75,7 +75,7 @@ class CheckoutController extends Controller
 
         if ($gateway === null) {
             return redirect()->route('app.billing')->withErrors([
-                'gateway_id' => 'وسيلة الدفع المختارة غير متاحة. اختر وسيلة مفعّلة.',
+                'gateway_id' => __('وسيلة الدفع المختارة غير متاحة. اختر وسيلة مفعّلة.'),
             ]);
         }
 
@@ -97,7 +97,7 @@ class CheckoutController extends Controller
             if ($session->pendingApproval) {
                 return redirect()->route('app.billing')->with(
                     'status',
-                    $session->message ?? 'سجّلنا طلبك. سيُعتمد رصيدك فور تأكيد التحويل.',
+                    $session->message ?? __('سجّلنا طلبك. سيُعتمد رصيدك فور تأكيد التحويل.'),
                 );
             }
 
@@ -105,7 +105,7 @@ class CheckoutController extends Controller
 
             return redirect()->route('app.billing')->with(
                 'status',
-                $paid ? 'تم اعتماد الدفع وأُضيف رصيدك.' : 'سجّلنا طلبك وهو قيد المراجعة.',
+                $paid ? __('تم اعتماد الدفع وأُضيف رصيدك.') : __('سجّلنا طلبك وهو قيد المراجعة.'),
             );
         }
 

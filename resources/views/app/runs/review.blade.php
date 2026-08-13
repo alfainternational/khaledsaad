@@ -32,7 +32,7 @@
         <article class="card">
             <p class="eyebrow">معلومات تحتاج إلى تأكيد</p>
             @if ($preflight['assumptions'] === [])
-                <p class="muted">لا شيء. كل ما كتبته سنعتمده كما هو منك.</p>
+                <p class="muted">لا شيء. كل ما كتبته يُعتمد كما هو منك.</p>
             @else
                 <ul class="bullets">
                     @foreach ($preflight['assumptions'] as $assumption)

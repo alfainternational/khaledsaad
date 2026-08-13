@@ -1,7 +1,7 @@
 @extends('layouts.public')
 @section('layout', 'marketing')
 
-@section('title', 'قطاعاتنا: التعليم والتجارة الإلكترونية والعقارات | خالد سعد')
+@section('title', 'القطاعات الثلاثة: التعليم والتجارة الإلكترونية والعقارات | خالد سعد')
 @section('description', 'نتخصص في ثلاثة قطاعات: التعليم والتجارة الإلكترونية والعقارات. لكل قطاع أسئلته وبنود فحصه ومؤشراته. وبقية القطاعات تمرّ بالمسار الكامل نفسه.')
 
 @section('content')
@@ -13,7 +13,7 @@
                 <p class="eyebrow">ثلاثة قطاعات</p>
                 <h1>في أي قطاع تعمل؟</h1>
                 <p class="hero-lead">
-                    نسألك أسئلة ونفحص بنودًا ونعرض مؤشرات تخص قطاعك وحده. اختر قطاعك لترى
+                    أسألك أسئلة وأفحص بنودًا وأعرض مؤشرات تخص قطاعك وحده. اختر قطاعك لترى
                     ما الذي يتغيّر فعلًا، وبقية القطاعات تمرّ بالمسار الكامل نفسه.
                 </p>
             </div>
@@ -21,7 +21,10 @@
 
         <section class="section" aria-labelledby="sectors-title">
             <div class="container">
-                <h2 id="sectors-title" class="sr-only">القطاعات الثلاثة</h2>
+                {{-- كان هذا العنوان `sr-only`، فتقفز الصفحة بصريًّا من h1 إلى ثلاث h3
+                     بلا عنوان يفصل الكتلة. الإخفاء البصري لعنوان القسم الوحيد في
+                     الصفحة يخدم قارئ الشاشة ويترك القارئ البصري بلا مرساة. --}}
+                <h2 id="sectors-title" class="section-title">القطاعات الثلاثة</h2>
 
                 {{--
                     الثلاثة في شبكة واحدة بلا ترتيب أفضلية: أي إبراز لواحد منها
@@ -32,7 +35,12 @@
                     @foreach ($sectors as $item)
                         @php($profile = $item['profile'])
                         <article class="sector-card">
-                            <span class="sector-card__mark" aria-hidden="true">{{ mb_substr($item['label'], 0, 1) }}</span>
+                            {{-- الأيقونة من عائلة الأيقونات الواحدة، ومفتاحها من `Sector`.
+                                 كانت هنا علامة تأخذ أول حرف من التسمية، فأخرجت «ا» في
+                                 البطاقات الثلاث كلها — ألف التعريف. --}}
+                            <span class="sector-card__mark" aria-hidden="true">
+                                @include('site.content._icon', ['name' => \App\Modules\Shared\Sectors\Sector::icon($item['sector'])])
+                            </span>
                             <h3 class="sector-card__name">{{ $item['label'] }}</h3>
                             <p class="sector-card__audience">{{ $profile['audience'] }}</p>
                             <p class="sector-card__pain">{{ $profile['pain'] }}</p>
@@ -47,6 +55,11 @@
                                         داخل
                                         {{ \App\Modules\Shared\Text\ArabicText::counted($item['questions']['tools'], 'تشخيصًا', 'تشخيصات', 'تشخيصين') }}
                                     </li>
+                                @else
+                                    {{-- الفجوة تُعلن ولا تُخفى (§٤.٣). كان الشرط يحذف السطر
+                                         صامتًا عند الصفر، فتنهار البطاقة إلى حقيقتين شاحبتين
+                                         ولا يلاحظ أحد أن أقوى برهان على التخصص غائب. --}}
+                                    <li class="sector-card__facts-gap">الأسئلة القطاعية لم تُنشر بعد</li>
                                 @endif
                                 @if ($item['kpis'] !== [])
                                     <li>
@@ -54,12 +67,14 @@
                                         {{ count($item['kpis']) <= 10 ? 'مؤشرات' : 'مؤشرًا' }} تتصدّر لوحتك
                                     </li>
                                 @endif
-                                <li>
-                                    فحص بيانات {{ $item['schema']['label'] }} المنظَّمة
-                                    <span dir="ltr" class="muted">({{ $item['schema']['types'][0] }})</span>
-                                </li>
+                                {{-- الاسم التقني لنوع Schema يبقى لصفحة القطاع: جمهور هذه
+                                     البطاقة مدرسةٌ ومكتبُ عقار، و«(Course)» لا يقول لهما شيئًا. --}}
+                                <li>فحص بيانات {{ $item['schema']['label'] }} المنظَّمة</li>
                             </ul>
 
+                            {{-- البطاقة كلها هي هدف النقر عبر `::after` الممتد: كان الهدف
+                                 الوحيد نصًّا بارتفاع 27px (الحد الأدنى 44px)، بينما التحويم
+                                 يرفع البطاقة كلها فيَعِد بأنها قابلة للنقر ثم لا تستجيب. --}}
                             <a class="sector-card__link" href="{{ route('sectors.show', $item['sector']) }}">
                                 ما الذي يتغيّر في {{ $item['label'] }}
                                 <span aria-hidden="true">←</span>
@@ -76,8 +91,8 @@
                 <h2 id="others-title" class="section-title">لست في هذه الثلاثة؟</h2>
                 <p>
                     تمرّ بالمسار الكامل نفسه: الأسئلة العامة وبنود الفحص العامة ودرجة النضج
-                    والتقرير وقائمة الإصلاح. ما ينقصك هو العمق القطاعي وحده، ونقولها لك
-                    صراحةً بدل أن ندّعي تخصصًا لم يُبنَ.
+                    والتقرير وقائمة الإصلاح. ما ينقصك هو العمق القطاعي وحده، وأقولها لك
+                    صراحةً بدل أن أدّعي تخصصًا لم يُبنَ.
                 </p>
                 <div class="hero-actions">
                     <a class="button button--primary button--large" href="{{ route('register') }}">

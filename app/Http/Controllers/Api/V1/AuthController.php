@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Guests\GuestSessionManager;
+use App\Support\Experience\Experience;
+use App\Support\Experience\ExperienceService;
+use App\Support\Experience\ExperiencePayload;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
@@ -12,12 +15,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function __construct(private readonly GuestSessionManager $guests) {}
+    public function __construct(
+        private readonly GuestSessionManager $guests,
+        private readonly ExperienceService $experiences,
+        private readonly ExperiencePayload $experiencePayload,
+    ) {}
 
     public function register(Request $request): JsonResponse
     {
@@ -27,17 +35,22 @@ class AuthController extends Controller
             'password' => ['required', PasswordRule::min(8)],
             'device_name' => 'required|string|max:120',
             'guest_token' => 'nullable|string|size:48',
+            'experience' => ['nullable', Rule::enum(Experience::class)],
         ]);
 
         $guest = $this->guests->currentForApi($data['guest_token'] ?? null);
         $claimedRun = $guest?->runs()->latest('id')->first();
         $user = User::create($data);
+        $experience = Experience::from($data['experience'] ?? Experience::BUSINESS->value);
+        $user = $this->experiences->selectInitial($user, $experience);
 
         event(new Registered($user));
 
         if ($guest !== null) {
             $this->guests->claim($guest, $user);
         }
+
+        $user->primaryWorkspace();
 
         return response()->json(
             $this->payload($user, $data['device_name'], $claimedRun?->uuid),
@@ -56,7 +69,7 @@ class AuthController extends Controller
         $user = User::where('email', $data['email'])->first();
 
         if ($user === null || ! Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages(['email' => 'بيانات الدخول غير صحيحة.']);
+            throw ValidationException::withMessages(['email' => __('بيانات الدخول غير صحيحة.')]);
         }
 
         return response()->json($this->payload($user, $data['device_name']));
@@ -71,7 +84,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['data' => ['message' => 'تم تسجيل الخروج.']]);
+        return response()->json(['data' => ['message' => __('تم تسجيل الخروج.')]]);
     }
 
     public function forgotPassword(Request $request): JsonResponse
@@ -82,7 +95,7 @@ class AuthController extends Controller
 
         return response()->json([
             'data' => [
-                'message' => 'إذا كان البريد مسجلًا، فستصلك رسالة تحتوي على رابط لتغيير كلمة المرور.',
+                'message' => __('إذا كان البريد مسجلًا، فستصلك رسالة تحتوي على رابط لتغيير كلمة المرور.'),
             ],
         ]);
     }
@@ -109,13 +122,13 @@ class AuthController extends Controller
 
         if ($status !== Password::PASSWORD_RESET) {
             throw ValidationException::withMessages([
-                'email' => 'انتهت صلاحية الرابط أو استُخدم من قبل. اطلب رابطًا جديدًا.',
+                'email' => __('انتهت صلاحية الرابط أو استُخدم من قبل. اطلب رابطًا جديدًا.'),
             ]);
         }
 
         return response()->json([
             'data' => [
-                'message' => 'تغيّرت كلمة المرور. يمكنك تسجيل الدخول الآن.',
+                'message' => __('تغيّرت كلمة المرور. يمكنك تسجيل الدخول الآن.'),
             ],
         ]);
     }
@@ -145,6 +158,8 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'is_admin' => $user->isAdmin(),
+            'locale' => app()->getLocale(),
+            ...$this->experiencePayload->for($user),
         ];
     }
 }

@@ -47,7 +47,7 @@
 .public-page-section__head h2,
 .profile-section > h2 {
     margin: 0 0 1.5rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: clamp(1.55rem, 3vw, 2.25rem);
 }
 
@@ -76,7 +76,7 @@
     min-width: 0;
     padding: clamp(1.15rem, 3vw, 1.75rem);
     border: 1px solid var(--line);
-    border-radius: 1.25rem;
+    border-radius: var(--radius-lg);
     color: var(--ink);
     background: var(--surface);
     box-shadow: var(--shadow-soft);
@@ -93,7 +93,7 @@ a.public-page-card:hover {
 }
 
 .public-page-card h3 {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.08rem;
 }
 
@@ -103,7 +103,7 @@ a.public-page-card:hover {
 
 .public-page-card__number {
     color: var(--brand-blue);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     font-weight: 900;
 }
 
@@ -116,12 +116,12 @@ a.public-page-card:hover {
 .public-faq-list details {
     padding: 1.1rem 1.25rem;
     border: 1px solid var(--line);
-    border-radius: 1rem;
+    border-radius: var(--radius-md);
     background: var(--surface);
 }
 
 .public-faq-list summary {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-weight: 900;
     cursor: pointer;
 }
@@ -139,7 +139,7 @@ a.public-page-card:hover {
     gap: 1.5rem;
     margin-top: 3rem;
     padding: clamp(1.5rem, 4vw, 2.5rem);
-    border-radius: 1.5rem;
+    border-radius: var(--radius-xl);
     color: #fff;
     background: linear-gradient(135deg, #071f5b, #123f91);
 }
@@ -226,14 +226,14 @@ a.public-page-card:hover {
 .profile-section {
     padding: clamp(1.25rem, 3vw, 2rem);
     border: 1px solid var(--line);
-    border-radius: 1.25rem;
+    border-radius: var(--radius-lg);
     background: var(--surface);
     box-shadow: var(--shadow-soft);
 }
 
 .profile-summary h2 {
     margin: 0 0 0.75rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1.05rem;
 }
 
@@ -284,7 +284,7 @@ a.public-page-card:hover {
     position: relative;
     padding: 1.25rem;
     border-inline-start: 3px solid var(--brand-blue);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-md);
     background: var(--surface-soft);
 }
 
@@ -302,12 +302,12 @@ a.public-page-card:hover {
 
 .profile-job h3 {
     margin: 0 0 0.2rem;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
 }
 
 .profile-job__meta {
     color: var(--muted);
-    text-align: left;
+    text-align: end;
     white-space: nowrap;
 }
 
@@ -342,7 +342,7 @@ a.public-page-card:hover {
     min-width: 0;
     padding: 1rem;
     border: 1px solid var(--line);
-    border-radius: 1rem;
+    border-radius: var(--radius-md);
     background: var(--surface-soft);
 }
 
@@ -363,7 +363,7 @@ a.public-page-card:hover {
 }
 
 .profile-credential-card h3 {
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     font-size: 1rem;
     line-height: 1.5;
 }
@@ -397,7 +397,7 @@ a.public-page-card:hover {
     padding: 0.38rem 0.65rem;
     border: 1px solid color-mix(in srgb, var(--brand-blue) 24%, var(--line));
     border-radius: 999px;
-    color: var(--brand-navy);
+    color: var(--ink-brand);
     background: color-mix(in srgb, var(--brand-blue) 6%, var(--surface));
     font-size: 0.82rem;
 }
@@ -441,7 +441,7 @@ a.public-page-card:hover {
     }
 
     .profile-job__meta {
-        text-align: right;
+        text-align: start;
         white-space: normal;
     }
 

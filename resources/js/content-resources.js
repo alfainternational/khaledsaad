@@ -1,3 +1,5 @@
+import { t } from './i18n';
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-content-resources]').forEach(initializeResources);
 });
@@ -27,11 +29,11 @@ function initializeResources(shell) {
         for (const [index, file] of files.entries()) {
             if (file.size > maxBytes) {
                 status.classList.add('is-error');
-                status.textContent = `حجم ${file.name} هو ${formatBytes(file.size)}، والحد الأقصى ${formatBytes(maxBytes)}.`;
+                status.textContent = t('حجم :name هو :size، والحد الأقصى :max.', { name: file.name, size: formatBytes(file.size), max: formatBytes(maxBytes) });
                 return;
             }
 
-            status.textContent = `جارٍ رفع ${file.name} · ${formatBytes(file.size)} (${index + 1} من ${files.length})…`;
+            status.textContent = t('جارٍ رفع :name · :size (:index من :total)…', { name: file.name, size: formatBytes(file.size), index: index + 1, total: files.length });
 
             try {
                 const uploaded = await uploadFile(uploadUrl, file);
@@ -47,12 +49,12 @@ function initializeResources(shell) {
                 render();
             } catch (error) {
                 status.classList.add('is-error');
-                status.textContent = error.message || `تعذر رفع ${file.name}.`;
+                status.textContent = error.message || t('تعذر رفع :name.', { name: file.name });
                 return;
             }
         }
 
-        status.textContent = `تم رفع ${files.length} ${files.length === 1 ? 'ملف' : 'ملفات'} بنجاح.`;
+        status.textContent = (files.length === 1 ? t('تم رفع :count ملف بنجاح.', { count: files.length }) : t('تم رفع :count ملفات بنجاح.', { count: files.length }));
     });
 
     addLink?.addEventListener('click', () => {
@@ -61,7 +63,7 @@ function initializeResources(shell) {
 
         if (!title || !isSafeHttpUrl(url)) {
             status.classList.add('is-error');
-            status.textContent = 'اكتب اسمًا للرابط وعنوانًا صحيحًا يبدأ بـ http أو https.';
+            status.textContent = t('اكتب اسمًا للرابط وعنوانًا صحيحًا يبدأ بـ http أو https.');
             return;
         }
 
@@ -69,7 +71,7 @@ function initializeResources(shell) {
         titleInput.value = '';
         urlInput.value = '';
         status.classList.remove('is-error');
-        status.textContent = 'تمت إضافة الرابط.';
+        status.textContent = t('تمت إضافة الرابط.');
         render();
     });
 
@@ -101,16 +103,16 @@ function initializeResources(shell) {
             const meta = document.createElement('small');
             name.textContent = resource.title;
             meta.textContent = resource.type === 'file'
-                ? `${resource.original_name || 'ملف مرفوع'}${resource.size_bytes ? ` · ${formatBytes(resource.size_bytes)}` : ''}`
+                ? `${resource.original_name || t('ملف مرفوع')}${resource.size_bytes ? ` · ${formatBytes(resource.size_bytes)}` : ''}`
                 : resource.url;
             info.append(name, meta);
 
             const actions = document.createElement('div');
             actions.className = 'content-resources__actions';
             actions.append(
-                actionButton('up', 'رفع', index, index === 0),
-                actionButton('down', 'خفض', index, index === resources.length - 1),
-                actionButton('remove', 'حذف', index, false),
+                actionButton('up', t('رفع'), index, index === 0),
+                actionButton('down', t('خفض'), index, index === resources.length - 1),
+                actionButton('remove', t('حذف'), index, false),
             );
             item.append(info, actions);
             list.appendChild(item);
@@ -141,7 +143,7 @@ async function uploadFile(uploadUrl, file) {
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(payload.errors?.file?.[0] || 'تعذر رفع الملف. تحقق من نوعه وحجمه وحاول مجددًا.');
+        throw new Error(payload.errors?.file?.[0] || t('تعذر رفع الملف. تحقق من نوعه وحجمه وحاول مجددًا.'));
     }
 
     return payload.data;
@@ -177,10 +179,10 @@ function isSafeHttpUrl(value) {
 }
 
 function formatBytes(bytes) {
-    if (bytes < 1024) return `${bytes} بايت`;
-    if (bytes < 1024 * 1024) return `${formatNumber(bytes / 1024)} كيلوبايت`;
+    if (bytes < 1024) return t(':count بايت', { count: bytes });
+    if (bytes < 1024 * 1024) return t(':count كيلوبايت', { count: formatNumber(bytes / 1024) });
 
-    return `${formatNumber(bytes / 1024 / 1024)} ميجابايت`;
+    return t(':count ميجابايت', { count: formatNumber(bytes / 1024 / 1024) });
 }
 
 function formatNumber(value) {

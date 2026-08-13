@@ -138,7 +138,7 @@ class AnswerPresenceCollector
             },
             'failure_reason' => $succeeded === $expected
                 ? null
-                : sprintf('نجحت %d محاولة من %d.', $succeeded, $expected),
+                : sprintf(__('نجحت %d محاولة من %d.'), $succeeded, $expected),
             'cost_usd' => $cost,
             'completed_at' => now(),
         ]);

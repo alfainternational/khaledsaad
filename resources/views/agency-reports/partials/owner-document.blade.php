@@ -47,7 +47,7 @@
 
 <section class="card">
     <h2 class="section-title">عملاؤك كما نفهمهم الآن</h2>
-    <p class="muted">نوضح من تحاول الوصول إليه، وما الذي يزعجه، وما النتيجة التي يبحث عنها. إذا كانت خانة ناقصة فهذه دعوة لسؤال العملاء، وليست معلومة سنخمنها.</p>
+    <p class="muted">هنا من تحاول الوصول إليه، وما الذي يزعجه، وما النتيجة التي يبحث عنها. إذا كانت خانة ناقصة فهذه دعوة لسؤال العملاء، لا معلومة تُخمَّن.</p>
     @forelse ($details['audiences'] as $audience)
         <article>
             <h3>{{ $audience['name'] }}</h3>
@@ -66,7 +66,7 @@
     @if (! empty($owner['numbers']['rows']))
         <div class="table-scroll">
             <table class="data-table">
-                <thead><tr><th>ما الذي نقيسه؟</th><th>ماذا نعرف؟</th><th>ماذا يعني ذلك لك؟</th></tr></thead>
+                <thead><tr><th>ما الذي يُقاس؟</th><th>ما الذي ظهر؟</th><th>ماذا يعني ذلك لك؟</th></tr></thead>
                 <tbody>
                     @foreach ($owner['numbers']['rows'] as $row)
                         <tr>
@@ -108,7 +108,7 @@
 
 <section class="print-section print-section--long">
     <h2 class="section-title">ماذا قالت كل التشخيصات؟</h2>
-    <p class="muted">جمعنا النتائج هنا حتى لا تبقى كل نتيجة في صفحة منفصلة. نعرض معنى النتيجة وما الذي تحتاجه، من دون رموز داخلية.</p>
+    <p class="muted">النتائج مجموعة هنا حتى لا تبقى كل نتيجة في صفحة منفصلة، ومعها معناها وما تحتاجه، من دون رموز داخلية.</p>
     @foreach ($details['tools'] as $tool)
         <article class="card">
             <h3>{{ $tool['title'] }}</h3>
@@ -139,7 +139,7 @@
             @if (! empty($problem['evidence']))<p class="evidence">ما الذي أوصلنا لهذه النتيجة؟ {{ $problem['evidence'] }}</p>@endif
         </article>
     @empty
-        <p class="muted">لا توجد ثلاث مشكلات مؤكدة بعد. أكمل القياس أولًا حتى لا نبني حكمًا على تخمين.</p>
+        <p class="muted">لا توجد ثلاث مشكلات مؤكدة بعد. أكمل القياس أولًا حتى لا يُبنى الحكم على تخمين.</p>
     @endforelse
 </section>
 
@@ -204,7 +204,7 @@
 @if (($details['different_readings'] ?? []) !== [])
     <section class="card">
         <h2 class="section-title">مقارنة نتائج التشخيصات</h2>
-        <p class="muted">عندما تقرأ التشخيصات الموضوع نفسه بطريقتين، نعرض الاختلاف هنا لتعرف ما يحتاج إلى حسم.</p>
+        <p class="muted">عندما تقرأ التشخيصات الموضوع نفسه بطريقتين، يظهر الاختلاف هنا لتعرف ما يحتاج إلى حسم.</p>
         @foreach ($details['different_readings'] as $reading)
             <p><b>اختلاف يحتاج حسمًا:</b> {{ $reading['resolution'] ?? 'راجع السياق قبل اعتماد قراءة واحدة.' }}</p>
         @endforeach
@@ -249,6 +249,10 @@
                     </ol>
                 @endif
 
+                @if (! empty($item['objective_id']))
+                    <x-recommendation-contract :recommendation="$item" :print="$print" />
+                @endif
+
                 <x-worked-example :example="$item['worked_example'] ?? null" :print="$print" />
             </article>
         @empty
@@ -282,7 +286,7 @@
         هذا الرقم لا يقيّمك؛ هو يساعدك على اختيار خطة تستطيع متابعتها فعلًا.
     </p>
     <h3>خطة عملك الشخصية خلال 30 و60 و90 يومًا</h3>
-    @foreach (['30_days' => 'أول 30 يومًا', '60_days' => 'حتى 60 يومًا', '90_days' => 'حتى 90 يومًا'] as $key => $label)
+    @foreach (['30_days' => __('أول 30 يومًا'), '60_days' => __('حتى 60 يومًا'), '90_days' => __('حتى 90 يومًا')] as $key => $label)
         <h4>{{ $label }}</h4>
         <ul class="bullets">
             @forelse (($details['plan'][$key] ?? []) as $item)

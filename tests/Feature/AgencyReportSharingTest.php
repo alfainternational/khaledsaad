@@ -14,6 +14,7 @@ use App\Modules\Reporting\AgencyReportPdfGenerator;
 use App\Modules\Reporting\AgencyReportService;
 use App\Modules\Reporting\AgencyReportSharing;
 use App\Services\Projects\ProjectService;
+use App\Support\Experience\Experience;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -113,7 +114,7 @@ class AgencyReportSharingTest extends TestCase
     public function a_stranger_cannot_share_or_revoke_someone_elses_report(): void
     {
         [, $report] = $this->report();
-        $stranger = User::factory()->create();
+        $stranger = $this->businessUser();
 
         $this->actingAs($stranger)
             ->post(route('app.agency-reports.share', $report))
@@ -148,7 +149,7 @@ class AgencyReportSharingTest extends TestCase
      */
     private function report(): array
     {
-        $user = User::factory()->create();
+        $user = $this->businessUser();
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع المشاركة']);
         $project->profile()->updateOrCreate([], ['monthly_budget' => 8000]);
         app(AgencyReportService::class)->saveBrief($project, [
@@ -209,6 +210,14 @@ class AgencyReportSharingTest extends TestCase
             'impact' => 'medium',
             'effort' => 'low',
             'priority' => 70,
+        ]);
+    }
+
+    private function businessUser(): User
+    {
+        return User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
         ]);
     }
 }

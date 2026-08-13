@@ -89,12 +89,12 @@
                                 </ul>
                             </div>
                             <div class="panel-block">
-                                <h2>ماذا نطلب منك؟</h2>
+                                <h2>ماذا أطلب منك؟</h2>
                                 {{-- ما نطلبه يُقال قبل البدء لا بعده، وحق ترك الفراغ
                                      يُعلَن هنا لأن النقص المعلن أصدق من تقدير صامت. --}}
                                 <ul class="check-list">
                                     <li><span>✓</span> إجابات من واقع مشروعك، بلا تجهيز ملف مسبق</li>
-                                    <li><span>✓</span> اترك ما لا تعرفه فارغًا — نعرض لك ما نقص وكيف تستكمله</li>
+                                    <li><span>✓</span> اترك ما لا تعرفه فارغًا — يظهر لك ما نقص وكيف تستكمله</li>
                                     <li><span>✓</span> ما تكتبه يُحفظ في ملف مشروعك، ويقلّل أسئلة التشخيص التالي</li>
                                 </ul>
                             </div>
@@ -153,6 +153,7 @@
                     <div class="steps-grid public-step-grid">
                         @foreach ($tool['steps'] as $step)
                             <article class="step-card">
+                                <x-section-icon :name="['answers', 'target', 'evidence', 'review'][$loop->index % 4]" />
                                 <span class="step-card__number">الخطوة {{ $step['step'] }}</span>
                                 <h3>{{ $step['title'] }}</h3>
                                 <ul>
@@ -184,20 +185,7 @@
                     </div>
                     <div class="catalog-grid catalog-grid--three public-card-grid">
                         @foreach ($related as $card)
-                            <a href="{{ route('tools.show', $card['key']) }}" @class(['catalog-card', 'catalog-card--soon' => ! $card['is_runnable']])>
-                                <div class="catalog-card__head">
-                                    <span class="catalog-card__category">{{ $card['category'] }}</span>
-                                    @unless ($card['is_runnable'])
-                                        <span class="pill pill--soon">قريبًا</span>
-                                    @endunless
-                                </div>
-                                @if ($card['pain'])
-                                    <p class="catalog-card__pain">«{{ $card['pain'] }}»</p>
-                                @endif
-                                <h2>{{ $card['title'] }}</h2>
-                                <p class="catalog-card__desc">{{ $card['promise'] ?: $card['description'] }}</p>
-                                <span class="catalog-card__link">التفاصيل <b aria-hidden="true">←</b></span>
-                            </a>
+                            @include('site.tools._catalog-card', ['tool' => $card])
                         @endforeach
                     </div>
                 </div>

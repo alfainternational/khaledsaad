@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Modules\Reporting\ReportCharts;
 use App\Services\Projects\ProjectService;
 use App\Services\Tools\ToolRunService;
+use App\Support\Experience\Experience;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -97,7 +98,10 @@ class ReportChartsTest extends TestCase
 
     private function report(): Report
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
+        ]);
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع الرسوم']);
         $tool = Tool::where('key', 'marketing-score')->firstOrFail();
         $run = app(ToolRunService::class)->start($project, $tool, $user);

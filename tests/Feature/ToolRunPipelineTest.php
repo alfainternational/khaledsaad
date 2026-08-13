@@ -109,7 +109,7 @@ class ToolRunPipelineTest extends TestCase
         app(ToolRunPipeline::class)->handle($run);
         $run->refresh();
 
-        $this->assertSame(ToolRun::STATUS_PARTIAL, $run->status);
+        $this->assertSame(ToolRun::STATUS_PARTIAL, $run->status, (string) $run->failure_reason);
         $this->assertNotNull($run->base_score);
         $this->assertSame(14, $run->answers()->count());
 
@@ -287,6 +287,7 @@ class ToolRunPipelineTest extends TestCase
                     'category' => 'القياس',
                     'severity' => 'high',
                     'evidence' => 'إجابة حالة القياس: زيارات فقط',
+                    'evidence_answer_ref' => 'tracking_maturity',
                     'confidence' => 90,
                     'is_assumption' => false,
                     'recommendations' => [
@@ -305,6 +306,7 @@ class ToolRunPipelineTest extends TestCase
                     'category' => 'التحويل',
                     'severity' => 'medium',
                     'evidence' => 'إجابة جاهزية الصفحات: صفحة عامة دون تحسين',
+                    'evidence_answer_ref' => 'landing_experience',
                     'confidence' => 80,
                     'is_assumption' => false,
                     'recommendations' => [

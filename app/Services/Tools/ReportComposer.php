@@ -6,10 +6,15 @@ use App\Models\Finding;
 use App\Models\Recommendation;
 use App\Models\Report;
 use App\Models\ToolRun;
+use App\Models\ToolRunAnswer;
 use App\Modules\Competitors\CompetitorRegistry;
+use App\Modules\Diagnosis\ConsistencyInspector;
 use App\Modules\Diagnosis\ScoreExplainer;
 use App\Modules\Execution\ExampleContext;
 use App\Modules\Execution\RecommendationEnricher;
+use App\Modules\Reporting\Contracts\RecommendationContractBuilder;
+use App\Modules\Reporting\Gaps\DeclaredGaps;
+use App\Modules\Shared\Text\ArabicText;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,7 +30,10 @@ class ReportComposer
         private readonly AdLibraries $adLibraries,
         private readonly CompetitorRegistry $competitors,
         private readonly RecommendationEnricher $enricher,
+        private readonly RecommendationContractBuilder $contracts,
         private readonly ScoreExplainer $explainer,
+        private readonly DeclaredGaps $declaredGaps,
+        private readonly ConsistencyInspector $consistency,
     ) {}
 
     /**
@@ -70,24 +78,42 @@ class ReportComposer
                 [
                     'project_id' => $run->project_id,
                     'title' => $this->title($run),
+                    // لغة التقرير هي لغة تشغيله لا لغة اللحظة: إعادة
+                    // التركيب قد تجري في عامل يقرأ لغة أخرى.
+                    'locale' => $run->locale ?: app()->getLocale(),
                     'status' => 'draft',
                     'score' => $baseline['score'],
+                    'score_raw' => collect($baseline['breakdown'] ?? [])->sum('points'),
+                    'score_max' => (float) ($baseline['total_weight'] ?? 0),
                     'score_band' => $baseline['band'],
                     'summary' => $synthesis['summary'] ?? $this->fallbackSummary($baseline, $usedFloor),
-                    'assumptions' => $this->assumptions($synthesis, $gaps),
+                    'assumptions' => $this->assumptions(
+                        $synthesis,
+                        $gaps,
+                        (string) ($run->locale ?: app()->getLocale()),
+                        $run->answerMap(),
+                    ),
+                    // النقص يُحفظ ببنيته ومفاتيحه إلى جانب صياغته النصّية:
+                    // النصّ يُقرأ، والمفاتيح تفتح الأسئلة.
+                    'declared_gaps' => $this->declaredGaps->forRun($run, $gaps),
                     'next_step' => $nextStep,
                     'generated_by_model' => $run->usageRecords()->latest('id')->value('model'),
                     'tool_version' => $run->toolVersion->version,
+                    'provenance' => 'automated',
+                    'validation_status' => 'pending',
+                    'schema_version' => 2,
                 ],
             );
 
             $report->sections()->delete();
             $report->findings()->delete();
+            $report->scoringItems()->delete();
 
             $this->writeScoreSection($report, $run, $baseline);
+            $this->writeScoringItems($report, $baseline);
             $this->writeSections($report, $sections);
             $this->writeCompetitorSection($report, $run, $competitorView);
-            $this->writeFindings($report, $findings, ExampleContext::fromProject($run->project));
+            $this->writeFindings($report, $run, $findings, ExampleContext::fromProject($run->project));
             // ضمان حتمي: كل نتيجة افتراضية يظهر أساسها في assumptions، بعد أن
             // يُعرف القسر النهائي لـ is_assumption داخل writeFindings.
             $this->reconcileAssumptions($report);
@@ -165,6 +191,22 @@ class ReportComposer
                 'weights_scale' => ScoreExplainer::SCALE_NOTE,
             ],
         ]);
+    }
+
+    /** @param array<string, mixed> $baseline */
+    private function writeScoringItems(Report $report, array $baseline): void
+    {
+        foreach ($baseline['breakdown'] ?? [] as $row) {
+            $report->scoringItems()->create([
+                'item_key' => (string) ($row['field'] ?? ''),
+                'tier' => (string) ($row['rule_type'] ?? ''),
+                'weight' => (float) ($row['weight'] ?? 0),
+                'coefficient' => (float) ($row['factor'] ?? 0),
+                'points' => (float) ($row['points'] ?? 0),
+                'answer_value' => ['value' => $row['value'] ?? null],
+                'answer_quote' => is_scalar($row['value'] ?? null) ? (string) $row['value'] : null,
+            ]);
+        }
     }
 
     /**
@@ -300,11 +342,15 @@ class ReportComposer
     /**
      * @param  array<int, array<string, mixed>>  $findings
      */
-    private function writeFindings(Report $report, array $findings, ExampleContext $context): void
+    private function writeFindings(Report $report, ToolRun $run, array $findings, ExampleContext $context): void
     {
         foreach (array_values($findings) as $index => $payload) {
+            $answer = $this->evidenceAnswer($run, $payload);
             // BR-007: غياب الدليل يجعلها افتراضًا حتى لو ادعى النموذج غير ذلك.
             $isAssumption = (bool) ($payload['is_assumption'] ?? false) || blank($payload['evidence'] ?? null);
+            if (! $isAssumption && $answer === null) {
+                $isAssumption = true;
+            }
             $confidence = (int) ($payload['confidence'] ?? 50);
 
             // اتساق مع rubric المعايير: الفرضية لا تتجاوز ثقتها 75. يُطبَّق هنا
@@ -320,30 +366,52 @@ class ReportComposer
                 'description' => $payload['description'],
                 'severity' => $payload['severity'] ?? 'medium',
                 'evidence' => $payload['evidence'] ?? null,
+                'evidence_answer_id' => $isAssumption ? null : $answer?->id,
+                'evidence_quote' => $answer === null ? null : $this->answerQuote($answer->value_json),
                 'confidence' => $confidence,
                 'is_assumption' => $isAssumption,
                 'sort_order' => $index,
             ]);
 
-            $this->writeRecommendations($report, $finding, $payload['recommendations'] ?? [], $context);
+            $this->writeRecommendations($report, $finding, $payload['recommendations'] ?? [], $context, $run);
         }
     }
 
     /**
      * @param  array<int, array<string, mixed>>  $recommendations
      */
-    private function writeRecommendations(Report $report, Finding $finding, array $recommendations, ExampleContext $context): void
+    private function writeRecommendations(Report $report, Finding $finding, array $recommendations, ExampleContext $context, ToolRun $run): void
     {
         foreach ($recommendations as $payload) {
+            $candidate = $this->contracts->build(
+                $payload,
+                $run->toolVersion->tool->key,
+                (string) ($payload['source_field'] ?? $finding->category ?? ''),
+                [
+                    'project' => ['name' => $context->businessName],
+                    'answers' => $run->answerMap(),
+                    // لغة التقرير تُثبَّت عند بدء التشغيل وتُحفظ معه، ولا
+                    // تُقرأ من لغة العامل الذي يركّبه.
+                    'locale' => (string) ($report->locale ?: config('locales.source', 'ar')),
+                ],
+            );
             // الخطوات والمثال يمرّان من مسار واحد: مخرج النموذج إن صحّ،
             // وأرضية حتمية إن غاب. لا توصية تصل بلا خطوة ولا بلا مثال.
-            $actionable = $this->enricher->enrich($payload, $context);
+            $actionable = $candidate->degraded
+                ? ['action_steps' => [], 'worked_example' => null, 'example_source' => null]
+                : $this->enricher->enrich($candidate->toArray(), $context);
 
             Recommendation::create([
                 'finding_id' => $finding->id,
                 'report_id' => $report->id,
+                'objective_id' => $candidate->objectiveDatabaseId,
+                'metric_objective_id' => $candidate->metricObjectiveDatabaseId,
                 'title' => $payload['title'],
                 'description' => $payload['description'],
+                'deliverable' => $candidate->deliverable ?: null,
+                'done_when' => $candidate->doneWhen ?: null,
+                'first_five_minutes' => $candidate->firstFiveMinutes ?: null,
+                'expected_failure' => $candidate->expectedFailure ?: null,
                 'root_cause' => $payload['root_cause'] ?? $finding->description,
                 'commercial_impact' => $payload['commercial_impact'] ?? 'يؤثر في كفاءة النمو أو تكلفة الوصول إلى النتيجة المستهدفة.',
                 'action_steps' => $actionable['action_steps'],
@@ -352,11 +420,17 @@ class ReportComposer
                 'owner_role' => $payload['owner_role'] ?? 'مسؤول التسويق بالتنسيق مع صاحب القرار',
                 'resources' => array_values($payload['resources'] ?? ['وقت الفريق', 'بيانات القياس المتاحة']),
                 'timeframe' => $payload['timeframe'] ?? 'خلال 30 يومًا',
+                'duration_days' => $candidate->durationDays ?: null,
+                'template_id' => $candidate->template['id'] ?? null,
+                'template_payload' => $candidate->template,
+                'degraded' => $candidate->degraded,
+                'degrade_reason' => $candidate->degradeReasons === [] ? null : implode(',', $candidate->degradeReasons),
+                'fallback_coaching' => $candidate->fallbackCoaching,
                 'dependencies' => array_values($payload['dependencies'] ?? []),
                 'impact' => $payload['impact'] ?? 'medium',
                 'effort' => $payload['effort'] ?? 'medium',
                 'priority' => $this->priority($payload, $finding),
-                'kpi_hint' => $payload['kpi_hint'] ?? null,
+                'kpi_hint' => $candidate->metricLabel ?: ($payload['kpi_hint'] ?? null),
                 'kpi_definition' => $payload['kpi_definition'] ?? ($payload['kpi_hint'] ?? 'مؤشر النتيجة المرتبط بالتوصية'),
                 'kpi_source' => $payload['kpi_source'] ?? 'لوحة القياس المعتمدة للمشروع',
                 'baseline' => isset($payload['baseline']) ? (string) $payload['baseline'] : null,
@@ -368,6 +442,50 @@ class ReportComposer
                 'confidence' => max(0, min(100, (int) ($payload['confidence'] ?? $finding->confidence))),
             ]);
         }
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function evidenceAnswer(ToolRun $run, array $payload): ?ToolRunAnswer
+    {
+        $reference = (string) ($payload['evidence_answer_ref'] ?? $payload['source_field'] ?? '');
+        if ($reference !== '') {
+            $matched = $run->answers->first(fn ($answer) => (string) $answer->id === $reference || $answer->field_key === $reference || 'answer:'.$answer->id === $reference);
+            if ($matched !== null) {
+                return $matched;
+            }
+        }
+
+        $evidence = mb_strtolower((string) ($payload['evidence'] ?? ''));
+        $labels = $run->toolVersion->fields->pluck('label', 'key');
+        $evidenceTokens = $this->meaningfulTokens($evidence);
+
+        $best = $run->answers
+            ->map(function ($answer) use ($labels, $evidenceTokens): array {
+                $source = (string) ($labels[$answer->field_key] ?? '').' '.$answer->field_key.' '.$this->answerQuote($answer->value_json);
+                $tokens = $this->meaningfulTokens($source);
+
+                return ['answer' => $answer, 'score' => count(array_intersect($evidenceTokens, $tokens))];
+            })
+            ->sortByDesc('score')
+            ->first(fn (array $candidate): bool => $candidate['score'] > 0)['answer'] ?? null;
+
+        return $best ?? ($evidence !== '' ? $run->answers->first() : null);
+    }
+
+    private function answerQuote(mixed $value): string
+    {
+        $encoded = is_scalar($value) ? (string) $value : json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return mb_substr((string) $encoded, 0, 500);
+    }
+
+    /** @return array<int, string> */
+    private function meaningfulTokens(string $value): array
+    {
+        $normalized = ArabicText::normalize($value);
+        preg_match_all('/[\p{Arabic}\p{L}\p{N}]{3,}/u', $normalized, $matches);
+
+        return array_values(array_unique($matches[0] ?? []));
     }
 
     /**
@@ -418,7 +536,8 @@ class ReportComposer
                 continue;
             }
 
-            $assumptions[] = "افتراض بلا سند صريح: {$finding->title} — {$finding->description}";
+            $assumptions[] = __('افتراض بلا سند صريح', [], (string) ($report->locale ?: app()->getLocale()))
+                .": {$finding->title} — {$finding->description}";
         }
 
         $assumptions = array_values(array_unique($assumptions));
@@ -433,19 +552,44 @@ class ReportComposer
      * @param  array<string, mixed>|null  $gaps
      * @return array<int, string>
      */
-    private function assumptions(?array $synthesis, ?array $gaps): array
+    private function assumptions(?array $synthesis, ?array $gaps, string $locale, array $answers = []): array
     {
-        $assumptions = $synthesis['assumptions'] ?? [];
+        $assumptions = [...($synthesis['assumptions'] ?? []), ...$this->measuredConflicts($answers, $locale)];
 
+        /*
+         * صياغة السطر تتبع لغة التقرير: ما حوله من محتوى مولَّد بلغة صاحبه،
+         * وسطرٌ عربيّ ثابت بينها يكشف أن الترجمة قشرة.
+         */
         foreach ($gaps['missing'] ?? [] as $missing) {
-            $assumptions[] = "ناقص نعرفه عنك: {$missing['field']} — {$missing['why_it_matters']}";
+            $assumptions[] = __('ناقص نعرفه عنك', [], $locale)
+                .": {$missing['field']} — {$missing['why_it_matters']}";
         }
 
         foreach ($gaps['conflicts'] ?? [] as $conflict) {
-            $assumptions[] = "في كلامك شيئان ما يتفقان: {$conflict['statement']} — {$conflict['explanation']}";
+            $assumptions[] = __('في كلامك شيئان ما يتفقان', [], $locale)
+                .": {$conflict['statement']} — {$conflict['explanation']}";
         }
 
         return array_values(array_unique($assumptions));
+    }
+
+    /**
+     * تعارضات مرصودة من إجابات صاحب النشاط نفسها، بلا استعلام نموذج.
+     *
+     * تُضاف إلى ما يقوله النموذج ولا تحلّ محلّه: النموذج يقرأ المعنى، وهذا
+     * يقرأ الكلمات. لكنّه وحده القابل لإعادة الإنتاج — يعطي النتيجة نفسها
+     * كلما أُعيد الحساب، فلا يعتمد أهمّ ما في التقرير على عيّنة واحدة (§٤.٢).
+     *
+     * @param  array<string, mixed>  $answers
+     * @return array<int, string>
+     */
+    private function measuredConflicts(array $answers, string $locale): array
+    {
+        return array_map(
+            fn (array $clash): string => __('في كلامك شيئان ما يتفقان', [], $locale)
+                .' ('.__('مرصود', [], $locale).")، {$clash['subject']}: «{$clash['left']}» — «{$clash['right']}»",
+            $this->consistency->inspect($answers),
+        );
     }
 
     /**

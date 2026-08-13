@@ -55,7 +55,7 @@ class AdminContentSubscriberController extends Controller
 
         $subscriber->update($data);
 
-        return back()->with('success', 'تم تحديث حالة المشترك.');
+        return back()->with('success', __('تم تحديث حالة المشترك.'));
     }
 
     private function safeCsvCell(mixed $value): string

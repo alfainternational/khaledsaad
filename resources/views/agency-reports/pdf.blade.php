@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: hacentunisia; color: #1a2233; font-size: 9.5pt; line-height: 1.75; }
+        body { font-family: plexarabic; color: #1a2233; font-size: 9.5pt; line-height: 1.75; }
         h1 { color: #fff; font-size: 18pt; margin: 0; }
         h2 { color: #071f5b; font-size: 13pt; border-bottom: 2px solid #2575ff; padding-bottom: 3pt; margin: 16pt 0 7pt; }
         h3 { color: #071f5b; font-size: 10.5pt; margin: 8pt 0 3pt; }
@@ -22,7 +22,7 @@
         .print-report th, .print-report td, .print-table th, .print-table td { overflow-wrap: anywhere; word-break: break-word; }
     </style>
 </head>
-<body class="print-report">
+<body class="print-report" data-interface-system="v2" data-interface-family="reports">
     <div class="cover">
         <h1>موجز التكليف — {{ $snapshot['agency_brief']['project']['name'] }}</h1>
         <p>معلومات تساعد الوكالة على فهم المطلوب وتسعيره من دون تخمين</p>

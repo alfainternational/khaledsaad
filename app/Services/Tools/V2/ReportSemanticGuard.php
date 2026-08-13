@@ -28,6 +28,7 @@ class ReportSemanticGuard
         }
 
         $source = $this->searchable([$context, $baseline]);
+        $answerReferences = $this->answerReferences($context);
         $allowedNumbers = $this->numbers($source);
         $seen = [];
         $findings = [];
@@ -47,7 +48,9 @@ class ReportSemanticGuard
 
             $seen[$fingerprint] = true;
             $evidence = trim((string) ($finding['evidence'] ?? ''));
-            $supported = $this->evidenceSupported($evidence, $source);
+            $explicitReference = trim((string) ($finding['evidence_answer_ref'] ?? ''));
+            $supported = ($explicitReference !== '' && array_key_exists($explicitReference, $answerReferences))
+                || $this->evidenceSupported($evidence, $source);
             // فحص الأرقام يقتصر على حقول الادعاء (ما يُقدَّم كحقيقة عن النشاط):
             // العنوان والوصف والدليل. أرقام التوصيات أهداف فعل توجيهية مشروعة
             // («انشر 3 مرات»، «استهدف 30 عميلًا») لا ادعاءات، فلا تُسقط الدليل.
@@ -70,6 +73,7 @@ class ReportSemanticGuard
                 }
             } else {
                 $finding['is_assumption'] = (bool) ($finding['is_assumption'] ?? false);
+                $finding['evidence_answer_ref'] = $this->closestAnswerReference($evidence, $answerReferences);
             }
 
             $finding['claim_type'] = $finding['is_assumption'] ? 'inference' : 'observed';
@@ -108,6 +112,48 @@ class ReportSemanticGuard
         }
 
         return $synthesis;
+    }
+
+    /** @param array<string, mixed> $context @return array<string, string> */
+    private function answerReferences(array $context): array
+    {
+        $answers = data_get($context, 'snapshot.answers', []);
+
+        if (! is_array($answers)) {
+            return [];
+        }
+
+        $references = [];
+        foreach ($answers as $key => $value) {
+            $reference = is_array($value) && isset($value['key']) ? (string) $value['key'] : (string) $key;
+            $text = $this->searchable($value);
+            if ($text !== '') {
+                $references[$reference] = $text;
+            }
+        }
+
+        return $references;
+    }
+
+    /** @param array<string, string> $references */
+    private function closestAnswerReference(string $evidence, array $references): ?string
+    {
+        $needle = $this->arabify($this->normalise($evidence));
+        $tokens = array_values(array_diff($this->contentTokens($needle), self::STOPWORDS));
+        $best = null;
+        $score = 0.0;
+
+        foreach ($references as $key => $value) {
+            $candidate = array_values(array_diff($this->contentTokens($this->arabify($value)), self::STOPWORDS));
+            $union = array_unique([...$tokens, ...$candidate]);
+            $current = $union === [] ? 0.0 : count(array_intersect($tokens, $candidate)) / count($union);
+            if ($current > $score) {
+                $score = $current;
+                $best = $key;
+            }
+        }
+
+        return $best;
     }
 
     /**

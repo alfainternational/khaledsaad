@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="{{ $appLocales->htmlLang() }}" dir="{{ $appLocales->direction() }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,8 +13,10 @@
 
         @include('partials.font')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <link rel="stylesheet" href="{{ asset('css/unified-report-contract.css') }}">
+        <script defer src="{{ asset('js/unified-report-contract.js') }}"></script>
     </head>
-    <body class="panel" data-layout="reading">
+    <body class="panel" data-layout="reading" data-interface-system="v2" data-interface-family="reports">
         <main class="panel__main panel__main--shared">
             <header class="page-head">
                 <div>

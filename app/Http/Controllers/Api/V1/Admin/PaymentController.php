@@ -54,7 +54,7 @@ class PaymentController extends Controller
         $this->confirm($request);
 
         if (! $payment->awaitsApproval()) {
-            return response()->json(['message' => 'هذه الدفعة عولجت مسبقاً.'], 409);
+            return response()->json(['message' => __('هذه الدفعة عولجت مسبقاً.')], 409);
         }
 
         $payments->approve($request, $payment);
@@ -72,7 +72,7 @@ class PaymentController extends Controller
         $this->confirm($request);
 
         if (! $payment->awaitsApproval()) {
-            return response()->json(['message' => 'هذه الدفعة عولجت مسبقاً.'], 409);
+            return response()->json(['message' => __('هذه الدفعة عولجت مسبقاً.')], 409);
         }
 
         $payments->reject($request, $payment);

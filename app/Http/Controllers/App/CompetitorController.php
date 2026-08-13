@@ -45,7 +45,7 @@ class CompetitorController extends Controller
 
         $this->registry->rememberNamed($project, $data['names']);
 
-        return back()->with('status', 'أُضيف منافسوك المحليون. سيظهرون في تقاريرك القادمة أيضًا.');
+        return back()->with('status', __('أُضيف منافسوك المحليون. سيظهرون في تقاريرك القادمة أيضًا.'));
     }
 
     public function confirm(Request $request, ProjectCompetitor $competitor): RedirectResponse

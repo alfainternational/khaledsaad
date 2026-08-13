@@ -33,7 +33,7 @@ final class ExampleContext
         $extras = is_array($profile?->extras) ? $profile->extras : [];
 
         return new self(
-            businessName: self::clean($project?->name) ?? 'نشاطك',
+            businessName: self::clean($project?->name) ?? __('نشاطك'),
             sector: $project?->sector,
             audience: self::clean($extras['audience'] ?? null)
                 ?? self::clean($extras['target_audience'] ?? null),
@@ -51,10 +51,10 @@ final class ExampleContext
     public function offeringNoun(): string
     {
         return match ($this->sector) {
-            Sector::EDUCATION => 'المقعد الدراسي',
-            Sector::REAL_ESTATE => 'الوحدة',
-            Sector::ECOMMERCE => 'المنتج',
-            default => 'الخدمة',
+            Sector::EDUCATION => __('المقعد الدراسي'),
+            Sector::REAL_ESTATE => __('الوحدة'),
+            Sector::ECOMMERCE => __('المنتج'),
+            default => __('الخدمة'),
         };
     }
 
@@ -65,10 +65,10 @@ final class ExampleContext
     public function buyerNoun(): string
     {
         return match ($this->sector) {
-            Sector::EDUCATION => 'ولي الأمر',
-            Sector::REAL_ESTATE => 'الباحث عن سكن',
-            Sector::ECOMMERCE => 'المشتري',
-            default => 'العميل',
+            Sector::EDUCATION => __('ولي الأمر'),
+            Sector::REAL_ESTATE => __('الباحث عن سكن'),
+            Sector::ECOMMERCE => __('المشتري'),
+            default => __('العميل'),
         };
     }
 
@@ -80,7 +80,7 @@ final class ExampleContext
      */
     public function promise(): string
     {
-        return $this->valueProposition ?? '[اكتب هنا في سطر واحد: ما الذي تعطيه ولا يعطيه غيرك]';
+        return $this->valueProposition ?? __('[اكتب هنا في سطر واحد: ما الذي تعطيه ولا يعطيه غيرك]');
     }
 
     public function audienceLabel(): string
@@ -90,7 +90,7 @@ final class ExampleContext
 
     public function placeLabel(): string
     {
-        return $this->geography ?? '[مدينتك]';
+        return $this->geography ?? __('[مدينتك]');
     }
 
     private static function clean(mixed $value): ?string

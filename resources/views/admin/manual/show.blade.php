@@ -53,8 +53,8 @@
                 box.select();
                 navigator.clipboard.writeText(box.value).then(function () {
                     var btn = document.querySelector('[data-copy-package]');
-                    btn.textContent = 'نُسخت ✓';
-                    setTimeout(function () { btn.textContent = 'انسخ الحزمة'; }, 2000);
+                    btn.textContent = @js(__('نُسخت ✓'));
+                    setTimeout(function () { btn.textContent = @js(__('انسخ الحزمة')); }, 2000);
                 });
             });
         </script>

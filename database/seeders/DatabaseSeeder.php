@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             FeatureSeeder::class,
             PaymentSeeder::class,
             ToolCatalogSeeder::class,
+            ReportingContractSeeder::class,
             ConsultationCatalogSeeder::class,
             // حساب الآدمن يبقى عبر عمليات إعادة التهيئة.
             AdminUserSeeder::class,

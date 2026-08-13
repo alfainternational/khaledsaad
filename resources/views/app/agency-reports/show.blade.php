@@ -1,7 +1,13 @@
 @extends('layouts.app')
+@section('interface_family', 'reports')
 @section('layout', 'report')
 
 @section('title', $agencyReport->title)
+
+@push('head')
+    <link rel="stylesheet" href="{{ asset('css/unified-report-contract.css') }}">
+    <script defer src="{{ asset('js/unified-report-contract.js') }}"></script>
+@endpush
 
 @section('content')
     @php($briefReady = $snapshot['agency_brief']['readiness']['is_ready'] ?? false)
@@ -55,7 +61,7 @@
         <section class="card card--warn">
             <h2 class="section-title">لديك معلومات أحدث من هذا التقرير</h2>
             <ul class="bullets">@foreach ($freshness['reasons'] as $reason)<li>{{ $reason }}</li>@endforeach</ul>
-            <p>سنحتفظ بهذه النسخة، وننشئ لك نسخة جديدة بالمعلومات الحالية.</p>
+            <p>تبقى هذه النسخة محفوظة، وتُنشأ نسخة جديدة بالمعلومات الحالية.</p>
             <form method="POST" action="{{ route('app.projects.agency-reports.store', $agencyReport->project) }}">
                 @csrf
                 @foreach (($agencyReport->visibility ?? []) as $key => $value)

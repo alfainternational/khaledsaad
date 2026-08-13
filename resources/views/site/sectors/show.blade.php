@@ -73,8 +73,8 @@
                 <p class="eyebrow">الجاهزية للذكاء الاصطناعي</p>
                 <h2 id="readiness-title" class="section-title">هل تظهر في إجابات النماذج؟</h2>
                 <p>
-                    نفحص موقعك كما تقرأه النماذج، ونسألها أسئلة عميلك بلسانه، ونعدّ كم مرة
-                    ذُكرت أنت ومن ظهر بدلًا منك. هذه أمثلة من الأسئلة التي نسألها عن قطاعك:
+                    أفحص موقعك كما تقرأه النماذج، وأسألها أسئلة عميلك بلسانه، وأعدّ كم مرة
+                    ذُكرت أنت ومن ظهر بدلًا منك. هذه أمثلة من الأسئلة التي تُسأل عن قطاعك:
                 </p>
                 <ul class="bullets">
                     @foreach ($capabilities['buyer_questions'] as $question)
@@ -82,9 +82,9 @@
                     @endforeach
                 </ul>
                 <p class="muted">
-                    ونفحص بيانات {{ $capabilities['schema']['label'] }} المنظَّمة في موقعك
+                    وأفحص بيانات {{ $capabilities['schema']['label'] }} المنظَّمة في موقعك
                     (<span dir="ltr">{{ implode('، ', $capabilities['schema']['types']) }}</span>)،
-                    ونعطيك القصاصة الجاهزة للصق إن كانت ناقصة.
+                    وأعطيك القصاصة الجاهزة للصق إن كانت ناقصة.
                 </p>
             </div>
         </section>
@@ -115,14 +115,14 @@
         <section class="section" aria-labelledby="honest-title">
             <div class="container">
                 <p class="eyebrow">وضوح قبل الوعود</p>
-                <h2 id="honest-title" class="section-title">ما لا نقوله لك</h2>
+                <h2 id="honest-title" class="section-title">ما لا أقوله لك</h2>
                 {{--
                     الصدق هنا ليس تواضعًا بل منتج: §٤ تمنع عرض الفرضية حقيقةً،
                     والصفحة التي تبيع بوعد لا يفي به المحرّك تُسقط الثقة عند أول تقرير.
                 --}}
                 <ul class="bullets">
                     <li>لا نعدك بعدد عملاء ولا بنسبة نمو — لا أحد يستطيع ذلك بصدق قبل أن يرى نشاطك.</li>
-                    <li>ما نستنتجه يظهر في تقريرك موسومًا «فرضية»، وما نرصده يظهر بدليله من موقعك أو إجاباتك.</li>
+                    <li>ما أستنتجه يظهر في تقريرك موسومًا «فرضية»، وما أرصده يظهر بدليله من موقعك أو إجاباتك.</li>
                     <li>معيار القطاع لا يظهر إلا بعد قياس خمسة أنشطة على الأقل فيه — ومتوسط من نشاطين صدفة لا مرجع.</li>
                     <li>القطاعات خارج الثلاثة تُخدم بالمسار الكامل نفسه، لكن بلا هذا العمق القطاعي.</li>
                 </ul>
@@ -131,7 +131,7 @@
 
         <section class="section" aria-labelledby="others-title">
             <div class="container">
-                <h2 id="others-title" class="section-title">قطاعاتنا الأخرى</h2>
+                <h2 id="others-title" class="section-title">القطاعان الآخران</h2>
                 <div class="hero-actions">
                     @foreach ($otherSectors as $other)
                         <a class="button button--ghost" href="{{ route('sectors.show', $other) }}">

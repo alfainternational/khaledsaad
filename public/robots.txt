@@ -1,4 +1,70 @@
+# الإتاحة صريحة لا مفترضة.
+#
+# المنصة تقيس ظهور العلامات في إجابات النماذج، ومن يقيس الظهور يجب أن يكون
+# ظاهرًا هو أولًا. الإتاحة الضمنية تكفي معظم الزواحف، لكن بعض المشغّلين
+# يعاملون غياب القاعدة معاملة الرفض — والسماح المكتوب لا يحتمل تأويلًا.
+#
+# التمييز الذي يستحق الانتباه: بوت **الفهرسة** يجعل الصفحة مصدرًا يُستشهد
+# به في إجابة حيّة، وبوت **التدريب** يبتلع النصّ بلا رابط ولا إسناد.
+# الأول مسموح صراحةً، والثاني قرار منفصل — وهو مسموح هنا لأن المحتوى
+# تعليمي يُقتبس بالإسناد، ولأن حجبه يحجب معه الظهور في الإجابات.
+
+# لا قاعدة تحجب `?lang=`: تلك هي عناوين النسخ الإنجليزية والفرنسية نفسها،
+# وحجبها يمنع فهرستها ويُفرغ `hreflang` من معناه. تكرارُها محكومٌ بـ
+# `canonical` — وهو الأداة الصحيحة لذلك، لا منع الزحف.
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /app/
+Disallow: /admin/
+Disallow: /api/
+
+# ── زواحف الذكاء الاصطناعي: الفهرسة والاستشهاد ──
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# ── زواحف التدريب ──
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# ملفّ يصف المنصة لنموذج لغوي بلغة طبيعية — أقصر طريق لفهمها بلا زحف كامل.
+# LLM guide: https://khaledsaad.net/llms.txt
 
 Sitemap: https://khaledsaad.net/sitemap.xml

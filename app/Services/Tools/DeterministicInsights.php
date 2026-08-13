@@ -3,6 +3,7 @@
 namespace App\Services\Tools;
 
 use App\Models\ToolRun;
+use App\Modules\Reporting\Objectives\ObjectiveCatalog;
 
 /**
  * أرضية النتائج الحتمية: ما يستحقه صاحب المشروع حتى لو تعطّل الذكاء الاصطناعي تمامًا.
@@ -15,6 +16,7 @@ use App\Models\ToolRun;
  */
 class DeterministicInsights
 {
+    public function __construct(private readonly ObjectiveCatalog $objectives) {}
     /**
      * يحوّل تفصيل الدرجة إلى نتائج مرتبة حسب الأثر: الأضعف عائدًا أولًا.
      *
@@ -39,7 +41,11 @@ class DeterministicInsights
             ->values();
 
         return $ranked
-            ->map(fn (array $row) => $this->toFinding($row, $advice[$row['field']] ?? null))
+            ->map(fn (array $row) => $this->toFinding(
+                $row,
+                $advice[$row['field']] ?? null,
+                $this->objectives->forField($run->toolVersion->tool->key, (string) ($row['field'] ?? '')),
+            ))
             ->all();
     }
 
@@ -75,7 +81,7 @@ class DeterministicInsights
      * @param  array{title?: string, description?: string, recommendation?: string, kpi?: string}|null  $advice
      * @return array<string, mixed>
      */
-    private function toFinding(array $row, ?array $advice): array
+    private function toFinding(array $row, ?array $advice, ?string $objectiveId): array
     {
         $label = (string) ($row['label'] ?? $row['field']);
         $factor = (float) ($row['factor'] ?? 0);
@@ -95,6 +101,7 @@ class DeterministicInsights
             ?? "خذ وقتًا هذا الأسبوع لـ«{$label}»: اكتب وضعه الحالي بصراحة، ثم اختر خطوة واحدة صغيرة تنقله للأفضل.";
 
         return [
+            'source_field' => (string) ($row['field'] ?? ''),
             'title' => $title,
             'description' => $description,
             'category' => 'ابدأ من هنا',
@@ -104,10 +111,24 @@ class DeterministicInsights
             'evidence' => "هذا الجانب وصل {$this->percent($factor)}% من الكامل، وهو من أكثر النقاط تأثيرًا في نتيجتك.",
             'confidence' => 90,
             'recommendations' => [[
+                'objective_id' => $objectiveId,
                 'title' => $advice['title'] ?? "اجعل «{$label}» أول خطوة",
                 'description' => $recommendation,
                 'impact' => $factor <= 0.4 ? 'high' : 'medium',
                 'effort' => 'medium',
+                'duration_days' => 7,
+                'deliverable' => "ورقة عمل مكتملة تخص «{$label}»",
+                'done_when' => "يمكن فحص تحسين «{$label}» من ورقة واحدة مكتملة بنعم أو لا.",
+                'first_five_minutes' => "افتح مستندًا جديدًا واكتب عنوان «{$label}» والوضع المثبت حاليًا.",
+                'expected_failure' => 'قد يتسع العمل إلى أكثر من قرار؛ التزم بناتج واحد قابل للفحص هذا الأسبوع.',
+                'metric' => [
+                    'label' => $advice['kpi'] ?? "اكتمال ناتج «{$label}» والتحقق منه",
+                    'objective_id' => $objectiveId,
+                ],
+                'action_steps' => [
+                    "استخرج من إجابتك الحالية حقيقة واحدة تخص «{$label}» واكتبها في أعلى الورقة.",
+                    "حوّل هذه الحقيقة إلى قرار واحد قابل للتنفيذ ثم راجعه بنهاية الأسبوع.",
+                ],
                 'kpi_hint' => $advice['kpi'] ?? null,
             ]],
         ];

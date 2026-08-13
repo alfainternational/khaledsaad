@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Modules\Shared\I18n\TranslatedConfig;
 use Illuminate\View\View;
 
 /**
@@ -36,6 +37,6 @@ class PricingController extends Controller
             ])
             ->values();
 
-        return view('site.pricing', ['plans' => $plans, 'brand' => config('brand')]);
+        return view('site.pricing', ['plans' => $plans, 'brand' => TranslatedConfig::get('brand')]);
     }
 }

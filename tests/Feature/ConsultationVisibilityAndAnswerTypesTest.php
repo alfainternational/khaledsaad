@@ -10,6 +10,8 @@ use App\Modules\Intake\ConsultationPresenter;
 use App\Modules\Intake\ConsultationService;
 use App\Modules\Intake\Engine\AnswerValidator;
 use App\Services\Projects\ProjectService;
+use App\Support\Experience\Experience;
+use App\Support\Experience\ExperienceService;
 use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,12 +27,44 @@ class ConsultationVisibilityAndAnswerTypesTest extends TestCase
     {
         $this->seed([ToolCatalogSeeder::class, ConsultationCatalogSeeder::class]);
         $user = User::factory()->create();
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
         app(ProjectService::class)->create($user, ['name' => 'مشروعي', 'stage' => 'growth']);
 
         $this->actingAs($user)->get(route('app.dashboard'))
-            ->assertOk()->assertSee('ابدأ التشخيص الذكي الشامل');
+            ->assertOk()->assertSee('ساعدني أختار من أين أبدأ');
         $this->actingAs($user)->get(route('app.consultations.index'))
             ->assertOk()->assertSee('مشروعي')->assertSee('ابدأ الاستشارة');
+    }
+
+    #[Test]
+    public function a_project_consultation_url_opens_the_entry_without_starting_a_session(): void
+    {
+        $this->seed([ToolCatalogSeeder::class, ConsultationCatalogSeeder::class]);
+        $user = User::factory()->create();
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروع مباشر', 'stage' => 'growth']);
+
+        $this->actingAs($user)
+            ->get("/app/projects/{$project->slug}/consultations")
+            ->assertRedirect(route('app.consultations.index'));
+
+        $this->assertDatabaseCount('consultation_sessions', 0);
+    }
+
+    #[Test]
+    public function a_project_consultation_url_resumes_its_latest_session(): void
+    {
+        $this->seed([ToolCatalogSeeder::class, ConsultationCatalogSeeder::class]);
+        $user = User::factory()->create();
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروع مستمر', 'stage' => 'growth']);
+        $session = app(ConsultationService::class)->start($project, $user);
+
+        $this->actingAs($user)
+            ->get("/app/projects/{$project->slug}/consultations")
+            ->assertRedirect(route('app.consultations.show', $session));
+
+        $this->assertDatabaseCount('consultation_sessions', 1);
     }
 
     #[Test]
@@ -52,6 +86,7 @@ class ConsultationVisibilityAndAnswerTypesTest extends TestCase
     {
         $this->seed([ToolCatalogSeeder::class, ConsultationCatalogSeeder::class]);
         $user = User::factory()->create();
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع المراجعة', 'stage' => 'growth']);
         $service = app(ConsultationService::class);
         $session = $service->start($project, $user);
@@ -63,6 +98,7 @@ class ConsultationVisibilityAndAnswerTypesTest extends TestCase
 
         $this->assertNotNull($reviewItem);
         $this->assertArrayHasKey('required', $reviewItem);
+        $this->assertIsArray($reviewItem['validation']);
 
         $this->actingAs($user)->get(route('app.consultations.show', $session))
             ->assertOk()

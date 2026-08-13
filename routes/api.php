@@ -16,8 +16,10 @@ use App\Http\Controllers\Api\V1\CompetitorController;
 use App\Http\Controllers\Api\V1\ConsultationController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\EngagementController;
+use App\Http\Controllers\Api\V1\ExperienceController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\GuestRunController;
+use App\Http\Controllers\Api\V1\MarketingLearningController;
 use App\Http\Controllers\Api\V1\MessageStudioController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\PresenceController as ApiPresenceController;
@@ -28,6 +30,7 @@ use App\Http\Controllers\Api\V1\PublicContentLibraryController;
 use App\Http\Controllers\Api\V1\PublicContentSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadinessController as ApiReadinessController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\ReportGapController as ApiReportGapController;
 use App\Http\Controllers\Api\V1\RunController;
 use App\Http\Controllers\Api\V1\SharedAgencyReportController as PublicSharedAgencyReportController;
 use App\Http\Controllers\Api\V1\TaskController;
@@ -68,9 +71,21 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('tools', [ToolController::class, 'index'])->name('tools.index');
     Route::get('tools/{tool}', [ToolController::class, 'show'])->name('tools.show');
 
-    Route::middleware('auth:sanctum')->group(function (): void {
+    Route::middleware(['auth:sanctum', 'experience-access'])->group(function (): void {
         Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+        Route::post('experiences/{experience}/activate', [ExperienceController::class, 'activate'])
+            ->whereIn('experience', ['business', 'learning'])->name('experiences.activate');
+        Route::post('experiences/{experience}/switch', [ExperienceController::class, 'switch'])
+            ->whereIn('experience', ['business', 'learning'])->name('experiences.switch');
+        Route::get('learning/marketing', [MarketingLearningController::class, 'index'])
+            ->name('learning.marketing.index');
+        Route::get('learning/marketing/{exercise}', [MarketingLearningController::class, 'show'])
+            ->name('learning.marketing.show');
+        Route::put('learning/marketing/{exercise}/answers/{question}', [MarketingLearningController::class, 'answer'])
+            ->middleware('throttle:120,1')->name('learning.marketing.answer');
+        Route::post('learning/marketing/{exercise}/review', [MarketingLearningController::class, 'review'])
+            ->middleware('throttle:20,60')->name('learning.marketing.review');
         Route::post('devices', [DeviceTokenController::class, 'store'])->name('devices.store');
         Route::delete('devices', [DeviceTokenController::class, 'destroy'])->name('devices.destroy');
 
@@ -138,6 +153,16 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('projects/{project}/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show');
         Route::post('reports/{report}/tasks', [ReportController::class, 'convert'])->name('reports.convert');
+
+        /*
+         * سدّ فجوات التقرير — نظير مسار الويب واحدًا بواحد.
+         *
+         * بلا هذين المسارين يعرض التطبيق النقص ولا يستطيع صاحبه كتابته،
+         * فيصير التكافؤ عرضًا بلا فعل.
+         */
+        Route::get('reports/{report}/gaps', [ApiReportGapController::class, 'index'])->name('reports.gaps.index');
+        Route::put('reports/{report}/gaps', [ApiReportGapController::class, 'update'])
+            ->middleware('throttle:30,60')->name('reports.gaps.update');
         // بوابة PDF داخل المتحكّم: الملكية قبل الاستحقاق.
         Route::get('reports/{report}/pdf', [AccountController::class, 'reportPdf'])->name('reports.pdf');
 

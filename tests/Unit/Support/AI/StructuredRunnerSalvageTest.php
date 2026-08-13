@@ -3,6 +3,8 @@
 namespace Tests\Unit\Support\AI;
 
 use App\Contracts\AI\ArtificialIntelligenceGateway;
+use App\Modules\Shared\I18n\GenerationLocale;
+use App\Modules\Shared\I18n\LocaleRegistry;
 use App\Support\AI\AIRequest;
 use App\Support\AI\AIResponse;
 use App\Support\AI\JsonSchemaValidator;
@@ -92,7 +94,12 @@ class StructuredRunnerSalvageTest extends TestCase
         $gateway = \Mockery::mock(ArtificialIntelligenceGateway::class);
         $gateway->shouldReceive('run')->andReturn($response);
 
-        $runner = new StructuredRunner($gateway, new JsonSchemaValidator);
+        $runner = new StructuredRunner(
+            $gateway,
+            new JsonSchemaValidator,
+            // توجيه لغة المخرَج: لغة المصدر تُرجع نصًّا فارغًا، فلا يتغيّر الطلب هنا.
+            new GenerationLocale(new LocaleRegistry),
+        );
 
         $request = AIRequest::json(
             messages: [['role' => 'user', 'content' => 'اختبار']],

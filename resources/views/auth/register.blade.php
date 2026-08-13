@@ -2,30 +2,54 @@
 @section('layout', 'auth')
 
 @section('title', 'إنشاء حساب')
-@section('heading', $startTool !== null ? 'احفظ تقدمك في «'.$startTool['title'].'»' : 'أنشئ حسابك وابدأ تشخيص مشروعك')
+@section('heading', $startTool !== null ? __('احفظ تقدمك في «:tool»', ['tool' => $startTool['title']]) : __('أنشئ حسابك واختر هدفك الحالي'))
 {{-- نقول ما نفعله بالحساب بصيغة الحاضر، لا ما «يمنحه لك». --}}
-@section('lead', 'نحفظ في حسابك إجاباتك وتقاريرك ومهامك، فتعود إليها وتتابع تقدّم مشروعك.')
+@section('lead', __('حساب واحد يحفظ تقدم تعلمك وبيانات مشروعك، ويمكنك تفعيل المسار الآخر لاحقًا.'))
 
 @section('context')
     @if ($startTool !== null)
         <div class="auth-intent" role="note">
             <span class="auth-intent__tag">{{ $startTool['category'] }}</span>
             <strong>{{ $startTool['title'] }}</strong>
-            <p>بعد تعريف مشروعك ستنتقل مباشرة إلى هذا التشخيص.</p>
+            <p>{{ __('بعد تعريف مشروعك ستنتقل مباشرة إلى هذا التشخيص.') }}</p>
         </div>
     @endif
 
-    <ol class="auth-steps" aria-label="ما يحدث بعد إنشاء الحساب">
-        <li class="is-current"><b>1</b> إنشاء الحساب</li>
-        <li><b>2</b> تعريف المشروع</li>
-        <li><b>3</b> {{ $startTool !== null ? 'أسئلة التشخيص' : 'اختيار التشخيص' }}</li>
-        <li><b>4</b> التقرير والمهام</li>
-    </ol>
+    @if ($startTool !== null)
+        <ol class="auth-steps" aria-label="{{ __('ما يحدث بعد إنشاء الحساب') }}">
+            <li class="is-current"><b>1</b> {{ __('إنشاء الحساب') }}</li>
+            <li><b>2</b> {{ __('تعريف المشروع') }}</li>
+            <li><b>3</b> {{ __('أسئلة التشخيص') }}</li>
+            <li><b>4</b> {{ __('التقرير والمهام') }}</li>
+        </ol>
+    @endif
 @endsection
 
 @section('form')
     <form method="POST" action="{{ route('register') }}" class="form">
         @csrf
+
+        <fieldset class="experience-choice">
+            <legend>{{ __('ماذا تريد أن تفعل الآن؟') }}</legend>
+            <label class="experience-choice__card">
+                <input type="radio" name="experience" value="business" required
+                    @checked(old('experience', $startExperience?->value) === 'business')>
+                <span>
+                    <strong>{{ __('أريد تحسين تسويق مشروعي') }}</strong>
+                    <small>{{ __('أضف مشروعك، شخّص وضعه، واحصل على أولويات ومهام تتابعها.') }}</small>
+                </span>
+            </label>
+            <label class="experience-choice__card">
+                <input type="radio" name="experience" value="learning" required
+                    @checked(old('experience', $startExperience?->value) === 'learning')>
+                <span>
+                    <strong>{{ __('أريد تعلّم التسويق بالتطبيق') }}</strong>
+                    <small>{{ __('اتبع دروسًا عملية، طبّق ما تتعلمه، واحصل على تقييم يساعدك على التحسن.') }}</small>
+                </span>
+            </label>
+            <p class="field__help">{{ __('يمكنك تفعيل المسار الآخر لاحقًا من حسابك دون إنشاء حساب جديد.') }}</p>
+            @error('experience') <span class="field-error">{{ $message }}</span> @enderror
+        </fieldset>
 
         <label class="field">
             <span class="field__label">الاسم</span>

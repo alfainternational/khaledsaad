@@ -48,7 +48,7 @@ class AdminFeatureController extends Controller
 
         Feature::create($data);
 
-        return redirect()->route('admin.features.index')->with('status', 'أُضيف عنصر الميزة.');
+        return redirect()->route('admin.features.index')->with('status', __('أُضيف عنصر الميزة.'));
     }
 
     public function edit(Feature $feature): View
@@ -70,20 +70,20 @@ class AdminFeatureController extends Controller
 
         $feature->update($data);
 
-        return redirect()->route('admin.features.index')->with('status', 'حُدّث عنصر الميزة.');
+        return redirect()->route('admin.features.index')->with('status', __('حُدّث عنصر الميزة.'));
     }
 
     public function destroy(Feature $feature): RedirectResponse
     {
         if ($this->isWired($feature)) {
             return back()->withErrors([
-                'feature' => 'هذا العنصر مربوط بنقطة منع في النظام. عطّله بدل حذفه.',
+                'feature' => __('هذا العنصر مربوط بنقطة منع في النظام. عطّله بدل حذفه.'),
             ]);
         }
 
         $feature->delete();
 
-        return redirect()->route('admin.features.index')->with('status', 'حُذف عنصر الميزة.');
+        return redirect()->route('admin.features.index')->with('status', __('حُذف عنصر الميزة.'));
     }
 
     private function isWired(Feature $feature): bool

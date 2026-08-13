@@ -82,6 +82,8 @@ class PipelineSchemas
     {
         return implode("\n", [
             'قابلية التنفيذ — كل توصية تحمل خطوات ومثالًا، وإلا فهي وصف مشكلة لا حلّ:',
+            '- اربط التوصية بهدف objective_id مسموح للأداة، واجعل metric.objective_id مساويًا له حرفيًا.',
+            '- الحقول deliverable وdone_when وfirst_five_minutes وexpected_failure وduration_days إلزامية؛ لا تضع نصًا عامًا ولا وعدًا بإكمال لاحق.',
             '- action_steps: من خطوتين إلى ست. كل خطوة فعلٌ يبدأ بأمر ("افتح"، "اكتب"، "أرسل"، "سجّل")، وينتهي بشيء ملموس يُعرف أنه تمّ. ممنوع أن تكون خطوة إعادةَ صياغة للوصف، وممنوع أن تكون نيّة مثل "اهتم بالمحتوى". قدّرها لمن ينفّذ وحده بوقت محدود: خطوة واحدة في اليوم.',
             '- worked_example: النصّ نفسه جاهزًا للنسخ، لا وصفًا له. الفرق حاسم: "اكتب رسالة تعريف قصيرة" ليست مثالًا، و"السلام عليكم أستاذ [الاسم]، معك…" مثال. اكتبه بلسان جمهور هذا النشاط تحديدًا وبلهجته، مستعملًا ما ذكره العميل عن نفسه ومنتجه وجمهوره.',
             '- kind يطابق ما يُسلَّم فعلًا: message للرسالة، post للمنشور، email للبريد، ad لنص الإعلان، script للسكربت، page_outline لبنية الصفحة، checklist لقائمة التنفيذ، spreadsheet لجدول المتابعة، reply للردّ الجاهز.',
@@ -105,10 +107,26 @@ class PipelineSchemas
                     'maxItems' => 10,
                     'items' => [
                         'type' => 'object',
-                        'required' => ['field', 'why_it_matters'],
+                        'required' => ['field', 'why_it_matters', 'field_key'],
                         'properties' => [
                             'field' => ['type' => 'string'],
                             'why_it_matters' => ['type' => 'string'],
+                            /*
+                             * مفتاح الحقل هو ما يحوّل «ناقص نعرفه عنك» من جملة
+                             * إلى زر. بلا مفتاح لا يمكن ربط النقص بالسؤال الذي
+                             * يُجاب فيه، فيبقى المستخدم يقرأ أن شيئًا ينقصه ولا
+                             * يجد له بابًا — وهو ما كان يحدث.
+                             *
+                             * والمفتاح المخترَع لا يصير زرًّا: `FieldDirectory`
+                             * تتحقق منه، وما لا تعرفه يبقى ملاحظة نصّية. زرٌّ
+                             * يفتح شاشة فارغة أسوأ من غياب الزر.
+                             */
+                            'field_key' => [
+                                'type' => 'string',
+                                'description' => 'The exact snapshot answer key this gap refers to '
+                                    .'(for example: value_proposition, best_customer, monthly_visitors). '
+                                    .'Use an empty string if no existing key matches — never invent one.',
+                            ],
                         ],
                     ],
                 ],
@@ -226,6 +244,7 @@ class PipelineSchemas
                             'category' => ['type' => 'string'],
                             'severity' => ['type' => 'string', 'enum' => ['critical', 'high', 'medium', 'low']],
                             'evidence' => ['type' => 'string'],
+                            'evidence_answer_ref' => ['type' => 'string', 'minLength' => 1],
                             'confidence' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 100],
                             'is_assumption' => ['type' => 'boolean'],
                             'recommendations' => [
@@ -243,10 +262,24 @@ class PipelineSchemas
                                      */
                                     'required' => ['title', 'description', 'impact', 'effort'],
                                     'properties' => [
+                                        'objective_id' => ['type' => 'string', 'minLength' => 3],
                                         'title' => ['type' => 'string', 'minLength' => 5],
                                         'description' => ['type' => 'string', 'minLength' => 20],
                                         'impact' => ['type' => 'string', 'enum' => ['high', 'medium', 'low']],
                                         'effort' => ['type' => 'string', 'enum' => ['high', 'medium', 'low']],
+                                        'duration_days' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 90],
+                                        'deliverable' => ['type' => 'string', 'minLength' => 5],
+                                        'done_when' => ['type' => 'string', 'minLength' => 10],
+                                        'first_five_minutes' => ['type' => 'string', 'minLength' => 10],
+                                        'expected_failure' => ['type' => 'string', 'minLength' => 10],
+                                        'metric' => [
+                                            'type' => 'object',
+                                            'required' => ['label', 'objective_id'],
+                                            'properties' => [
+                                                'label' => ['type' => 'string', 'minLength' => 3],
+                                                'objective_id' => ['type' => 'string', 'minLength' => 3],
+                                            ],
+                                        ],
                                         'kpi_hint' => ['type' => 'string'],
                                         'action_steps' => [
                                             'type' => 'array',

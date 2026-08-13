@@ -111,7 +111,7 @@ class ReadinessController extends Controller
 
         if (blank($url)) {
             throw ValidationException::withMessages([
-                'website' => 'أضف رابط موقعك في ملف المشروع أولًا، فبدونه لا يوجد ما يُفحص.',
+                'website' => __('أضف رابط موقعك في ملف المشروع أولًا، فبدونه لا يوجد ما يُفحص.'),
             ]);
         }
 
@@ -120,8 +120,8 @@ class ReadinessController extends Controller
         return redirect()
             ->route('app.readiness.show', $project)
             ->with('status', $result->reachable
-                ? 'اكتمل الفحص.'
-                : 'تعذّر الوصول إلى الموقع، فلم يُفحص شيء. تأكّد من الرابط ثم أعد المحاولة.');
+                ? __('اكتمل الفحص.')
+                : __('تعذّر الوصول إلى الموقع، فلم يُفحص شيء. تأكّد من الرابط ثم أعد المحاولة.'));
     }
 
     /**
@@ -137,13 +137,13 @@ class ReadinessController extends Controller
         $request->validate([
             // السجلات نصّية؛ الحد الأعلى يمنع ملفًا ضخمًا من إسقاط الطلب.
             'log' => ['required', 'file', 'max:20480'],
-        ], [], ['log' => 'ملف السجل']);
+        ], [], ['log' => __('ملف السجل')]);
 
         $contents = (string) file_get_contents($request->file('log')->getRealPath());
         $summary = $this->collector->collectCrawlLog($project, $contents);
 
         $message = $summary['parsed_lines'] === 0
-            ? 'تعذّرت قراءة السجل: لم يُفهم أي سطر. تأكّد أنه سجل وصول بصيغة Combined.'
+            ? __('تعذّرت قراءة السجل: لم يُفهم أي سطر. تأكّد أنه سجل وصول بصيغة Combined.')
             : "قُرئ {$summary['parsed_lines']} سطرًا، ورُصدت {$summary['total_visits']} زيارة بوت.";
 
         return redirect()
@@ -161,7 +161,7 @@ class ReadinessController extends Controller
 
         if (blank($url)) {
             throw ValidationException::withMessages([
-                'website' => 'أضف رابط موقعك أولًا.',
+                'website' => __('أضف رابط موقعك أولًا.'),
             ]);
         }
 

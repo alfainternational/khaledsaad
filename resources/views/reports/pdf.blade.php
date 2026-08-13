@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <style>
-        /* خط الموقع نفسه: Hacen Tunisia المحمّل من public/assets/fonts */
-        body { font-family: hacentunisia; color: #1a2233; font-size: 10pt; line-height: 1.8; }
+        /* خط الموقع نفسه: IBM Plex Sans Arabic بوزنيه، من public/assets/fonts */
+        body { font-family: plexarabic; color: #1a2233; font-size: 10pt; line-height: 1.8; }
         h1 { color: #ffffff; font-size: 17pt; margin: 0; }
         h2 { color: #071f5b; font-size: 12.5pt; margin: 16pt 0 6pt; border-bottom: 2px solid #2575ff; padding-bottom: 3pt; }
         h3 { color: #071f5b; font-size: 10.5pt; margin: 0 0 3pt; }
@@ -109,7 +109,7 @@
         .print-report th, .print-report td, .print-table th, .print-table td { overflow-wrap: anywhere; word-break: break-word; }
     </style>
 </head>
-<body class="print-report">
+<body class="print-report" data-interface-system="v2" data-interface-family="reports">
 
 {{-- الغلاف --}}
 <div class="cover">
@@ -140,6 +140,8 @@
             <span class="score-num">{{ $report['score'] }}</span>
             <span class="score-den">/ 100</span>
             <div style="margin-top: 5pt;"><span class="band">{{ $report['score_band'] }}</span></div>
+            <x-score-equation :equation="$report['score_equation']" />
+            <div style="margin-top: 6pt"><x-provenance-badge :type="$report['provenance_type']" :label="$report['provenance_label']" /></div>
             @php($scorePct = max(2, min(100, (int) $report['score'])))
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 8pt;">
                 <tr>
@@ -156,12 +158,13 @@
                 <table width="100%" cellpadding="6" cellspacing="0" class="verified">
                     <tr>
                         <td>
-                            <b>راجعها {{ $report['reviewer_name'] }} بنفسه — ليست نتيجة آلة</b><br>
+                            <b>تحليل موقّع راجعه {{ $report['reviewer_name'] }}</b><br>
                             <em>قرأ إجاباتك وكتب لك هذا التحليل{{ $report['reviewed_at'] ? ' في '.$report['reviewed_at'] : '' }}.</em>
                         </td>
                     </tr>
                 </table>
             @endif
+            <x-human-trace-list :traces="$report['human_traces']" />
 
             {{-- المقارنة الزمنية: نفس ما يظهر أعلى صفحة التقرير --}}
             @if (! empty($comparison))
@@ -319,7 +322,7 @@
         @else
             <h3>متابعة التقرير</h3>
             <p class="muted">
-                سننبهك إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
+                يصلك تنبيه إذا تغيّرت البيانات التي بُني عليها هذا التقرير.
                 @if ($watcher->last_checked_at)
                     آخر فحص {{ $watcher->last_checked_at->locale('ar')->translatedFormat('j F Y') }}.
                 @endif
@@ -376,6 +379,7 @@
                     </tr>
                 </table>
                 <p class="muted" style="font-size: 9pt;">{{ $rec['description'] }}</p>
+                <x-recommendation-contract :recommendation="$rec" :print="true" />
                 <p class="tags">
                     {{ $rec['impact_label'] }} — {{ $rec['effort_label'] }}@if (! empty($rec['timeframe'])) — المدة: {{ $rec['timeframe'] }}@endif @if (! empty($rec['kpi_hint'])) — المؤشر: {{ $rec['kpi_hint'] }}@endif
                 </p>
@@ -542,7 +546,7 @@
 
 {{-- توقيع صادق في نهاية التقرير اليدوي. --}}
 @if (! empty($report['is_manually_reviewed']))
-    <p class="report-sign">راجعه وكتبه بنفسه: {{ $report['reviewer_name'] }}@if ($report['reviewed_at']) · {{ $report['reviewed_at'] }}@endif</p>
+    <p class="report-sign">مراجعة موثّقة بواسطة {{ $report['reviewer_name'] }}@if ($report['reviewed_at']) · {{ $report['reviewed_at'] }}@endif</p>
 @endif
 
 </body>

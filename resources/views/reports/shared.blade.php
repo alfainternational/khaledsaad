@@ -1,8 +1,14 @@
 @extends('layouts.public')
+@section('interface_family', 'reports')
 @section('layout', 'report')
 
 @section('title', $report['title'].' — نسخة للاطلاع | خالد سعد')
 @section('description', 'نسخة للقراءة فقط من تقرير تشخيص تسويقي أُنشئ عبر منصة خالد سعد.')
+
+@push('head')
+    <link rel="stylesheet" href="{{ asset('css/unified-report-contract.css') }}">
+    <script defer src="{{ asset('js/unified-report-contract.js') }}"></script>
+@endpush
 
 @section('content')
     @include('partials.site-header')
@@ -25,6 +31,9 @@
                 <p class="eyebrow">الدرجة</p>
                 <p class="score-big">{{ $report['score'] }}<small>/100</small></p>
                 <p class="score-chip">{{ $report['score_band'] }}</p>
+                <x-score-equation :equation="$report['score_equation']" />
+                <x-provenance-badge :type="$report['provenance_type']" :label="$report['provenance_label']" />
+                <x-human-trace-list :traces="$report['human_traces']" />
                 @if ($comparison)
                     <p @class(['delta', 'delta--up' => $comparison['direction'] === 'up', 'delta--down' => $comparison['direction'] === 'down'])>
                         {{ $comparison['label'] }}
@@ -49,6 +58,9 @@
                         <x-evidence-badge :level="$finding['is_assumption'] ? 'inferred' : 'measured'" compact />
                     </header>
                     <p>{{ $finding['description'] }}</p>
+                    @foreach ($finding['recommendations'] as $recommendation)
+                        <x-recommendation-contract :recommendation="$recommendation" />
+                    @endforeach
                 </article>
             @endforeach
         </section>

@@ -103,7 +103,7 @@ class GrowthController extends Controller
 
         if (($missing = $this->geo->missingFields($project)) !== []) {
             return response()->json([
-                'message' => 'أكمل ملف المشروع أولًا — الحزمة تُبنى مما كتبته أنت.',
+                'message' => __('أكمل ملف المشروع أولًا — الحزمة تُبنى مما كتبته أنت.'),
                 'missing_fields' => $missing,
             ], 422);
         }
@@ -156,14 +156,14 @@ class GrowthController extends Controller
         $panel = $project->personaPanel;
 
         if ($panel === null) {
-            return response()->json(['message' => 'ابنِ لوحة الجمهور أولًا.'], 422);
+            return response()->json(['message' => __('ابنِ لوحة الجمهور أولًا.')], 422);
         }
 
         try {
             $test = $this->audience->test($panel, $validated['message'], $request->user());
         } catch (Throwable) {
             return response()->json([
-                'message' => 'تعذّر إجراء الاختبار الآن. أعد المحاولة بعد قليل.',
+                'message' => __('تعذّر إجراء الاختبار الآن. أعد المحاولة بعد قليل.'),
             ], 503);
         }
 

@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('interface_family', 'reports')
 
 @section('title', 'موجز التكليف — '.$snapshot['project']['name'])
 @section('layout', 'report')

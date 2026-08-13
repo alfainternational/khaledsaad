@@ -1,3 +1,5 @@
+import { t } from './i18n';
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-content-cover]').forEach((shell) => initializeCoverUploader(shell));
 });
@@ -19,23 +21,23 @@ function initializeCoverUploader(shell) {
 
         if (file.size > maxBytes) {
             status.classList.add('is-error');
-            status.textContent = `حجم الصورة ${formatBytes(file.size)}، والحد الأقصى ${formatBytes(maxBytes)}.`;
+            status.textContent = t('حجم الصورة :size، والحد الأقصى :max.', { size: formatBytes(file.size), max: formatBytes(maxBytes) });
             fileInput.value = '';
             return;
         }
 
         const dimensions = await readImageDimensions(file);
-        const fileDetails = [formatBytes(file.size), dimensions ? `${dimensions.width} × ${dimensions.height} بكسل` : null]
+        const fileDetails = [formatBytes(file.size), dimensions ? t(':width × :height بكسل', { width: dimensions.width, height: dimensions.height }) : null]
             .filter(Boolean)
             .join(' · ');
 
         status.classList.remove('is-error');
-        status.textContent = `جارٍ رفع الصورة… ${fileDetails}`;
+        status.textContent = t('جارٍ رفع الصورة… :details', { details: fileDetails });
         fileInput.disabled = true;
 
         const body = new FormData();
         body.append('file', file);
-        body.append('alt_text', shell.closest('form')?.querySelector('[name="title"]')?.value || 'الصورة الرئيسية');
+        body.append('alt_text', shell.closest('form')?.querySelector('[name="title"]')?.value || t('الصورة الرئيسية'));
 
         try {
             const response = await fetch(shell.dataset.uploadUrl, {
@@ -48,17 +50,17 @@ function initializeCoverUploader(shell) {
             });
 
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(payload.errors?.file?.[0] || 'تعذر رفع الصورة.');
+            if (!response.ok) throw new Error(payload.errors?.file?.[0] || t('تعذر رفع الصورة.'));
 
             valueInput.value = payload.data.url;
             preview.src = payload.data.url;
             preview.hidden = false;
             empty.hidden = true;
             remove.hidden = false;
-            status.textContent = `تم رفع الصورة (${fileDetails}). احفظ المحتوى لتثبيتها.`;
+            status.textContent = t('تم رفع الصورة (:details). احفظ المحتوى لتثبيتها.', { details: fileDetails });
         } catch (error) {
             status.classList.add('is-error');
-            status.textContent = error.message || 'تعذر رفع الصورة. استخدم JPG أو PNG أو WebP أو GIF.';
+            status.textContent = error.message || t('تعذر رفع الصورة. استخدم JPG أو PNG أو WebP أو GIF.');
         } finally {
             fileInput.disabled = false;
             fileInput.value = '';
@@ -72,7 +74,7 @@ function initializeCoverUploader(shell) {
         empty.hidden = false;
         remove.hidden = true;
         status.classList.remove('is-error');
-        status.textContent = 'ستُحذف الصورة الرئيسية عند حفظ المحتوى.';
+        status.textContent = t('ستُحذف الصورة الرئيسية عند حفظ المحتوى.');
     });
 }
 
@@ -94,10 +96,10 @@ function readImageDimensions(file) {
 }
 
 function formatBytes(bytes) {
-    if (bytes < 1024) return `${bytes} بايت`;
-    if (bytes < 1024 * 1024) return `${formatNumber(bytes / 1024)} كيلوبايت`;
+    if (bytes < 1024) return t(':count بايت', { count: bytes });
+    if (bytes < 1024 * 1024) return t(':count كيلوبايت', { count: formatNumber(bytes / 1024) });
 
-    return `${formatNumber(bytes / 1024 / 1024)} ميجابايت`;
+    return t(':count ميجابايت', { count: formatNumber(bytes / 1024 / 1024) });
 }
 
 function formatNumber(value) {

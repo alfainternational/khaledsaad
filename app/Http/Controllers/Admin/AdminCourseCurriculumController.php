@@ -40,7 +40,7 @@ class AdminCourseCurriculumController extends Controller
             ]);
         });
 
-        return back()->with('success', 'أُضيف قسم الدورة.');
+        return back()->with('success', __('أُضيف قسم الدورة.'));
     }
 
     public function updateSection(CourseSectionRequest $request, Content $course, CourseSection $section): RedirectResponse
@@ -48,7 +48,7 @@ class AdminCourseCurriculumController extends Controller
         $this->ensureSection($course, $section);
         $section->update($request->validated());
 
-        return back()->with('success', 'حُدّث القسم.');
+        return back()->with('success', __('حُدّث القسم.'));
     }
 
     public function destroySection(Content $course, CourseSection $section): RedirectResponse
@@ -56,7 +56,7 @@ class AdminCourseCurriculumController extends Controller
         $this->ensureSection($course, $section);
         $section->delete();
 
-        return back()->with('success', 'حُذف القسم من الدورة.');
+        return back()->with('success', __('حُذف القسم من الدورة.'));
     }
 
     public function storeItem(Request $request, Content $course, CourseSection $section): RedirectResponse
@@ -81,7 +81,7 @@ class AdminCourseCurriculumController extends Controller
             ]);
         });
 
-        return back()->with('success', 'أُضيف المحتوى إلى القسم.');
+        return back()->with('success', __('أُضيف المحتوى إلى القسم.'));
     }
 
     public function destroyItem(Content $course, CourseSection $section, Content $item): RedirectResponse
@@ -89,7 +89,7 @@ class AdminCourseCurriculumController extends Controller
         $this->ensureSection($course, $section);
         $section->items()->detach($item->id);
 
-        return back()->with('success', 'أُزيل المحتوى من القسم.');
+        return back()->with('success', __('أُزيل المحتوى من القسم.'));
     }
 
     private function ensureCourse(Content $course): void

@@ -17,8 +17,8 @@ class ImpersonationController extends Controller
 {
     public function start(Request $request, User $user): RedirectResponse
     {
-        abort_if($user->isAdmin(), 403, 'لا انتحال لحساب إداري.');
-        abort_if($request->session()->has('impersonator_id'), 403, 'أنهِ الانتحال الحالي أولًا.');
+        abort_if($user->isAdmin(), 403, __('لا انتحال لحساب إداري.'));
+        abort_if($request->session()->has('impersonator_id'), 403, __('أنهِ الانتحال الحالي أولًا.'));
 
         AuditLog::write('impersonation.start', $user);
 
@@ -43,6 +43,6 @@ class ImpersonationController extends Controller
         $request->session()->regenerate();
         $request->session()->forget('impersonator_id');
 
-        return redirect()->route('admin.users.index')->with('status', 'انتهى الانتحال وعدت لحسابك.');
+        return redirect()->route('admin.users.index')->with('status', __('انتهى الانتحال وعدت لحسابك.'));
     }
 }

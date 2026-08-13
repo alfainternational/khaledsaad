@@ -5,15 +5,38 @@
 @section('description', $description)
 
 @section('content')
+    @php
+        $heroVisuals = [
+            'methodology' => ['file' => 'page-methodology-flow.png', 'width' => 1536, 'height' => 1024],
+            'principles' => ['file' => 'page-principles-trust.png', 'width' => 1254, 'height' => 1254],
+            'services' => ['file' => 'page-services-outcomes.png', 'width' => 1254, 'height' => 1254],
+            'knowledge' => ['file' => 'page-knowledge-actions.png', 'width' => 1254, 'height' => 1254],
+            'faq' => ['file' => 'page-faq-decisions.png', 'width' => 1149, 'height' => 1369],
+            'sample-report' => ['file' => 'page-sample-report.png', 'width' => 1122, 'height' => 1402],
+        ];
+        $heroVisual = $heroVisuals[$pageKey] ?? null;
+        $cardIcons = ['listen', 'search', 'priority', 'act', 'evidence', 'target'];
+    @endphp
+
     @include('partials.site-header')
 
     <main id="main-content" class="public-page public-page--{{ $pageKey }}">
         <section class="public-page-hero">
             <div class="container public-page-hero__inner">
-                <nav class="crumbs" aria-label="مسار الصفحة"><a href="{{ route('home') }}">الرئيسية</a><span>←</span><b>{{ $label }}</b></nav>
-                <p class="eyebrow">{{ $label }}</p>
-                <h1>{{ $title }}</h1>
-                <p>{{ $description }}</p>
+                <div class="public-page-hero__copy">
+                    <nav class="crumbs" aria-label="مسار الصفحة"><a href="{{ route('home') }}">الرئيسية</a><span>←</span><b>{{ $label }}</b></nav>
+                    <p class="eyebrow">{{ $label }}</p>
+                    <h1>{{ $title }}</h1>
+                    <p>{{ $description }}</p>
+                </div>
+
+                @if ($heroVisual)
+                    <figure class="public-page-hero__visual" aria-hidden="true">
+                        <img src="{{ asset('assets/design/'.$heroVisual['file']) }}?v=1" alt=""
+                            width="{{ $heroVisual['width'] }}" height="{{ $heroVisual['height'] }}"
+                            loading="eager" fetchpriority="high" decoding="async">
+                    </figure>
+                @endif
             </div>
         </section>
 
@@ -36,7 +59,13 @@
                             <div class="public-sample-report__score"><strong>64<small>/100</small></strong><span>درجة جاهزية توضيحية</span></div>
                             <div class="public-page-grid">
                                 @foreach ($collection['items'] as $item)
-                                    <article class="public-page-card"><h3>{{ $item['title'] }}</h3><p>{{ $item['description'] }}</p></article>
+                                    <article class="public-page-card">
+                                        <h3>{{ $item['title'] }}</h3>
+                                        <p>{{ $item['description'] }}</p>
+                                        @isset($item['evidence'])
+                                            <x-evidence-badge :level="$item['evidence']" />
+                                        @endisset
+                                    </article>
                                 @endforeach
                             </div>
                             <p class="public-sample-report__next"><span>الخطوة التالية</span><strong>اكتب سبب الشراء منك في صفحتك الأولى، وابنِ صفحة الشراء، قبل زيادة ميزانية الإعلان.</strong></p>
@@ -46,7 +75,10 @@
                             @foreach ($collection['items'] as $item)
                                 <article class="public-page-card">
                                     @if (isset($item['step']) || isset($item['number']))
-                                        <span class="public-page-card__number">{{ $item['step'] ?? $item['number'] }}</span>
+                                        <div class="public-page-card__marker">
+                                            <x-section-icon :name="$cardIcons[$loop->index % count($cardIcons)]" />
+                                            <span class="public-page-card__number">{{ $item['step'] ?? $item['number'] }}</span>
+                                        </div>
                                     @endif
                                     <h3>{{ $item['title'] }}</h3>
                                     <p>{{ $item['description'] }}</p>

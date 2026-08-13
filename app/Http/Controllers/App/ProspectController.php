@@ -72,7 +72,7 @@ class ProspectController extends Controller
             'preferred_channel' => 'required|string|in:'.implode(',', array_keys(MessageChannel::options())),
             'persona_key' => 'nullable|string|max:64',
         ], [
-            'name.required' => 'الاسم إلزامي — الرسالة تُخاطب شخصًا لا سجلًّا.',
+            'name.required' => __('الاسم إلزامي — الرسالة تُخاطب شخصًا لا سجلًّا.'),
         ]);
 
         $interests = $this->splitList($validated['interests'] ?? '');
@@ -98,7 +98,7 @@ class ProspectController extends Controller
             'status' => Prospect::STATUS_ACTIVE,
         ]);
 
-        return back()->with('status', 'أُضيف '.$validated['name'].' — ولّد رسالته حين تشاء.');
+        return back()->with('status', __('أُضيف :name — ولّد رسالته حين تشاء.', ['name' => $validated['name']]));
     }
 
     /**
@@ -121,7 +121,7 @@ class ProspectController extends Controller
             ->orderBy('id')->get();
 
         if ($prospects->isEmpty()) {
-            return back()->withErrors(['prospects' => 'أضف عميلًا متوقعًا أولًا.']);
+            return back()->withErrors(['prospects' => __('أضف عميلًا متوقعًا أولًا.')]);
         }
 
         $outcome = $this->messages->generate(
@@ -136,20 +136,22 @@ class ProspectController extends Controller
 
         if ($outcome['messages'] === []) {
             return $redirect->withErrors([
-                'prospects' => 'تعذّر التوليد الآن. بيانات عملائك ورسائلهم السابقة لم تتأثر.',
+                'prospects' => __('تعذّر التوليد الآن. بيانات عملائك ورسائلهم السابقة لم تتأثر.'),
             ]);
         }
 
-        $notes = [count($outcome['messages']).' رسالة جاهزة.'];
+        $notes = [__(':count رسالة جاهزة.', ['count' => count($outcome['messages'])])];
 
         if ($outcome['failed'] !== []) {
-            $notes[] = 'لم تكتمل: '.implode('، ', $outcome['failed']).'.';
+            $notes[] = __('لم تكتمل: :names.', ['names' => implode('، ', $outcome['failed'])]);
         }
 
         if ($outcome['skipped'] > 0) {
             // السقف يُعلَن ولا يُقتطع بصمت.
-            $notes[] = 'تُركت '.$outcome['skipped'].' خارج هذه الدفعة (الحد '
-                .ProspectMessageService::BATCH_LIMIT.' في المرة) — أعد التوليد لبقيتهم.';
+            $notes[] = __('تُركت :skipped خارج هذه الدفعة (الحد :limit في المرة) — أعد التوليد لبقيتهم.', [
+                'skipped' => $outcome['skipped'],
+                'limit' => ProspectMessageService::BATCH_LIMIT,
+            ]);
         }
 
         return $redirect->with('status', implode(' ', $notes));
@@ -189,7 +191,7 @@ class ProspectController extends Controller
             'parent_id' => $prospect->latestMessage()?->id,
         ]);
 
-        return back()->with('status', 'حُفظت رسالتك لـ'.$prospect->name.'.');
+        return back()->with('status', __('حُفظت رسالتك لـ:name.', ['name' => $prospect->name]));
     }
 
     /**
@@ -208,7 +210,7 @@ class ProspectController extends Controller
             'sent_at' => now(),
         ]);
 
-        return back()->with('status', 'سُجّلت كمُرسَلة.');
+        return back()->with('status', __('سُجّلت كمُرسَلة.'));
     }
 
     public function updateProspect(Request $request, Project $project, Prospect $prospect): RedirectResponse
@@ -223,8 +225,8 @@ class ProspectController extends Controller
         $prospect->update(['status' => $validated['status']]);
 
         return back()->with('status', $validated['status'] === Prospect::STATUS_WON
-            ? 'مبروك — نُقل إلى العملاء الفائزين.'
-            : 'أُرشف العميل.');
+            ? __('مبروك — نُقل إلى العملاء الفائزين.')
+            : __('أُرشف العميل.'));
     }
 
     private function assertOwns(Project $project, Prospect $prospect): void

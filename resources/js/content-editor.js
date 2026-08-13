@@ -9,42 +9,43 @@ import TaskItem from '@tiptap/extension-task-item';
 import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
+import { t } from './i18n';
 
 const labels = {
-    paragraph: 'نص عادي',
-    bold: 'عريض',
-    italic: 'مائل',
-    underline: 'تحته خط',
-    strike: 'شطب',
-    h2: 'عنوان 2',
-    h3: 'عنوان 3',
-    bulletList: 'نقاط',
-    orderedList: 'ترقيم',
-    taskList: 'مهام',
-    blockquote: 'اقتباس',
-    code: 'كود',
-    codeBlock: 'كتلة كود',
-    highlight: 'تمييز',
-    alignRight: 'يمين',
-    alignCenter: 'وسط',
-    alignJustify: 'ضبط',
-    link: 'رابط',
-    image: 'صورة',
+    paragraph: t('نص عادي'),
+    bold: t('عريض'),
+    italic: t('مائل'),
+    underline: t('تحته خط'),
+    strike: t('شطب'),
+    h2: t('عنوان 2'),
+    h3: t('عنوان 3'),
+    bulletList: t('نقاط'),
+    orderedList: t('ترقيم'),
+    taskList: t('مهام'),
+    blockquote: t('اقتباس'),
+    code: t('كود'),
+    codeBlock: t('كتلة كود'),
+    highlight: t('تمييز'),
+    alignRight: t('يمين'),
+    alignCenter: t('وسط'),
+    alignJustify: t('ضبط'),
+    link: t('رابط'),
+    image: t('صورة'),
     youtube: 'YouTube',
-    table: 'جدول',
-    horizontalRule: 'فاصل',
-    undo: 'تراجع',
-    redo: 'إعادة',
-    fullscreen: 'ملء الشاشة',
-    clear: 'مسح التنسيق',
+    table: t('جدول'),
+    horizontalRule: t('فاصل'),
+    undo: t('تراجع'),
+    redo: t('إعادة'),
+    fullscreen: t('ملء الشاشة'),
+    clear: t('مسح التنسيق'),
 };
 
 const toolbarGroups = [
-    { label: 'تنسيق النص', actions: ['bold', 'italic', 'underline', 'strike', 'highlight', 'clear'] },
-    { label: 'بنية المحتوى', actions: ['paragraph', 'h2', 'h3', 'bulletList', 'orderedList', 'taskList', 'blockquote', 'code', 'codeBlock'] },
-    { label: 'إدراج عناصر', actions: ['link', 'image', 'youtube', 'table', 'horizontalRule'] },
-    { label: 'محاذاة النص', actions: ['alignRight', 'alignCenter', 'alignJustify'] },
-    { label: 'التحكم والعرض', actions: ['undo', 'redo', 'fullscreen'] },
+    { label: t('تنسيق النص'), actions: ['bold', 'italic', 'underline', 'strike', 'highlight', 'clear'] },
+    { label: t('بنية المحتوى'), actions: ['paragraph', 'h2', 'h3', 'bulletList', 'orderedList', 'taskList', 'blockquote', 'code', 'codeBlock'] },
+    { label: t('إدراج عناصر'), actions: ['link', 'image', 'youtube', 'table', 'horizontalRule'] },
+    { label: t('محاذاة النص'), actions: ['alignRight', 'alignCenter', 'alignJustify'] },
+    { label: t('التحكم والعرض'), actions: ['undo', 'redo', 'fullscreen'] },
 ];
 
 const svg = (body) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
@@ -120,7 +121,7 @@ function initializeEditor(shell) {
             TaskList,
             TaskItem.configure({ nested: true }),
             Youtube.configure({ nocookie: true, controls: true }),
-            Placeholder.configure({ placeholder: 'ابدأ كتابة المحتوى هنا…' }),
+            Placeholder.configure({ placeholder: t('ابدأ كتابة المحتوى هنا…') }),
             CharacterCount.configure({ limit: 100000 }),
         ],
         editorProps: {
@@ -196,7 +197,7 @@ function initializeEditor(shell) {
         jsonInput.value = JSON.stringify(instance.getJSON());
 
         if (count) {
-            count.textContent = `${instance.storage.characterCount.words()} كلمة · ${instance.storage.characterCount.characters()} حرف`;
+            count.textContent = t(':words كلمة · :chars حرف', { words: instance.storage.characterCount.words(), chars: instance.storage.characterCount.characters() });
         }
 
         updateToolbar(instance);
@@ -234,7 +235,7 @@ function initializeEditor(shell) {
 
 function setLink(editor) {
     const previous = editor.getAttributes('link').href || '';
-    const url = window.prompt('رابط الوجهة:', previous);
+    const url = window.prompt(t('رابط الوجهة:'), previous);
 
     if (url === null) return;
     if (url.trim() === '') {
@@ -258,12 +259,12 @@ function selectImage(editor, uploadUrl, maxBytes) {
         if (!file) return;
 
         if (file.size > maxBytes) {
-            window.alert(`حجم الصورة ${formatMediaBytes(file.size)}، والحد الأقصى ${formatMediaBytes(maxBytes)}.`);
+            window.alert(t('حجم الصورة :size، والحد الأقصى :max.', { size: formatMediaBytes(file.size), max: formatMediaBytes(maxBytes) }));
             input.remove();
             return;
         }
 
-        const alt = window.prompt('وصف الصورة البديل:', '') || '';
+        const alt = window.prompt(t('وصف الصورة البديل:'), '') || '';
         const body = new FormData();
         body.append('file', file);
         body.append('alt_text', alt);
@@ -279,10 +280,10 @@ function selectImage(editor, uploadUrl, maxBytes) {
             });
 
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(payload.errors?.file?.[0] || 'تعذر رفع الصورة.');
+            if (!response.ok) throw new Error(payload.errors?.file?.[0] || t('تعذر رفع الصورة.'));
             editor.chain().focus().setImage({ src: payload.data.url, alt }).run();
         } catch (error) {
-            window.alert(error.message || 'تعذر رفع الصورة. تحقق من نوع الملف أو حجمه وحاول مجددًا.');
+            window.alert(error.message || t('تعذر رفع الصورة. تحقق من نوع الملف أو حجمه وحاول مجددًا.'));
         } finally {
             input.remove();
         }
@@ -293,14 +294,14 @@ function selectImage(editor, uploadUrl, maxBytes) {
 }
 
 function formatMediaBytes(bytes) {
-    if (bytes < 1024) return `${bytes} بايت`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toLocaleString('ar', { maximumFractionDigits: 1 })} كيلوبايت`;
+    if (bytes < 1024) return t(':count بايت', { count: bytes });
+    if (bytes < 1024 * 1024) return t(':count كيلوبايت', { count: (bytes / 1024).toLocaleString('ar', { maximumFractionDigits: 1 }) });
 
-    return `${(bytes / 1024 / 1024).toLocaleString('ar', { maximumFractionDigits: 1 })} ميجابايت`;
+    return t(':count ميجابايت', { count: (bytes / 1024 / 1024).toLocaleString('ar', { maximumFractionDigits: 1 }) });
 }
 
 function addYoutube(editor) {
-    const url = window.prompt('رابط فيديو YouTube:');
+    const url = window.prompt(t('رابط فيديو YouTube:'));
     if (!url) return;
 
     editor.commands.setYoutubeVideo({ src: url, width: 800, height: 450 });
@@ -309,7 +310,7 @@ function addYoutube(editor) {
 function preview(editor) {
     const dialog = document.createElement('dialog');
     dialog.className = 'content-editor-preview';
-    dialog.innerHTML = '<form method="dialog"><button class="btn btn--ghost">إغلاق</button></form>';
+    dialog.innerHTML = t('<form method="dialog"><button class="btn btn--ghost">إغلاق</button></form>');
     const article = document.createElement('article');
     article.className = 'prose content-prose';
     article.dir = 'rtl';

@@ -18,7 +18,7 @@
             <a href="{{ route('tools.index') }}" @class(['is-active' => request()->routeIs('tools.*')])>التشخيصات</a>
             {{-- الفهرس لا قطاعًا بعينه: رابطٌ يذهب إلى واحد يجعل الاثنين
                  الآخرين حاشيةً في ذهن الزائر قبل أن يقرأ سطرًا. --}}
-            <a href="{{ route('sectors.index') }}" @class(['is-active' => request()->routeIs('sectors.*')])>قطاعاتنا</a>
+            <a href="{{ route('sectors.index') }}" @class(['is-active' => request()->routeIs('sectors.*')])>القطاعات</a>
             <a href="{{ route('pricing') }}" @class(['is-active' => request()->routeIs('pricing')])>الأسعار</a>
             <a href="{{ route('profile') }}" @class(['is-active' => request()->routeIs('profile')])>السيرة</a>
             {{-- «مقالات» تصف ما خلف الرابط؛ «المعرفة» تسمية مجرّدة لا يعرف
@@ -28,6 +28,7 @@
         </nav>
 
         <div class="nav-actions">
+            @include('partials.language-switcher')
             @include('partials.theme-toggle')
             @guest
                 <a class="nav-login" href="{{ route('login') }}">تسجيل الدخول</a>
@@ -47,6 +48,7 @@
             <div class="mobile-menu__utilities">
                 <span>مظهر الموقع</span>
                 @include('partials.theme-toggle')
+                @include('partials.language-switcher')
             </div>
             <a href="{{ route('methodology') }}">المنهجية</a>
             <a href="{{ route('tools.index') }}">التشخيصات</a>

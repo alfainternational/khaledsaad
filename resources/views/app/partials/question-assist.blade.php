@@ -157,9 +157,9 @@
                         });
 
                         if (applied) {
-                            say('أُدخل المقترح في الخانة. عدّله بما يطابق نشاطك فعلًا قبل الحفظ.');
+                            say(@js(__('أُدخل المقترح في الخانة. عدّله بما يطابق نشاطك فعلًا قبل الحفظ.')));
                         } else {
-                            say('تعذّر إدخال المقترح تلقائيًّا. انسخه واكتبه بنفسك.');
+                            say(@js(__('تعذّر إدخال المقترح تلقائيًّا. انسخه واكتبه بنفسك.')));
                         }
                     }
 
@@ -181,10 +181,10 @@
                         var basisBox = root.querySelector('[data-assist-basis-box]');
 
                         guide.textContent = data.guide || '';
-                        badge.textContent = data.assumption_label || 'فرضية';
+                        badge.textContent = data.assumption_label || @js(__('فرضية'));
 
                         if (data.recommendation_reason) {
-                            recommendation.textContent = 'الأقرب لوصفك: ' + data.recommendation_reason;
+                            recommendation.textContent = @js(__('الأقرب لوصفك: :reason')).replace(':reason', data.recommendation_reason);
                             recommendation.hidden = false;
                         } else {
                             recommendation.hidden = true;
@@ -203,7 +203,7 @@
 
                             if (data.recommended_value && String(data.recommended_value) === String(suggestion.value)) {
                                 item.classList.add('is-recommended');
-                                button.textContent = suggestion.label + ' — الأقرب لوصفك';
+                                button.textContent = @js(__(':label — الأقرب لوصفك')).replace(':label', suggestion.label);
                             }
 
                             button.addEventListener('click', function () { fill(suggestion.value); });
@@ -220,7 +220,7 @@
 
                     trigger.addEventListener('click', function () {
                         trigger.disabled = true;
-                        say('نقرأ ما نعرفه عن نشاطك…');
+                        say(@js(__('نقرأ ما نعرفه عن نشاطك…')));
 
                         post(root.dataset.endpoint, {
                             surface: root.dataset.surface,
@@ -231,7 +231,7 @@
                             .then(function (payload) {
                                 if (!payload.data || (!payload.data.guide && !(payload.data.suggestions || []).length)) {
                                     // الفراغ يُعلن ولا يُلفَّق (§٤.٣).
-                                    say('لا تتوفر مقترحات لهذا السؤال الآن. اكتب إجابتك وسنقيس كفايتها.');
+                                    say(@js(__('لا تتوفر مقترحات لهذا السؤال الآن. اكتب إجابتك وتُقاس كفايتها.')));
 
                                     return;
                                 }
@@ -240,7 +240,7 @@
                                 say('');
                             })
                             .catch(function () {
-                                say('تعذّر جلب المقترحات الآن. يمكنك الإجابة بصورة طبيعية.');
+                                say(@js(__('تعذّر جلب المقترحات الآن. يمكنك الإجابة بصورة طبيعية.')));
                             })
                             .finally(function () { trigger.disabled = false; });
                     });
@@ -280,7 +280,7 @@
 
                                 // كل رقم يُعرض معه أساسه (§١٣).
                                 root.querySelector('[data-fitness-score]').textContent =
-                                    'كفاية إجابتك ' + payload.data.score + ' من ١٠٠';
+                                    @js(__('كفاية إجابتك :score من 100')).replace(':score', payload.data.score);
                                 root.querySelector('[data-fitness-headline]').textContent = payload.data.headline;
                                 renderList(root.querySelector('[data-fitness-gaps]'), payload.data.gaps);
                                 renderList(root.querySelector('[data-fitness-basis]'), payload.data.basis);

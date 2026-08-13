@@ -25,20 +25,20 @@ class RepairSnippets
         return match ($key) {
             'schema_organization' => [
                 'language' => 'html',
-                'where' => 'داخل <head> في كل صفحات الموقع، أو في الرئيسية على الأقل.',
+                'where' => __('داخل <head> في كل صفحات الموقع، أو في الرئيسية على الأقل.'),
                 'code' => $this->json([
                     '@context' => 'https://schema.org',
                     '@type' => 'Organization',
-                    'name' => '[اسم نشاطك كما يكتبه الناس]',
-                    'url' => 'https://[نطاقك]',
-                    'logo' => 'https://[نطاقك]/logo.png',
-                    'telephone' => '[رقم التواصل بصيغة دولية مثل 966500000000+]',
+                    'name' => __('[اسم نشاطك كما يكتبه الناس]'),
+                    'url' => __('https://[نطاقك]'),
+                    'logo' => __('https://[نطاقك]/logo.png'),
+                    'telephone' => __('[رقم التواصل بصيغة دولية مثل 966500000000+]'),
                     'address' => [
                         '@type' => 'PostalAddress',
-                        'addressLocality' => '[المدينة]',
+                        'addressLocality' => __('[المدينة]'),
                         'addressCountry' => 'SA',
                     ],
-                    'sameAs' => ['https://[رابط حسابك الأول]', 'https://[رابط حسابك الثاني]'],
+                    'sameAs' => [__('https://[رابط حسابك الأول]'), __('https://[رابط حسابك الثاني]')],
                 ]),
             ],
 
@@ -46,20 +46,20 @@ class RepairSnippets
 
             'prices_machine_readable' => [
                 'language' => 'html',
-                'where' => 'داخل صفحة المنتج أو البرنامج نفسها، مع بيانات العرض.',
+                'where' => __('داخل صفحة المنتج أو البرنامج نفسها، مع بيانات العرض.'),
                 'code' => $this->json([
                     '@context' => 'https://schema.org',
                     '@type' => 'Offer',
-                    'price' => '[الرقم بلا فاصلة ولا رمز عملة، مثل 1500]',
+                    'price' => __('[الرقم بلا فاصلة ولا رمز عملة، مثل 1500]'),
                     'priceCurrency' => 'SAR',
                     'availability' => 'https://schema.org/InStock',
-                    'url' => 'https://[نطاقك]/[مسار الصفحة]',
+                    'url' => __('https://[نطاقك]/[مسار الصفحة]'),
                 ]),
             ],
 
             'llms_txt' => [
                 'language' => 'text',
-                'where' => 'ملف نصّي باسم llms.txt في جذر الموقع: https://[نطاقك]/llms.txt',
+                'where' => __('ملف نصّي باسم llms.txt في جذر الموقع: https://[نطاقك]/llms.txt'),
                 'code' => implode("\n", [
                     '# [اسم نشاطك]',
                     '',
@@ -80,7 +80,7 @@ class RepairSnippets
 
             'ai_bots_allowed' => [
                 'language' => 'text',
-                'where' => 'ملف robots.txt في جذر الموقع. احذف أي سطر Disallow يخص هذه البوتات، ثم أضف:',
+                'where' => __('ملف robots.txt في جذر الموقع. احذف أي سطر Disallow يخص هذه البوتات، ثم أضف:'),
                 'code' => implode("\n", [
                     'User-agent: GPTBot',
                     'Allow: /',
@@ -98,7 +98,7 @@ class RepairSnippets
 
             'arabic_page_structure' => [
                 'language' => 'html',
-                'where' => 'في وسم <html> أعلى كل صفحة، وفي ترتيب عناوين المحتوى.',
+                'where' => __('في وسم <html> أعلى كل صفحة، وفي ترتيب عناوين المحتوى.'),
                 'code' => implode("\n", [
                     '<html lang="ar" dir="rtl">',
                     '  <head>',
@@ -117,7 +117,7 @@ class RepairSnippets
             // السياسات نصّ تحريري لا قصاصة كود: قالبها هيكل صفحة لا وسم.
             'policy_pages' => [
                 'language' => 'text',
-                'where' => 'صفحة مستقلة لكل سياسة، بنصّ قابل للتحديد لا صورة.',
+                'where' => __('صفحة مستقلة لكل سياسة، بنصّ قابل للتحديد لا صورة.'),
                 'code' => implode("\n", [
                     'عنوان الصفحة: سياسة [الشحن / الاستبدال والاسترجاع / الخصوصية]',
                     '',
@@ -142,36 +142,36 @@ class RepairSnippets
     {
         [$type, $extra] = match ($sector) {
             Sector::EDUCATION => ['Course', [
-                'provider' => ['@type' => 'Organization', 'name' => '[اسم المدرسة أو المعهد]'],
-                'educationalLevel' => '[المرحلة: ابتدائي / متوسط / دورة مهنية]',
+                'provider' => ['@type' => 'Organization', 'name' => __('[اسم المدرسة أو المعهد]')],
+                'educationalLevel' => __('[المرحلة: ابتدائي / متوسط / دورة مهنية]'),
             ]],
             Sector::REAL_ESTATE => ['RealEstateListing', [
-                'numberOfRooms' => '[عدد الغرف]',
-                'floorSize' => ['@type' => 'QuantitativeValue', 'value' => '[المساحة]', 'unitCode' => 'MTK'],
+                'numberOfRooms' => __('[عدد الغرف]'),
+                'floorSize' => ['@type' => 'QuantitativeValue', 'value' => __('[المساحة]'), 'unitCode' => 'MTK'],
             ]],
             default => ['Product', [
-                'brand' => ['@type' => 'Brand', 'name' => '[اسم علامتك]'],
-                'sku' => '[رمز المنتج عندك]',
+                'brand' => ['@type' => 'Brand', 'name' => __('[اسم علامتك]')],
+                'sku' => __('[رمز المنتج عندك]'),
             ]],
         };
 
         return [
             'language' => 'html',
             'where' => 'داخل <head> في صفحة كل '.match ($sector) {
-                Sector::EDUCATION => 'برنامج أو مرحلة دراسية',
-                Sector::REAL_ESTATE => 'وحدة أو إعلان',
-                default => 'منتج',
+                Sector::EDUCATION => __('برنامج أو مرحلة دراسية'),
+                Sector::REAL_ESTATE => __('وحدة أو إعلان'),
+                default => __('منتج'),
             }.' على حدة، لا في الرئيسية فقط.',
             'code' => $this->json([
                 '@context' => 'https://schema.org',
                 '@type' => $type,
-                'name' => '[الاسم كما يظهر للزائر]',
-                'description' => '[سطران يصفان ما يحصل عليه]',
-                'url' => 'https://[نطاقك]/[مسار الصفحة]',
+                'name' => __('[الاسم كما يظهر للزائر]'),
+                'description' => __('[سطران يصفان ما يحصل عليه]'),
+                'url' => __('https://[نطاقك]/[مسار الصفحة]'),
                 ...$extra,
                 'offers' => [
                     '@type' => 'Offer',
-                    'price' => '[الرقم بلا رمز عملة]',
+                    'price' => __('[الرقم بلا رمز عملة]'),
                     'priceCurrency' => 'SAR',
                 ],
             ]),

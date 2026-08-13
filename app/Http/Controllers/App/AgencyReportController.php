@@ -70,7 +70,7 @@ class AgencyReportController extends Controller
 
         $this->service->saveBrief($project, $validated['brief'] ?? []);
 
-        return back()->with('status', 'حُفظ موجز التكليف. سيدخل في الإصدار القادم من المستند.');
+        return back()->with('status', __('حُفظ موجز التكليف. سيدخل في الإصدار القادم من المستند.'));
     }
 
     /**
@@ -107,7 +107,7 @@ class AgencyReportController extends Controller
         );
 
         return redirect()->route('app.agency-reports.show', $report)
-            ->with('status', 'أُنشئ تقرير جديد يشرح حالة مشروعك، ومعه موجز الوكالة عند اكتمال بياناته.');
+            ->with('status', __('أُنشئ تقرير جديد يشرح حالة مشروعك، ومعه موجز الوكالة عند اكتمال بياناته.'));
     }
 
     public function show(Request $request, AgencyReport $agencyReport): View
@@ -165,7 +165,7 @@ class AgencyReportController extends Controller
 
         $this->sharing->share($agencyReport, (int) ($validated['days'] ?? 30));
 
-        return back()->with('status', 'أُنشئ رابط مشاركة محدود المدة. يمكنك إلغاؤه في أي وقت.');
+        return back()->with('status', __('أُنشئ رابط مشاركة محدود المدة. يمكنك إلغاؤه في أي وقت.'));
     }
 
     public function revokeShare(Request $request, AgencyReport $agencyReport): RedirectResponse
@@ -173,6 +173,6 @@ class AgencyReportController extends Controller
         $this->authorizeAgencyReport($request, $agencyReport);
         $this->sharing->revoke($agencyReport);
 
-        return back()->with('status', 'أُلغي الرابط فورًا ولم يعد يفتح لدى أحد.');
+        return back()->with('status', __('أُلغي الرابط فورًا ولم يعد يفتح لدى أحد.'));
     }
 }

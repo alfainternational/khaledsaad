@@ -35,7 +35,7 @@ class AdminSettingsController extends Controller
                     'is_overridden' => $override !== null && $override->value !== null,
                     // للأسرار لا نكشف القيمة؛ للبقية نعرض الفعّالة.
                     'display' => $field['type'] === 'secret'
-                        ? ($override && $override->value ? '•••••• محفوظ' : '')
+                        ? ($override && $override->value ? __('•••••• محفوظ') : '')
                         : (string) ($effective ?? ''),
                     'current_bool' => (bool) ($effective ?? false),
                 ];
@@ -86,7 +86,7 @@ class AdminSettingsController extends Controller
         }
 
         return redirect()->route('admin.settings')
-            ->with('status', 'حُفظت الإعدادات وسرت مفعولها فورًا في كل مكان ذي صلة.');
+            ->with('status', __('حُفظت الإعدادات وسرت مفعولها فورًا في كل مكان ذي صلة.'));
     }
 
     /**

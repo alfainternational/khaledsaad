@@ -55,6 +55,47 @@ class PublicToolJourneyTest extends TestCase
     }
 
     #[Test]
+    public function the_catalog_has_unique_transparent_art_and_separates_available_tools_from_coming_soon_tools(): void
+    {
+        $this->comingSoonTool();
+
+        $response = $this->get(route('tools.index'))->assertOk();
+        $view = file_get_contents(resource_path('views/site/tools/index.blade.php'));
+        $css = file_get_contents(resource_path('css/interface-system.css'));
+        $asset = public_path('assets/design/tools-diagnosis-selector.png');
+
+        $response
+            ->assertSee('tools-index-hero', false)
+            ->assertSee('tools-catalog-grid--available', false)
+            ->assertSee('tools-catalog-grid--soon', false)
+            ->assertSeeInOrder(['متاح الآن', 'قريبًا']);
+
+        $this->assertFileExists($asset);
+        $this->assertSame(1, substr_count($view, 'assets/design/tools-diagnosis-selector.png'));
+        $allViews = collect(new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator(resource_path('views'), \FilesystemIterator::SKIP_DOTS),
+        ))
+            ->filter(fn (\SplFileInfo $file): bool => $file->isFile() && str_ends_with($file->getFilename(), '.blade.php'))
+            ->map(fn (\SplFileInfo $file): string => file_get_contents($file->getPathname()))
+            ->implode("\n");
+
+        $this->assertSame(1, substr_count($allViews, 'assets/design/tools-diagnosis-selector.png'));
+
+        $png = file_get_contents($asset);
+        $this->assertSame("\x89PNG\r\n\x1a\n", substr($png, 0, 8));
+        $this->assertContains(ord($png[25]), [4, 6], 'The catalog PNG must contain an alpha channel.');
+        $this->assertStringContainsString('.tools-catalog-grid--available', $css);
+        $this->assertStringContainsString('.tools-catalog-grid--soon', $css);
+        $this->assertStringContainsString("grid-template-areas: 'copy visual'", $css);
+        $this->assertStringContainsString('font-size: clamp(2.05rem, 3vw, 2.75rem)', $css);
+        $this->assertDoesNotMatchRegularExpression(
+            "/:where\(\.public-card-grid, \.public-step-grid\)\s*\{[^}]*grid-template-columns:\s*1fr/s",
+            $css,
+            'The shared interface layer must not flatten every public grid into one long column.',
+        );
+    }
+
+    #[Test]
     public function a_tool_page_shows_its_questions_and_outputs_before_registration(): void
     {
         $response = $this->get(route('tools.show', 'marketing-score'))->assertOk();
@@ -88,6 +129,7 @@ class PublicToolJourneyTest extends TestCase
             ->assertSee(Tool::where('key', 'marketing-score')->value('title'));
 
         $this->post(route('register'), [
+            'experience' => 'business',
             'name' => 'خالد',
             'email' => 'journey@example.test',
             'password' => 'password-1234',
@@ -105,6 +147,7 @@ class PublicToolJourneyTest extends TestCase
         $this->get(route('register', ['tool' => 'campaign-planner']))->assertOk();
 
         $this->post(route('register'), [
+            'experience' => 'business',
             'name' => 'خالد',
             'email' => 'journey2@example.test',
             'password' => 'password-1234',
@@ -153,11 +196,12 @@ class PublicToolJourneyTest extends TestCase
         $this->get(route('register', ['tool' => $this->comingSoonTool()->key]))->assertOk();
 
         $this->post(route('register'), [
+            'experience' => 'business',
             'name' => 'خالد',
             'email' => 'journey3@example.test',
             'password' => 'password-1234',
             'password_confirmation' => 'password-1234',
-        ])->assertRedirect(route('app.dashboard'));
+        ])->assertRedirect(route('app.projects.create'));
     }
 
     private function comingSoonTool(): Tool

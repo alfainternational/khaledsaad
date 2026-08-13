@@ -74,7 +74,7 @@ class BillingController extends Controller
                     'features' => $this->entitlements->displayFeatures($plan),
                     'is_current' => $plan->id === $subscription->plan_id,
                 ])->all(),
-            'transactions' => $wallet->transactions()->limit(15)->get()
+            'transactions' => $wallet->transactions()->where('amount', '!=', 0)->limit(15)->get()
                 ->map(fn ($transaction) => [
                     'type_label' => $transaction->typeLabel(),
                     'amount' => $transaction->amount,
@@ -93,7 +93,7 @@ class BillingController extends Controller
     {
         if ($plan->price > 0) {
             return redirect()->route('app.billing')
-                ->withErrors(['plan' => 'هذه خطة مدفوعة: أتمم الدفع من زر الاشتراك.']);
+                ->withErrors(['plan' => __('هذه خطة مدفوعة: أتمم الدفع من زر الاشتراك.')]);
         }
 
         $this->subscriptions->subscribe($request->user()->primaryWorkspace(), $plan);

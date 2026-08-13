@@ -13,6 +13,7 @@ use App\Modules\Intake\ConsultationService;
 use App\Modules\Reporting\AgencyReportService;
 use App\Modules\Reporting\ReportFreshnessService;
 use App\Services\Projects\ProjectService;
+use App\Support\Experience\Experience;
 use Database\Seeders\ConsultationCatalogSeeder;
 use Database\Seeders\ToolCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,7 +29,7 @@ class AgencyReportFreshnessTest extends TestCase
     public function completing_the_source_consultation_after_generation_does_not_immediately_stale_the_report(): void
     {
         $this->seed([ToolCatalogSeeder::class, ConsultationCatalogSeeder::class]);
-        $user = User::factory()->create();
+        $user = $this->businessUser();
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع تقرير مكتمل']);
         foreach (['marketing-score', 'brand-clarity', 'audience-map'] as $tool) {
             $this->report($project, $user, $tool);
@@ -52,7 +53,7 @@ class AgencyReportFreshnessTest extends TestCase
     public function knowledge_changes_mark_old_reports_stale_in_service_api_and_web_without_mutating_the_snapshot(): void
     {
         $this->seed(ToolCatalogSeeder::class);
-        $user = User::factory()->create();
+        $user = $this->businessUser();
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع الحداثة']);
         foreach (['marketing-score', 'brand-clarity', 'audience-map'] as $tool) {
             $this->report($project, $user, $tool);
@@ -129,6 +130,14 @@ class AgencyReportFreshnessTest extends TestCase
             'effort' => 'low',
             'priority' => 90,
             'kpi_hint' => 'معدل التحويل',
+        ]);
+    }
+
+    private function businessUser(): User
+    {
+        return User::factory()->create([
+            'active_experience' => Experience::BUSINESS,
+            'business_experience_enabled_at' => now(),
         ]);
     }
 }

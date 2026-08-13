@@ -40,7 +40,7 @@ class ReportWatchController extends Controller
             if ($active >= $limit) {
                 return back()->withErrors([
                     'watch' => $limit === 0
-                        ? 'التقرير الحي غير متاح في خطتك الحالية.'
+                        ? __('التقرير الحي غير متاح في خطتك الحالية.')
                         : "خطتك تسمح بمتابعة {$limit} تقرير حي. أوقف متابعة تقرير آخر أو ارفع خطتك.",
                 ]);
             }
@@ -48,7 +48,7 @@ class ReportWatchController extends Controller
 
         $this->checker->activate($report, $request->user());
 
-        return back()->with('status', 'فُعّلت متابعة التقرير. سننبهك إذا تغيّرت البيانات التي بُني عليها.');
+        return back()->with('status', __('فُعّلت متابعة التقرير. سننبهك إذا تغيّرت البيانات التي بُني عليها.'));
     }
 
     public function destroy(Request $request, Report $report): RedirectResponse
@@ -58,6 +58,6 @@ class ReportWatchController extends Controller
         ReportWatcher::where('report_id', $report->id)
             ->update(['status' => ReportWatcher::STATUS_PAUSED]);
 
-        return back()->with('status', 'توقفت متابعة التقرير. يمكنك تفعيلها مرة أخرى في أي وقت.');
+        return back()->with('status', __('توقفت متابعة التقرير. يمكنك تفعيلها مرة أخرى في أي وقت.'));
     }
 }

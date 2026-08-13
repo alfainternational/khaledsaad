@@ -4,25 +4,26 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Content;
+use App\Modules\Shared\I18n\TranslatedConfig;
 use Illuminate\View\View;
 
 class PublicPageController extends Controller
 {
     public function profile(): View
     {
-        return view('site.pages.profile', ['brand' => config('brand')]);
+        return view('site.pages.profile', ['brand' => TranslatedConfig::get('brand')]);
     }
 
     public function services(): View
     {
         return $this->page(
             'services',
-            'المشكلات والمخرجات',
-            'ما الذي نبحث عنه في مشروعك، وما الذي تستلمه بعد التشخيص؟',
-            'نبدأ من المشكلة التي تراها، ثم نصل إلى الفجوة التي يمكن قياسها وترتيبها وتحويلها إلى خطوة.',
+            __('المشكلات والمخرجات'),
+            __('ما الذي أبحث عنه في مشروعك، وما الذي تستلمه بعد التشخيص؟'),
+            __('نبدأ من المشكلة التي تراها، ثم نصل إلى الفجوة التي يمكن قياسها وترتيبها وتحويلها إلى خطوة.'),
             [
-                ['title' => 'المشكلات التي نبدأ منها', 'items' => config('brand.problems')],
-                ['title' => 'ما تخرج به', 'items' => config('brand.services')],
+                ['title' => __('المشكلات التي نبدأ منها'), 'items' => TranslatedConfig::get('brand.problems')],
+                ['title' => __('ما تخرج به'), 'items' => TranslatedConfig::get('brand.services')],
             ],
         );
     }
@@ -31,10 +32,10 @@ class PublicPageController extends Controller
     {
         return $this->page(
             'methodology',
-            'منهجية العمل',
-            'من السؤال الأول إلى خطوة قابلة للتنفيذ',
-            'لا نزيد الأدوات قبل فهم السبب. نسمع وصفك، ونفصل العرض عن جذره، ثم نرتب الفجوات على الأثر والجهد.',
-            [['title' => 'المراحل الأربع', 'items' => config('brand.method'), 'ordered' => true]],
+            __('منهجية العمل'),
+            __('من السؤال الأول إلى خطوة قابلة للتنفيذ'),
+            __('لا أزيد الأدوات قبل فهم السبب. أسمع وصفك، وأفصل العرض عن جذره، ثم أرتّب الفجوات على الأثر والجهد.'),
+            [['title' => __('المراحل الأربع'), 'items' => TranslatedConfig::get('brand.method'), 'ordered' => true]],
         );
     }
 
@@ -42,10 +43,10 @@ class PublicPageController extends Controller
     {
         return $this->page(
             'principles',
-            'مبادئ العمل',
-            'كيف نحافظ على وضوح النتيجة وحدودها؟',
-            'الثقة هنا لا تأتي من ادعاء نتيجة، بل من معرفة ما قيس، وما استنتج، وما يمكن تنفيذه ومراجعته.',
-            [['title' => 'المبادئ التي تحكم التشخيص', 'items' => config('brand.principles')]],
+            __('مبادئ العمل'),
+            __('كيف نحافظ على وضوح النتيجة وحدودها؟'),
+            __('الثقة هنا لا تأتي من ادعاء نتيجة، بل من معرفة ما قيس، وما استنتج، وما يمكن تنفيذه ومراجعته.'),
+            [['title' => __('المبادئ التي تحكم التشخيص'), 'items' => TranslatedConfig::get('brand.principles')]],
         );
     }
 
@@ -53,10 +54,10 @@ class PublicPageController extends Controller
     {
         return $this->page(
             'knowledge',
-            'المعرفة والمحتوى',
-            'محتوى عملي يساعدك على فهم التسويق وتطبيقه',
-            'مقالات ودروس ونشرة تعليمية تربط الفكرة بمثال وخطوة، من دون تغيير النص الأصلي للمادة المنشورة.',
-            [['title' => 'الموضوعات الأساسية', 'items' => config('brand.knowledge')]],
+            __('المعرفة والمحتوى'),
+            __('محتوى عملي يساعدك على فهم التسويق وتطبيقه'),
+            __('مقالات ودروس ونشرة تعليمية تربط الفكرة بمثال وخطوة، من دون تغيير النص الأصلي للمادة المنشورة.'),
+            [['title' => __('الموضوعات الأساسية'), 'items' => TranslatedConfig::get('brand.knowledge')]],
             Content::query()->published()->orderByDesc('published_at')->limit(6)->get(),
         );
     }
@@ -65,10 +66,10 @@ class PublicPageController extends Controller
     {
         return $this->page(
             'faq',
-            'الأسئلة الشائعة',
-            'إجابات واضحة قبل أن تبدأ',
-            'تعرف كيف يعمل التشخيص، وكيف تحفظ البيانات، وما الذي يمكن مشاركته مع فريقك أو وكالتك.',
-            [['title' => 'ما الذي تريد معرفته؟', 'items' => config('brand.faqs'), 'faq' => true]],
+            __('الأسئلة الشائعة'),
+            __('إجابات واضحة قبل أن تبدأ'),
+            __('تعرف كيف يعمل التشخيص، وكيف تحفظ البيانات، وما الذي يمكن مشاركته مع فريقك أو وكالتك.'),
+            [['title' => __('ما الذي تريد معرفته؟'), 'items' => TranslatedConfig::get('brand.faqs'), 'faq' => true]],
         );
     }
 
@@ -76,16 +77,25 @@ class PublicPageController extends Controller
     {
         return $this->page(
             'sample-report',
-            'نموذج النتيجة',
-            'هكذا تساعدك النتيجة على اتخاذ القرار',
-            'هذا مثال توضيحي غير منسوب إلى عميل. يبين شكل الدرجة والفجوات والخطوة التالية فقط.',
+            __('نموذج النتيجة'),
+            __('هكذا تساعدك النتيجة على اتخاذ القرار'),
+            __('هذا مثال توضيحي غير منسوب إلى عميل. يبين شكل الدرجة والفجوات والخطوة التالية فقط.'),
             [[
-                'title' => 'تقرير تشخيص توضيحي',
+                'title' => __('تقرير تشخيص توضيحي'),
                 'sample' => true,
+                /*
+                 * كل بند يحمل مستوى دليله (§٤.١).
+                 *
+                 * **سبب وجوده:** هذه الصفحة تُري الزائر شكل المخرج، فما تحذفه
+                 * منها يتعلّمه أنه ليس جزءًا من المنتج. كانت البنود الثلاثة
+                 * جملًا سببية بصيغة الجزم بلا وسم واحد — وهو ما يمنعه §٤.١
+                 * صراحةً، ويُفوّت في الوقت نفسه أوضح فرق بيننا وبين مولّد نصوص.
+                 * والعيّنة تُري التدرّج كاملًا: ما رُصد وما استُنتج جنبًا إلى جنب.
+                 */
                 'items' => [
-                    ['title' => 'سبب الشراء منك غير مكتوب', 'description' => 'أثر مرتفع · جهد منخفض'],
-                    ['title' => 'لا توجد صفحة تنقل الزائر إلى الشراء', 'description' => 'أثر مرتفع · جهد متوسط'],
-                    ['title' => 'لا تعرف من أين جاءك العميل', 'description' => 'أثر متوسط · جهد منخفض'],
+                    ['title' => __('سبب الشراء منك غير مكتوب'), 'description' => __('أثر مرتفع · جهد منخفض'), 'evidence' => 'inferred'],
+                    ['title' => __('لا توجد صفحة تنقل الزائر إلى الشراء'), 'description' => __('أثر مرتفع · جهد متوسط'), 'evidence' => 'measured'],
+                    ['title' => __('لا تعرف من أين جاءك العميل'), 'description' => __('أثر متوسط · جهد منخفض'), 'evidence' => 'inferred'],
                 ],
             ]],
         );
@@ -103,7 +113,7 @@ class PublicPageController extends Controller
         mixed $latestContent = null,
     ): View {
         return view('site.pages.show', [
-            'brand' => config('brand'),
+            'brand' => TranslatedConfig::get('brand'),
             'pageKey' => $key,
             'label' => $label,
             'title' => $title,

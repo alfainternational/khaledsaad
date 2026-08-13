@@ -32,13 +32,13 @@ class GuestRunController extends Controller
 
         $guest = $this->guests->startForApi(
             $request->header('X-Guest-Token'),
-            $data['project_name'] ?? 'مشروعي',
+            $data['project_name'] ?? __('مشروعي'),
         );
         $session = $guest['session'];
 
         try {
             $run = $this->service->start(
-                $this->guests->project($session, $data['project_name'] ?? 'مشروعي'),
+                $this->guests->project($session, $data['project_name'] ?? __('مشروعي')),
                 $tool,
                 null,
                 $session->id,

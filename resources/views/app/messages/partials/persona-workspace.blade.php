@@ -97,8 +97,11 @@
                 @endif
                 <textarea name="content" rows="4" required minlength="20"
                     maxlength="{{ $channel->maxLength() }}"
-                    aria-label="رسالة {{ \App\Support\Messaging\PersonaName::display($persona['name'] ?? null) }}"
-                    placeholder="اكتب رسالة {{ \App\Support\Messaging\PersonaName::display($persona['name'] ?? null) }} — {{ $channel->hint() }}">{{ old('content') }}</textarea>
+                    aria-label="{{ __('رسالة :persona', ['persona' => \App\Support\Messaging\PersonaName::display($persona['name'] ?? null)]) }}"
+                    placeholder="{{ __('اكتب رسالة :persona — :hint', [
+                        'persona' => \App\Support\Messaging\PersonaName::display($persona['name'] ?? null),
+                        'hint' => $channel->hint(),
+                    ]) }}">{{ old('content') }}</textarea>
                 <button type="submit" class="btn btn--ghost btn--sm">احفظ الإصدار</button>
             </form>
         </div>

@@ -55,7 +55,7 @@
                             <label class="field">
                                 <span class="field__label">الفئة</span>
                                 <select name="tier">
-                                    @foreach (['economy' => 'اقتصاد', 'standard' => 'قياسي', 'advanced' => 'متقدّم'] as $value => $label)
+                                    @foreach (['economy' => __('اقتصاد'), 'standard' => __('قياسي'), 'advanced' => __('متقدّم')] as $value => $label)
                                         <option value="{{ $value }}" @selected($prompt->tier === $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>

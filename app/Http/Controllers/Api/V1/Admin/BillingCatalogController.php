@@ -80,13 +80,13 @@ class BillingCatalogController extends Controller
 
         if (in_array($feature->key, FeatureKey::all(), true)) {
             return response()->json([
-                'message' => 'هذا العنصر مربوط بالنظام. يمكنك تعطيله بدلاً من حذفه.',
+                'message' => __('هذا العنصر مربوط بالنظام. يمكنك تعطيله بدلاً من حذفه.'),
             ], 409);
         }
 
         $features->destroy($feature);
 
-        return response()->json(['message' => 'حُذف عنصر الميزة.']);
+        return response()->json(['message' => __('حُذف عنصر الميزة.')]);
     }
 
     public function storePlan(Request $request, AdminPlanController $plans): JsonResponse
@@ -111,13 +111,13 @@ class BillingCatalogController extends Controller
 
         if ($plan->subscriptions()->exists()) {
             return response()->json([
-                'message' => 'لا يمكن حذف خطة تضم مشتركين. يمكنك إخفاؤها بدلاً من حذفها.',
+                'message' => __('لا يمكن حذف خطة تضم مشتركين. يمكنك إخفاؤها بدلاً من حذفها.'),
             ], 409);
         }
 
         $plans->destroy($plan);
 
-        return response()->json(['message' => 'حُذفت الخطة.']);
+        return response()->json(['message' => __('حُذفت الخطة.')]);
     }
 
     public function storePack(Request $request, AdminCreditPackController $packs): JsonResponse
@@ -140,7 +140,7 @@ class BillingCatalogController extends Controller
         $this->confirm($request);
         $packs->destroy($pack);
 
-        return response()->json(['message' => 'حُذفت الحزمة.']);
+        return response()->json(['message' => __('حُذفت الحزمة.')]);
     }
 
     public function storeGateway(Request $request, AdminGatewayController $gateways): JsonResponse
@@ -170,11 +170,11 @@ class BillingCatalogController extends Controller
 
         if (! $gateway->is_active && ! $gateway->hasRequiredCredentials()) {
             return response()->json([
-                'message' => 'أضف كل المفاتيح الإلزامية قبل تفعيل البوابة.',
+                'message' => __('أضف كل المفاتيح الإلزامية قبل تفعيل البوابة.'),
             ], 422);
         }
         if (! $gateway->is_active && $gateway->isLive() && ! $gateway->isHealthy()) {
-            return response()->json(['message' => 'اختبر اتصال البوابة بنجاح قبل تفعيل الوضع المباشر.'], 422);
+            return response()->json(['message' => __('اختبر اتصال البوابة بنجاح قبل تفعيل الوضع المباشر.')], 422);
         }
 
         $gateways->toggle($gateway);
@@ -189,7 +189,7 @@ class BillingCatalogController extends Controller
     ): JsonResponse {
         $this->confirm($request);
         if (! $gateway->hasRequiredCredentials()) {
-            return response()->json(['message' => 'أضف كل بيانات الربط الإلزامية أولًا.'], 422);
+            return response()->json(['message' => __('أضف كل بيانات الربط الإلزامية أولًا.')], 422);
         }
         $health = app(PaymentGatewayManager::class)->provider($gateway)->healthCheck();
         $gateway->update([
@@ -212,7 +212,7 @@ class BillingCatalogController extends Controller
         $this->confirm($request);
 
         if (! $gateway->is_active || ! $gateway->hasRequiredCredentials()) {
-            return response()->json(['message' => 'فعّل البوابة المهيأة أولًا.'], 422);
+            return response()->json(['message' => __('فعّل البوابة المهيأة أولًا.')], 422);
         }
 
         $gateways->setDefault($gateway);
@@ -227,11 +227,11 @@ class BillingCatalogController extends Controller
     ): JsonResponse {
         $this->confirm($request);
         if (Payment::where('payment_gateway_id', $gateway->id)->exists()) {
-            return response()->json(['message' => 'لا يمكن حذف بوابة مرتبطة بمدفوعات سابقة.'], 409);
+            return response()->json(['message' => __('لا يمكن حذف بوابة مرتبطة بمدفوعات سابقة.')], 409);
         }
         $gateways->destroy($gateway);
 
-        return response()->json(['message' => 'حُذفت البوابة.']);
+        return response()->json(['message' => __('حُذفت البوابة.')]);
     }
 
     /**

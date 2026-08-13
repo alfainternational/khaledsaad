@@ -48,7 +48,7 @@ class AudienceLabController extends Controller
 
         return redirect()
             ->route('app.audience.show', $project)
-            ->with('status', 'لوحة جمهورك جاهزة — اكتب رسالة واختبرها عليهم.');
+            ->with('status', __('لوحة جمهورك جاهزة — اكتب رسالة واختبرها عليهم.'));
     }
 
     public function test(Request $request, Project $project): RedirectResponse
@@ -58,13 +58,13 @@ class AudienceLabController extends Controller
         $validated = $request->validate([
             'message' => 'required|string|min:10|max:1000',
         ], [
-            'message.min' => 'اكتب الرسالة كما ستنشرها فعلًا — عشرة أحرف على الأقل.',
+            'message.min' => __('اكتب الرسالة كما ستنشرها فعلًا — عشرة أحرف على الأقل.'),
         ]);
 
         $panel = $project->personaPanel;
 
         if ($panel === null) {
-            return back()->withErrors(['message' => 'ابنِ لوحة الجمهور أولًا.']);
+            return back()->withErrors(['message' => __('ابنِ لوحة الجمهور أولًا.')]);
         }
 
         try {
@@ -72,12 +72,12 @@ class AudienceLabController extends Controller
         } catch (Throwable) {
             // رد فعل مُخترع أسوأ من الاعتذار: نقولها صراحة ولا نلفّق.
             return back()->withErrors([
-                'message' => 'تعذّر إجراء الاختبار الآن. رسالتك لم تُفقد — أعد المحاولة بعد قليل.',
+                'message' => __('تعذّر إجراء الاختبار الآن. رسالتك لم تُفقد — أعد المحاولة بعد قليل.'),
             ])->withInput();
         }
 
         return redirect()
             ->route('app.audience.show', $project)
-            ->with('status', 'جمهورك قال رأيه — النتيجة بالأسفل.');
+            ->with('status', __('جمهورك قال رأيه — النتيجة بالأسفل.'));
     }
 }

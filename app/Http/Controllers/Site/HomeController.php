@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Site;
 use App\Http\Controllers\Controller;
 use App\Models\Content;
 use App\Models\ToolRun;
+use App\Modules\Shared\I18n\TranslatedConfig;
 use App\Services\Tools\ToolShowcase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
@@ -16,7 +17,7 @@ class HomeController extends Controller
     public function __invoke(): View
     {
         return view('home', [
-            'brand' => config('brand'),
+            'brand' => TranslatedConfig::get('brand'),
             'tools' => $this->showcase->cards(limit: 8),
             'toolStats' => $this->showcase->stats(),
             'entryTool' => $this->showcase->entryTool(),

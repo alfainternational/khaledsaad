@@ -58,8 +58,7 @@ class MessageStudioController extends Controller
                 'evidence' => [
                     'level' => $panel?->evidenceLevel()->value ?? EvidenceLevel::Inferred->value,
                     'label' => ($panel?->evidenceLevel() ?? EvidenceLevel::Inferred)->label(),
-                    'note' => 'شخصيات مبنية على وصف مشروعك لا عملاء حقيقيين — '
-                        .'الدرجات ترتّب الصياغات بينها ولا تتنبأ بأداء إعلان.',
+                    'note' => __('شخصيات مبنية على وصف مشروعك لا عملاء حقيقيين — الدرجات ترتّب الصياغات بينها ولا تتنبأ بأداء إعلان.'),
                 ],
                 'personas' => $panel === null ? [] : $this->personas($panel),
                 'batches' => $panel === null ? [] : MessageTestBatch::where('project_id', $project->id)
@@ -94,7 +93,7 @@ class MessageStudioController extends Controller
         $panel = $project->personaPanel;
 
         if ($panel === null) {
-            return response()->json(['message' => 'ابنِ لوحة الجمهور أولًا.'], 422);
+            return response()->json(['message' => __('ابنِ لوحة الجمهور أولًا.')], 422);
         }
 
         $validated = $request->validate([
@@ -116,7 +115,7 @@ class MessageStudioController extends Controller
         );
 
         if ($outcome['variants'] === []) {
-            return response()->json(['message' => 'تعذّر إنشاء الاقتراحات الآن.'], 503);
+            return response()->json(['message' => __('تعذّر إنشاء الاقتراحات الآن.')], 503);
         }
 
         return response()->json([
@@ -133,7 +132,7 @@ class MessageStudioController extends Controller
         $panel = $project->personaPanel;
 
         if ($panel === null) {
-            return response()->json(['message' => 'ابنِ لوحة الجمهور أولًا.'], 422);
+            return response()->json(['message' => __('ابنِ لوحة الجمهور أولًا.')], 422);
         }
 
         $validated = $request->validate([
@@ -145,7 +144,7 @@ class MessageStudioController extends Controller
         ]);
 
         if ($this->profiles->findPersona($panel, $validated['persona_key']) === null) {
-            return response()->json(['message' => 'هذه الشخصية ليست في لوحة مشروعك.'], 422);
+            return response()->json(['message' => __('هذه الشخصية ليست في لوحة مشروعك.')], 422);
         }
 
         $channel = MessageChannel::from($validated['channel']);
@@ -183,7 +182,7 @@ class MessageStudioController extends Controller
         $panel = $project->personaPanel;
 
         if ($panel === null) {
-            return response()->json(['message' => 'ابنِ لوحة الجمهور أولًا.'], 422);
+            return response()->json(['message' => __('ابنِ لوحة الجمهور أولًا.')], 422);
         }
 
         $validated = $request->validate([
@@ -201,7 +200,7 @@ class MessageStudioController extends Controller
                 ->latest('id')->get()->unique('persona_key')->values();
 
         if ($variants->isEmpty()) {
-            return response()->json(['message' => 'لا توجد رسالة صالحة للاختبار بعد.'], 422);
+            return response()->json(['message' => __('لا توجد رسالة صالحة للاختبار بعد.')], 422);
         }
 
         try {
@@ -212,7 +211,7 @@ class MessageStudioController extends Controller
                 filled($validated['variant_id'] ?? null) ? MessageTestBatch::MODE_SINGLE : MessageTestBatch::MODE_BATCH,
             );
         } catch (Throwable) {
-            return response()->json(['message' => 'تعذّر إجراء الاختبار الآن. رسائلك محفوظة.'], 503);
+            return response()->json(['message' => __('تعذّر إجراء الاختبار الآن. رسائلك محفوظة.')], 503);
         }
 
         return response()->json([
@@ -242,11 +241,11 @@ class MessageStudioController extends Controller
         $this->authorizeProject($request, $project);
 
         if ($result->variant?->project_id !== $project->id) {
-            return response()->json(['message' => 'غير موجود.'], 404);
+            return response()->json(['message' => __('غير موجود.')], 404);
         }
 
         if (blank($result->revised_content)) {
-            return response()->json(['message' => 'لا يوجد تعديل مقترح لهذه النتيجة.'], 422);
+            return response()->json(['message' => __('لا يوجد تعديل مقترح لهذه النتيجة.')], 422);
         }
 
         return response()->json([
@@ -259,7 +258,7 @@ class MessageStudioController extends Controller
         $this->authorizeProject($request, $project);
 
         if ($variant->project_id !== $project->id) {
-            return response()->json(['message' => 'غير موجود.'], 404);
+            return response()->json(['message' => __('غير موجود.')], 404);
         }
 
         $validated = $request->validate([
