@@ -19,7 +19,7 @@ class ExperienceDashboardTest extends TestCase
 
     public function test_business_dashboard_does_not_create_a_learning_run(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
         $user = app(ExperienceService::class)->selectInitial($user, Experience::BUSINESS);
         app(ProjectService::class)->create($user, ['name' => 'مشروع أعمال']);
 
@@ -30,9 +30,9 @@ class ExperienceDashboardTest extends TestCase
 
     public function test_learning_and_unclassified_users_enter_the_correct_start_surface(): void
     {
-        $learner = User::factory()->create();
+        $learner = User::factory()->withoutExperience()->create();
         $learner = app(ExperienceService::class)->selectInitial($learner, Experience::LEARNING);
-        $unclassified = User::factory()->create();
+        $unclassified = User::factory()->withoutExperience()->create();
 
         $this->actingAs($learner)
             ->get(route('app.dashboard'))
@@ -46,7 +46,7 @@ class ExperienceDashboardTest extends TestCase
     public function test_each_navigation_mode_exposes_only_its_primary_journey(): void
     {
         $business = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::BUSINESS,
         );
         app(ProjectService::class)->create($business, ['name' => 'مشروع للتنقل']);
@@ -60,7 +60,7 @@ class ExperienceDashboardTest extends TestCase
             ->assertDontSeeText('تطبيقاتي');
 
         $learner = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
 
@@ -76,7 +76,7 @@ class ExperienceDashboardTest extends TestCase
     public function test_each_dashboard_presents_exactly_one_primary_next_action(): void
     {
         $business = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::BUSINESS,
         );
         app(ProjectService::class)->create($business, ['name' => 'مشروع واحد']);
@@ -84,7 +84,7 @@ class ExperienceDashboardTest extends TestCase
         $this->assertSame(1, substr_count($businessResponse->getContent(), 'data-primary-action'));
 
         $learner = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $learningResponse = $this->actingAs($learner)->get(route('app.learning.marketing.home'))->assertOk();
@@ -95,7 +95,7 @@ class ExperienceDashboardTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::BUSINESS,
         );
         app(ProjectService::class)->create($user, ['name' => 'مشروع التكلفة']);
@@ -111,7 +111,7 @@ class ExperienceDashboardTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::BUSINESS,
         );
         $wallet = $user->primaryWorkspace()->wallet;

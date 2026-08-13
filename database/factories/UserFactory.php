@@ -30,6 +30,20 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+
+            /*
+             * مسار الأعمال مفتوح افتراضًا لأن المستخدم الحقيقي يختار مساره عند
+             * التسجيل — فالمستخدم بلا مسار حالةٌ خاصة لا القاعدة.
+             *
+             * وبدون هذا كان `EnsureExperienceAccess` يردّ كل اختبار يطلب مسار
+             * `app/*` بـ302 إلى شاشة التفعيل قبل أن يصل إلى المتحكّم، فتقيس
+             * ٩٧ حالةً البوابةَ لا السلوك الذي كُتبت له.
+             *
+             * `initial_experience` يبقى فارغًا عمدًا: `selectInitial()` يرفض
+             * الكتابة فوق قيمة موجودة، فملؤه هنا كان سيكسر كل اختبار يفعّل
+             * مساره صراحةً. والبوابة لا تقرأ إلا العمود أدناه.
+             */
+            'business_experience_enabled_at' => now(),
         ];
     }
 
@@ -40,6 +54,17 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * مستخدم لم يختر مسارًا بعد — لاختبار البوابة نفسها.
+     */
+    public function withoutExperience(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'business_experience_enabled_at' => null,
+            'learning_experience_enabled_at' => null,
         ]);
     }
 }

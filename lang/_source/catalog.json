@@ -19094,7 +19094,8 @@
         "محفظة الأنشطة": {
             "type": "blade",
             "contexts": [
-                "resources/views/app/portfolio/index.blade.php"
+                "resources/views/app/portfolio/index.blade.php",
+                "resources/views/app/projects/show.blade.php"
             ]
         },
         "محفظة الأنشطة | خالد سعد": {

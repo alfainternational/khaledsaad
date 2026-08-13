@@ -76,7 +76,7 @@ class ExperienceRegistrationTest extends TestCase
 
     public function test_auth_me_returns_the_same_experience_contract_without_creating_data(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
         $workspace = $user->primaryWorkspace();
         $user = app(ExperienceService::class)->selectInitial($user, Experience::LEARNING);
 

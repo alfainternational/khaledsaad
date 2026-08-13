@@ -17,6 +17,12 @@
             </form>
             @feature(\App\Support\Billing\FeatureKey::REPORTS_AGENCY)
                 <a href="{{ route('app.projects.agency-reports.index', $project['slug']) }}" class="btn btn--ghost">موجز الوكالة</a>
+                {{--
+                    المحفظة تعبر المشاريع، وموجز الوكالة يخصّ مشروعًا واحدًا.
+                    كان المسار مبنيًّا ومحروسًا ولا يصله رابط واحد في الواجهة —
+                    أي غير موجود عند من يدفع ثمنه.
+                --}}
+                <a href="{{ route('app.portfolio') }}" class="btn btn--ghost">محفظة الأنشطة</a>
             @endfeature
             <a href="{{ route('app.projects.tasks', $project['slug']) }}" class="btn btn--ghost">المهام ({{ $project['tasks']['open'] }})</a>
             <a href="{{ route('app.projects.edit', $project['slug']) }}" class="btn btn--ghost">تعديل الملف</a>

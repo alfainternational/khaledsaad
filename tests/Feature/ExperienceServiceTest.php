@@ -14,7 +14,7 @@ class ExperienceServiceTest extends TestCase
     public function test_initial_selection_enables_only_the_selected_experience(): void
     {
         $this->assertTrue(class_exists(\App\Support\Experience\ExperienceService::class));
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
 
         app(\App\Support\Experience\ExperienceService::class)
             ->selectInitial($user, Experience::LEARNING);
@@ -32,7 +32,7 @@ class ExperienceServiceTest extends TestCase
         $this->assertTrue(class_exists(\App\Support\Experience\ExperienceService::class));
         $this->assertTrue(method_exists(\App\Support\Experience\ExperienceService::class, 'activate'));
         $this->assertTrue(method_exists(\App\Support\Experience\ExperienceService::class, 'switch'));
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
         $workspace = $user->primaryWorkspace();
         $service = app(\App\Support\Experience\ExperienceService::class);
         $service->selectInitial($user, Experience::LEARNING);

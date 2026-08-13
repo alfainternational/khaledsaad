@@ -41,7 +41,7 @@ class ExperienceAccessTest extends TestCase
 
     public function test_learner_is_sent_to_business_activation_before_projects(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
         app(ExperienceService::class)->selectInitial($user, Experience::LEARNING);
 
         $this->actingAs($user)
@@ -51,7 +51,7 @@ class ExperienceAccessTest extends TestCase
 
     public function test_api_denial_distinguishes_experience_activation_from_plan_upgrade(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
         app(ExperienceService::class)->selectInitial($user, Experience::LEARNING);
 
         $this->actingAs($user, 'sanctum')
@@ -63,7 +63,7 @@ class ExperienceAccessTest extends TestCase
 
     public function test_api_can_activate_and_switch_experiences_without_replacing_workspace(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
         $workspace = $user->primaryWorkspace();
         app(ExperienceService::class)->selectInitial($user, Experience::LEARNING);
 
@@ -86,11 +86,11 @@ class ExperienceAccessTest extends TestCase
     public function test_shared_workspace_members_change_only_their_own_experience(): void
     {
         $owner = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::BUSINESS,
         );
         $member = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $workspace = $owner->primaryWorkspace();
@@ -137,7 +137,7 @@ class ExperienceAccessTest extends TestCase
     public function test_web_activation_returns_to_intended_url_without_new_workspace(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $workspace = $user->primaryWorkspace();
@@ -156,7 +156,7 @@ class ExperienceAccessTest extends TestCase
     public function test_account_experience_page_offers_activation_or_direct_switch_as_needed(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
 
@@ -174,7 +174,7 @@ class ExperienceAccessTest extends TestCase
     public function test_learning_api_returns_one_next_application_without_requiring_a_project(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $user->primaryWorkspace();
@@ -190,7 +190,7 @@ class ExperienceAccessTest extends TestCase
     public function test_learning_api_opens_the_requested_application_and_saves_its_answers(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $user->primaryWorkspace();
@@ -220,7 +220,7 @@ class ExperienceAccessTest extends TestCase
     public function test_learning_api_rechecks_attempt_status_under_lock_before_saving_an_answer(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $run = MarketingLearningRun::startForWorkspace($user->primaryWorkspace(), $user);
@@ -260,7 +260,7 @@ class ExperienceAccessTest extends TestCase
     public function test_learning_api_exposes_and_retains_an_optional_owned_project_context(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $project = app(ProjectService::class)->create($user, ['name' => 'متجر المستخدم']);
@@ -312,12 +312,12 @@ class ExperienceAccessTest extends TestCase
     public function test_learning_api_never_reveals_or_accepts_projects_outside_the_owned_workspace(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $owned = app(ProjectService::class)->create($user, ['name' => 'المشروع المسموح']);
         $user = app(ExperienceService::class)->activate($user, Experience::BUSINESS);
-        $otherUser = User::factory()->create();
+        $otherUser = User::factory()->withoutExperience()->create();
         $foreign = app(ProjectService::class)->create($otherUser, ['name' => 'مشروع مستخدم آخر']);
         $otherWorkspace = $user->workspaces()->create(['name' => 'مساحة أخرى', 'slug' => 'other-workspace']);
         $outsidePrimaryWorkspace = $otherWorkspace->projects()->create([
@@ -346,12 +346,12 @@ class ExperienceAccessTest extends TestCase
     public function test_learning_api_checks_project_ownership_before_answer_validation(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $user = app(ExperienceService::class)->activate($user, Experience::BUSINESS);
         $foreignProject = app(ProjectService::class)->create(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             ['name' => 'مشروع مستخدم آخر'],
         );
 
@@ -368,7 +368,7 @@ class ExperienceAccessTest extends TestCase
     public function test_learning_api_checks_entitlement_before_projectless_answer_validation(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $workspace = $user->primaryWorkspace();
@@ -406,7 +406,7 @@ class ExperienceAccessTest extends TestCase
 
     public function test_learning_api_hides_project_context_until_business_is_enabled(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع قبل التفعيل']);
         $user = app(ExperienceService::class)->selectInitial($user, Experience::LEARNING);
 
@@ -424,7 +424,7 @@ class ExperienceAccessTest extends TestCase
     {
         Queue::fake();
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $user->primaryWorkspace();
@@ -454,7 +454,7 @@ class ExperienceAccessTest extends TestCase
     public function test_learning_api_reports_a_dispatch_failure_as_a_non_success_response(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::LEARNING,
         );
         $run = MarketingLearningRun::startForWorkspace($user->primaryWorkspace(), $user);
@@ -482,7 +482,7 @@ class ExperienceAccessTest extends TestCase
     public function test_business_user_can_read_public_learning_content_but_not_open_course_applications(): void
     {
         $user = app(ExperienceService::class)->selectInitial(
-            User::factory()->create(),
+            User::factory()->withoutExperience()->create(),
             Experience::BUSINESS,
         );
 

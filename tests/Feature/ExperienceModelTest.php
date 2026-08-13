@@ -49,7 +49,7 @@ class ExperienceModelTest extends TestCase
     {
         $this->assertTrue(class_exists(\App\Support\Experience\ExperienceBackfill::class));
 
-        $owner = User::factory()->create();
+        $owner = User::factory()->withoutExperience()->create();
         app(ProjectService::class)->create($owner, ['name' => 'مشروع قائم']);
         $admin = User::factory()->create(['is_admin' => true]);
 
@@ -69,11 +69,11 @@ class ExperienceModelTest extends TestCase
 
     public function test_backfill_ignores_empty_learning_runs_but_classifies_real_learning(): void
     {
-        $emptyUser = User::factory()->create();
+        $emptyUser = User::factory()->withoutExperience()->create();
         $emptyRun = MarketingLearningRun::startForWorkspace($emptyUser->primaryWorkspace(), $emptyUser);
         $emptyRun->attemptFor('marketing-reality-check');
 
-        $learner = User::factory()->create();
+        $learner = User::factory()->withoutExperience()->create();
         $realRun = MarketingLearningRun::startForWorkspace($learner->primaryWorkspace(), $learner);
         $realRun->attemptFor('marketing-reality-check')->update([
             'answers' => ['answer' => 'إجابة فعلية محفوظة'],
@@ -95,7 +95,7 @@ class ExperienceModelTest extends TestCase
 
     public function test_backfill_preserves_combined_user_projects_runs_and_attempts(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutExperience()->create();
         $project = app(ProjectService::class)->create($user, ['name' => 'مشروع محفوظ']);
         $run = MarketingLearningRun::startForWorkspace($user->primaryWorkspace(), $user, $project);
         $attempt = $run->attemptFor('marketing-reality-check');
