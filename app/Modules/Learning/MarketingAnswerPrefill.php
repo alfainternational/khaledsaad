@@ -52,6 +52,10 @@ class MarketingAnswerPrefill
             }
         }
 
+        if ($attempt->run->project === null) {
+            return null;
+        }
+
         $value = $this->brain->value($attempt->run->project, $brainKey);
 
         return $this->present($value) ? ['value' => $value, 'source' => 'project'] : null;

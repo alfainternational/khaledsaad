@@ -144,8 +144,9 @@ return [
             'order' => 20,
             'source_key' => 'marketing-course-20',
             'path' => 'data/content/marketing-course/lessons/20.php',
+            // اختلاف الـ slug عن العنوان مقصود — التعليل في lessons/20.php.
             'slug' => 'ورشة-عمل-تسويقية-تطبيقية',
-            'title' => 'ورشة عمل تطبيقية -- نطبق كل ما تعلمناه على مشروعك الحقيقي',
+            'title' => 'معرض الدروس والتطبيقات',
         ],
     ],
 ];

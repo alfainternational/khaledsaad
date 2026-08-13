@@ -5,11 +5,11 @@
 @section('content')
     <header class="page-head learning-head">
         <div>
-            <p class="eyebrow">مشروع {{ $project->name }}</p>
-            <h1>طبّق التسويق على مشروعك</h1>
-            <p class="muted">أجب عن أسئلة قصيرة، وسنراجع كل إجابة ونجهز لك نتيجة يمكنك استخدامها.</p>
+            <p class="eyebrow">{{ $project ? 'سياق اختياري: '.$project->name : 'مسارك التعليمي' }}</p>
+            <h1>تعلّم وطبّق مباشرة</h1>
+            <p class="muted">أجب عن أسئلة قصيرة، وتُراجَع كل إجابة لتصلك نتيجة يمكنك استخدامها.</p>
         </div>
-        <div class="learning-progress" aria-label="تقدمك في المهام">
+        <div id="learning-progress" class="marketing-learning-progress" aria-label="تقدمك في المهام">
             <strong>{{ $run->completed_exercises }} من {{ $exerciseCount }}</strong>
             <span>مهمة مكتملة</span>
         </div>
@@ -26,7 +26,7 @@
                     <li>ستحصل على: {{ $recommendation['exercise']['deliverable'] }}</li>
                 </ul>
             </div>
-            <a class="btn btn--primary" href="{{ route('app.learning.marketing.exercise', [$project, $recommendation['exercise']['key']]) }}">
+            <a class="btn btn--primary" data-primary-action href="{{ route('app.learning.marketing.course.exercise', ['exercise' => $recommendation['exercise']['key'], 'project' => $project?->slug]) }}">
                 {{ $run->current_exercise_key === $recommendation['exercise']['key'] ? 'أكمل المهمة' : 'ابدأ المهمة' }}
             </a>
         </section>
@@ -71,8 +71,8 @@
                                         <strong class="score-chip">{{ $task['score'] }}/100</strong>
                                     @endif
                                     <a href="{{ in_array($task['status'], ['completed', 'queued', 'evaluating', 'review_failed'], true)
-                                        ? route('app.learning.marketing.result', [$project, $task['key']])
-                                        : route('app.learning.marketing.exercise', [$project, $task['key']]) }}" class="btn btn--ghost btn--sm">
+                                        ? route('app.learning.marketing.course.result', ['exercise' => $task['key'], 'project' => $project?->slug])
+                                        : route('app.learning.marketing.course.exercise', ['exercise' => $task['key'], 'project' => $project?->slug]) }}" class="btn btn--ghost btn--sm">
                                         @if ($task['status'] === 'completed')
                                             افتح النتيجة
                                         @elseif (in_array($task['status'], ['queued', 'evaluating'], true))

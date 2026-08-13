@@ -11,7 +11,7 @@
 @section('content')
     <header class="page-head learning-head">
         <div>
-            <a href="{{ route('app.learning.marketing.index', $project) }}" class="learning-back">العودة إلى جميع الدروس</a>
+            <a href="{{ route('app.learning.marketing.home', ['project' => $project?->slug]) }}" class="learning-back">العودة إلى جميع الدروس</a>
             <p class="eyebrow">نتيجة المهمة</p>
             <h1>{{ $exercise['title'] }}</h1>
         </div>
@@ -20,21 +20,21 @@
     @if (in_array($attempt->status, ['queued', 'evaluating'], true))
         <section class="card learning-waiting" aria-live="polite">
             <span class="learning-spinner" aria-hidden="true"></span>
-            <h2>نراجع إجاباتك الآن</h2>
+            <h2>تُراجَع إجاباتك الآن</h2>
             <p>إجاباتك محفوظة. نقيّم كل واحدة ونجهز لك النتيجة والمقترحات، وستظهر هنا تلقائيًا.</p>
         </section>
     @elseif ($attempt->status === 'review_failed')
         <section class="card learning-waiting">
             <h2>حفظنا إجاباتك، لكن المراجعة لم تكتمل</h2>
             <p>لن تحتاج إلى كتابتها مرة أخرى. ابدأ المراجعة من جديد وسنحاول إكمال النتيجة.</p>
-            <form method="POST" action="{{ route('app.learning.marketing.retry', [$project, $exercise['key']]) }}">
+            <form method="POST" action="{{ route('app.learning.marketing.course.retry', ['exercise' => $exercise['key'], 'project' => $project?->slug]) }}">
                 @csrf
                 <button type="submit" class="btn btn--primary">أعد المراجعة</button>
             </form>
         </section>
     @elseif ($attempt->status === 'completed')
         <section class="learning-result-hero">
-            <div class="learning-score" aria-label="درجتك {{ $attempt->final_score }} من 100">
+            <div class="learning-score" aria-label="{{ __('درجتك :score من 100', ['score' => $attempt->final_score]) }}">
                 <strong>{{ $attempt->final_score }}</strong>
                 <span>من 100</span>
             </div>
@@ -114,18 +114,18 @@
         @endif
 
         <div class="learning-result-actions">
-            <a href="{{ route('app.learning.marketing.exercise', [$project, $exercise['key']]) }}" class="btn btn--ghost">حسّن إجاباتك</a>
+            <a href="{{ route('app.learning.marketing.course.exercise', ['exercise' => $exercise['key'], 'project' => $project?->slug]) }}" class="btn btn--ghost">حسّن إجاباتك</a>
             @if ($recommendation['exercise'] && $recommendation['exercise']['key'] !== $exercise['key'])
-                <a href="{{ route('app.learning.marketing.exercise', [$project, $recommendation['exercise']['key']]) }}" class="btn btn--primary">ابدأ المهمة المقترحة التالية</a>
+                <a href="{{ route('app.learning.marketing.course.exercise', ['exercise' => $recommendation['exercise']['key'], 'project' => $project?->slug]) }}" class="btn btn--primary">ابدأ المهمة المقترحة التالية</a>
             @else
-                <a href="{{ route('app.learning.marketing.index', $project) }}" class="btn btn--primary">اختر المهمة التالية</a>
+                <a href="{{ route('app.learning.marketing.home', ['project' => $project?->slug]) }}" class="btn btn--primary">اختر المهمة التالية</a>
             @endif
         </div>
     @else
         <section class="card learning-waiting">
             <h2>المهمة لم تُرسل للمراجعة بعد</h2>
             <p>أكمل إجاباتك، ثم اطلب المراجعة لتحصل على الدرجة والمقترحات.</p>
-            <a href="{{ route('app.learning.marketing.exercise', [$project, $exercise['key']]) }}" class="btn btn--primary">أكمل الإجابات</a>
+            <a href="{{ route('app.learning.marketing.course.exercise', ['exercise' => $exercise['key'], 'project' => $project?->slug]) }}" class="btn btn--primary">أكمل الإجابات</a>
         </section>
     @endif
 @endsection

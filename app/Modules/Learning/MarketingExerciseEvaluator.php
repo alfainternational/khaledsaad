@@ -108,7 +108,7 @@ class MarketingExerciseEvaluator
             ->merge(collect($exercise['questions'])->pluck('brain_key')->filter())
             ->unique()
             ->values();
-        $facts = $this->brain->facts($project)
+        $facts = $project === null ? [] : $this->brain->facts($project)
             ->toBase()
             ->only($keys->all())
             ->map(fn ($fact) => [
@@ -129,9 +129,9 @@ class MarketingExerciseEvaluator
             ['role' => 'system', 'content' => MarketingExerciseEvaluationSchema::instructions()],
             ['role' => 'user', 'content' => json_encode([
                 'project' => [
-                    'name' => $project->name,
-                    'sector' => $project->sector,
-                    'industry' => $project->industry,
+                    'name' => $project?->name,
+                    'sector' => $project?->sector,
+                    'industry' => $project?->industry,
                     'known_facts' => $facts,
                 ],
                 'exercise' => [
@@ -268,6 +268,10 @@ class MarketingExerciseEvaluator
      */
     private function recordUserAnswers(MarketingExerciseAttempt $attempt, array $exercise, int $revision): void
     {
+        if ($attempt->run->project === null) {
+            return;
+        }
+
         foreach ($exercise['questions'] as $question) {
             $brainKey = $question['brain_key'] ?? null;
             $value = $attempt->answers[$question['key']] ?? null;
