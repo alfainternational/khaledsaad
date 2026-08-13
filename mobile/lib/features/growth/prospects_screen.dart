@@ -87,7 +87,7 @@ class _ProspectsScreenState extends State<ProspectsScreen> {
           return AdaptiveScaffold(
             family: AdaptivePageFamily.operational,
             appBar: AppBar(title: const Text('العملاء المتوقعون')),
-            body: Center(child: Text('${snapshot.error}')),
+            body: Center(child: Text(userErrorMessage(snapshot.error))),
           );
         }
 

@@ -94,7 +94,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
     } catch (error) {
       if (mounted) {
         setState(() {
-          _error = error.toString();
+          _error = userErrorMessage(error);
           _busy = false;
         });
       }
@@ -162,7 +162,10 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   }
 
   /// قياس كفاية السؤال المفتوح الحالي بعد توقّف الكتابة — بلا حفظ وبلا تكلفة.
-  void _scheduleConsultationFitness(ConsultationQuestion question, String value) {
+  void _scheduleConsultationFitness(
+    ConsultationQuestion question,
+    String value,
+  ) {
     _fitnessTimer?.cancel();
 
     if (value.trim().isEmpty) {
@@ -285,8 +288,9 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
       return Align(
         alignment: AlignmentDirectional.centerStart,
         child: TextButton.icon(
-          onPressed:
-              _assistBusy ? null : () => _requestConsultationAssist(question),
+          onPressed: _assistBusy
+              ? null
+              : () => _requestConsultationAssist(question),
           icon: _assistBusy
               ? const SizedBox(
                   width: 14,
@@ -598,7 +602,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = error.toString();
+          _error = userErrorMessage(error);
         });
       }
     }

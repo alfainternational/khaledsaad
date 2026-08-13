@@ -12,11 +12,39 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  test('روابط التعلم العميقة تحفظ التجربة المطلوبة حتى المصادقة', () {
+    expect(
+      experienceForDeepLink(
+        Uri.parse('khaledsaad://app/learn/marketing/marketing-reality-check'),
+      ),
+      'learning',
+    );
+    expect(
+      experienceForDeepLink(
+        Uri.parse('https://khaledsaad.net/register?intent=business'),
+      ),
+      'business',
+    );
+    expect(
+      experienceForDeepLink(Uri.parse('khaledsaad://r/report-token')),
+      isNull,
+    );
+    expect(
+      learningApplicationForDeepLink(
+        Uri.parse('khaledsaad://app/learn/marketing/marketing-reality-check'),
+      ),
+      'marketing-reality-check',
+    );
+  });
+
   testWidgets('التطبيق يبدأ من واجهة الزائر عندما لا توجد جلسة', (
     tester,
   ) async {
     await tester.pumpWidget(
-      KhaledSaadApp(repository: PlatformRepository(ApiClient())),
+      KhaledSaadApp(
+        repository: PlatformRepository(ApiClient()),
+        locale: const Locale('ar'),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -27,7 +55,10 @@ void main() {
 
   testWidgets('واجهة التطبيق تعمل باتجاه RTL مثل الويب', (tester) async {
     await tester.pumpWidget(
-      KhaledSaadApp(repository: PlatformRepository(ApiClient())),
+      KhaledSaadApp(
+        repository: PlatformRepository(ApiClient()),
+        locale: const Locale('ar'),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -47,7 +78,10 @@ void main() {
 
   testWidgets('يمكن فتح تسجيل الدخول من واجهة الزائر', (tester) async {
     await tester.pumpWidget(
-      KhaledSaadApp(repository: PlatformRepository(ApiClient())),
+      KhaledSaadApp(
+        repository: PlatformRepository(ApiClient()),
+        locale: const Locale('ar'),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -59,14 +93,19 @@ void main() {
 
   testWidgets('لا يُرسل النموذج ببيانات ناقصة', (tester) async {
     await tester.pumpWidget(
-      KhaledSaadApp(repository: PlatformRepository(ApiClient())),
+      KhaledSaadApp(
+        repository: PlatformRepository(ApiClient()),
+        locale: const Locale('ar'),
+      ),
     );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('أنشئ حسابك واحفظ تقدمك'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'أنشئ حسابك وتابع'));
+    final submit = find.widgetWithText(FilledButton, 'أنشئ حسابك وتابع');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
     await tester.pumpAndSettle();
 
     expect(find.text('الاسم مطلوب.'), findsOneWidget);

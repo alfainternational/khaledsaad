@@ -10,6 +10,14 @@ class RecommendationModel {
     this.kpiHint,
     this.timeframe,
     this.actionSteps = const [],
+    this.objectiveId,
+    this.deliverable,
+    this.doneWhen,
+    this.firstFiveMinutes,
+    this.expectedFailure,
+    this.durationDays,
+    this.template,
+    this.degraded = false,
     this.workedExample,
     this.taskId,
   });
@@ -27,6 +35,18 @@ class RecommendationModel {
             .map((e) => e.toString())
             .where((e) => e.trim().isNotEmpty)
             .toList(),
+        objectiveId: json['objective_id'] as String?,
+        deliverable: json['deliverable'] as String?,
+        doneWhen: json['done_when'] as String?,
+        firstFiveMinutes: json['first_five_minutes'] as String?,
+        expectedFailure: json['expected_failure'] as String?,
+        durationDays: json['duration_days'] as int?,
+        template: json['template'] is Map
+            ? RecommendationTemplateModel.fromJson(
+                Map<String, dynamic>.from(json['template'] as Map),
+              )
+            : null,
+        degraded: json['degraded'] as bool? ?? false,
         workedExample: WorkedExampleModel.fromJson(
           json['worked_example'] == null
               ? null
@@ -43,10 +63,39 @@ class RecommendationModel {
   final String? kpiHint;
   final String? timeframe;
   final List<String> actionSteps;
+  final String? objectiveId;
+  final String? deliverable;
+  final String? doneWhen;
+  final String? firstFiveMinutes;
+  final String? expectedFailure;
+  final int? durationDays;
+  final RecommendationTemplateModel? template;
+  final bool degraded;
   final WorkedExampleModel? workedExample;
   final int? taskId;
 
   bool get isTask => taskId != null;
+}
+
+class RecommendationTemplateModel {
+  const RecommendationTemplateModel({
+    required this.title,
+    required this.blocks,
+    required this.isHypothesis,
+  });
+
+  factory RecommendationTemplateModel.fromJson(Map<String, dynamic> json) =>
+      RecommendationTemplateModel(
+        title: json['title'] as String? ?? '',
+        blocks: (json['blocks'] as List? ?? const [])
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList(),
+        isHypothesis: json['is_hypothesis'] as bool? ?? false,
+      );
+
+  final String title;
+  final List<Map<String, dynamic>> blocks;
+  final bool isHypothesis;
 }
 
 class FindingModel {
@@ -410,6 +459,7 @@ class ReportDetail {
     required this.scoreBand,
     required this.summary,
     required this.assumptions,
+    required this.openGaps,
     required this.sections,
     required this.findings,
     required this.evidenceBacked,
@@ -418,6 +468,10 @@ class ReportDetail {
     required this.projectName,
     required this.projectSlug,
     required this.isManuallyReviewed,
+    required this.provenanceType,
+    required this.provenanceLabel,
+    required this.scoreRaw,
+    required this.scoreMax,
     this.nextStepTitle,
     this.nextStepDescription,
     this.reviewedAt,
@@ -445,9 +499,21 @@ class ReportDetail {
       scoreBand: json['score_band'] as String? ?? '',
       summary: json['summary'] as String? ?? '',
       isManuallyReviewed: json['is_manually_reviewed'] as bool? ?? false,
+      provenanceType: json['provenance_type'] as String? ?? 'automated',
+      provenanceLabel:
+          json['provenance_label'] as String? ?? 'تحليل آلي بقواعد ثابتة',
+      scoreRaw:
+          ((json['score_equation'] as Map?)?['raw'] as num?)?.toDouble() ?? 0,
+      scoreMax:
+          ((json['score_equation'] as Map?)?['max'] as num?)?.toDouble() ?? 0,
       reviewedAt: json['reviewed_at'] as String?,
       assumptions: (json['assumptions'] as List? ?? const [])
           .map((e) => e.toString())
+          .toList(),
+      // الفجوات المفتوحة تصل من `ReportPresenter` نفسه الذي يغذّي الويب،
+      // فلا يفترق السطحان فيما يعرفانه عن نقص هذا التقرير.
+      openGaps: (json['open_gaps'] as List? ?? const [])
+          .map((e) => ReportGap.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
       nextStepTitle: nextStep?['title']?.toString(),
       nextStepDescription: nextStep?['description']?.toString(),
@@ -499,6 +565,7 @@ class ReportDetail {
   final String scoreBand;
   final String summary;
   final List<String> assumptions;
+  final List<ReportGap> openGaps;
   final List<ReportSectionModel> sections;
   final List<FindingModel> findings;
   final int evidenceBacked;
@@ -507,6 +574,10 @@ class ReportDetail {
   final String projectName;
   final String projectSlug;
   final bool isManuallyReviewed;
+  final String provenanceType;
+  final String provenanceLabel;
+  final double scoreRaw;
+  final double scoreMax;
   final String? nextStepTitle;
   final String? nextStepDescription;
   final String? reviewedAt;
@@ -516,4 +587,58 @@ class ReportDetail {
   final ReportWatcherModel? watcher;
   final String? myVerdict;
   final NextToolSuggestionModel? suggestion;
+}
+
+/// فجوة معلنة في تقرير: معلومة ينقصها النظام ومفتاح السؤال الذي يملؤها.
+///
+/// وجودها كصنف لا كنصّ هو الفرق بين أن يقرأ صاحب النشاط «ينقصك شيء» وأن
+/// يفتح السؤال ويكتبه. النصّ وحده كان يصل التطبيق والويب معًا، فيقف الاثنان
+/// عند الإعلان.
+class ReportGap {
+  const ReportGap({
+    required this.key,
+    required this.label,
+    this.help,
+    this.why,
+    this.type = 'textarea',
+    this.options = const [],
+    this.surface = 'tool',
+  });
+
+  factory ReportGap.fromJson(Map<String, dynamic> json) {
+    return ReportGap(
+      key: json['key']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      help: json['help']?.toString(),
+      why: json['why']?.toString(),
+      type: json['type']?.toString() ?? 'textarea',
+      options: (json['options'] as List? ?? const [])
+          .map((e) => ReportGapOption.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
+      surface: json['surface']?.toString() ?? 'tool',
+    );
+  }
+
+  final String key;
+  final String label;
+  final String? help;
+  final String? why;
+  final String type;
+  final List<ReportGapOption> options;
+  final String surface;
+}
+
+/// خيار جاهز لفجوة من نوع اختيار.
+class ReportGapOption {
+  const ReportGapOption({required this.value, required this.label});
+
+  factory ReportGapOption.fromJson(Map<String, dynamic> json) {
+    return ReportGapOption(
+      value: json['value']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+    );
+  }
+
+  final String value;
+  final String label;
 }

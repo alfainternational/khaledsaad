@@ -135,6 +135,10 @@ void main() {
       'consultations/consultation_screen.dart': AdaptivePageFamily.form,
       'consultations/consultations_list_screen.dart':
           AdaptivePageFamily.operational,
+      'experience/experience_selection_screen.dart': AdaptivePageFamily.form,
+      'experience/learning_application_screen.dart': AdaptivePageFamily.form,
+      'experience/learning_dashboard_screen.dart':
+          AdaptivePageFamily.operational,
       'growth/growth_hub_screen.dart': AdaptivePageFamily.operational,
       'growth/message_studio_screen.dart': AdaptivePageFamily.form,
       'growth/prospects_screen.dart': AdaptivePageFamily.operational,
@@ -154,6 +158,9 @@ void main() {
       'public/public_home_screen.dart': AdaptivePageFamily.operational,
       'public/public_tool_screen.dart': AdaptivePageFamily.operational,
       'public/shared_report_screen.dart': AdaptivePageFamily.reading,
+      // سدّ الفجوات نموذج يُملأ لا تقرير يُقرأ، فعائلته تختلف عن شاشة التقرير
+      // التي فُتح منها.
+      'reports/report_gaps_screen.dart': AdaptivePageFamily.form,
       'reports/report_screen.dart': AdaptivePageFamily.reading,
       'tools/run_status_screen.dart': AdaptivePageFamily.form,
       'tools/run_wizard_screen.dart': AdaptivePageFamily.form,

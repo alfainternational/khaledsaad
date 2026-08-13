@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/api/platform_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/i18n/app_strings.dart';
 import '../../core/widgets/adaptive_layout.dart';
 import '../../core/widgets/common.dart';
 import 'password_reset_request_screen.dart';
@@ -15,12 +16,14 @@ class AuthScreen extends StatefulWidget {
     required this.onAuthenticated,
     this.onBack,
     this.registering = true,
+    this.initialExperience = 'business',
   });
 
   final PlatformRepository repository;
   final VoidCallback onAuthenticated;
   final VoidCallback? onBack;
   final bool registering;
+  final String initialExperience;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -35,6 +38,15 @@ class _AuthScreenState extends State<AuthScreen> {
   late bool _isRegistering = widget.registering;
   bool _busy = false;
   String? _error;
+  late String _experience;
+
+  @override
+  void initState() {
+    super.initState();
+    _experience = {'business', 'learning'}.contains(widget.initialExperience)
+        ? widget.initialExperience
+        : 'business';
+  }
 
   @override
   void dispose() {
@@ -58,6 +70,7 @@ class _AuthScreenState extends State<AuthScreen> {
           name: _name.text.trim(),
           email: _email.text.trim(),
           password: _password.text,
+          experience: _experience,
         );
       } else {
         await widget.repository.login(
@@ -76,13 +89,14 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     return AdaptiveScaffold(
       family: AdaptivePageFamily.form,
       appBar: widget.onBack == null
           ? null
           : AppBar(
               leading: IconButton(
-                tooltip: 'عودة',
+                tooltip: strings.text('back'),
                 onPressed: widget.onBack,
                 icon: const Icon(Icons.arrow_back),
               ),
@@ -98,7 +112,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      _isRegistering ? 'ابدأ تشخيص مشروعك' : 'أهلًا بعودتك',
+                      strings.text(
+                        _isRegistering ? 'register_title' : 'login_title',
+                      ),
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
@@ -106,9 +122,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      _isRegistering
-                          ? 'اجمع إجاباتك وتقاريرك ومهامك في مكان واحد، وتابع تقدم مشروعك.'
-                          : 'سجّل الدخول للمتابعة من حيث توقفت والوصول إلى تقاريرك ومهامك.',
+                      strings.text(
+                        _isRegistering ? 'register_lead' : 'login_lead',
+                      ),
                       style: const TextStyle(color: BrandColors.muted),
                     ),
                     const SizedBox(height: 20),
@@ -119,13 +135,54 @@ class _AuthScreenState extends State<AuthScreen> {
                     ],
 
                     if (_isRegistering) ...[
+                      Text(
+                        strings.text('experience_question'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      RadioGroup<String>(
+                        groupValue: _experience,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _experience = value);
+                          }
+                        },
+                        child: Column(
+                          children: [
+                            RadioListTile<String>(
+                              value: 'business',
+                              title: Text(strings.text('business_choice')),
+                              subtitle: Text(
+                                strings.text('business_description'),
+                              ),
+                            ),
+                            RadioListTile<String>(
+                              value: 'learning',
+                              title: Text(strings.text('learning_choice')),
+                              subtitle: Text(
+                                strings.text('learning_description'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        strings.text('other_later'),
+                        style: const TextStyle(color: BrandColors.muted),
+                      ),
+                      const SizedBox(height: 18),
                       TextFormField(
                         controller: _name,
-                        decoration: const InputDecoration(labelText: 'الاسم'),
+                        decoration: InputDecoration(
+                          labelText: strings.text('name'),
+                        ),
                         textInputAction: TextInputAction.next,
                         validator: (value) =>
                             (value == null || value.trim().isEmpty)
-                            ? 'الاسم مطلوب.'
+                            ? strings.text('name_required')
                             : null,
                       ),
                       const SizedBox(height: 14),
@@ -133,27 +190,27 @@ class _AuthScreenState extends State<AuthScreen> {
 
                     TextFormField(
                       controller: _email,
-                      decoration: const InputDecoration(
-                        labelText: 'البريد الإلكتروني',
+                      decoration: InputDecoration(
+                        labelText: strings.text('email'),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       validator: (value) =>
                           (value == null || !value.contains('@'))
-                          ? 'أدخل بريدًا صحيحًا.'
+                          ? strings.text('email_invalid')
                           : null,
                     ),
                     const SizedBox(height: 14),
 
                     TextFormField(
                       controller: _password,
-                      decoration: const InputDecoration(
-                        labelText: 'كلمة المرور',
-                        helperText: 'ثمانية أحرف على الأقل.',
+                      decoration: InputDecoration(
+                        labelText: strings.text('password'),
+                        helperText: strings.text('password_help'),
                       ),
                       obscureText: true,
                       validator: (value) => (value == null || value.length < 8)
-                          ? 'ثمانية أحرف على الأقل.'
+                          ? strings.text('password_help')
                           : null,
                     ),
                     const SizedBox(height: 22),
@@ -171,8 +228,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             )
                           : Text(
                               _isRegistering
-                                  ? 'أنشئ حسابك وتابع'
-                                  : 'سجّل الدخول',
+                                  ? strings.text('register_submit')
+                                  : strings.text('login_submit'),
                             ),
                     ),
                     const SizedBox(height: 10),
@@ -188,7 +245,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                                 ),
                               ),
-                        child: const Text('نسيت كلمة المرور؟'),
+                        child: Text(strings.text('forgot_password')),
                       ),
 
                     TextButton(
@@ -200,8 +257,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             }),
                       child: Text(
                         _isRegistering
-                            ? 'لديك حساب؟ سجّل الدخول'
-                            : 'ليس لديك حساب؟ أنشئ حسابًا',
+                            ? strings.text('have_account')
+                            : strings.text('need_account'),
                       ),
                     ),
                   ],

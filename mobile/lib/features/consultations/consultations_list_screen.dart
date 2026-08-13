@@ -53,7 +53,7 @@ class _ConsultationsListScreenState extends State<ConsultationsListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
     }
   }
 

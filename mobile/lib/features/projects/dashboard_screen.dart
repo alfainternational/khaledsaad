@@ -10,6 +10,7 @@ import '../account/notifications_screen.dart';
 import '../admin/admin_hub_screen.dart';
 import '../consultations/consultation_screen.dart';
 import '../consultations/consultations_list_screen.dart';
+import '../experience/experience_selection_screen.dart';
 import '../growth/pulse_screen.dart';
 import '../portfolio/portfolio_screen.dart';
 import '../public/public_shell.dart';
@@ -34,10 +35,12 @@ class DashboardScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.onLogout,
+    this.onExperienceChanged,
   });
 
   final PlatformRepository repository;
   final VoidCallback onLogout;
+  final VoidCallback? onExperienceChanged;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -75,6 +78,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('لوحة التحكم'),
         actions: [
+          IconButton(
+            tooltip: 'تغيير ما أعمل عليه الآن',
+            icon: const Icon(Icons.swap_horiz),
+            onPressed: () async {
+              final account = await widget.repository.me();
+              if (!context.mounted) return;
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ExperienceSelectionScreen(
+                    repository: widget.repository,
+                    account: account,
+                    onChanged: () => Navigator.of(context).pop(true),
+                  ),
+                ),
+              );
+              widget.onExperienceChanged?.call();
+            },
+          ),
           IconButton(
             tooltip: 'الإشعارات',
             icon: const Icon(Icons.notifications_none),

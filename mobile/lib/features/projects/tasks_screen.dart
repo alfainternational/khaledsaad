@@ -63,7 +63,7 @@ class _TasksScreenState extends State<TasksScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _developing.remove(task.id));
@@ -78,7 +78,7 @@ class _TasksScreenState extends State<TasksScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     }
   }
@@ -204,10 +204,7 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
         ),
         for (final item in items)
-          Text(
-            '• $item',
-            style: const TextStyle(fontSize: 13, height: 1.6),
-          ),
+          Text('• $item', style: const TextStyle(fontSize: 13, height: 1.6)),
       ],
     ),
   );

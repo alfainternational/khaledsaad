@@ -62,9 +62,7 @@ class ConsultationQuestion {
         sensitive: json['sensitive'] == true,
         help: json['help']?.toString(),
         why: json['why']?.toString(),
-        validation: Map<String, dynamic>.from(
-          (json['validation'] as Map?) ?? const {},
-        ),
+        validation: _mapOrEmpty(json['validation']),
       );
 }
 
@@ -210,9 +208,7 @@ class ConsultationReviewItem {
           ),
         )
         .toList(),
-    validation: Map<String, dynamic>.from(
-      (json['validation'] as Map?) ?? const {},
-    ),
+    validation: _mapOrEmpty(json['validation']),
   );
 }
 
@@ -331,3 +327,6 @@ class ConsultationSessionModel {
         reportUuid: json['report_uuid']?.toString(),
       );
 }
+
+Map<String, dynamic> _mapOrEmpty(dynamic value) =>
+    value is Map ? Map<String, dynamic>.from(value) : const <String, dynamic>{};

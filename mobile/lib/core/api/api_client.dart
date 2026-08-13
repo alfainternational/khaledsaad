@@ -18,12 +18,17 @@ class ApiClient {
 
   final http.Client _client;
   final TokenStore _tokenStore;
+  String _locale = 'ar';
 
   TokenStore get tokens => _tokenStore;
 
+  set locale(String value) {
+    _locale = const {'ar', 'en', 'fr'}.contains(value) ? value : 'ar';
+  }
+
   Uri _uri(String path, [Map<String, String>? query]) => Uri.parse(
     '${AppEnvironment.apiBaseUrl}/v1$path',
-  ).replace(queryParameters: query);
+  ).replace(queryParameters: {'lang': _locale, ...?query});
 
   Future<Map<String, String>> _headers([
     Map<String, String> extra = const {},
@@ -33,6 +38,7 @@ class ApiClient {
     return {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'Accept-Language': _locale,
       // يعرّف الخادم بنسخة التطبيق ليردّ رسالة تحديث مفهومة بدل عقد مكسور.
       'X-App-Build': '${AppEnvironment.appBuild}',
       if (token != null) 'Authorization': 'Bearer $token',
@@ -125,10 +131,15 @@ class ApiClient {
   );
 
   /// رفع ملف عبر multipart. المفتاح لا يغادر الخادم — نرسل رمز المستخدم فقط.
-  Future<dynamic> upload(String path, String filePath, {String field = 'file'}) async {
+  Future<dynamic> upload(
+    String path,
+    String filePath, {
+    String field = 'file',
+  }) async {
     final token = await _tokenStore.read();
     final request = http.MultipartRequest('POST', _uri(path))
       ..headers['Accept'] = 'application/json'
+      ..headers['Accept-Language'] = _locale
       ..files.add(await http.MultipartFile.fromPath(field, filePath));
 
     if (token != null) {
@@ -147,6 +158,7 @@ class ApiClient {
     final token = await _tokenStore.read();
     final request = http.MultipartRequest('POST', _uri(path))
       ..headers['Accept'] = 'application/json'
+      ..headers['Accept-Language'] = _locale
       ..fields['seconds'] = '$seconds'
       ..files.add(await http.MultipartFile.fromPath('audio', filePath));
 
@@ -204,6 +216,8 @@ class ApiClient {
       _message(body, response.statusCode),
       statusCode: response.statusCode,
       errors: _errors(body),
+      code: _errorValue(body, 'code'),
+      action: _errorValue(body, 'action'),
     );
   }
 
@@ -227,6 +241,9 @@ class ApiClient {
       return body['message'] as String;
     }
 
+    final nested = _errorValue(body, 'message');
+    if (nested != null && nested.isNotEmpty) return nested;
+
     return switch (statusCode) {
       404 => 'العنصر المطلوب غير موجود.',
       422 => 'راجع البيانات المدخلة.',
@@ -244,5 +261,12 @@ class ApiClient {
         (value as List).map((item) => item.toString()).toList(),
       ),
     );
+  }
+
+  String? _errorValue(dynamic body, String key) {
+    if (body is! Map) return null;
+    final error = body['error'];
+    final value = error is Map ? error[key] : body[key];
+    return value is String ? value : null;
   }
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../api/api_exception.dart';
 import '../theme/app_theme.dart';
+
+String userErrorMessage(Object? error) => error is ApiException
+    ? error.message
+    : 'حدث خلل غير متوقع. أعد المحاولة، وإن استمر حدّث التطبيق.';
 
 /// مكونات مشتركة تقابل أصناف CSS في الويب:
 /// .card / .score-chip / .badge / .empty / .alert
@@ -157,7 +162,7 @@ class EmptyState extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 44),
     decoration: BoxDecoration(
       color: BrandColors.surface,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(14),
       border: Border.all(color: BrandColors.line, style: BorderStyle.solid),
     ),
     child: Column(
@@ -226,7 +231,7 @@ class BigScore extends StatelessWidget {
       RichText(
         text: TextSpan(
           style: const TextStyle(
-            fontFamily: 'HacenTunisia',
+            fontFamily: 'IBMPlexSansArabic',
             fontSize: 52,
             fontWeight: FontWeight.w700,
             color: BrandColors.navy,
@@ -289,7 +294,7 @@ class AsyncView<T> extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: ErrorNotice(
-          message: snapshot.error.toString(),
+          message: userErrorMessage(snapshot.error),
           onRetry: onRetry,
         ),
       );

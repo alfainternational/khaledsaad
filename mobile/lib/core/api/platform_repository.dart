@@ -162,6 +162,7 @@ class PlatformRepository {
     required String name,
     required String email,
     required String password,
+    String experience = 'business',
   }) async {
     final guestToken = await _guestSessions.read();
     final payload = <String, dynamic>{
@@ -169,6 +170,7 @@ class PlatformRepository {
       'email': email,
       'password': password,
       'device_name': AppEnvironment.deviceName,
+      'experience': experience,
     };
     if (guestToken != null) payload['guest_token'] = guestToken;
     final response = await _api.post('/auth/register', payload);
@@ -194,6 +196,45 @@ class PlatformRepository {
 
   Future<Map<String, dynamic>> me() async {
     final response = await _api.get('/auth/me');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> activateExperience(String experience) async {
+    final response = await _api.post('/experiences/$experience/activate');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> switchExperience(String experience) async {
+    final response = await _api.post('/experiences/$experience/switch');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> marketingLearningOverview() async {
+    final response = await _api.get('/learning/marketing');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> marketingLearningApplication(String key) async {
+    final response = await _api.get('/learning/marketing/$key');
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> saveMarketingLearningAnswer(
+    String exerciseKey,
+    String questionKey,
+    dynamic answer,
+  ) async {
+    final response = await _api.put(
+      '/learning/marketing/$exerciseKey/answers/$questionKey',
+      {'answer': answer},
+    );
+    return Map<String, dynamic>.from(response['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> reviewMarketingLearningApplication(
+    String exerciseKey,
+  ) async {
+    final response = await _api.post('/learning/marketing/$exerciseKey/review');
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
@@ -826,6 +867,31 @@ class PlatformRepository {
 
   /// بايتات PDF التقرير، مُصدَّقة بالرمز.
   Future<List<int>> reportPdf(int id) => _api.downloadBytes('/reports/$id/pdf');
+
+  /// الفجوات المفتوحة في تقرير: ما ينقص النظام ومفاتيح أسئلته.
+  Future<List<ReportGap>> reportGaps(int id) async {
+    final response = await _api.get('/reports/$id/gaps');
+
+    return (response['data'] as List? ?? const [])
+        .map((e) => ReportGap.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  /// حفظ ما كتبه صاحب النشاط لسدّ فجوات تقريره.
+  ///
+  /// الخادم يرفض أي مفتاح لم يعلنه التقرير نفسه، فلا يصير المسار بابًا
+  /// يكتب أي حقيقة في الدماغ. ويعيد ما تبقّى مفتوحًا لتُحدَّث الشاشة بلا
+  /// طلب ثانٍ.
+  Future<List<ReportGap>> saveReportGaps(
+    int id,
+    Map<String, String> answers,
+  ) async {
+    final response = await _api.put('/reports/$id/gaps', {'answers': answers});
+
+    return (response['remaining'] as List? ?? const [])
+        .map((e) => ReportGap.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
 
   Future<ScoreComparison?> reportComparison(int id) async {
     final response = await _api.get('/reports/$id');

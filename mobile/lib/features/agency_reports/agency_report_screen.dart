@@ -58,7 +58,7 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
       await file.writeAsBytes(bytes, flush: true);
       await OpenFilex.open(file.path);
     } catch (error) {
-      _notify(error.toString());
+      _notify(userErrorMessage(error));
     } finally {
       if (mounted) setState(() => _downloading = false);
     }
@@ -98,7 +98,7 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
       if (mounted) setState(() => _share = share);
       _notify('أصبح رابط موجز الوكالة جاهزًا لمدة $days يومًا.');
     } catch (error) {
-      _notify(error.toString());
+      _notify(userErrorMessage(error));
     } finally {
       if (mounted) setState(() => _sharing = false);
     }
@@ -113,7 +113,7 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
       if (mounted) setState(() => _share = share);
       _notify('أُلغي الرابط، ولم يعد موجز الوكالة متاحًا من خلاله.');
     } catch (error) {
-      _notify(error.toString());
+      _notify(userErrorMessage(error));
     } finally {
       if (mounted) setState(() => _sharing = false);
     }
@@ -135,7 +135,7 @@ class _AgencyReportScreenState extends State<AgencyReportScreen> {
       });
       _notify('أُنشئ تقرير جديد بالمعلومات الحالية.');
     } catch (error) {
-      _notify(error.toString());
+      _notify(userErrorMessage(error));
     } finally {
       if (mounted) setState(() => _regenerating = false);
     }

@@ -71,7 +71,9 @@ class _AgencyBriefEditScreenState extends State<AgencyBriefEditScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('حُفظ موجز التكليف. سيدخل في الإصدار القادم من المستند.'),
+          content: Text(
+            'حُفظ موجز التكليف. سيدخل في الإصدار القادم من المستند.',
+          ),
         ),
       );
       Navigator.of(context).pop(true);
@@ -79,7 +81,7 @@ class _AgencyBriefEditScreenState extends State<AgencyBriefEditScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

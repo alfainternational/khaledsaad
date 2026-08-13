@@ -13,6 +13,7 @@ import '../tools/run_wizard_screen.dart';
 import 'competitors_card.dart';
 import 'models.dart';
 import 'report_charts.dart';
+import 'report_gaps_screen.dart';
 
 /// يقابل resources/views/app/reports/show.blade.php
 ///
@@ -52,7 +53,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _downloadingPdf = false);
@@ -92,7 +93,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _converting = false);
@@ -113,7 +114,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _engagementBusy = false);
@@ -130,7 +131,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _engagementBusy = false);
@@ -161,7 +162,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(userErrorMessage(error))));
       }
     } finally {
       if (mounted) setState(() => _engagementBusy = false);
@@ -257,6 +258,14 @@ class _ReportScreenState extends State<ReportScreen> {
                   child: Column(
                     children: [
                       BigScore(score: report.score, band: report.scoreBand),
+                      const SizedBox(height: 8),
+                      Text(
+                        report.provenanceLabel,
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                      Text(
+                        '${report.scoreRaw.toStringAsFixed(1)} ÷ ${report.scoreMax.toStringAsFixed(1)} × 100 = ${report.score}',
+                      ),
                       if (report.comparison != null) ...[
                         const SizedBox(height: 8),
                         Text(
@@ -298,9 +307,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   // «الكل» هو الزر الأول: من قرأ تقريره كاملًا وقرّر تنفيذه
                   // لا يُفترض أن يضغط زرًّا لكل توصية. العدد من التقرير نفسه.
                   FilledButton.icon(
-                    onPressed: _converting
-                        ? null
-                        : () => _convert(all: true),
+                    onPressed: _converting ? null : () => _convert(all: true),
                     icon: const Icon(Icons.checklist),
                     label: Text(
                       'حوّل كل التوصيات إلى مهام'
@@ -321,7 +328,8 @@ class _ReportScreenState extends State<ReportScreen> {
                 ],
               ),
 
-              if (report.assumptions.isNotEmpty) ...[
+              if (report.assumptions.isNotEmpty ||
+                  report.openGaps.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 BrandCard(
                   child: Column(
@@ -335,8 +343,38 @@ class _ReportScreenState extends State<ReportScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
+
+                      // الفجوة التي نعرف مفتاحها تُعرض ومعها بابها. كانت
+                      // تُعرض نقطةً صمّاء: يقرأ صاحب النشاط أن شيئًا ينقصه
+                      // ولا يجد أين يكتبه.
+                      for (final gap in report.openGaps)
+                        Text(
+                          '• ${gap.label}'
+                          '${gap.why == null || gap.why!.isEmpty ? '' : ' — ${gap.why}'}',
+                        ),
+
+                      // ما لا مفتاح له يبقى ملاحظة نصّية بلا زر: زرٌّ يفتح
+                      // شاشة فارغة أسوأ من غياب الزر.
                       for (final assumption in report.assumptions)
                         Text('• $assumption'),
+
+                      if (report.openGaps.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => ReportGapsScreen(
+                                repository: widget.repository,
+                                reportId: report.id,
+                                projectName: report.projectName,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'أكمل هذه المعلومات (${report.openGaps.length})',
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -571,6 +609,55 @@ class _ReportScreenState extends State<ReportScreen> {
                   ],
                 ),
 
+                if (recommendation.degraded)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: Text(
+                      'لا يوجد قالب مطابق ومكتمل لهذه التوصية بعد؛ لذلك لا تظهر كإجراء.',
+                      style: TextStyle(color: BrandColors.muted),
+                    ),
+                  )
+                else ...[
+                  _ContractLine(
+                    label: 'الناتج',
+                    value: recommendation.deliverable,
+                  ),
+                  _ContractLine(
+                    label: 'تعريف الإنجاز',
+                    value: recommendation.doneWhen,
+                  ),
+                  _ContractLine(
+                    label: 'أول خمس دقائق',
+                    value: recommendation.firstFiveMinutes,
+                  ),
+                  _ContractLine(
+                    label: 'الفشل المتوقع ومخرجه',
+                    value: recommendation.expectedFailure,
+                  ),
+                  if (recommendation.template != null)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              recommendation.template!.title,
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                            for (final block in recommendation.template!.blocks)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  '${block['label'] ?? ''}: ${block['value'] ?? ''}',
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+
                 // الخطوات قبل المثال: المسار أولًا ثم المادة التي يُنفَّذ بها.
                 if (recommendation.actionSteps.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -678,6 +765,25 @@ class _ReportScreenState extends State<ReportScreen> {
                 ),
             ],
           ),
+      ],
+    ),
+  );
+}
+
+class _ContractLine extends StatelessWidget {
+  const _ContractLine({required this.label, required this.value});
+
+  final String label;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        Text(value?.trim().isNotEmpty == true ? value! : 'غير مكتمل'),
       ],
     ),
   );
