@@ -45,7 +45,7 @@ class IndustryBenchmark
         $industry = $declared ? Sector::label($project->sector) : $project->industry;
 
         if (blank($industry)) {
-            return $this->unavailable('قطاع النشاط غير محدَّد، فلا مجموعة يُقارَن بها.');
+            return $this->unavailable(__('قطاع النشاط غير محدَّد، فلا مجموعة يُقارَن بها.'));
         }
 
         $scores = $declared
@@ -54,7 +54,7 @@ class IndustryBenchmark
 
         if (count($scores) < self::MIN_SAMPLE) {
             return $this->unavailable(sprintf(
-                'عدد الأنشطة المقيسة في «%s» %d، والمقارنة تبدأ عند %d.',
+                __('عدد الأنشطة المقيسة في «%s» %d، والمقارنة تبدأ عند %d.'),
                 $industry,
                 count($scores),
                 self::MIN_SAMPLE,

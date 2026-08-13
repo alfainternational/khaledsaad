@@ -261,6 +261,9 @@ class AgencyReportService
                 'version' => $version,
                 'title' => "أين يقف مشروعك — {$project->name} — الإصدار {$version}",
                 'status' => 'published',
+                'provenance' => $reports->contains(fn (Report $report) => in_array($report->provenance, ['signed', 'hybrid'], true)) ? 'hybrid' : 'automated',
+                'validation_status' => 'passed',
+                'schema_version' => 2,
                 'source_report_ids' => $reports->pluck('id')->values()->all(),
                 'visibility' => $visibility,
                 'snapshot' => $snapshot,
@@ -284,7 +287,9 @@ class AgencyReportService
             ->with([
                 'toolRun.toolVersion.tool',
                 'sections',
-                'findings.recommendations',
+                'findings.recommendations.objective',
+                'findings.recommendations.metricObjective',
+                'findings.recommendations.template.objective',
             ])
             ->latest('created_at')
             ->latest('id')
@@ -1246,6 +1251,13 @@ class AgencyReportService
      */
     private function priorities(Collection $reports, string $evidenceVisibility): array
     {
+        $invalid = $reports->first(fn (Report $report) => (int) $report->schema_version >= 2 && ! in_array($report->validation_status, ['passed', 'passed_with_warnings'], true));
+        if ($invalid !== null) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'reports' => "التقرير المصدر رقم {$invalid->id} لم يجتز عقد الإصدار الموحد.",
+            ]);
+        }
+
         return $reports
             ->flatMap(function (Report $report) use ($evidenceVisibility) {
                 $tool = $report->toolRun->toolVersion->tool;
@@ -1256,7 +1268,28 @@ class AgencyReportService
                         'description' => $recommendation->description,
                         'root_cause' => $recommendation->root_cause ?: $finding->description,
                         'commercial_impact' => $recommendation->commercial_impact ?: 'يؤثر في كفاءة النمو أو تكلفة الوصول إلى النتيجة المستهدفة.',
-                        'action_steps' => $recommendation->action_steps ?: [$recommendation->description],
+                        'objective_id' => $recommendation->objective?->slug,
+                        'deliverable' => $recommendation->deliverable,
+                        'done_when' => $recommendation->done_when,
+                        'first_five_minutes' => $recommendation->first_five_minutes,
+                        'expected_failure' => $recommendation->expected_failure,
+                        'duration_days' => $recommendation->duration_days,
+                        'metric' => ['label' => $recommendation->kpi_hint, 'objective_id' => $recommendation->metricObjective?->slug],
+                        'template' => $recommendation->template_payload ?: ((int) $report->schema_version < 2 && $recommendation->template ? [
+                            'objective_id' => $recommendation->template->objective?->slug,
+                            'kind' => $recommendation->template->kind,
+                            'title' => $recommendation->template->title,
+                            'blocks' => $recommendation->template->body['blocks'] ?? [],
+                            'tips' => $recommendation->template->body['tips'] ?? [],
+                            'is_hypothesis' => (bool) $recommendation->template->is_hypothesis,
+                        ] : null),
+                        'degraded' => (bool) $recommendation->degraded,
+                        'degrade_reason' => $recommendation->degrade_reason,
+                        'action_steps' => $recommendation->action_steps ?: (
+                            (int) $report->schema_version < 2
+                                ? [$recommendation->description, 'راجع الناتج مع صاحب القرار وسجّل قرار الاعتماد.']
+                                : []
+                        ),
                         // المثال ينتقل مع الأولوية: «تقريرك الخاص» هو أكثر
                         // مستند يقرؤه صاحب النشاط وحده، وحذفه منه يتركه أمام
                         // خطوة يفهمها ولا يعرف كيف يكتبها.

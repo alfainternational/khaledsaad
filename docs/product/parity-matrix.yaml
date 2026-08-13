@@ -1,5 +1,12 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "unified_report_contract": {
+    "status": "verified",
+    "surfaces": ["web", "pdf", "api_v1", "shared", "flutter", "agency_report", "readiness"],
+    "contract_fields": ["deliverable", "template", "done_when", "first_five_minutes", "expected_failure"],
+    "validation_rules": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10", "R11", "R12", "R13", "R14", "R15"],
+    "evidence": "docs/product/release-evidence/unified-report-contract/README.md"
+  },
   "description": "سجل المطابقة الوظيفية بين الويب وواجهة API وتطبيق Flutter. صيغة JSON صحيحة ومتوافقة مع YAML.",
   "layout_contract": {
     "web": {
@@ -183,6 +190,7 @@
     },
     {
       "id": "customer.consultation.complete",
+      "note": "عقد JSON يثبت أن validation كائن في API، مع قبول التطبيق المؤقت لصيغة القائمة الفارغة من الإصدارات الأقدم دون إسقاط الرحلة.",
       "role": "customer",
       "web": {
         "applicable": true,
@@ -219,14 +227,15 @@
           "Tests\\Feature\\ConsultationLifecycleTest"
         ],
         "mobile": [
-          "mobile/test/features/consultation_journey_test.dart"
+          "mobile/test/features/consultation_journey_test.dart",
+          "mobile/test/features/consultation_models_test.dart"
         ]
       },
       "status": "verified"
     },
     {
       "id": "admin.consultation.govern",
-      "note": "قرار لا فجوة: الإدارة ويب فقط بالتصميم. حوكمة كتالوج الاستشارة عمل مكتبي بجداول ونماذج طويلة، ولا تُبنى في تطبيق العميل.",
+      "note": "حوكمة مخطط الاستشارة متاحة للآدمن على الويب والتطبيق بالعمر نفسه للمسودة والنشر والقفل التاريخي.",
       "role": "admin",
       "web": {
         "applicable": true,
@@ -234,10 +243,14 @@
         "method": "GET|POST|PUT"
       },
       "api": {
-        "applicable": false
+        "applicable": true,
+        "route": "api.v1.admin.consultations.index",
+        "method": "GET|POST|PUT"
       },
       "mobile": {
-        "applicable": false
+        "applicable": true,
+        "screen": "AdminConsultationsScreen + AdminConsultationVersionScreen",
+        "action": "browse_draft_edit_simulate_publish"
       },
       "states": [
         "empty",
@@ -251,8 +264,12 @@
         "web": [
           "Tests\\Feature\\AdminConsultationTest"
         ],
-        "api": [],
-        "mobile": []
+        "api": [
+          "Tests\\Feature\\AdminConsultationTest"
+        ],
+        "mobile": [
+          "mobile/test/features/admin_consultation_parity_test.dart"
+        ]
       },
       "status": "verified"
     },
@@ -961,6 +978,45 @@
         ],
         "mobile": [
           "mobile/test/features/parity_models_test.dart"
+        ]
+      },
+      "status": "verified"
+    },
+    {
+      "id": "customer.reports.gaps",
+      "role": "customer",
+      "web": {
+        "applicable": true,
+        "route": "app.reports.gaps.edit",
+        "method": "GET|PUT"
+      },
+      "api": {
+        "applicable": true,
+        "route": "api.v1.reports.gaps.index",
+        "method": "GET|PUT"
+      },
+      "mobile": {
+        "applicable": true,
+        "screen": "ReportGapsScreen",
+        "action": "answer_declared_gaps"
+      },
+      "states": [
+        "loading",
+        "empty",
+        "error",
+        "rejected",
+        "saved",
+        "success"
+      ],
+      "tests": {
+        "web": [
+          "Tests\\Feature\\ReportGapCompletionTest"
+        ],
+        "api": [
+          "Tests\\Feature\\ReportGapApiTest"
+        ],
+        "mobile": [
+          "mobile/test/features/report_gaps_test.dart"
         ]
       },
       "status": "verified"
@@ -2093,7 +2149,7 @@
     },
     {
       "id": "customer.portfolio.board",
-      "note": "قرار لا فجوة: لوحة الوكالة شاشة قرار مكتبية بجدول عريض (عملاء × درجات × اتجاه × تصدير). التطبيق يخدم صاحب النشاط الواحد؛ الوكيل يدير محفظته من المكتب. نقطة التوسّع مفتوحة إن طُلبت لاحقًا.",
+      "note": "لوحة المحفظة متاحة على الويب والتطبيق من المصدر الحسابي نفسه، وتعرض غير المقيس والاتجاه غير القابل للمقارنة بالدلالة نفسها.",
       "role": "customer",
       "web": {
         "applicable": true,
@@ -2101,14 +2157,14 @@
         "method": "GET"
       },
       "api": {
-        "applicable": false,
-        "route": null,
-        "method": null
+        "applicable": true,
+        "route": "api.v1.portfolio",
+        "method": "GET"
       },
       "mobile": {
-        "applicable": false,
-        "screen": null,
-        "action": null
+        "applicable": true,
+        "screen": "PortfolioScreen",
+        "action": "view_and_prioritize"
       },
       "states": [
         "loading",
@@ -2120,8 +2176,12 @@
         "web": [
           "Tests\\Feature\\AgencyPortfolioTest"
         ],
-        "api": [],
-        "mobile": []
+        "api": [
+          "Tests\\Feature\\AgencyPortfolioTest"
+        ],
+        "mobile": [
+          "mobile/test/features/portfolio_parity_test.dart"
+        ]
       },
       "status": "verified"
     },

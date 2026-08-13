@@ -80,10 +80,10 @@ class ScoreExplainer
     private function tier(float $weight): string
     {
         return match (true) {
-            $weight >= 20 => 'مصيري',
-            $weight >= 16 => 'حاسم',
-            $weight >= 12 => 'مؤثر',
-            default => 'مساند',
+            $weight >= 20 => __('مصيري'),
+            $weight >= 16 => __('حاسم'),
+            $weight >= 12 => __('مؤثر'),
+            default => __('مساند'),
         };
     }
 
@@ -94,7 +94,7 @@ class ScoreExplainer
     {
         if (is_array($value)) {
             if ($value === []) {
-                return 'لم تُجب';
+                return __('لم تُجب');
             }
 
             return implode('، ', array_map(
@@ -106,7 +106,7 @@ class ScoreExplainer
         $value = trim((string) $value);
 
         if ($value === '') {
-            return 'لم تُجب';
+            return __('لم تُجب');
         }
 
         return $labels[$value] ?? $value;

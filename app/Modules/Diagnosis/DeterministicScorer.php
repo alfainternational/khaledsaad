@@ -45,7 +45,7 @@ class DeterministicScorer
         }
 
         if ($rules === []) {
-            return ['score' => 0, 'band' => 'غير محسوبة', 'total_weight' => 0.0, 'breakdown' => [], 'excluded' => $excluded];
+            return ['score' => 0, 'band' => __('غير محسوبة'), 'total_weight' => 0.0, 'breakdown' => [], 'excluded' => $excluded];
         }
 
         $totalWeight = 0.0;

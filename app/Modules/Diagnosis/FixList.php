@@ -91,6 +91,21 @@ class FixList
                      * والبند الذي يُصلَح بنصّ معياري ثابت لا عذر لتركه وصفًا.
                      */
                     'snippet' => $this->snippets->for($input['key'], $project->sector),
+                    'action_contract' => [
+                        'objective_id' => 'improve-ai-readiness',
+                        'deliverable' => 'إصلاح منشور ومفحوص لبند «'.$input['label'].'»',
+                        'done_when' => 'يعيد الفحص الآلي للبند نتيجة ناجحة ويمكن توثيق رابطها أو استجابتها.',
+                        'first_five_minutes' => 'افتح الصفحة أو الملف المسؤول عن «'.$input['label'].'» وسجّل حالته الحالية.',
+                        'expected_failure' => 'قد يتغير الملف دون نشره؛ انشر التعديل ثم أعد الفحص من رابط الموقع العام.',
+                        'duration_days' => $effort === 'low' ? 1 : ($effort === 'medium' ? 3 : 7),
+                        'impact' => $impact >= 1 ? 'high' : 'medium',
+                        'effort' => $effort,
+                        'metric' => ['label' => 'نجاح فحص '.$input['label'], 'objective_id' => 'improve-ai-readiness'],
+                        'steps' => array_values(array_filter([
+                            $repairs[$input['key']]['fix'] ?? 'طبّق الإصلاح المحدد على الموقع المنشور.',
+                            'أعد تشغيل الفحص وسجّل النتيجة ورابط الصفحة بعد النشر.',
+                        ])),
+                    ],
                 ];
             }
         }

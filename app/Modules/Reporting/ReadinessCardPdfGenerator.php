@@ -49,7 +49,7 @@ class ReadinessCardPdfGenerator
             'generatedAt' => now(),
         ])->render();
 
-        $mpdf = $this->engine->make('بطاقة الجاهزية');
+        $mpdf = $this->engine->make(__('بطاقة الجاهزية'));
         $mpdf->WriteHTML($html);
 
         $path = $this->path($project);

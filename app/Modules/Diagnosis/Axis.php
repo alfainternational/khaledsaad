@@ -25,14 +25,14 @@ enum Axis: string
     public function label(): string
     {
         return match ($this) {
-            self::StrategicClarity => 'الوضوح الاستراتيجي',
-            self::AudienceUnderstanding => 'فهم الجمهور',
-            self::PositioningMessage => 'التموضع والرسالة',
-            self::ChannelStructure => 'البنية القنواتية',
-            self::MeasurementData => 'القياس والبيانات',
-            self::ExecutionCapacity => 'القدرة التنفيذية',
-            self::AiReadiness => 'الجاهزية للذكاء الاصطناعي',
-            self::OwnedAssets => 'الأصول المملوكة',
+            self::StrategicClarity => __('الوضوح الاستراتيجي'),
+            self::AudienceUnderstanding => __('فهم الجمهور'),
+            self::PositioningMessage => __('التموضع والرسالة'),
+            self::ChannelStructure => __('البنية القنواتية'),
+            self::MeasurementData => __('القياس والبيانات'),
+            self::ExecutionCapacity => __('القدرة التنفيذية'),
+            self::AiReadiness => __('الجاهزية للذكاء الاصطناعي'),
+            self::OwnedAssets => __('الأصول المملوكة'),
         };
     }
 
@@ -42,14 +42,14 @@ enum Axis: string
     public function question(): string
     {
         return match ($this) {
-            self::StrategicClarity => 'لمن تبيع، ولماذا يُشترى منك',
-            self::AudienceUnderstanding => 'دقة تعريفك لشرائح عملائك',
-            self::PositioningMessage => 'تمايزك ووضوح عرضك',
-            self::ChannelStructure => 'ملاءمة قنواتك لرحلة الشراء',
-            self::MeasurementData => 'هل تعرف ما ينجح فعلًا',
-            self::ExecutionCapacity => 'فريقك وعملياتك وإيقاعك',
-            self::AiReadiness => 'ظهورك في إجابات النماذج وقابلية موقعك للقراءة الآلية',
-            self::OwnedAssets => 'اعتمادك على جمهور مستأجر مقابل بيانات مباشرة',
+            self::StrategicClarity => __('لمن تبيع، ولماذا يُشترى منك'),
+            self::AudienceUnderstanding => __('دقة تعريفك لشرائح عملائك'),
+            self::PositioningMessage => __('تمايزك ووضوح عرضك'),
+            self::ChannelStructure => __('ملاءمة قنواتك لرحلة الشراء'),
+            self::MeasurementData => __('هل تعرف ما ينجح فعلًا'),
+            self::ExecutionCapacity => __('فريقك وعملياتك وإيقاعك'),
+            self::AiReadiness => __('ظهورك في إجابات النماذج وقابلية موقعك للقراءة الآلية'),
+            self::OwnedAssets => __('اعتمادك على جمهور مستأجر مقابل بيانات مباشرة'),
         };
     }
 

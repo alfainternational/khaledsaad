@@ -33,7 +33,7 @@ class AgencyReportPdfGenerator
             'brand' => config('brand'),
         ])->render();
 
-        $mpdf = $this->engine->make('موجز وكالة');
+        $mpdf = $this->engine->make(__('موجز وكالة'));
         $mpdf->WriteHTML($html);
         Storage::disk(self::DISK)->put($path, $mpdf->Output('', 'S'));
 
