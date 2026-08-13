@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Jobs\EvaluateMarketingExercise;
 use App\Models\MarketingExerciseAttempt;
 use App\Models\MarketingLearningRun;
+use App\Models\Project;
+use App\Models\Workspace;
 use App\Modules\Learning\MarketingCourseCatalog;
 use App\Modules\Learning\MarketingExerciseCompletenessScorer;
 use App\Modules\Learning\MarketingLearningRecommender;
@@ -30,7 +32,7 @@ class MarketingLearningController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $run = $this->run($request);
+        [$run, $project] = $this->run($request);
         $recommendation = $this->recommender->next($run);
         $next = $recommendation['exercise'] === null ? null : [
             ...$recommendation['exercise'],
@@ -39,7 +41,8 @@ class MarketingLearningController extends Controller
 
         return response()->json([
             'data' => [
-                'project' => null,
+                'project' => $this->projectPayload($project),
+                'project_choices' => $this->projectChoices($request, $run->workspace),
                 'progress' => [
                     'completed' => $run->completed_exercises,
                     'total' => count($this->catalog->exercises()),
@@ -64,12 +67,16 @@ class MarketingLearningController extends Controller
     public function show(Request $request, string $exercise): JsonResponse
     {
         $definition = $this->definition($exercise);
-        $run = $this->run($request);
+        [$run, $project] = $this->run($request);
         $attempt = $run->attemptFor($exercise);
         $run->forceFill(['current_exercise_key' => $exercise])->save();
 
         return response()->json([
-            'data' => $this->applicationPayload($definition, $attempt),
+            'data' => [
+                ...$this->applicationPayload($definition, $attempt),
+                'project' => $this->projectPayload($project),
+                'project_choices' => $this->projectChoices($request, $run->workspace),
+            ],
         ]);
     }
 
@@ -83,26 +90,25 @@ class MarketingLearningController extends Controller
             abort(404);
         }
 
+        [$workspace, $project] = $this->learningContext($request);
         $rules = ($questionDefinition['type'] ?? 'textarea') === 'number'
             ? ['required', 'numeric', 'min:'.(int) ($questionDefinition['min'] ?? 1)]
             : ['required', 'string', 'min:'.(int) ($questionDefinition['min'] ?? 1), 'max:5000'];
         $data = $request->validate(['answer' => $rules]);
-        $attempt = $this->run($request)->attemptFor($exercise);
+        $run = MarketingLearningRun::startForWorkspace($workspace, $request->user(), $project);
+        $attempt = $run->attemptFor($exercise);
 
-        if (in_array($attempt->status, [
-            MarketingExerciseAttempt::STATUS_QUEUED,
-            MarketingExerciseAttempt::STATUS_EVALUATING,
-        ], true)) {
-            return response()->json([
-                'error' => [
-                    'code' => 'learning_review_in_progress',
-                    'message' => __('المراجعة تعمل الآن. انتظر النتيجة قبل تعديل الإجابات.'),
-                ],
-            ], 409);
+        if (! $this->answerIsEditable($attempt)) {
+            return $this->answerLockedResponse();
         }
 
-        $attempt = DB::transaction(function () use ($attempt, $question, $data): MarketingExerciseAttempt {
+        $attempt = DB::transaction(function () use ($attempt, $question, $data): ?MarketingExerciseAttempt {
             $current = MarketingExerciseAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+
+            if (! $this->answerIsEditable($current)) {
+                return null;
+            }
+
             $answers = $current->answers ?? [];
             $answers[$question] = $data['answer'];
             $current->forceFill([
@@ -112,6 +118,11 @@ class MarketingLearningController extends Controller
 
             return $current->refresh();
         });
+
+        if ($attempt === null) {
+            return $this->answerLockedResponse();
+        }
+
         $questions = collect($definition['questions'])->pluck('key')->values();
         $position = $questions->search($question);
         $nextQuestion = $position === false ? null : $questions->get($position + 1);
@@ -120,6 +131,7 @@ class MarketingLearningController extends Controller
             'data' => [
                 'attempt' => $this->attemptPayload($attempt),
                 'next_question_key' => $nextQuestion,
+                'project' => $this->projectPayload($project),
             ],
         ]);
     }
@@ -127,7 +139,8 @@ class MarketingLearningController extends Controller
     public function review(Request $request, string $exercise): JsonResponse
     {
         $definition = $this->definition($exercise);
-        $attempt = $this->run($request)->attemptFor($exercise);
+        [$run, $project] = $this->run($request);
+        $attempt = $run->attemptFor($exercise);
 
         if (in_array($attempt->status, [
             MarketingExerciseAttempt::STATUS_QUEUED,
@@ -135,7 +148,10 @@ class MarketingLearningController extends Controller
             MarketingExerciseAttempt::STATUS_COMPLETED,
         ], true)) {
             return response()->json([
-                'data' => ['attempt' => $this->attemptPayload($attempt)],
+                'data' => [
+                    'attempt' => $this->attemptPayload($attempt),
+                    'project' => $this->projectPayload($project),
+                ],
             ]);
         }
 
@@ -171,18 +187,41 @@ class MarketingLearningController extends Controller
             return $current->refresh();
         });
 
-        if ($queued !== null) {
-            $this->dispatchReview($queued);
+        if ($queued !== null && ! $this->dispatchReview($queued)) {
+            $attempt = $queued->refresh();
+
+            return response()->json([
+                'error' => [
+                    'code' => 'learning_review_dispatch_failed',
+                    'message' => __('تعذر بدء المراجعة الآن. إجاباتك محفوظة ويمكنك إعادة المحاولة.'),
+                ],
+                'data' => [
+                    'attempt' => $this->attemptPayload($attempt),
+                    'project' => $this->projectPayload($project),
+                ],
+            ], 503);
         }
 
         $attempt = ($queued ?? $attempt)->refresh();
 
         return response()->json([
-            'data' => ['attempt' => $this->attemptPayload($attempt)],
+            'data' => [
+                'attempt' => $this->attemptPayload($attempt),
+                'project' => $this->projectPayload($project),
+            ],
         ], $queued === null ? 200 : 202);
     }
 
-    private function run(Request $request): MarketingLearningRun
+    /** @return array{0: MarketingLearningRun, 1: ?Project} */
+    private function run(Request $request): array
+    {
+        [$workspace, $project] = $this->learningContext($request);
+
+        return [MarketingLearningRun::startForWorkspace($workspace, $request->user(), $project), $project];
+    }
+
+    /** @return array{0: Workspace, 1: ?Project} */
+    private function learningContext(Request $request): array
     {
         $user = $request->user();
         $workspace = $user->primaryWorkspace();
@@ -198,7 +237,57 @@ class MarketingLearningController extends Controller
             ], 403));
         }
 
-        return MarketingLearningRun::startForWorkspace($workspace, $user);
+        $project = $this->projectContext($request, $workspace);
+
+        return [$workspace, $project];
+    }
+
+    private function projectContext(Request $request, Workspace $workspace): ?Project
+    {
+        $projectId = $request->input('project_id');
+
+        if ($projectId === null || $projectId === '') {
+            return null;
+        }
+
+        $user = $request->user();
+        abort_unless(
+            $user->hasBusinessExperience() && $workspace->owner_id === $user->id,
+            404,
+        );
+        abort_unless(is_int($projectId) || (is_string($projectId) && ctype_digit($projectId)), 404);
+
+        return $workspace->projects()->whereKey((int) $projectId)->firstOrFail();
+    }
+
+    /** @return list<array{id: int, name: string, slug: string}> */
+    private function projectChoices(Request $request, Workspace $workspace): array
+    {
+        $user = $request->user();
+
+        if (! $user->hasBusinessExperience() || $workspace->owner_id !== $user->id) {
+            return [];
+        }
+
+        return $workspace->projects()
+            ->oldest('id')
+            ->get(['id', 'name', 'slug'])
+            ->map(fn (Project $project): array => $this->projectPayload($project))
+            ->all();
+    }
+
+    /** @return array{id: int, name: string, slug: string}|null */
+    private function projectPayload(?Project $project): ?array
+    {
+        if ($project === null) {
+            return null;
+        }
+
+        return [
+            'id' => $project->id,
+            'name' => $project->name,
+            'slug' => $project->slug,
+        ];
     }
 
     /** @return array<string, mixed> */
@@ -248,10 +337,31 @@ class MarketingLearningController extends Controller
         ];
     }
 
-    private function dispatchReview(MarketingExerciseAttempt $attempt): void
+    private function answerIsEditable(MarketingExerciseAttempt $attempt): bool
+    {
+        return in_array($attempt->status, [
+            MarketingExerciseAttempt::STATUS_DRAFT,
+            MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
+        ], true);
+    }
+
+    private function answerLockedResponse(): JsonResponse
+    {
+        return response()->json([
+            'error' => [
+                'code' => 'learning_review_in_progress',
+                'message' => __('لا يمكن تعديل الإجابات بعدما بدأت مراجعة التطبيق.'),
+            ],
+        ], 409);
+    }
+
+    private function dispatchReview(MarketingExerciseAttempt $attempt): bool
     {
         try {
-            EvaluateMarketingExercise::dispatch($attempt->id);
+            $pending = EvaluateMarketingExercise::dispatch($attempt->id);
+            unset($pending);
+
+            return true;
         } catch (Throwable $exception) {
             $attempt->forceFill([
                 'status' => MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
@@ -262,6 +372,8 @@ class MarketingLearningController extends Controller
                 'exercise_key' => $attempt->exercise_key,
                 'reason' => $exception->getMessage(),
             ]);
+
+            return false;
         }
     }
 }

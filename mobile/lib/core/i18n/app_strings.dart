@@ -97,6 +97,12 @@ class AppStrings {
       'fr':
           'Votre application est en cours d’évaluation. Le résultat apparaîtra dans votre parcours.',
     },
+    'application_completed': {
+      'ar': 'اكتمل هذا التطبيق وأصبحت إجاباته للقراءة فقط.',
+      'en': 'This application is complete and its answers are read-only.',
+      'fr':
+          'Cette application est terminée et ses réponses sont en lecture seule.',
+    },
     'expected_result': {
       'ar': 'ما الذي ستحصل عليه',
       'en': 'What you will get',

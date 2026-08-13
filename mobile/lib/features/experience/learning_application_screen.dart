@@ -26,6 +26,8 @@ class LearningApplicationScreen extends StatefulWidget {
 class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _answerController = TextEditingController();
+  int _loadGeneration = 0;
+  int _selectedProjectId = 0;
   late Future<Map<String, dynamic>> _future = _load();
   Map<String, dynamic>? _data;
   int _step = 0;
@@ -34,15 +36,25 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
 
   @override
   void dispose() {
+    _loadGeneration++;
     _answerController.dispose();
     super.dispose();
   }
 
   Future<Map<String, dynamic>> _load() async {
+    final generation = ++_loadGeneration;
     final data = await widget.repository.marketingLearningApplication(
       widget.exerciseKey,
+      projectId: _selectedProjectId == 0 ? null : _selectedProjectId,
     );
+
+    if (!mounted || generation != _loadGeneration) {
+      return data;
+    }
+
     _data = data;
+    _selectedProjectId =
+        ((data['project'] as Map?)?['id'] as num?)?.toInt() ?? 0;
     final questions = _questions(data);
     final answers = _answers(data);
     final firstMissing = questions.indexWhere(
@@ -96,6 +108,7 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
         widget.exerciseKey,
         question['key'].toString(),
         _answerController.text.trim(),
+        projectId: _selectedProjectId == 0 ? null : _selectedProjectId,
       );
       _data!['attempt'] = saved['attempt'];
       if (_step < questions.length - 1) {
@@ -117,7 +130,10 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
     });
     try {
       final reviewed = await widget.repository
-          .reviewMarketingLearningApplication(widget.exerciseKey);
+          .reviewMarketingLearningApplication(
+            widget.exerciseKey,
+            projectId: _selectedProjectId == 0 ? null : _selectedProjectId,
+          );
       _data!['attempt'] = reviewed['attempt'];
       if (mounted) setState(() {});
     } on ApiException catch (exception) {
@@ -160,9 +176,14 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
               data['attempt'] as Map? ?? const {},
             );
             final questions = _questions(data);
+            final projectChoices =
+                (data['project_choices'] as List? ?? const [])
+                    .map((item) => Map<String, dynamic>.from(item as Map))
+                    .toList();
             final question = questions[_step];
             final status = attempt['status']?.toString() ?? 'draft';
             final underReview = status == 'queued' || status == 'evaluating';
+            final completed = status == 'completed';
             final allAnswered = questions.every(
               (item) => _answers(data).containsKey(item['key'].toString()),
             );
@@ -177,6 +198,44 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
                 const SizedBox(height: 8),
                 Text(exercise['purpose']?.toString() ?? ''),
                 const SizedBox(height: 16),
+                if (projectChoices.isNotEmpty) ...[
+                  BrandCard(
+                    muted: true,
+                    child: DropdownButtonFormField<int>(
+                      key: const Key('learning-project-selector'),
+                      initialValue: _selectedProjectId,
+                      decoration: const InputDecoration(
+                        labelText: 'اربط التطبيق بمشروع (اختياري)',
+                      ),
+                      items: [
+                        const DropdownMenuItem<int>(
+                          value: 0,
+                          child: Text('بدون مشروع'),
+                        ),
+                        ...projectChoices.map(
+                          (project) => DropdownMenuItem<int>(
+                            value: (project['id'] as num).toInt(),
+                            child: Text(project['name']?.toString() ?? ''),
+                          ),
+                        ),
+                      ],
+                      onChanged: _busy
+                          ? null
+                          : (value) {
+                              if (value == null ||
+                                  value == _selectedProjectId) {
+                                return;
+                              }
+
+                              setState(() {
+                                _selectedProjectId = value;
+                                _future = _load();
+                              });
+                            },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 BrandCard(
                   muted: true,
                   child: Column(
@@ -195,6 +254,8 @@ class _LearningApplicationScreenState extends State<LearningApplicationScreen> {
                 ],
                 if (underReview)
                   BrandCard(child: Text(strings.text('review_in_progress')))
+                else if (completed)
+                  BrandCard(child: Text(strings.text('application_completed')))
                 else
                   Form(
                     key: _formKey,

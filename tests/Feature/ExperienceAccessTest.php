@@ -3,14 +3,23 @@
 namespace Tests\Feature;
 
 use App\Jobs\EvaluateMarketingExercise;
+use App\Models\Feature;
 use App\Models\MarketingExerciseAttempt;
+use App\Models\MarketingLearningRun;
+use App\Models\PlanFeature;
 use App\Models\User;
+use App\Services\Billing\Entitlements;
+use App\Services\Projects\ProjectService;
+use App\Support\Billing\FeatureKey;
 use App\Support\Experience\Experience;
 use App\Support\Experience\ExperienceService;
+use Illuminate\Contracts\Bus\Dispatcher as BusDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use RuntimeException;
 use Tests\TestCase;
 
 class ExperienceAccessTest extends TestCase
@@ -208,6 +217,209 @@ class ExperienceAccessTest extends TestCase
         ]);
     }
 
+    public function test_learning_api_rechecks_attempt_status_under_lock_before_saving_an_answer(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $run = MarketingLearningRun::startForWorkspace($user->primaryWorkspace(), $user);
+        $attempt = $run->attemptFor('marketing-reality-check');
+        $attempt->update(['answers' => ['current_actions' => 'الإجابة الأصلية قبل بدء المراجعة.']]);
+        $event = 'eloquent.retrieved: '.MarketingExerciseAttempt::class;
+        $queuedAfterRead = false;
+
+        Event::listen($event, function (MarketingExerciseAttempt $retrieved) use ($attempt, &$queuedAfterRead): void {
+            if ($queuedAfterRead || $retrieved->id !== $attempt->id) {
+                return;
+            }
+
+            $queuedAfterRead = true;
+            DB::table('marketing_exercise_attempts')->where('id', $attempt->id)->update([
+                'status' => MarketingExerciseAttempt::STATUS_QUEUED,
+            ]);
+        });
+
+        try {
+            $this->actingAs($user, 'sanctum')
+                ->putJson('/api/v1/learning/marketing/marketing-reality-check/answers/current_actions', [
+                    'answer' => 'إجابة جديدة يجب ألا تستبدل الإجابة الأصلية أثناء المراجعة.',
+                ])
+                ->assertConflict()
+                ->assertJsonPath('error.code', 'learning_review_in_progress');
+        } finally {
+            Event::forget($event);
+        }
+
+        $attempt->refresh();
+        $this->assertTrue($queuedAfterRead);
+        $this->assertSame(MarketingExerciseAttempt::STATUS_QUEUED, $attempt->status);
+        $this->assertSame('الإجابة الأصلية قبل بدء المراجعة.', $attempt->answers['current_actions']);
+    }
+
+    public function test_learning_api_exposes_and_retains_an_optional_owned_project_context(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $project = app(ProjectService::class)->create($user, ['name' => 'متجر المستخدم']);
+        $user = app(ExperienceService::class)->activate($user, Experience::BUSINESS);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/learning/marketing/marketing-reality-check')
+            ->assertOk()
+            ->assertJsonPath('data.project', null)
+            ->assertJsonCount(1, 'data.project_choices')
+            ->assertJsonPath('data.project_choices.0.id', $project->id)
+            ->assertJsonPath('data.project_choices.0.name', 'متجر المستخدم');
+
+        $this->getJson('/api/v1/learning/marketing/marketing-reality-check?project_id='.$project->id)
+            ->assertOk()
+            ->assertJsonPath('data.project.id', $project->id)
+            ->assertJsonPath('data.attempt.answers', []);
+
+        $answer = 'أراجع رحلة الشراء في متجر المستخدم وأربط النتائج بهذا المشروع فقط.';
+        $this->putJson('/api/v1/learning/marketing/marketing-reality-check/answers/current_actions', [
+            'answer' => $answer,
+            'project_id' => $project->id,
+        ])->assertOk()
+            ->assertJsonPath('data.attempt.answers.current_actions', $answer)
+            ->assertJsonPath('data.project.id', $project->id);
+
+        $this->getJson('/api/v1/learning/marketing/marketing-reality-check?project_id='.$project->id)
+            ->assertOk()
+            ->assertJsonPath('data.project.id', $project->id)
+            ->assertJsonPath('data.attempt.answers.current_actions', $answer);
+
+        $this->getJson('/api/v1/learning/marketing/marketing-reality-check')
+            ->assertOk()
+            ->assertJsonPath('data.project', null)
+            ->assertJsonPath('data.attempt.answers', []);
+
+        $this->assertDatabaseHas('marketing_learning_runs', [
+            'workspace_id' => $project->workspace_id,
+            'project_id' => $project->id,
+            'started_by' => $user->id,
+        ]);
+        $this->assertDatabaseHas('marketing_learning_runs', [
+            'workspace_id' => $project->workspace_id,
+            'project_id' => null,
+            'started_by' => $user->id,
+        ]);
+    }
+
+    public function test_learning_api_never_reveals_or_accepts_projects_outside_the_owned_workspace(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $owned = app(ProjectService::class)->create($user, ['name' => 'المشروع المسموح']);
+        $user = app(ExperienceService::class)->activate($user, Experience::BUSINESS);
+        $otherUser = User::factory()->create();
+        $foreign = app(ProjectService::class)->create($otherUser, ['name' => 'مشروع مستخدم آخر']);
+        $otherWorkspace = $user->workspaces()->create(['name' => 'مساحة أخرى', 'slug' => 'other-workspace']);
+        $outsidePrimaryWorkspace = $otherWorkspace->projects()->create([
+            'name' => 'مشروع مساحة أخرى',
+            'slug' => 'outside-primary-workspace',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/learning/marketing')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.project_choices')
+            ->assertJsonPath('data.project_choices.0.id', $owned->id);
+
+        $this->getJson('/api/v1/learning/marketing/marketing-reality-check?project_id='.$foreign->id)
+            ->assertNotFound();
+
+        $this->putJson('/api/v1/learning/marketing/marketing-reality-check/answers/current_actions', [
+            'answer' => 'هذه الإجابة لا يجوز ربطها بمشروع خارج مساحة العمل الحالية.',
+            'project_id' => $outsidePrimaryWorkspace->id,
+        ])->assertNotFound();
+
+        $this->assertDatabaseMissing('marketing_learning_runs', ['project_id' => $foreign->id]);
+        $this->assertDatabaseMissing('marketing_learning_runs', ['project_id' => $outsidePrimaryWorkspace->id]);
+    }
+
+    public function test_learning_api_checks_project_ownership_before_answer_validation(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $user = app(ExperienceService::class)->activate($user, Experience::BUSINESS);
+        $foreignProject = app(ProjectService::class)->create(
+            User::factory()->create(),
+            ['name' => 'مشروع مستخدم آخر'],
+        );
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson('/api/v1/learning/marketing/marketing-reality-check/answers/current_actions', [
+                'answer' => '',
+                'project_id' => $foreignProject->id,
+            ])
+            ->assertNotFound();
+
+        $this->assertDatabaseMissing('marketing_learning_runs', ['project_id' => $foreignProject->id]);
+    }
+
+    public function test_learning_api_checks_entitlement_before_projectless_answer_validation(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $workspace = $user->primaryWorkspace();
+        $plan = $workspace->subscription()->firstOrFail()->plan;
+        $feature = Feature::query()->create([
+            'key' => FeatureKey::LEARNING_MARKETING,
+            'name' => 'التعلم التطبيقي',
+            'description' => 'اختبار',
+            'group' => 'core',
+            'type' => Feature::TYPE_BOOLEAN,
+            'enforcement' => Feature::ENFORCEMENT_GATE,
+            'default_enabled' => false,
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+        PlanFeature::query()->create([
+            'plan_id' => $plan->id,
+            'feature_id' => $feature->id,
+            'enabled' => false,
+        ]);
+        app(Entitlements::class)->flush();
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson('/api/v1/learning/marketing/marketing-reality-check/answers/current_actions', [
+                'answer' => '',
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'feature_not_available');
+
+        $this->assertDatabaseMissing('marketing_learning_runs', [
+            'workspace_id' => $workspace->id,
+            'started_by' => $user->id,
+        ]);
+    }
+
+    public function test_learning_api_hides_project_context_until_business_is_enabled(): void
+    {
+        $user = User::factory()->create();
+        $project = app(ProjectService::class)->create($user, ['name' => 'مشروع قبل التفعيل']);
+        $user = app(ExperienceService::class)->selectInitial($user, Experience::LEARNING);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/learning/marketing')
+            ->assertOk()
+            ->assertJsonPath('data.project', null)
+            ->assertJsonCount(0, 'data.project_choices');
+
+        $this->getJson('/api/v1/learning/marketing/marketing-reality-check?project_id='.$project->id)
+            ->assertNotFound();
+    }
+
     public function test_learning_api_reviews_only_complete_requested_application(): void
     {
         Queue::fake();
@@ -237,6 +449,34 @@ class ExperienceAccessTest extends TestCase
             ->assertJsonPath('data.attempt.status', MarketingExerciseAttempt::STATUS_QUEUED);
 
         Queue::assertPushed(EvaluateMarketingExercise::class, 1);
+    }
+
+    public function test_learning_api_reports_a_dispatch_failure_as_a_non_success_response(): void
+    {
+        $user = app(ExperienceService::class)->selectInitial(
+            User::factory()->create(),
+            Experience::LEARNING,
+        );
+        $run = MarketingLearningRun::startForWorkspace($user->primaryWorkspace(), $user);
+        $run->attemptFor('marketing-reality-check')->update(['answers' => [
+            'current_actions' => 'أنشر محتوى تعليميًا مرتين أسبوعيًا وأتابع الطلبات الناتجة عن كل منشور.',
+            'business_result' => 'أريد خمس محادثات بيع مؤهلة أسبوعيًا يمكن ربطها بالمحتوى المنشور.',
+        ]]);
+        $this->mock(BusDispatcher::class)
+            ->shouldReceive('dispatch')
+            ->once()
+            ->andThrow(new RuntimeException('queue unavailable'));
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/learning/marketing/marketing-reality-check/review')
+            ->assertStatus(503)
+            ->assertJsonPath('error.code', 'learning_review_dispatch_failed')
+            ->assertJsonPath('data.attempt.status', MarketingExerciseAttempt::STATUS_REVIEW_FAILED);
+
+        $this->assertSame(
+            MarketingExerciseAttempt::STATUS_REVIEW_FAILED,
+            $run->attemptFor('marketing-reality-check')->refresh()->status,
+        );
     }
 
     public function test_business_user_can_read_public_learning_content_but_not_open_course_applications(): void

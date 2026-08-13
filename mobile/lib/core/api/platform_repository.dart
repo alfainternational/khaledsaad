@@ -214,27 +214,38 @@ class PlatformRepository {
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
-  Future<Map<String, dynamic>> marketingLearningApplication(String key) async {
-    final response = await _api.get('/learning/marketing/$key');
+  Future<Map<String, dynamic>> marketingLearningApplication(
+    String key, {
+    int? projectId,
+  }) async {
+    final response = await _api.get(
+      '/learning/marketing/$key',
+      projectId == null ? null : {'project_id': '$projectId'},
+    );
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
   Future<Map<String, dynamic>> saveMarketingLearningAnswer(
     String exerciseKey,
     String questionKey,
-    dynamic answer,
-  ) async {
+    dynamic answer, {
+    int? projectId,
+  }) async {
     final response = await _api.put(
       '/learning/marketing/$exerciseKey/answers/$questionKey',
-      {'answer': answer},
+      {'answer': answer, 'project_id': ?projectId},
     );
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
   Future<Map<String, dynamic>> reviewMarketingLearningApplication(
-    String exerciseKey,
-  ) async {
-    final response = await _api.post('/learning/marketing/$exerciseKey/review');
+    String exerciseKey, {
+    int? projectId,
+  }) async {
+    final response = await _api.post(
+      '/learning/marketing/$exerciseKey/review',
+      projectId == null ? null : {'project_id': projectId},
+    );
     return Map<String, dynamic>.from(response['data'] as Map);
   }
 
