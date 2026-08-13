@@ -1,0 +1,117 @@
+/* ==========================================================================
+   الشِّل — الهيدر والتذييل بلغة التكوين المعتمد.
+   لا يُعاد بناء المحتوى وحده: رأسٌ بزرّ أزرق متدرّج فوق صفحة أحادية اللون
+   ينقض الصفحة التي يعلوها. الروابط والوجهات كما هي — المتغيّر هو اللباس.
+   لماذا `:root` أمام كل محدِّد؟
+   `@import` يُدرَج في أعلى app.css لا في موضع كتابته، فقواعد الملف الأصلية
+   تأتي بعده وتغلبه عند تساوي الانتقائية — قِيس فعليًّا: التذييل بقي #04122f.
+   `:root .x` تعطي (0,2,0) فتغلب `.x` بلا !important الذي يقفل التخصيص لاحقًا.
+   ========================================================================== */
+
+/* — ١ · الهيدر: خطّ شعري واحد، بلا ظلّ ولا ضبابية — */
+:root .site-header {
+    border-bottom: 1px solid var(--line);
+    background: var(--hero-canvas);
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+:root[data-theme='dark'] .site-header { background: var(--hero-canvas); }
+
+:root .nav-shell { min-height: 4.5rem; }
+
+:root .brand-link { flex: 0 0 auto; }
+
+:root .brand-link .brand-logo__image,
+:root .site-header .brand-logo__image { max-block-size: 2rem; inline-size: auto; }
+
+/* الروابط: نصّ هادئ بوزن واحد. الخط السفلي المتحرّك استُبدل بحبّة للنشط
+   وحده — علامة واحدة واضحة أهدأ من سبعة خطوط تتحرّك تحت سبعة روابط. */
+:root .desktop-nav { gap: clamp(.5rem, 1.6vw, 1.4rem); }
+
+:root .desktop-nav a {
+    min-block-size: var(--tap-min);
+    display: inline-flex;
+    align-items: center;
+    padding-inline: .75rem;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-pill);
+    color: var(--ink);
+    font-size: .9375rem;
+    font-weight: 600;
+    transition: border-color 150ms cubic-bezier(.4, 0, .2, 1),
+                color 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+:root .desktop-nav a::after { content: none; }
+
+:root .desktop-nav a:hover { color: var(--brand-blue); }
+
+:root .desktop-nav a.is-active {
+    border-color: var(--ink);
+    color: var(--ink);
+    font-weight: 700;
+}
+
+/* — ٢ · طرف الهيدر: زرّ واحد أسود، والدخول رابط نصّي — */
+:root .nav-login {
+    color: var(--muted);
+    font-size: .9375rem;
+    font-weight: 600;
+}
+
+:root .nav-login:hover { color: var(--ink); }
+
+:root .site-header .button--primary.nav-cta {
+    padding-inline: 1.5rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--surface);
+    box-shadow: none;
+    font-size: .9375rem;
+    font-weight: 800;
+}
+
+:root .site-header .button--primary.nav-cta:hover { background: var(--brand-blue); }
+
+/* — ٣ · التذييل: نفس اللوحة، والفصل بخطّ لا بكتلة داكنة — */
+:root .site-footer {
+    border-top: 1px solid var(--line);
+    background: var(--hero-canvas);
+    color: var(--ink);
+}
+
+:root .footer-brand p { color: var(--muted); }
+
+:root .footer-links strong {
+    color: var(--ink);
+    font-weight: 800;
+}
+
+:root .footer-links a,
+:root .footer-links span { color: var(--muted); }
+
+:root .footer-links a:hover { color: var(--brand-blue); }
+
+:root .footer-bottom {
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+}
+
+/* الشعار الفاتح صُمّم لخلفية داكنة؛ على اللوحة الفاتحة يختفي.
+   يُقلب في الوضع الفاتح وحده ويُترك كما هو في الداكن. */
+:root:not([data-theme='dark']) .site-footer .brand-logo--light .brand-logo__image {
+    filter: invert(1) grayscale(1) contrast(1.6);
+}
+
+/* — ٤ · قائمة الجوال: نفس اللغة — */
+:root .mobile-menu {
+    border-top: 1px solid var(--line);
+    background: var(--hero-canvas);
+}
+
+:root .mobile-menu a {
+    color: var(--ink);
+    font-weight: 600;
+}

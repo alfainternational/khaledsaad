@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>خالد سعد — الهيرو</title>
+<style>
+  @font-face{font-family:'PlexAr';src:url('file:///D:/xampp/htdocs/khaledsaad/public/assets/fonts/plex/plex-ar-400.woff2') format('woff2');font-weight:400}
+  @font-face{font-family:'PlexAr';src:url('file:///D:/xampp/htdocs/khaledsaad/public/assets/fonts/plex/plex-ar-600.woff2') format('woff2');font-weight:600}
+  @font-face{font-family:'PlexAr';src:url('file:///D:/xampp/htdocs/khaledsaad/public/assets/fonts/plex/plex-ar-700.woff2') format('woff2');font-weight:700}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1600px;height:1000px;overflow:hidden;background:#8d8d8f}
+  .frame{position:absolute;inset:0;background:#ececea;overflow:hidden;
+         font-family:'Cairo','PlexAr',sans-serif;color:#0a0a0b}
+  .layer{position:absolute;inset:0}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- ١ · الشعاع الطيفي -->
+  <svg class="layer" width="1600" height="1000" viewBox="0 0 1600 1000">
+    <defs>
+      <radialGradient id="a"><stop offset="0%" stop-color="#9ef020" stop-opacity=".95"/><stop offset="45%" stop-color="#c2f56b" stop-opacity=".6"/><stop offset="100%" stop-color="#c2f56b" stop-opacity="0"/></radialGradient>
+      <radialGradient id="b"><stop offset="0%" stop-color="#d6fa72" stop-opacity=".9"/><stop offset="55%" stop-color="#e8fbaa" stop-opacity=".45"/><stop offset="100%" stop-color="#e8fbaa" stop-opacity="0"/></radialGradient>
+      <radialGradient id="c"><stop offset="0%" stop-color="#ffd23d" stop-opacity=".9"/><stop offset="50%" stop-color="#ffe79a" stop-opacity=".5"/><stop offset="100%" stop-color="#ffe79a" stop-opacity="0"/></radialGradient>
+      <radialGradient id="d"><stop offset="0%" stop-color="#ffb27a" stop-opacity=".75"/><stop offset="55%" stop-color="#ffd2b0" stop-opacity=".4"/><stop offset="100%" stop-color="#ffd2b0" stop-opacity="0"/></radialGradient>
+      <radialGradient id="e"><stop offset="0%" stop-color="#ff7bc8" stop-opacity=".9"/><stop offset="50%" stop-color="#ffb6e0" stop-opacity=".5"/><stop offset="100%" stop-color="#ffb6e0" stop-opacity="0"/></radialGradient>
+      <radialGradient id="f"><stop offset="0%" stop-color="#c99bff" stop-opacity=".6"/><stop offset="60%" stop-color="#e3ccff" stop-opacity=".3"/><stop offset="100%" stop-color="#e3ccff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <ellipse cx="60"  cy="40"  rx="330" ry="300" fill="url(#a)"/>
+    <ellipse cx="185" cy="190" rx="320" ry="270" fill="url(#b)"/>
+    <ellipse cx="40"  cy="350" rx="300" ry="270" fill="url(#a)" opacity=".8"/>
+    <ellipse cx="190" cy="500" rx="320" ry="270" fill="url(#c)"/>
+    <ellipse cx="45"  cy="650" rx="300" ry="260" fill="url(#d)"/>
+    <ellipse cx="175" cy="800" rx="320" ry="270" fill="url(#e)"/>
+    <ellipse cx="30"  cy="960" rx="300" ry="250" fill="url(#f)"/>
+  </svg>
+
+  <!-- ٢ · «٨» عدد المحاور -->
+  <svg class="layer" width="1600" height="1000" viewBox="0 0 1600 1000">
+    <g transform="translate(198 392) skewX(-10)">
+      <text x="0" y="0" font-family="Cairo, PlexAr" font-weight="900" font-size="262"
+            fill="#0a0a0b" text-anchor="middle">٨</text>
+    </g>
+  </svg>
+
+  <!-- ٤ · الجهاز وحزامه: يعبر اللوحة كاملة -->
+  <img src="file:///D:/xampp/htdocs/khaledsaad/docs/design/assets/device-hero-long.png"
+       style="position:absolute;left:462px;top:-577px;width:516px;
+              transform-origin:258px 977px;transform:rotate(23deg);
+              filter:drop-shadow(14px 26px 34px rgba(57,64,74,.30))">
+
+  <!-- ٥ · بطاقة الجاهزية: ما يستلمه فعلًا -->
+  <img src="file:///D:/xampp/htdocs/khaledsaad/docs/design/assets/readiness-card.png"
+       style="position:absolute;left:66px;top:452px;width:258px;transform:rotate(-7deg);
+              filter:drop-shadow(10px 20px 30px rgba(57,64,74,.34))">
+
+  <!-- ٦ · الطبقة النصية -->
+  <div class="layer">
+    <div style="position:absolute;top:44px;right:70px;left:70px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:12px">
+        <svg width="24" height="24" viewBox="0 0 26 26"><path d="M13 0 L16.4 9.6 L26 13 L16.4 16.4 L13 26 L9.6 16.4 L0 13 L9.6 9.6 Z" fill="#0a0a0b"/></svg>
+        <span style="font-weight:900;font-size:20px">خالد سعد</span>
+      </div>
+      <nav style="display:flex;align-items:center;gap:30px;font-size:15.5px;font-weight:600">
+        <span style="display:inline-flex;align-items:center;gap:9px;border:1.6px solid #0a0a0b;border-radius:999px;padding:6px 18px 6px 8px">
+          <span style="width:26px;height:26px;border-radius:999px;background:conic-gradient(from 200deg,#9ef020,#ffd23d,#ff7bc8,#9ef020)"></span>
+          <span style="font-weight:700">التشخيص</span>
+        </span>
+        <span>المنهجية</span><span>القطاعات</span><span>الأسعار</span>
+      </nav>
+      <span style="font-weight:900;font-size:14.5px">تواصل معي</span>
+    </div>
+
+    <div style="position:absolute;top:250px;right:70px;width:560px">
+      <h1 style="font-weight:900;font-size:92px;line-height:1.14;letter-spacing:-1px">أين يتعطّل<br>تسويقك؟</h1>
+    </div>
+
+    <div style="position:absolute;top:556px;right:70px;width:430px">
+      <p style="font-weight:700;font-size:20px;line-height:1.65">التشخيص يقيس نشاطك على ثمانية محاور،
+      ويعطيك درجة من ١٠٠ وفجواتك بالاسم لا بالوصف</p>
+    </div>
+
+    <div style="position:absolute;top:790px;right:70px;width:1180px;height:1px;background:#b7b9bc"></div>
+
+    <div style="position:absolute;top:830px;right:70px;display:flex;align-items:baseline;gap:36px">
+      <span style="font-weight:900;font-size:56px;letter-spacing:-1px">٦٧<span style="font-size:25px;font-weight:800">/١٠٠</span></span>
+      <span style="font-size:16px;font-weight:600;line-height:1.45">درجة نضج حقيقية<br>مثال توضيحي</span>
+    </div>
+
+    <div style="position:absolute;bottom:88px;left:74px;text-align:center;width:214px">
+      <p style="font-size:16px;font-weight:600;line-height:1.55;margin-bottom:22px">١٢ دقيقة، ولا تعيد<br>شرح مشروعك مرتين</p>
+      <span style="display:inline-block;background:#0a0a0b;color:#fff;font-weight:800;font-size:15.5px;padding:15px 34px;border-radius:999px">ابدأ التشخيص</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
