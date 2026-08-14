@@ -116,6 +116,10 @@ class MobileParityGapsTest extends TestCase
             'score_band' => Report::bandFor(64),
             'summary' => 'ملخص مراجع.',
             'review_mode' => 'manual',
+            // `ManualReportService` يكتب العمودين معًا، و`ReportPresenter`
+            // صار يقرأ `provenance` وحده. تركيبةٌ يدويّة بالعمود القديم فقط
+            // لا تُنتجها المنصة أبدًا، فاختبارها يقيس حالةً لا وجود لها.
+            'provenance' => 'signed',
             'reviewed_by' => $user->id,
             'reviewed_at' => now(),
         ]);

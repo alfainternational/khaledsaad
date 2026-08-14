@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Support\Experience\Experience;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -44,6 +45,13 @@ class UserFactory extends Factory
              * مساره صراحةً. والبوابة لا تقرأ إلا العمود أدناه.
              */
             'business_experience_enabled_at' => now(),
+
+            /*
+             * والمسار النشط معه: `DashboardController` يحوّل إلى شاشة الاختيار
+             * حين يكون فارغًا، فالعمود الأول وحده يفتح البوابة ويترك اللوحة
+             * تُعيد 302.
+             */
+            'active_experience' => Experience::BUSINESS,
         ];
     }
 
@@ -65,6 +73,7 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'business_experience_enabled_at' => null,
             'learning_experience_enabled_at' => null,
+            'active_experience' => null,
         ]);
     }
 }
