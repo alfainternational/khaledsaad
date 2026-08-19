@@ -7,6 +7,7 @@ use App\Exceptions\AIInvalidOutputException;
 use App\Models\AiUsageRecord;
 use App\Models\ToolRun;
 use App\Modules\Shared\I18n\GenerationLocale;
+use Throwable;
 
 /**
  * الطبقة التي تفصل «استدعاء نموذج» عن «الحصول على بيانات صالحة».
@@ -215,12 +216,23 @@ class StructuredRunner
         ]);
     }
 
+    /**
+     * قيد التكلفة قياسٌ للعملية لا جزءٌ منها.
+     *
+     * كان تعذّر الكتابة (قاعدة متوقفة أو جدول مقفل) يُسقط استدعاءً نجح فعلًا
+     * وسُدِّد ثمنه للمزوّد — فيُهدر المال ويُفقد المخرج معًا. يُبلَّغ الخطأ
+     * ولا يُصعَّد: السجل المفقود أهون من النتيجة المفقودة.
+     */
     private function record(AIResponse $response, ?ToolRun $toolRun, string $status): void
     {
-        AiUsageRecord::create([
-            'tool_run_id' => $toolRun?->id,
-            ...$response->usageRecord(),
-            'status' => $status,
-        ]);
+        try {
+            AiUsageRecord::create([
+                'tool_run_id' => $toolRun?->id,
+                ...$response->usageRecord(),
+                'status' => $status,
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }

@@ -31,13 +31,14 @@
 
     <section class="card" aria-labelledby="plan-heading">
         <h2 id="plan-heading">إدارة الخطة</h2>
-        <p class="muted">اختر مساحة العمل والخطة وموعد النفاذ. لا يتغير الرصيد إلا إذا اخترت ذلك صراحة.</p>
+        <p class="muted">اختر مساحة العمل والخطة وموعد النفاذ. تصل الباقة برصيدها ومزاياها افتراضيًا — واختيار «إبقاء الرصيد» يمنع ذلك عمدًا.</p>
         <form method="POST" action="{{ route('admin.users.plan.assign', $user) }}" class="form form--wide form-layout">
             @csrf
             <label class="field"><span class="field__label">مساحة العمل</span>
                 <select name="workspace_id" required>
                     @foreach($workspaces as $workspace)
-                        <option value="{{ $workspace->id }}">{{ $workspace->name }} — {{ $workspace->subscription?->plan?->name ?? 'بلا خطة' }}</option>
+                        {{-- المساحة الأساسية (الأقدم) هي ما يقرأه التطبيق فعلًا؛ ترقية غيرها تُحدِّث صفًّا لا يراه العميل. --}}
+                        <option value="{{ $workspace->id }}" @selected($loop->first)>{{ $workspace->name }} — {{ $workspace->subscription?->plan?->name ?? 'بلا خطة' }}@if($loop->first) (المساحة الأساسية)@endif</option>
                     @endforeach
                 </select>
             </label>
@@ -48,7 +49,7 @@
                 <select name="effective"><option value="now">فورًا</option><option value="period_end">نهاية الفترة الحالية</option></select>
             </label>
             <label class="field"><span class="field__label">معالجة الرصيد</span>
-                <select name="credit_policy"><option value="keep">إبقاء الرصيد كما هو</option><option value="plan_grant">إضافة رصيد الخطة</option><option value="add">إضافة مقدار محدد</option></select>
+                <select name="credit_policy"><option value="plan_grant" selected>إضافة رصيد الخطة (الافتراضي)</option><option value="keep">إبقاء الرصيد كما هو</option><option value="add">إضافة مقدار محدد</option></select>
             </label>
             <label class="field"><span class="field__label">مقدار إضافي عند اختيار الإضافة</span><input type="number" name="credit_amount" min="1"></label>
             <label><input type="checkbox" name="confirmation" value="1" required> أؤكد تغيير الخطة وفق الخيارات أعلاه.</label>

@@ -62,3 +62,11 @@ Schedule::command('insights:prune')->weeklyOn(2, '03:15')->withoutOverlapping();
 
 // إكمال الدفعات التي أغلق العميل متصفحها قبل العودة، دون لمس التحويل اليدوي.
 Schedule::command('payments:reconcile --minutes=15 --limit=100')->everyTenMinutes()->withoutOverlapping();
+
+/*
+ * تغييرات الخطة المؤجَّلة إلى نهاية الفترة.
+ *
+ * كل ساعة لا يوميًّا: الفترة تنتهي بطابع زمني لا بيوم، وفحصٌ يومي يترك
+ * العميل ساعاتٍ على باقة انتهت — أو ينتظر ترقيته دون سبب ظاهر له.
+ */
+Schedule::command('subscriptions:apply-scheduled')->hourly()->withoutOverlapping();

@@ -44,6 +44,26 @@ class AdminSubscriptionAssignmentTest extends TestCase
     }
 
     #[Test]
+    public function an_upgrade_that_omits_the_credit_field_still_delivers_the_plan_benefits(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+        $workspace = $user->primaryWorkspace();
+        $before = $workspace->wallet->balance;
+        $target = Plan::where('key', 'professional')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.users.plan.assign', $user), [
+            'workspace_id' => $workspace->id,
+            'plan_id' => $target->id,
+            'effective' => 'now',
+            'confirmation' => '1',
+        ])->assertRedirect(route('admin.users.edit', $user));
+
+        $this->assertSame($target->id, $workspace->subscription->fresh()->plan_id);
+        $this->assertSame($before + $target->monthly_credits, $workspace->wallet->fresh()->balance);
+    }
+
+    #[Test]
     public function admin_can_preview_and_apply_one_bulk_plan_change(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

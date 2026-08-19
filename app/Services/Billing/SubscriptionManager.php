@@ -58,6 +58,7 @@ class SubscriptionManager
                 'cancel_at_period_end' => false,
                 'scheduled_plan_id' => null,
                 'scheduled_change_at' => null,
+                'scheduled_credit_policy' => null,
                 'source' => $source,
                 'last_payment_id' => $payment?->id ?? $subscription->last_payment_id,
                 'suspended_at' => null,

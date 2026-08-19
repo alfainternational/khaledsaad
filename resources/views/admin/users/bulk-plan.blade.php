@@ -16,7 +16,7 @@
     </fieldset>
     <label class="field"><span class="field__label">الخطة الجديدة</span><select name="plan_id" required>@foreach($plans as $plan)<option value="{{ $plan->id }}">{{ $plan->name }}{{ $plan->is_public ? '' : ' (خاصة)' }}</option>@endforeach</select></label>
     <label class="field"><span class="field__label">موعد التطبيق</span><select name="effective"><option value="now">فورًا</option><option value="period_end">نهاية الفترة</option></select></label>
-    <label class="field"><span class="field__label">الرصيد</span><select name="credit_policy"><option value="keep">إبقاؤه</option><option value="plan_grant">إضافة رصيد الخطة</option><option value="add">إضافة مقدار</option></select></label>
+    <label class="field"><span class="field__label">الرصيد</span><select name="credit_policy"><option value="plan_grant" selected>إضافة رصيد الخطة (الافتراضي)</option><option value="keep">إبقاؤه</option><option value="add">إضافة مقدار</option></select></label>
     <label class="field"><span class="field__label">المقدار الإضافي</span><input type="number" name="credit_amount" min="1"></label>
     <button class="btn btn--primary" type="submit">اعرض المعاينة</button>
 </form>
