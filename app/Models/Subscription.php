@@ -10,7 +10,8 @@ class Subscription extends Model
     protected $fillable = [
         'workspace_id', 'plan_id', 'status', 'renews_at', 'ends_at',
         'current_period_starts_at', 'current_period_ends_at', 'cancel_at_period_end',
-        'scheduled_plan_id', 'scheduled_change_at', 'source', 'last_payment_id', 'suspended_at',
+        'scheduled_plan_id', 'scheduled_change_at', 'scheduled_credit_policy',
+        'source', 'last_payment_id', 'suspended_at',
     ];
 
     protected function casts(): array

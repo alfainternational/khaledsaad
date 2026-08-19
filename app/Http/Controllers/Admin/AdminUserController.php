@@ -167,7 +167,8 @@ class AdminUserController extends Controller
                 ? ['required', 'array', 'min:1', 'max:500']
                 : ['required', 'integer', 'exists:workspaces,id'],
             'plan_id' => ['required', 'integer', 'exists:plans,id'],
-            'credit_policy' => ['required', 'in:keep,plan_grant,add'],
+            // غياب الحقل لا يعني «أبقِ الرصيد»: الافتراضي أن تصل الباقة بمزاياها.
+            'credit_policy' => ['nullable', 'in:keep,plan_grant,add'],
             'credit_amount' => ['nullable', 'required_if:credit_policy,add', 'integer', 'min:1', 'max:1000000'],
             'effective' => ['required', 'in:now,period_end'],
         ];
@@ -178,6 +179,11 @@ class AdminUserController extends Controller
             $rules['confirmation'] = ['required', 'accepted'];
         }
 
-        return $request->validate($rules);
+        $data = $request->validate($rules);
+        // الحقل الغائب لا يظهر في المُصدَّق أصلًا مع nullable، فيُقرأ بأمان.
+        $data['credit_policy'] = ($data['credit_policy'] ?? null)
+            ?: SubscriptionAssignmentService::DEFAULT_CREDIT_POLICY;
+
+        return $data;
     }
 }

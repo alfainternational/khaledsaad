@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "count": 3684,
+    "count": 3686,
     "entries": {
         "## أسئلة شائعة": {
             "type": "php",
@@ -62,6 +62,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/runs/partials/field.blade.php"
+            ]
+        },
+        "(المساحة الأساسية)": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/users/form.blade.php"
             ]
         },
         "(خاصة)": {
@@ -3838,7 +3844,7 @@
                 "resources/views/admin/content/form.blade.php"
             ]
         },
-        "إضافة رصيد الخطة": {
+        "إضافة رصيد الخطة (الافتراضي)": {
             "type": "blade",
             "contexts": [
                 "resources/views/admin/users/bulk-plan.blade.php",
@@ -4703,7 +4709,7 @@
                 "resources/views/admin/content/curriculum.blade.php"
             ]
         },
-        "اختر مساحة العمل والخطة وموعد النفاذ. لا يتغير الرصيد إلا إذا اخترت ذلك صراحة.": {
+        "اختر مساحة العمل والخطة وموعد النفاذ. تصل الباقة برصيدها ومزاياها افتراضيًا — واختيار «إبقاء الرصيد» يمنع ذلك عمدًا.": {
             "type": "blade",
             "contexts": [
                 "resources/views/admin/users/form.blade.php"
@@ -7434,6 +7440,12 @@
             "contexts": [
                 "resources/views/admin/plans/form.blade.php",
                 "resources/views/admin/plans/index.blade.php"
+            ]
+        },
+        "الرصيد المضاف": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/users/plan-preview.blade.php"
             ]
         },
         "الرصيد بعدها": {

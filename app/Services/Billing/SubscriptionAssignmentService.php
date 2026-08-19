@@ -12,6 +12,15 @@ use Throwable;
 
 class SubscriptionAssignmentService
 {
+    /**
+     * السياسة الافتراضية: الخطة تصل بمزاياها.
+     *
+     * الترقية التي تغيّر `plan_id` ولا تمنح رصيد الخطة تترك العميل على باقة
+     * لا يستطيع تشغيل شيء بها — فالأدوات تُحجز من المحفظة لا من اسم الخطة.
+     * لذلك `keep` خيار صريح للتصحيح الإداري، لا سلوكًا صامتًا افتراضيًا.
+     */
+    public const DEFAULT_CREDIT_POLICY = 'plan_grant';
+
     public function __construct(
         private readonly SubscriptionManager $subscriptions,
         private readonly CreditManager $credits,
@@ -32,6 +41,8 @@ class SubscriptionAssignmentService
                 'target_plan' => $plan->key,
                 'balance' => $workspace->wallet?->balance ?? 0,
                 'credit_policy' => $creditPolicy,
+                // ما سيُضاف فعلًا للمحفظة بهذه السياسة — لا يُترك للتخمين.
+                'credit_delta' => $this->creditDelta($workspace, $plan, $creditPolicy),
                 'effective' => $effective,
             ])->values()->all();
 
@@ -46,8 +57,8 @@ class SubscriptionAssignmentService
         array $workspaceIds,
         Plan $plan,
         User $actor,
-        string $creditPolicy,
-        string $effective,
+        string $creditPolicy = self::DEFAULT_CREDIT_POLICY,
+        string $effective = 'now',
         ?int $creditAmount = null,
     ): array {
         $result = ['succeeded' => 0, 'failed' => 0, 'errors' => []];
@@ -67,7 +78,10 @@ class SubscriptionAssignmentService
                         $subscription->forceFill([
                             'scheduled_plan_id' => $plan->id,
                             'scheduled_change_at' => $changeAt,
-                            'cancel_at_period_end' => true,
+                            // الإلغاء عند نهاية الفترة يعني الهبوط للمجاني وحده.
+                            // وسم الترقية المجدولة بالإلغاء يجعلها تُقرأ انسحابًا.
+                            'cancel_at_period_end' => $plan->isFree(),
+                            'scheduled_credit_policy' => $creditPolicy,
                             'source' => 'admin',
                         ])->save();
                     } else {
@@ -109,5 +123,22 @@ class SubscriptionAssignmentService
         }
 
         return $result;
+    }
+
+    /**
+     * كم رصيدًا ستضيفه هذه السياسة فعلًا؟
+     *
+     * يطابق شرط المنح في SubscriptionManager::subscribe — إعادة اختيار
+     * الخطة الحالية لا تمنح، فلا تَعِد المعاينة بما لن يحدث.
+     */
+    private function creditDelta(Workspace $workspace, Plan $plan, string $creditPolicy): int
+    {
+        if ($creditPolicy !== 'plan_grant') {
+            return 0;
+        }
+
+        $current = $this->subscriptions->currentPlan($workspace);
+
+        return $current->id === $plan->id ? 0 : (int) $plan->monthly_credits;
     }
 }
