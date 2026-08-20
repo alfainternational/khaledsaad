@@ -83,6 +83,15 @@ class FeatureSeeder extends Seeder
                 'default_enabled' => true,
             ],
             [
+                'key' => FeatureKey::QUERY_BUDGET_MONTHLY,
+                'name' => 'ميزانية استعلامات الذكاء',
+                'description' => 'سقف استعلامات النماذج شهريًا لكل مساحة عمل. دورة استطلاع واحدة = ١٥ استعلامًا (٥ أسئلة × ٣ محاولات).',
+                'group' => 'growth', 'type' => Feature::TYPE_QUOTA, 'unit' => 'استعلام/شهر',
+                'enforcement' => Feature::ENFORCEMENT_GATE,
+                // الافتراضي سخيّ لا صفر: مساحة بلا سقف مضبوط تعمل ولا تتوقف.
+                'default_enabled' => true, 'default_value' => 150,
+            ],
+            [
                 'key' => FeatureKey::REPORTS_PDF,
                 'name' => 'تصدير PDF',
                 'description' => 'تنزيل التقرير ملفًا جاهزًا للمشاركة.',
@@ -169,6 +178,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::TOOL_RUNS_MONTHLY => 3,
                 FeatureKey::COMPETITORS_LIMIT => 3,
                 FeatureKey::LEARNING_MARKETING => true,
+                FeatureKey::QUERY_BUDGET_MONTHLY => 150,
             ],
             'individual' => [
                 FeatureKey::PROJECTS_LIMIT => 3,
@@ -179,6 +189,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::WATCHERS_LIMIT => 2,
                 FeatureKey::DIAGNOSIS_FULL => true,
                 FeatureKey::LEARNING_MARKETING => true,
+                FeatureKey::QUERY_BUDGET_MONTHLY => 600,
             ],
             'professional' => [
                 FeatureKey::PROJECTS_LIMIT => 10,
@@ -193,6 +204,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::GROWTH_GEO => true,
                 FeatureKey::LEARNING_MARKETING => true,
                 'support.priority' => true,
+                FeatureKey::QUERY_BUDGET_MONTHLY => 2000,
             ],
             'team' => [
                 FeatureKey::PROJECTS_LIMIT => 20,
@@ -210,6 +222,7 @@ class FeatureSeeder extends Seeder
                 FeatureKey::LEARNING_MARKETING => true,
                 'support.priority' => true,
                 'support.onboarding' => true,
+                FeatureKey::QUERY_BUDGET_MONTHLY => 6000,
             ],
         ];
 

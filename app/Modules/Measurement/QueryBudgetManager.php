@@ -8,6 +8,8 @@ use App\Modules\Measurement\Exceptions\BudgetExhausted;
 use App\Modules\Measurement\Models\QueryBudget;
 use App\Modules\Measurement\Models\QueryReservation;
 use App\Notifications\QueryBudgetWarningNotification;
+use App\Services\Billing\Entitlements;
+use App\Support\Billing\FeatureKey;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -186,13 +188,34 @@ class QueryBudgetManager
 
     /**
      * ميزانية الشهر الجاري، تُنشأ عند أول استعمال.
+     *
+     * السقف يُزامَن مع كل قراءة لا عند الإنشاء وحده: الصفّ يُنشأ أول الشهر
+     * بسقف الباقة **وقتها**، فترقيةٌ في منتصفه كانت تترك العميل على سقف
+     * باقته القديمة حتى الشهر التالي — وهي «الترقية التي لا تصل» نفسها في
+     * صورة ثانية. الشهور الماضية لا تُلمس: تاريخُ إنفاقٍ لا حدٌّ نافذ.
      */
     public function budgetFor(Workspace $workspace, ?string $period = null): QueryBudget
     {
-        return QueryBudget::firstOrCreate(
-            ['workspace_id' => $workspace->id, 'period' => $period ?? $this->currentPeriod()],
+        $period ??= $this->currentPeriod();
+
+        $budget = QueryBudget::firstOrCreate(
+            ['workspace_id' => $workspace->id, 'period' => $period],
             ['monthly_limit' => $this->limitFor($workspace)],
         );
+
+        if ($period !== $this->currentPeriod()) {
+            return $budget;
+        }
+
+        $limit = $this->limitFor($workspace);
+
+        // الهبوط يُطبَّق أيضًا: `remaining()` لا يقلّ عن صفر، فالمُلتزَم به
+        // يبقى محفوظًا ويُرفض الجديد وحده — وهو ما يعنيه خفض السقف.
+        if ($budget->monthly_limit !== $limit) {
+            $budget->forceFill(['monthly_limit' => $limit])->save();
+        }
+
+        return $budget;
     }
 
     /**
@@ -235,17 +258,40 @@ class QueryBudgetManager
     }
 
     /**
-     * السقف من إعدادات المساحة، وإلا الافتراضي.
+     * السقف: تخصيص المساحة، ثم باقتها، ثم الافتراضي.
      *
      * السقف على `Workspace` لا `Project`: وكالة بعشرة مشاريع كانت ستأخذ عشرة
      * أضعاف السقف باشتراك واحد (§٩).
+     *
+     * الترتيب مقصود. `monthly_query_limit` قرار إداري صريح لمساحة بعينها
+     * (اتفاق خاص أو إيقاف)، فيعلو على الباقة ولو كان صفرًا. وما لم يُضبط،
+     * السقف من الباقة — وهذا ما يجعل الترقية ترفع الميزانية فعلًا لا اسمًا.
+     *
+     * **«بلا حد» ممنوع هنا** خلافًا لبقية المفاتيح: §٤.٤ توجب سقفًا لكل مساحة
+     * وتوقفًا عند ١٠٠٪. فقيمة `null` من الباقة تعني «لم تحدّد رقمًا» فيُرجَع
+     * للافتراضي، ولو قُرئت «بلا حد» لسقط سقف التكلفة كله من حيث أردنا تثبيته.
+     * وميزة مغلقة تعطي صفرًا، والصفر يوقف كل استعلام — فيُرفض ويُرجَع
+     * للافتراضي: منع الذكاء كليًّا قرارٌ لا يُتخذ بترك خانة فارغة.
      */
     private function limitFor(Workspace $workspace): int
     {
-        return (int) ($workspace->monthly_query_limit ?? config(
-            'growth.query_budget_default',
-            self::DEFAULT_MONTHLY_LIMIT,
-        ));
+        $override = $workspace->monthly_query_limit;
+
+        // الصفر قرار لا فراغ: مفتاح إيقاف صريح لمساحة بعينها. الفراغ وحده
+        // (`null`) هو غياب القرار الذي يُسلِّم الأمر للباقة.
+        if ($override !== null) {
+            return max(0, (int) $override);
+        }
+
+        // يُحلّ كسولًا: Entitlements يعتمد على SubscriptionManager، وحقنه
+        // في المُنشئ يجعل وحدة القياس تحمل سلسلة الفوترة كلها.
+        $planLimit = app(Entitlements::class)->limit($workspace, FeatureKey::QUERY_BUDGET_MONTHLY);
+
+        if ($planLimit !== null && $planLimit > 0) {
+            return $planLimit;
+        }
+
+        return (int) config('growth.query_budget_default', self::DEFAULT_MONTHLY_LIMIT);
     }
 
     private function currentPeriod(): string

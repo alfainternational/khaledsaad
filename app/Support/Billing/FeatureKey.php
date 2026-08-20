@@ -57,6 +57,15 @@ final class FeatureKey
     public const LEARNING_MARKETING = 'learning.marketing';
 
     /**
+     * سقف استعلامات النماذج الشهري لمساحة العمل (§٤.٤).
+     *
+     * وحده بين المفاتيح **لا يقبل «بلا حد»**: الدستور يوجب سقفًا لكل مساحة،
+     * وتنبيهًا عند ٨٠٪ وتوقفًا عند ١٠٠٪. فقيمة `null` هنا تعني «لم تحدّد
+     * الباقة رقمًا» فيُرجَع للافتراضي، لا «بلا حد» كما في بقية المفاتيح.
+     */
+    public const QUERY_BUDGET_MONTHLY = 'growth.query_budget';
+
+    /**
      * كل مفاتيح البوابات.
      *
      * @return array<int, string>
@@ -77,6 +86,7 @@ final class FeatureKey
             self::KPI_TRACKING,
             self::DIAGNOSIS_FULL,
             self::LEARNING_MARKETING,
+            self::QUERY_BUDGET_MONTHLY,
         ];
     }
 }

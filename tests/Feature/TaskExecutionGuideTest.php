@@ -158,9 +158,9 @@ class TaskExecutionGuideTest extends TestCase
             $owner,
         );
 
-        $budgets = app(QueryBudgetManager::class);
-        $budget = $budgets->budgetFor($report->project->workspace);
-        $budget->forceFill(['monthly_limit' => 0])->save();
+        // السقف على المساحة لا على صفّ الشهر: الصفّ قيمة مشتقّة تُزامَن مع
+        // الباقة عند كل قراءة، فكتابته مباشرة تُمحى عند أول استعلام.
+        $report->project->workspace->forceFill(['monthly_query_limit' => 0])->save();
 
         $this->actingAs($owner)->post(route('app.tasks.develop', $task->id));
 
