@@ -17,6 +17,7 @@ use App\Support\Billing\FeatureKey;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Modules\Shared\I18n\StoredText;
 
 /**
  * نظير التطبيق لصفحات الأرصدة والإشعارات وتنزيل PDF.
@@ -66,7 +67,7 @@ class AccountController extends Controller
                 'plans' => Plan::where('is_public', true)->with('planFeatures')->orderBy('sort_order')->get()
                     ->map(fn (Plan $plan) => [
                         'key' => $plan->key,
-                        'name' => $plan->name,
+                        'name' => StoredText::of($plan->name),
                         'price' => $plan->price,
                         'monthly_credits' => $plan->monthly_credits,
                         'project_limit' => $plan->project_limit,

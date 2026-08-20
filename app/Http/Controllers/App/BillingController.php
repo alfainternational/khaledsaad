@@ -13,6 +13,7 @@ use App\Services\Payments\PaymentGatewayManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Modules\Shared\I18n\StoredText;
 
 class BillingController extends Controller
 {
@@ -66,7 +67,7 @@ class BillingController extends Controller
             'plans' => Plan::where('is_public', true)->with('planFeatures')->orderBy('sort_order')->get()
                 ->map(fn (Plan $plan) => [
                     'key' => $plan->key,
-                    'name' => $plan->name,
+                    'name' => StoredText::of($plan->name),
                     'price' => $plan->price,
                     'monthly_credits' => $plan->monthly_credits,
                     'project_limit' => $plan->project_limit,

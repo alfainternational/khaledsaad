@@ -31,139 +31,55 @@ class FeatureSeeder extends Seeder
     /**
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * فهرس الميزات. التسميات من `config/catalogue.php` لا مكتوبة هنا:
+     * الملف نفسه يُمسح للترجمة (`locales.scan.config.files`)، فكتابتها هنا
+     * ثانيةً تصنع مصدر حقيقة ثانيًا يفترقان عند أول تعديل (§١٥).
+     *
+     * @return array<int, array<string, mixed>>
+     */
     private function catalogue(): array
     {
-        return [
-            [
-                'key' => FeatureKey::PROJECTS_LIMIT,
-                'name' => 'المشاريع',
-                'description' => 'عدد المشاريع التي يمكن إنشاؤها في مساحة العمل.',
-                'group' => 'core', 'type' => Feature::TYPE_LIMIT, 'unit' => 'مشروع',
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => true, 'default_value' => 1,
-            ],
-            [
-                'key' => FeatureKey::TOOL_RUNS_MONTHLY,
-                'name' => 'تشغيل الأدوات',
-                'description' => 'عدد تشغيلات الأدوات في الشهر الجاري (بخلاف الرصيد).',
-                'group' => 'core', 'type' => Feature::TYPE_QUOTA, 'unit' => 'تشغيل/شهر',
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => true, 'default_value' => null,
-            ],
-            [
-                'key' => FeatureKey::COMPETITORS_LIMIT,
-                'name' => 'المنافسون',
-                'description' => 'عدد المنافسين المتابَعين لكل مشروع.',
-                'group' => 'core', 'type' => Feature::TYPE_LIMIT, 'unit' => 'منافس/مشروع',
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => true, 'default_value' => 3,
-            ],
-            [
-                'key' => FeatureKey::KPI_TRACKING,
-                'name' => 'تتبّع مؤشرات الأداء',
-                'description' => 'تسجيل مؤشرات ومتابعة تطوّرها زمنيًا.',
-                'group' => 'core', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => FeatureKey::DIAGNOSIS_FULL,
-                'name' => 'التشخيص الكامل',
-                'description' => 'تاريخ درجة النضج وتصدير بطاقة الجاهزية وتقرير الزحف.',
-                'group' => 'core', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => FeatureKey::LEARNING_MARKETING,
-                'name' => 'التعلم التسويقي التطبيقي',
-                'description' => 'الدروس العشرون وتطبيقاتها ومراجعة الإجابات.',
-                'group' => 'core', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => true,
-            ],
-            [
-                'key' => FeatureKey::QUERY_BUDGET_MONTHLY,
-                'name' => 'ميزانية استعلامات الذكاء',
-                'description' => 'سقف استعلامات النماذج شهريًا لكل مساحة عمل. دورة استطلاع واحدة = ١٥ استعلامًا (٥ أسئلة × ٣ محاولات).',
-                'group' => 'growth', 'type' => Feature::TYPE_QUOTA, 'unit' => 'استعلام/شهر',
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                // الافتراضي سخيّ لا صفر: مساحة بلا سقف مضبوط تعمل ولا تتوقف.
-                'default_enabled' => true, 'default_value' => 150,
-            ],
-            [
-                'key' => FeatureKey::REPORTS_PDF,
-                'name' => 'تصدير PDF',
-                'description' => 'تنزيل التقرير ملفًا جاهزًا للمشاركة.',
-                'group' => 'reports', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => FeatureKey::REPORTS_AGENCY,
-                'name' => 'تقرير الوكالة الموحّد',
-                'description' => 'تقرير شامل يجمع مخرجات المشروع في مستند واحد.',
-                'group' => 'reports', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => FeatureKey::MANUAL_REVIEW,
-                'name' => 'مراجعة بشرية',
-                'description' => 'إحالة التشغيل لمراجعة خبير بدل المسار الآلي.',
-                'group' => 'reports', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => FeatureKey::GROWTH_PULSE,
-                'name' => 'نبض النمو',
-                'description' => 'ملخّص دوري بما تغيّر وما يستحق التحرّك.',
-                'group' => 'growth', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => FeatureKey::GROWTH_GEO,
-                'name' => 'حزمة الظهور للآلات (GEO)',
-                'description' => 'ملف llms.txt وبيانات تجعل المشروع مقروءًا لمحرّكات الذكاء.',
-                'group' => 'growth', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => FeatureKey::WATCHERS_LIMIT,
-                'name' => 'التقارير الحيّة',
-                'description' => 'عدد التقارير التي تُتابَع وتُحدَّث تلقائيًا.',
-                'group' => 'growth', 'type' => Feature::TYPE_LIMIT, 'unit' => 'تقرير',
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false, 'default_value' => 0,
-            ],
-            [
-                'key' => FeatureKey::AUDIENCE_LAB,
-                'name' => 'مختبر الجمهور',
-                'description' => 'اختبار الرسائل على جمهور اصطناعي قبل إطلاقها.',
-                'group' => 'growth', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_GATE,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => 'support.priority',
-                'name' => 'دعم بأولوية',
-                'description' => 'وعد خدمة بشري: ردّ أسرع على طلبات الدعم. لا يمنعه النظام تقنيًا.',
-                'group' => 'support', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_DISPLAY,
-                'default_enabled' => false,
-            ],
-            [
-                'key' => 'support.onboarding',
-                'name' => 'جلسة تهيئة',
-                'description' => 'وعد خدمة بشري: جلسة إعداد أولى مع الفريق.',
-                'group' => 'support', 'type' => Feature::TYPE_BOOLEAN,
-                'enforcement' => Feature::ENFORCEMENT_DISPLAY,
-                'default_enabled' => false,
-            ],
+        $shape = [
+            [FeatureKey::PROJECTS_LIMIT, 'core', Feature::TYPE_LIMIT, true, 1],
+            [FeatureKey::TOOL_RUNS_MONTHLY, 'core', Feature::TYPE_QUOTA, true, null],
+            [FeatureKey::COMPETITORS_LIMIT, 'core', Feature::TYPE_LIMIT, true, 3],
+            [FeatureKey::KPI_TRACKING, 'core', Feature::TYPE_BOOLEAN, false, null],
+            [FeatureKey::DIAGNOSIS_FULL, 'core', Feature::TYPE_BOOLEAN, false, null],
+            [FeatureKey::LEARNING_MARKETING, 'core', Feature::TYPE_BOOLEAN, true, null],
+            [FeatureKey::QUERY_BUDGET_MONTHLY, 'growth', Feature::TYPE_QUOTA, true, 150],
+            [FeatureKey::REPORTS_PDF, 'reports', Feature::TYPE_BOOLEAN, false, null],
+            [FeatureKey::REPORTS_AGENCY, 'reports', Feature::TYPE_BOOLEAN, false, null],
+            [FeatureKey::MANUAL_REVIEW, 'reports', Feature::TYPE_BOOLEAN, false, null],
+            [FeatureKey::GROWTH_PULSE, 'growth', Feature::TYPE_BOOLEAN, false, null],
+            [FeatureKey::GROWTH_GEO, 'growth', Feature::TYPE_BOOLEAN, false, null],
+            [FeatureKey::WATCHERS_LIMIT, 'growth', Feature::TYPE_LIMIT, false, 0],
+            [FeatureKey::AUDIENCE_LAB, 'growth', Feature::TYPE_BOOLEAN, false, null],
+            ['support.priority', 'support', Feature::TYPE_BOOLEAN, false, null],
+            ['support.onboarding', 'support', Feature::TYPE_BOOLEAN, false, null],
         ];
+
+        $labels = (array) config('catalogue.features', []);
+
+        return array_map(static function (array $row) use ($labels): array {
+            [$key, $group, $type, $enabled, $value] = $row;
+            $label = $labels[$key] ?? [];
+
+            return [
+                'key' => $key,
+                'name' => $label['name'] ?? $key,
+                'description' => $label['description'] ?? null,
+                'group' => $group,
+                'type' => $type,
+                'unit' => $label['unit'] ?? null,
+                // ما ليس في FeatureKey::all() وعدُ خدمة بشري لا بوابة تقنية.
+                'enforcement' => in_array($key, FeatureKey::all(), true)
+                    ? Feature::ENFORCEMENT_GATE
+                    : Feature::ENFORCEMENT_DISPLAY,
+                'default_enabled' => $enabled,
+                'default_value' => $value,
+            ];
+        }, $shape);
     }
 
     /**

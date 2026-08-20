@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Feature;
+use App\Modules\Shared\I18n\StoredText;
 use App\Services\Billing\Entitlements;
 use Closure;
 use Illuminate\Http\Request;
@@ -26,8 +27,8 @@ class EnsureFeature
             return $next($request);
         }
 
-        $name = Feature::where('key', $key)->value('name') ?? $key;
-        $message = "«{$name}» غير متاحة في خطتك الحالية.";
+        $name = StoredText::of(Feature::where('key', $key)->value('name')) ?: $key;
+        $message = __('«:feature» غير متاحة في خطتك الحالية.', ['feature' => $name]);
 
         if ($request->expectsJson()) {
             return response()->json(['message' => $message, 'feature' => $key], 403);

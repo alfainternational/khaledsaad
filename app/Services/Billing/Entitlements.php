@@ -5,6 +5,7 @@ namespace App\Services\Billing;
 use App\Models\Feature;
 use App\Models\Plan;
 use App\Models\Workspace;
+use App\Modules\Shared\I18n\StoredText;
 use Illuminate\Support\Collection;
 
 /**
@@ -139,8 +140,8 @@ class Entitlements
             ->filter(fn (array $entry) => $entry['enabled'])
             ->map(fn (array $entry, string $key) => [
                 'key' => $key,
-                'name' => $entry['feature']->name,
-                'label' => $entry['note'] ?: $entry['feature']->describeValue($entry['value']),
+                'name' => $entry['feature']->displayName(),
+                'label' => StoredText::of($entry['note']) ?: $entry['feature']->describeValue($entry['value']),
                 'value' => $entry['value'],
                 'group' => $entry['feature']->group,
                 'unit' => $entry['feature']->unit,
@@ -158,8 +159,9 @@ class Entitlements
      */
     public function displayFeatures(Plan $plan): array
     {
+        // النصوص الحرّة القديمة تُعرض للعميل أيضًا، فتُترجَم كغيرها.
         if (! $plan->isGoverned()) {
-            return $plan->features ?? [];
+            return array_map(StoredText::of(...), $plan->features ?? []);
         }
 
         return array_map(fn (array $row) => $row['label'], $this->summaryForPlan($plan));

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Shared\I18n\StoredText;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -63,21 +64,27 @@ class Feature extends Model
     public function typeLabel(): string
     {
         return match ($this->type) {
-            self::TYPE_LIMIT => 'حد أقصى',
-            self::TYPE_QUOTA => 'حصة شهرية',
-            default => 'تشغيل/إيقاف',
+            self::TYPE_LIMIT => __('حد أقصى'),
+            self::TYPE_QUOTA => __('حصة شهرية'),
+            default => __('تشغيل/إيقاف'),
         };
     }
 
     public function groupLabel(): string
     {
         return match ($this->group) {
-            'core' => 'الأساس',
-            'reports' => 'التقارير',
-            'growth' => 'محرك النمو',
-            'support' => 'الدعم والخدمة',
-            default => 'عام',
+            'core' => __('الأساس'),
+            'reports' => __('التقارير'),
+            'growth' => __('محرك النمو'),
+            'support' => __('الدعم والخدمة'),
+            default => __('عام'),
         };
+    }
+
+    /** الاسم كما يُعرض: مترجَمًا إن خُبزت له ترجمة. */
+    public function displayName(): string
+    {
+        return StoredText::of($this->name);
     }
 
     /**
@@ -85,14 +92,18 @@ class Feature extends Model
      */
     public function describeValue(?int $value): string
     {
+        $name = $this->displayName();
+
         if (! $this->isNumeric()) {
-            return $this->name;
+            return $name;
         }
 
         if ($value === null) {
-            return $this->name.' — بلا حد';
+            return $name.' — '.__('بلا حد');
         }
 
-        return $this->name.' — '.$value.($this->unit ? ' '.$this->unit : '');
+        // الوحدة جزء من الجملة لا زينة: تركها عربية يُنتج «10 مشروع» داخل
+        // سطر إنجليزي، وهو أوضح في الخطأ من غياب الترجمة أصلًا.
+        return $name.' — '.$value.($this->unit ? ' '.StoredText::of($this->unit) : '');
     }
 }

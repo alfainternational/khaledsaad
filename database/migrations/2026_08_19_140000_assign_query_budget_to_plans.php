@@ -28,14 +28,18 @@ return new class extends Migration
 
     public function up(): void
     {
+        $label = (array) config('catalogue.features.'.FeatureKey::QUERY_BUDGET_MONTHLY, []);
+
         $feature = Feature::updateOrCreate(
             ['key' => FeatureKey::QUERY_BUDGET_MONTHLY],
             [
-                'name' => 'ميزانية استعلامات الذكاء',
-                'description' => 'سقف استعلامات النماذج شهريًا لكل مساحة عمل. دورة استطلاع واحدة = ١٥ استعلامًا (٥ أسئلة × ٣ محاولات).',
+                // التسمية من `config/catalogue.php`: الملف يُمسح للترجمة،
+                // فكتابتها هنا تصنع نصًّا لا تصله ترجمة.
+                'name' => $label['name'] ?? 'ميزانية استعلامات الذكاء',
+                'description' => $label['description'] ?? null,
                 'group' => 'growth',
                 'type' => Feature::TYPE_QUOTA,
-                'unit' => 'استعلام/شهر',
+                'unit' => $label['unit'] ?? 'استعلام/شهر',
                 'enforcement' => Feature::ENFORCEMENT_GATE,
                 'default_enabled' => true,
                 'default_value' => 150,

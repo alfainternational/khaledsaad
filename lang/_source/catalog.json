@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "count": 3686,
+    "count": 3723,
     "entries": {
         "## أسئلة شائعة": {
             "type": "php",
@@ -1620,6 +1620,12 @@
             ]
         },
         "«70 خلال شهر» رقم بلا معنى حتى تقول 70 ماذا: تسجيل، أم مستخدم نشط، أم عملية بيع مدفوعة. الوكالة ستُقاس على تعريفك، فاكتبه أنت.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "«:feature» غير متاحة في خطتك الحالية.": {
             "type": "php",
             "contexts": [
                 "app"
@@ -3709,6 +3715,12 @@
                 "app"
             ]
         },
+        "إحالة التشغيل لمراجعة خبير بدل المسار الآلي.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "إحصاءات الزوّار": {
             "type": "blade",
             "contexts": [
@@ -4399,6 +4411,12 @@
                 "resources/views/admin/gateways/index.blade.php"
             ]
         },
+        "احترافية": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "احسب النسبة بين كل رقمين متجاورين. أكبر هبوط بينهما هو نقطة التسرب، لا ما تشعر أنه المشكلة.": {
             "type": "php",
             "contexts": [
@@ -4523,6 +4541,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/audience/lab.blade.php"
+            ]
+        },
+        "اختبار الرسائل على جمهور اصطناعي قبل إطلاقها.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "اختبار جماعي": {
@@ -4935,6 +4959,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/home.blade.php"
+            ]
+        },
+        "استعلام/شهر": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "استفدنا من إجابة سابقة لك. راجعها قبل المتابعة.": {
@@ -5846,7 +5876,8 @@
         "الأساس": {
             "type": "blade",
             "contexts": [
-                "resources/views/admin/features/form.blade.php"
+                "resources/views/admin/features/form.blade.php",
+                "app"
             ]
         },
         "الأسعار": {
@@ -6572,6 +6603,12 @@
                 "resources/views/home.blade.php"
             ]
         },
+        "التشخيص الكامل": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "التشخيص المقترح بعد ذلك": {
             "type": "blade",
             "contexts": [
@@ -6642,6 +6679,12 @@
                 "resources/views/agency-reports/partials/unified-context.blade.php"
             ]
         },
+        "التعلم التسويقي التطبيقي": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "التعلم بالتطبيق": {
             "type": "blade",
             "contexts": [
@@ -6695,13 +6738,20 @@
             "contexts": [
                 "resources/views/admin/features/form.blade.php",
                 "resources/views/app/projects/show.blade.php",
-                "resources/views/partials/panel-nav.blade.php"
+                "resources/views/partials/panel-nav.blade.php",
+                "app"
             ]
         },
         "التقارير (:v1)": {
             "type": "blade",
             "contexts": [
                 "resources/views/app/search.blade.php"
+            ]
+        },
+        "التقارير الحيّة": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "التقدّم": {
@@ -7243,6 +7293,12 @@
                 "resources/views/site/content/index.blade.php"
             ]
         },
+        "الدروس العشرون وتطبيقاتها ومراجعة الإجابات.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "الدروس العشرون ومهامها": {
             "type": "blade",
             "contexts": [
@@ -7252,7 +7308,8 @@
         "الدعم والخدمة": {
             "type": "blade",
             "contexts": [
-                "resources/views/admin/features/form.blade.php"
+                "resources/views/admin/features/form.blade.php",
+                "app"
             ]
         },
         "الدفع الإلكتروني غير متاح حاليًا. حاول مرة أخرى لاحقًا.": {
@@ -8648,10 +8705,11 @@
             ]
         },
         "المشاريع": {
-            "type": "blade",
+            "type": "config",
             "contexts": [
                 "resources/views/app/billing/index.blade.php",
-                "resources/views/app/projects/index.blade.php"
+                "resources/views/app/projects/index.blade.php",
+                "config/catalogue.php"
             ]
         },
         "المشاريع (:v1)": {
@@ -8927,6 +8985,12 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "المنافسون": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "المنافسون المسجلون": {
@@ -9883,7 +9947,8 @@
             "type": "blade",
             "contexts": [
                 "resources/views/admin/features/index.blade.php",
-                "resources/views/admin/plans/form.blade.php"
+                "resources/views/admin/plans/form.blade.php",
+                "app"
             ]
         },
         "بلا خطة": {
@@ -10160,6 +10225,12 @@
                 "resources/views/admin/content/subscribers.blade.php"
             ]
         },
+        "تاريخ درجة النضج وتصدير بطاقة الجاهزية وتقرير الزحف.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "تبدأ التنفيذ": {
             "type": "config",
             "contexts": [
@@ -10200,6 +10271,12 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "تتبّع مؤشرات الأداء": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "تتحول التوصية إلى مهمة بخطوات ومثال مطوَّر، فلا تقف عند «فهمت المشكلة».": {
@@ -10535,6 +10612,12 @@
                 "resources/views/site/tools/show.blade.php"
             ]
         },
+        "تسجيل مؤشرات ومتابعة تطوّرها زمنيًا.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "تسويق": {
             "type": "blade",
             "contexts": [
@@ -10601,10 +10684,23 @@
                 "resources/views/admin/dashboard.blade.php"
             ]
         },
+        "تشغيل الأدوات": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "تشغيل/إيقاف": {
             "type": "blade",
             "contexts": [
-                "resources/views/admin/features/form.blade.php"
+                "resources/views/admin/features/form.blade.php",
+                "app"
+            ]
+        },
+        "تشغيل/شهر": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "تشغيلات": {
@@ -10618,6 +10714,12 @@
             "contexts": [
                 "resources/views/admin/content/subscribers.blade.php",
                 "resources/views/admin/insights/partials/nav.blade.php"
+            ]
+        },
+        "تصدير PDF": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "تصدير PDF · في الخطط المدفوعة": {
@@ -11350,9 +11452,10 @@
             ]
         },
         "تقرير": {
-            "type": "blade",
+            "type": "config",
             "contexts": [
-                "resources/views/admin/dashboard.blade.php"
+                "resources/views/admin/dashboard.blade.php",
+                "config/catalogue.php"
             ]
         },
         "تقرير #:v1": {
@@ -11367,10 +11470,22 @@
                 "resources/views/reports/readiness-card.blade.php"
             ]
         },
+        "تقرير الوكالة الموحّد": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "تقرير تشخيص توضيحي": {
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "تقرير شامل يجمع مخرجات المشروع في مستند واحد.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "تقرير-:id": {
@@ -11605,6 +11720,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/billing/index.blade.php"
+            ]
+        },
+        "تنزيل التقرير ملفًا جاهزًا للمشاركة.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "تنزيل السيرة PDF": {
@@ -11964,6 +12085,12 @@
                 "app"
             ]
         },
+        "جلسة تهيئة": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "جملة عنوان وجملة توضيح — لا فقرة تسويقية.": {
             "type": "php",
             "contexts": [
@@ -12154,7 +12281,8 @@
         "حد أقصى": {
             "type": "blade",
             "contexts": [
-                "resources/views/admin/features/form.blade.php"
+                "resources/views/admin/features/form.blade.php",
+                "app"
             ]
         },
         "حد المشاريع": {
@@ -12293,6 +12421,12 @@
                 "resources/views/app/billing/index.blade.php"
             ]
         },
+        "حزمة الظهور للآلات (GEO)": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "حزمة تجعل مشروعك قابلًا للقراءة والاقتباس من مساعدات الذكاء الاصطناعي.": {
             "type": "blade",
             "contexts": [
@@ -12387,7 +12521,8 @@
         "حصة شهرية": {
             "type": "blade",
             "contexts": [
-                "resources/views/admin/features/form.blade.php"
+                "resources/views/admin/features/form.blade.php",
+                "app"
             ]
         },
         "حضورك في إجابات الذكاء": {
@@ -13132,6 +13267,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/experience/choose.blade.php"
+            ]
+        },
+        "دعم بأولوية": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "دعمت استراتيجيات منصات التواصل وتطوير المحتوى العضوي.": {
@@ -13977,6 +14118,12 @@
                 "resources/views/admin/plans/form.blade.php"
             ]
         },
+        "سقف استعلامات النماذج شهريًا لكل مساحة عمل. دورة استطلاع واحدة = ١٥ استعلامًا (٥ أسئلة × ٣ محاولات).": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "سقوف الاستعلامات — شهر :v1": {
             "type": "blade",
             "contexts": [
@@ -14653,7 +14800,8 @@
             "type": "blade",
             "contexts": [
                 "resources/views/admin/features/form.blade.php",
-                "resources/views/partials/panel-nav.blade.php"
+                "resources/views/partials/panel-nav.blade.php",
+                "app"
             ]
         },
         "عبر قنواته الرسمية المعلنة.": {
@@ -14693,6 +14841,12 @@
                 "app"
             ]
         },
+        "عدد التقارير التي تُتابَع وتُحدَّث تلقائيًا.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "عدد الرصيد": {
             "type": "blade",
             "contexts": [
@@ -14709,6 +14863,24 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "عدد المشاريع التي يمكن إنشاؤها في مساحة العمل.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
+        "عدد المنافسين المتابَعين لكل مشروع.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
+        "عدد تشغيلات الأدوات في الشهر الجاري (بخلاف الرصيد).": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "عدّل أي إجابة تحتاج إلى تصحيح، لأن التقرير سيعتمد على المعلومات المعروضة هنا.": {
@@ -15318,6 +15490,12 @@
                 "resources/views/components/recommendation-contract.blade.php"
             ]
         },
+        "فردية": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "فرص إضافية لتحسين المشروع": {
             "type": "blade",
             "contexts": [
@@ -15368,6 +15546,12 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "فرق": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "فرق النقاط الذي يستحق تنبيه «درجتك تغيّرت». الافتراضي 5.": {
@@ -18971,6 +19155,12 @@
                 "resources/views/admin/content/form.blade.php"
             ]
         },
+        "مجانية": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "مجدول": {
             "type": "blade",
             "contexts": [
@@ -19123,10 +19313,11 @@
             ]
         },
         "مختبر الجمهور": {
-            "type": "blade",
+            "type": "config",
             "contexts": [
                 "resources/views/app/audience/lab.blade.php",
-                "resources/views/app/projects/show.blade.php"
+                "resources/views/app/projects/show.blade.php",
+                "config/catalogue.php"
             ]
         },
         "مختبر الجمهور —": {
@@ -19257,9 +19448,10 @@
             ]
         },
         "مراجعة بشرية": {
-            "type": "blade",
+            "type": "config",
             "contexts": [
-                "resources/views/app/agency-reports/index.blade.php"
+                "resources/views/app/agency-reports/index.blade.php",
+                "config/catalogue.php"
             ]
         },
         "مراجعة موثّقة بواسطة :v1": {
@@ -19599,12 +19791,13 @@
             ]
         },
         "مشروع": {
-            "type": "blade",
+            "type": "config",
             "contexts": [
                 "resources/views/app/consultations/index.blade.php",
                 "resources/views/app/dashboard.blade.php",
                 "resources/views/app/projects/show.blade.php",
-                "resources/views/site/pricing.blade.php"
+                "resources/views/site/pricing.blade.php",
+                "config/catalogue.php"
             ]
         },
         "مشروع جديد": {
@@ -20208,6 +20401,12 @@
                 "resources/views/admin/insights/session.blade.php"
             ]
         },
+        "ملخّص دوري بما تغيّر وما يستحق التحرّك.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "ملف PDF عبر وسيلة التواصل المعتمدة للمشروع.": {
             "type": "blade",
             "contexts": [
@@ -20225,6 +20424,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/agency-reports/partials/appendix.blade.php"
+            ]
+        },
+        "ملف llms.txt وبيانات تجعل المشروع مقروءًا لمحرّكات الذكاء.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "ملف robots.txt في جذر الموقع. احذف أي سطر Disallow يخص هذه البوتات، ثم أضف:": {
@@ -20505,6 +20710,12 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "منافس/مشروع": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "منافسوك (الأقرب أثرًا أولًا)": {
@@ -20818,6 +21029,12 @@
                 "resources/views/site/pricing.blade.php"
             ]
         },
+        "ميزانية استعلامات الذكاء": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
         "مُطبَّق": {
             "type": "blade",
             "contexts": [
@@ -20877,6 +21094,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/site/pages/profile.blade.php"
+            ]
+        },
+        "نبض النمو": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "نبضك الأول في الطريق": {
@@ -22207,6 +22430,18 @@
             "type": "blade",
             "contexts": [
                 "resources/views/site/sectors/show.blade.php"
+            ]
+        },
+        "وعد خدمة بشري: جلسة إعداد أولى مع الفريق.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
+            ]
+        },
+        "وعد خدمة بشري: ردّ أسرع على طلبات الدعم. لا يمنعه النظام تقنيًا.": {
+            "type": "config",
+            "contexts": [
+                "config/catalogue.php"
             ]
         },
         "وقت نشط": {

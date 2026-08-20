@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Modules\Shared\I18n\TranslatedConfig;
 use Illuminate\View\View;
+use App\Modules\Shared\I18n\StoredText;
 
 /**
  * صفحة الأسعار العامة (بند ٢٤ من خطة الواجهات).
@@ -23,7 +24,7 @@ class PricingController extends Controller
             ->get()
             ->map(fn (Plan $plan) => [
                 'key' => $plan->key,
-                'name' => $plan->name,
+                'name' => StoredText::of($plan->name),
                 'price' => (int) $plan->price,
                 'interval' => $plan->interval,
                 'monthly_credits' => (int) $plan->monthly_credits,
