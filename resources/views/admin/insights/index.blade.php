@@ -34,6 +34,7 @@
             <p class="muted">
                 {{ $from->translatedFormat('j F Y') }} — {{ $to->translatedFormat('j F Y') }} ({{ $days }} يومًا).
                 القياس داخلي بالكامل: مصدره طلبات هذا الخادم ونبض متصفح الزائر، بلا أي خدمة خارجية.
+                والأرقام كلها مبنيّة على الزيارات المتحقَّقة وحدها — تفصيلها في «أساس الأرقام» أسفل.
             </p>
         </div>
 
@@ -53,6 +54,31 @@
         مقامها رقمٌ لا يمكن الحكم عليه، و«٤٢٪ من ١٩ جلسة» يقول للقارئ
         فورًا أن المدة أقصر من أن تُبنى عليها قرارات.
     --}}
+    {{--
+        على ماذا بُنيت الأرقام — يُقرأ قبلها لا بعدها (§٤.٣).
+
+        كانت اللوحة تعرض «زائرًا» لكل طلب لم تُعلن سلسلة وكيله أنها بوت،
+        فظهر آلاف الزوّار بينما من فتح الموقع بمتصفّح حقيقي عشرات. هذه
+        الخانات الثلاث هي الفرق، ولا تُطوى في رقم واحد.
+    --}}
+    <section class="alert" aria-labelledby="audience-heading">
+        <h2 id="audience-heading" class="section-title">أساس الأرقام</h2>
+        <p class="muted">
+            كل رقم في هذه الصفحة مبنيّ على <strong>الزيارات المتحقَّقة</strong> وحدها:
+            {{ number_format($audience['verified']) }} من {{ number_format($audience['total']) }}
+            ({{ $audience['verified_percent'] }}٪).
+        </p>
+        <ul class="layout-flow">
+            <li><strong>متحقَّقة — {{ number_format($audience['verified']) }} ({{ $audience['verified_percent'] }}٪):</strong> متصفّح نفّذ صفحتنا فعلًا — وصلت منه نبضة أو أُرسل منه نموذج. هذه وحدها ما يُبنى عليه قرار.</li>
+            <li><strong>غير متحقَّقة — {{ number_format($audience['unverified']) }} ({{ $audience['unverified_percent'] }}٪):</strong> طلبٌ وصل بلا تنفيذ جافاسكربت. آلةٌ في الغالب الأعمّ، وقد يكون متصفّحًا عُطّل فيه السكربت. <span class="badge badge--assumption">فرضية</span> — لا يُدّعى أيّهما ولا تُحذف.</li>
+            <li><strong>آلية معلنة — {{ number_format($audience['bots']) }} ({{ $audience['bots_percent'] }}٪):</strong> ما عرّف نفسه في سلسلة الوكيل. مفصَّلة في جدول الزحف أسفل الصفحة.</li>
+        </ul>
+        <p class="muted">
+            حدّ هذا التمييز مُعلَن: التحقّق يُسقط من لا ينفّذ جافاسكربت، ولا يُسقط
+            متصفّحًا آليًّا ينفّذه. فهو أرضية للضجيج لا سقفٌ له.
+        </p>
+    </section>
+
     <section class="layout-metrics" aria-label="الإجماليات">
         <article class="stat">
             <span class="stat__value">{{ number_format($totals['visitors']) }}</span>
@@ -105,7 +131,9 @@
             <li><strong>الارتداد:</strong> صفحة واحدة، بلا أي حدث تفاعل، وبزمن نشط أقل من {{ (int) config('insights.bounce_max_seconds', 5) }} ثوان. من قرأ مقالًا كاملًا في صفحة واحدة ليس مرتدًّا.</li>
             <li><strong>الزائر الفريد:</strong> كوكي طرف أول يعيش سنة. مسحُه أو تغييرُ الجهاز يجعل الشخص نفسه زائرَين — وهذا حدّ القياس بلا استثناء.</li>
             <li><strong>البلد:</strong> <span class="badge badge--assumption">فرضية</span> مستنتجة من المنطقة الزمنية أو لغة المتصفح، لا من قاعدة عناوين. تُصيب غالبًا وتخطئ مع VPN.</li>
-            <li><strong>المستبعَد من كل ما سبق:</strong> زحف البوتات ({{ number_format($totals['bot_hits']) }} زيارة آلية في المدة){{ config('insights.count_staff') ? '' : ' وزيارات حسابات الإدارة' }}.</li>
+            <li><strong>الزيارة المتحقَّقة:</strong> زيارةٌ وصلت منها إشارة من المتصفح — نبضة بيكون أو نموذج مُرسَل برمز CSRF. الطلب الذي لا ينفّذ جافاسكربت لا يدخل أي رقم هنا.</li>
+            <li><strong>التحويل:</strong> حدثٌ اسمه مُدرَج في <code>insights.conversion_events</code> ويُطلقه الخادم عند وقوعه فعلًا: {{ implode('، ', array_values((array) config('insights.conversion_events', []))) }}. إرسالُ نموذج ليس تحويلًا بذاته.</li>
+            <li><strong>المستبعَد من كل ما سبق:</strong> زحف البوتات ({{ number_format($totals['bot_hits']) }} زيارة آلية في المدة)، والزيارات غير المتحقَّقة ({{ number_format($totals['unverified']) }}){{ config('insights.count_staff') ? '' : '، وزيارات حسابات الإدارة' }}.</li>
         </ul>
     </details>
 
@@ -335,13 +363,15 @@
                 @else
                     <div class="table-wrap">
                         <table class="table" data-table="matrix">
-                            <thead><tr><th>المسار</th><th>الرمز</th><th>المرات</th></tr></thead>
+                            <thead><tr><th>المسار</th><th>الرمز</th><th>المرات</th><th>من متصفح</th></tr></thead>
                             <tbody>
                                 @foreach ($broken as $row)
                                     <tr>
                                         <td><span class="path-cell" title="{{ $row['path'] }}">{{ $row['path'] }}</span></td>
                                         <td>{{ $row['status'] }}</td>
                                         <td>{{ $row['hits'] }}</td>
+                                        {{-- صفرٌ هنا يعني ماسحًا آليًّا لا رابطًا مكسورًا: لا شيء يُصلَح. --}}
+                                        <td>{{ $row['verified_hits'] }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

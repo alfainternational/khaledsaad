@@ -20,7 +20,7 @@ class VisitorEvent extends Model
     protected $fillable = [
         'session_id', 'page_view_id', 'visitor_id', 'user_id',
         'name', 'category', 'label', 'path', 'value', 'meta',
-        'is_staff', 'occurred_at',
+        'is_staff', 'is_verified', 'occurred_at',
     ];
 
     protected function casts(): array
@@ -29,6 +29,7 @@ class VisitorEvent extends Model
             'meta' => 'array',
             'value' => 'float',
             'is_staff' => 'boolean',
+            'is_verified' => 'boolean',
             'occurred_at' => 'datetime',
         ];
     }
@@ -48,8 +49,11 @@ class VisitorEvent extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** نفس تعريف الجلسة حرفيًّا — والتحقّق منها هو ما يُنسخ إلى هنا. */
     public function scopeHuman(Builder $query): Builder
     {
+        $query->where('is_verified', true);
+
         if (! config('insights.count_staff')) {
             $query->where('is_staff', false);
         }

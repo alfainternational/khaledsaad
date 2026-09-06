@@ -103,12 +103,26 @@ return [
         'DuckDuckBot' => 'DuckDuckGo',
     ],
 
-    // أنماط عامة تدلّ على آلة لا إنسان، بعد استبعاد المصنَّفين أعلاه.
+    /*
+     * أنماط عامة تدلّ على آلة لا إنسان، بعد استبعاد المصنَّفين أعلاه.
+     *
+     * وهذه القائمة **أرضية لا سقف**: من ينتحل سلسلة Chrome عادية يمرّ
+     * منها كلها. من يمسكه فعلًا هو شرط التحقّق في `scopeHuman` — أن
+     * ينفّذ المتصفّح صفحتنا. تبقى القائمة لأنها تسمّي ما أعلن عن نفسه،
+     * وتسميته أنفع من عدّه مجهولًا.
+     */
     'bot_patterns' => [
         'bot', 'crawl', 'spider', 'slurp', 'curl', 'wget', 'python-requests',
         'httpclient', 'headless', 'phantomjs', 'monitor', 'uptime', 'preview',
         'facebookexternalhit', 'whatsapp', 'telegrambot', 'twitterbot', 'linkedinbot',
         'embedly', 'scrapy', 'axios/', 'go-http-client', 'okhttp', 'postman',
+
+        // أدوات الأتمتة التي تُعلن عن نفسها: تشغّل جافاسكربت فتتجاوز
+        // التحقّق، ولا تتجاوز اسمها حين تكتبه في سلسلة الوكيل.
+        'headlesschrome', 'puppeteer', 'playwright', 'selenium', 'webdriver',
+        'phantom', 'cypress', 'lighthouse', 'pagespeed', 'chrome-lighthouse',
+        'node-fetch', 'libwww-perl', 'java/', 'guzzlehttp', 'apachebench',
+        'masscan', 'zgrab', 'nuclei', 'nikto', 'sqlmap', 'wpscan',
     ],
 
     /*

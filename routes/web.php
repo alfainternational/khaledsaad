@@ -235,6 +235,17 @@ Route::get('tools/{tool}', [ToolShowcaseController::class, 'show'])->name('tools
 Route::middleware('throttle:12,60')->group(function (): void {
     Route::post('try/{tool}', [GuestRunController::class, 'start'])->name('try.start');
 });
+
+/*
+ * نفس العنوان بـ GET: صفحة الأداة لا رسالة ٤٠٥.
+ *
+ * الزر الرئيسي في الصفحة الرئيسية نموذج POST، وعنوانه يصل بـ GET في
+ * ثلاث حالات عادية: تحديث الصفحة بعد الإرسال، ومشاركة الرابط، وزحف
+ * البوت على `action` النموذج. وكان الردّ في الثلاث «405 Method Not
+ * Allowed» خامًا — أسوأ ما يمكن أن يراه زائر ضغط أول زر في الموقع.
+ */
+Route::get('try/{tool}', fn (Tool $tool) => redirect()->route('tools.show', $tool->key))
+    ->name('try.show');
 Route::get('try/{run}/steps/{step}', [GuestRunController::class, 'step'])->name('try.step');
 Route::post('try/{run}/steps/{step}', [GuestRunController::class, 'saveStep'])->name('try.step.save');
 Route::get('try/{run}/result', [GuestRunController::class, 'result'])->name('try.result');
@@ -259,9 +270,22 @@ Route::get('terms', LegalController::class)->defaults('page', 'terms')->name('te
 
 Route::middleware('guest')->group(function (): void {
     Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('register', [RegisteredUserController::class, 'store']);
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    /*
+     * أبواب الاعتماد محدودة بالمعدّل — وكانت مفتوحة بلا سقف.
+     *
+     * القياس كشف ١٩ محاولة دخول من غير الإدارة على منصة فيها حساب واحد،
+     * كلها في شهر واحد ومن عميل يشغّل جافاسكربت. هذا حشو بيانات اعتماد
+     * لا زوّار حائرون، ولم يكن يوقفه شيء.
+     *
+     * السقف على الزوج (المسار + العنوان) لا على البريد وحده: الربط
+     * بالبريد يجعل المهاجم يبدّله في كل محاولة فيتجاوز السقف كله.
+     */
+    Route::middleware('throttle:10,1')->group(function (): void {
+        Route::post('register', [RegisteredUserController::class, 'store']);
+        Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    });
 
     // خطوة التحقق الثانية بالبريد (بند ٢٣) — لمن فعّلها فقط.
     Route::get('login/code', [AuthenticatedSessionController::class, 'otpForm'])->name('login.otp');
@@ -270,9 +294,11 @@ Route::middleware('guest')->group(function (): void {
 
     // من نسي كلمة مروره كان يخرج من المنتج نهائيًا قبل هذا المسار.
     Route::get('forgot-password', [PasswordResetController::class, 'request'])->name('password.request');
-    Route::post('forgot-password', [PasswordResetController::class, 'email'])->name('password.email');
+    Route::post('forgot-password', [PasswordResetController::class, 'email'])
+        ->middleware('throttle:6,1')->name('password.email');
     Route::get('reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
-    Route::post('reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+    Route::post('reset-password', [PasswordResetController::class, 'update'])
+        ->middleware('throttle:6,1')->name('password.update');
 });
 
 Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])

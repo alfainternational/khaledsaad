@@ -45,6 +45,15 @@ class InsightsCollectorController extends Controller
         // صفحة واحدة إلى جلستين لمجرّد أن الزائر لم ينتقل خلال نصف ساعة.
         $identity->rememberVisit($session->uuid);
 
+        /*
+         * وصولُ هذا الطلب هو الإثبات نفسه.
+         *
+         * لا يبلغ هذا السطر إلا عميلٌ حمّل الصفحة، قرأ الوسوم المحقونة
+         * فيها، ونفّذ السكربت. الترتيب مقصود: التعليم قبل تسجيل الحدث
+         * حتى يُولد صفّ الحدث متحقَّقًا لا مُرقًّى بعد كتابته.
+         */
+        $recorder->verify($session, 'beacon');
+
         $view = $data['view'] !== null
             ? VisitorPageView::where('uuid', $data['view'])->where('session_id', $session->id)->first()
             : null;

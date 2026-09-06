@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Content;
+use App\Modules\Insights\ConversionRecorder;
 use App\Services\Content\ContentAccessService;
 use App\Services\Content\ContentSubscriptionService;
 use Illuminate\Http\RedirectResponse;
@@ -11,7 +12,10 @@ use Illuminate\Http\Request;
 
 class ContentSubscriptionController extends Controller
 {
-    public function __construct(private readonly ContentSubscriptionService $subscriptions) {}
+    public function __construct(
+        private readonly ContentSubscriptionService $subscriptions,
+        private readonly ConversionRecorder $conversions,
+    ) {}
 
     public function store(Request $request, Content $content): RedirectResponse
     {
@@ -26,6 +30,9 @@ class ContentSubscriptionController extends Controller
 
         $result = $this->subscriptions->subscribe($data['email'], true);
         $request->session()->put(ContentAccessService::SESSION_KEY, $result['token']);
+
+        // بريدٌ مملوك مقابل محتوى: هذا هو التحويل الوحيد في مسار المحتوى.
+        $this->conversions->record($request, 'subscribe', $content->slug);
 
         return redirect()->route('content.show', $content)->with('success', __('تم فتح المحتوى على هذا الجهاز.'));
     }

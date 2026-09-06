@@ -22,6 +22,7 @@ class VisitorSession extends Model
         'screen_width', 'screen_height', 'viewport_width', 'viewport_height',
         'country', 'location_basis', 'location_evidence', 'timezone', 'language',
         'is_returning', 'is_bounce', 'is_bot', 'bot_name', 'bot_owner', 'is_staff',
+        'is_verified', 'verified_by',
         'conversion_name', 'converted_at', 'ip_hash',
     ];
 
@@ -43,6 +44,7 @@ class VisitorSession extends Model
             'is_bounce' => 'boolean',
             'is_bot' => 'boolean',
             'is_staff' => 'boolean',
+            'is_verified' => 'boolean',
         ];
     }
 
@@ -64,12 +66,38 @@ class VisitorSession extends Model
     /**
      * الجمهور البشري: ما تُبنى عليه كل نسبة تُعرض كسوق.
      *
-     * البوتات وزيارات الإدارة تبقى في الجدول ولا تدخل هنا. خلطها يجعل
-     * «ارتفاع الزيارات ٤٠٪» احتفالًا بزحف بوت أو بجلسة تطوير.
+     * ثلاثة شروط لا شرطان. البوتات وزيارات الإدارة تبقى في الجدول ولا
+     * تدخل هنا، **ويُشترط فوقهما أن يكون المتصفّح قد نفّذ جافاسكربت**.
+     *
+     * الشرط الثالث هو الذي كان ناقصًا، وغيابه أفسد كل رقم في اللوحة:
+     * تصنيف البوت يقرأ سلسلة الوكيل وحدها، والماسح الذي ينتحل Chrome
+     * عاديًّا يمرّ منها كإنسان. فكانت اللوحة تعرض آلاف «الزوّار» بينما
+     * من فتح الموقع بمتصفّح حقيقي عشرات.
+     *
+     * والدليل داخلي لا مشترى: البيكون يُرسل عند `pagehide` دائمًا، حتى
+     * بصفر ثانية. فمن وصلت منه إشارة واحدة فتح الصفحة فعلًا.
+     *
+     * ما استُبعد لا يُحذف ولا يُسمّى بوتًا: `unverified` خانته، وتُعرض
+     * بعددها في اللوحة لأن §٤.٣ تمنع طيّ الفجوة.
      */
     public function scopeHuman(Builder $query): Builder
     {
-        $query->where('is_bot', false);
+        $query->where('is_bot', false)->where('is_verified', true);
+
+        if (! config('insights.count_staff')) {
+            $query->where('is_staff', false);
+        }
+
+        return $query;
+    }
+
+    /**
+     * ما وصل بلا أن ينفّذ جافاسكربت: آلة غالبًا، وقد يكون متصفّحًا
+     * عُطّل فيه السكربت. لا يُدّعى أيّهما — يُعدّ ويُعرض بوصفه فجوة.
+     */
+    public function scopeUnverified(Builder $query): Builder
+    {
+        $query->where('is_bot', false)->where('is_verified', false);
 
         if (! config('insights.count_staff')) {
             $query->where('is_staff', false);

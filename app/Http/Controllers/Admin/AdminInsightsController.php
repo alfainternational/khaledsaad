@@ -35,6 +35,7 @@ class AdminInsightsController extends Controller
             'from' => $report->from(),
             'to' => $report->to(),
             'totals' => $report->totals(),
+            'audience' => $report->audience(),
             'comparison' => $report->comparison(),
             'timeline' => $report->timeline(),
             'channels' => $report->channels(),
@@ -150,6 +151,7 @@ class AdminInsightsController extends Controller
                 __('الصفحات'), __('الأحداث'), __('القناة'), __('المنصة'), __('المُحيل'), __('الحملة'),
                 __('صفحة الدخول'), __('صفحة الخروج'), __('الجهاز'), __('المتصفح'), __('النظام'),
                 __('البلد (فرضية)'), __('أساس البلد'), __('اللغة'), __('عائد'), __('ارتداد'), __('التحويل'),
+                __('أساس التحقّق'),
             ]);
 
             $query->chunk(500, function ($chunk) use ($handle): void {
@@ -178,6 +180,11 @@ class AdminInsightsController extends Controller
                         $session->is_returning ? __('نعم') : __('لا'),
                         $session->is_bounce ? __('نعم') : __('لا'),
                         $session->conversion_name ?? '—',
+                        match ($session->verified_by) {
+                            'form' => __('نموذج مُرسَل'),
+                            'beacon', 'backfill' => __('نبض المتصفح'),
+                            default => '—',
+                        },
                     ]);
                 }
             });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Concerns\CarriesStartIntent;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Insights\ConversionRecorder;
 use App\Services\Guests\GuestSessionManager;
 use App\Support\Experience\Experience;
 use App\Support\Experience\ExperienceService;
@@ -24,6 +25,7 @@ class RegisteredUserController extends Controller
         private readonly ToolPresenter $presenter,
         private readonly GuestSessionManager $guests,
         private readonly ExperienceService $experiences,
+        private readonly ConversionRecorder $conversions,
     ) {}
 
     public function create(Request $request): View
@@ -57,12 +59,35 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
-        $user = User::create($data);
+        /*
+         * الحقول تُمرَّر مُسمّاة لا بتمرير `$data` كاملًا.
+         *
+         * `experience` ليس عمودًا في `users` ولا في `#[Fillable]`، فكان
+         * يُهمَل بصمت. يعمل اليوم، وينقلب استثناءً على كل تسجيل لحظة
+         * تفعيل `preventSilentlyDiscardingAttributes` — عطلٌ مؤجَّل في
+         * أخطر مسار في المنصة، وتفكيكه أرخص من انتظاره.
+         */
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+        ]);
+
         $experience = Experience::from($data['experience']);
         $user = $this->experiences->selectInitial($user, $experience);
 
         event(new Registered($user));
         auth()->login($user);
+
+        /*
+         * التحويل يُسجَّل هنا لا في مسارات الخروج.
+         *
+         * الخروج من هذه الدالة خمسة مسارات مختلفة، ووضعه في كلٍّ منها
+         * يجعل إضافة مسار سادس تُسقطه صامتًا. وهذا آخر موضع يقين فيه
+         * أن الحساب أُنشئ فعلًا.
+         */
+        $this->conversions->record($request, 'signup', $experience->value);
+
         $request->session()->regenerate();
 
         // من جرّب كضيف: تنتقل مساحته وإجاباته ونتائجه إلى حسابه الجديد كما هي.

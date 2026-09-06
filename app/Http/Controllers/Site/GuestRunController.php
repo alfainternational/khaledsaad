@@ -8,6 +8,7 @@ use App\Models\GuestSession;
 use App\Models\Tool;
 use App\Models\ToolRun;
 use App\Modules\Diagnosis\GuestPreview;
+use App\Modules\Insights\ConversionRecorder;
 use App\Services\Guests\GuestSessionManager;
 use App\Services\Tools\AnswerCompleteness;
 use App\Services\Tools\ToolRunService;
@@ -31,6 +32,7 @@ class GuestRunController extends Controller
         private readonly ToolRunService $service,
         private readonly RunPresenter $presenter,
         private readonly GuestPreview $preview,
+        private readonly ConversionRecorder $conversions,
     ) {}
 
     /**
@@ -50,6 +52,10 @@ class GuestRunController extends Controller
         } catch (RuntimeException $exception) {
             return back()->withErrors(['tool' => $exception->getMessage()]);
         }
+
+        // بدء التجربة بلا حساب هو الزر الأول في الصفحة الرئيسية،
+        // وبلا هذا السطر لا تعرف اللوحة أنه ضُغط أصلًا.
+        $this->conversions->record($request, 'diagnosis_started', $tool->key);
 
         return redirect()->route('try.step', [$run, 1]);
     }

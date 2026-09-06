@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Modules\Insights\ClientProfile;
+use App\Modules\Insights\ConversionRecorder;
 use App\Modules\Insights\InsightsReport;
 use App\Modules\Insights\InsightsRollup;
 use App\Modules\Insights\LocationInference;
@@ -14,6 +15,7 @@ use App\Modules\Insights\Models\VisitorSession;
 use App\Modules\Insights\TrafficOrigin;
 use App\Modules\Insights\VisitorIdentity;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -188,6 +190,162 @@ class VisitorInsightsTest extends TestCase
         $report = new InsightsReport(7);
         $this->assertSame(0, $report->totals()['sessions'], 'زحف البوت دخل أرقام البشر.');
         $this->assertNotEmpty($report->crawlers(), 'زحف نماذج الذكاء حُذف بدل أن يُعرض وحده.');
+    }
+
+    /* ---------------------------------------------------------------
+     * التحقّق من الزيارة
+     * --------------------------------------------------------------- */
+
+    #[Test]
+    public function a_request_that_never_runs_javascript_is_kept_out_of_the_numbers(): void
+    {
+        // ماسحٌ ينتحل Chrome عاديًّا: سلسلة الوكيل وحدها تمرّره كإنسان.
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36')
+            ->get('/');
+
+        $session = VisitorSession::firstOrFail();
+
+        $this->assertFalse($session->is_bot, 'التصنيف بالوكيل لا يمسك المنتحل — وهذا سبب وجود التحقّق.');
+        $this->assertFalse($session->is_verified);
+
+        $report = new InsightsReport(7);
+
+        $this->assertSame(0, $report->totals()['sessions'], 'طلبٌ لم ينفّذ جافاسكربت دخل أرقام السوق.');
+        $this->assertSame(1, $report->audience()['unverified'], 'الفجوة طُويت بدل أن تُعلن (§٤.٣).');
+    }
+
+    #[Test]
+    public function one_beacon_verifies_the_visit_even_with_zero_seconds(): void
+    {
+        $this->get('/');
+
+        $session = VisitorSession::firstOrFail();
+
+        // نبضة المغادرة تصل دائمًا عند `pagehide`، ولو بصفر ثانية.
+        $this->postJson(route('insights.collect'), [
+            'visit' => $session->uuid,
+            'view' => $session->pageViews()->firstOrFail()->uuid,
+            'type' => 'exit',
+            'active_seconds' => 0,
+        ])->assertNoContent();
+
+        $session->refresh();
+
+        $this->assertTrue($session->is_verified);
+        $this->assertSame('beacon', $session->verified_by);
+        $this->assertTrue($session->pageViews()->firstOrFail()->is_verified, 'المشاهدة السابقة للتحقّق لم تُرقَّ معه.');
+        $this->assertSame(1, (new InsightsReport(7))->totals()['sessions']);
+    }
+
+    #[Test]
+    public function the_audience_panel_declares_all_three_buckets(): void
+    {
+        $this->makeSession(['is_verified' => true]);
+        $this->makeSession(['is_verified' => false]);
+        $this->makeSession(['is_verified' => false, 'is_bot' => true, 'bot_name' => 'Bingbot']);
+
+        $audience = (new InsightsReport(7))->audience();
+
+        $this->assertSame(1, $audience['verified']);
+        $this->assertSame(1, $audience['unverified']);
+        $this->assertSame(1, $audience['bots']);
+        $this->assertSame(3, $audience['total'], 'المقام يجب أن يجمع الخانات الثلاث لا المتحقَّق وحده.');
+    }
+
+    #[Test]
+    public function a_broken_path_separates_scanner_noise_from_a_real_dead_link(): void
+    {
+        // ماسح: لا جافاسكربت، فلا يُحسب «من متصفح».
+        $this->get('/wp-admin')->assertNotFound();
+
+        // زائر حقيقي: يصل إلى رابط مكسور ثم ينبض. الطلب الأول لم تُنقل
+        // كوكيّاته، فهذه زيارة ثانية مستقلة عن الماسح.
+        $second = $this->get('/no-such-page-anywhere');
+        $this->continue($second);
+
+        $session = VisitorSession::orderByDesc('id')->firstOrFail();
+        $this->postJson(route('insights.collect'), [
+            'visit' => $session->uuid,
+            'view' => $session->pageViews()->firstOrFail()->uuid,
+            'type' => 'exit',
+            'active_seconds' => 3,
+        ]);
+
+        $rows = collect((new InsightsReport(7))->brokenPaths())->keyBy('path');
+
+        $this->assertSame(0, $rows['/wp-admin']['verified_hits'], 'ضجيج الماسح ظهر كرابط مكسور يحتاج إصلاحًا.');
+        $this->assertSame(1, $rows['/no-such-page-anywhere']['verified_hits']);
+    }
+
+    /* ---------------------------------------------------------------
+     * التحويل من الخادم
+     * --------------------------------------------------------------- */
+
+    #[Test]
+    public function creating_an_account_is_recorded_as_a_conversion(): void
+    {
+        $home = $this->get('/register');
+        $session = VisitorSession::firstOrFail();
+
+        $this->continue($home)->post('/register', [
+            'experience' => 'business',
+            'name' => 'زائر جديد',
+            'email' => 'new@example.test',
+            'password' => 'password-1234',
+            'password_confirmation' => 'password-1234',
+        ]);
+
+        $this->assertSame(1, User::where('email', 'new@example.test')->count(), 'التسجيل نفسه لم يقع.');
+
+        $session->refresh();
+
+        $this->assertSame('signup', $session->conversion_name, 'الحساب أُنشئ ولم يُسجَّل تحويلًا — وهو العطل الأصلي.');
+        $this->assertNotNull($session->converted_at);
+        $this->assertTrue($session->is_verified, 'نموذجٌ أُرسل برمز CSRF إثبات متصفّح كالنبضة.');
+        $this->assertSame('form', $session->verified_by);
+        $this->assertSame(1, (new InsightsReport(7))->totals()['conversions']);
+    }
+
+    #[Test]
+    public function a_plain_form_submission_is_not_a_conversion(): void
+    {
+        $this->get('/');
+        $session = VisitorSession::firstOrFail();
+
+        $this->postJson(route('insights.collect'), [
+            'visit' => $session->uuid,
+            'view' => $session->pageViews()->firstOrFail()->uuid,
+            'type' => 'event',
+            'event' => ['name' => 'form_submit', 'category' => 'conversion'],
+        ]);
+
+        $this->assertSame(1, VisitorEvent::count());
+        $this->assertNull(
+            $session->fresh()->conversion_name,
+            'أي نموذج مُرسَل عُدّ تحويلًا — بحثٌ أو محاولة دخول فاشلة تصير نجاحًا.',
+        );
+    }
+
+    #[Test]
+    public function an_undeclared_conversion_name_is_refused_instead_of_failing_silently(): void
+    {
+        $this->get('/');
+        $session = VisitorSession::firstOrFail();
+
+        $request = Request::create('/anywhere', 'POST');
+        $request->cookies->set(VisitorIdentity::VISIT_COOKIE, $session->uuid);
+
+        app(ConversionRecorder::class)->record($request, 'not_a_declared_event');
+
+        $this->assertSame(
+            0,
+            VisitorEvent::where('name', 'not_a_declared_event')->count(),
+            'اسمٌ خارج `conversion_events` كُتب صفًّا لا يُحتسب — نجاحٌ في الكود وصفرٌ في اللوحة.',
+        );
+
+        // والاسم المعرَّف يمرّ من نفس الباب.
+        app(ConversionRecorder::class)->record($request, 'lead');
+        $this->assertSame('lead', $session->fresh()->conversion_name);
     }
 
     /* ---------------------------------------------------------------
@@ -544,6 +702,13 @@ class VisitorInsightsTest extends TestCase
             'device_type' => 'desktop',
             'active_seconds' => 0,
             'page_views_count' => 1,
+
+            /*
+             * الافتراض متحقَّق: هذه الدالة تصنع «جلسة بشرية» لاختبارات
+             * الأرقام، وأرقام اللوحة مبنيّة على المتحقَّق وحده. اختبارات
+             * التحقّق نفسه تمرّر `is_verified => false` صراحةً.
+             */
+            'is_verified' => true,
         ], $attributes));
     }
 

@@ -71,6 +71,14 @@ class VisitRecorder
                 'page_views_count' => 0,
                 'events_count' => 0,
                 'is_bounce' => true,
+
+                /*
+                 * والتحقّق معها لنفس السبب حرفيًّا: `firstOrCreate` يعيد
+                 * النموذج بما مُرّر إليه لا بما استقرّ في القاعدة، فحقلٌ
+                 * متروك لافتراضيّها يُقرأ `null` — ويُنسخ `null` إلى عمود
+                 * `not null` في أول مشاهدة، فتسقط المشاهدة كلها بصمت.
+                 */
+                'is_verified' => false,
             ]),
         );
 
@@ -107,6 +115,7 @@ class VisitRecorder
                     'is_exit' => true,
                     'is_bot' => $session->is_bot,
                     'is_staff' => $session->is_staff,
+                    'is_verified' => (bool) $session->is_verified,
                     'viewed_at' => now(),
                 ]));
 
@@ -167,6 +176,35 @@ class VisitRecorder
     }
 
     /**
+     * تحقّق الجلسة: إثباتٌ أن متصفّحًا حقيقيًّا فتح الصفحة.
+     *
+     * لا يُستنتج من سلسلة الوكيل — تلك يكتبها المرسِل بما يشاء. الإثبات
+     * فعلٌ لا يستطيعه إلا عميلٌ ينفّذ صفحتنا: نبضةٌ بلغت نقطة الجمع، أو
+     * نموذجٌ أُرسل برمز CSRF من صفحة عرضناها نحن.
+     *
+     * يقع مرة واحدة لكل جلسة ولا يُنقض. ولأن الحقل مكرَّر على المشاهدات
+     * والأحداث لتُقرأ بلا JOIN، تُرقَّى صفوف الجلسة السابقة معه — وما
+     * يُكتب بعدها يرث القيمة من الجلسة عند إنشائه.
+     *
+     * @param  string  $basis  ما أثبت التحقّق: `beacon` أو `form`.
+     */
+    public function verify(VisitorSession $session, string $basis = 'beacon'): void
+    {
+        if ($session->is_verified) {
+            return;
+        }
+
+        try {
+            $session->forceFill(['is_verified' => true, 'verified_by' => $basis])->save();
+
+            VisitorPageView::where('session_id', $session->id)->update(['is_verified' => true]);
+            VisitorEvent::where('session_id', $session->id)->update(['is_verified' => true]);
+        } catch (\Throwable $e) {
+            $this->swallow($e, __('تعذّر تعليم الزيارة متحقَّقة'));
+        }
+    }
+
+    /**
      * حدث: نقرة أو إرسال أو تنزيل أو خروج إلى موقع آخر.
      *
      * @param  array<string, mixed>  $payload
@@ -186,6 +224,7 @@ class VisitRecorder
                 'value' => isset($payload['value']) ? (float) $payload['value'] : null,
                 'meta' => is_array($payload['meta'] ?? null) ? $payload['meta'] : null,
                 'is_staff' => $session->is_staff,
+                'is_verified' => (bool) $session->is_verified,
                 'occurred_at' => now(),
             ]);
 

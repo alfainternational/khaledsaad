@@ -20,7 +20,7 @@ class VisitorPageView extends Model
         'path', 'url', 'route_name', 'title', 'query_string', 'referrer',
         'status_code', 'response_ms', 'sequence', 'is_entry', 'is_exit',
         'active_seconds', 'scroll_percent', 'interactions',
-        'is_bot', 'is_staff', 'viewed_at', 'left_at',
+        'is_bot', 'is_staff', 'is_verified', 'viewed_at', 'left_at',
     ];
 
     protected function casts(): array
@@ -38,6 +38,7 @@ class VisitorPageView extends Model
             'is_exit' => 'boolean',
             'is_bot' => 'boolean',
             'is_staff' => 'boolean',
+            'is_verified' => 'boolean',
         ];
     }
 
@@ -56,9 +57,10 @@ class VisitorPageView extends Model
         return $this->hasMany(VisitorEvent::class, 'page_view_id');
     }
 
+    /** نفس تعريف الجلسة حرفيًّا — والتحقّق منها هو ما يُنسخ إلى هنا. */
     public function scopeHuman(Builder $query): Builder
     {
-        $query->where('is_bot', false);
+        $query->where('is_bot', false)->where('is_verified', true);
 
         if (! config('insights.count_staff')) {
             $query->where('is_staff', false);

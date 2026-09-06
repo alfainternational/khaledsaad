@@ -44,7 +44,28 @@
             <span class="stat__value">{{ $channel_label }}</span>
             <span class="stat__label">القناة</span>
         </article>
+        {{-- بأي دليل عُدّت هذه زيارةً بشرية: يُعرض لأن كل رقم يُبنى عليه. --}}
+        <article class="stat">
+            <span class="stat__value">
+                @if (! $session->is_verified)
+                    غير متحقَّقة
+                @elseif ($session->verified_by === 'form')
+                    نموذج مُرسَل
+                @else
+                    نبض المتصفح
+                @endif
+            </span>
+            <span class="stat__label">أساس التحقّق</span>
+        </article>
     </section>
+
+    @unless ($session->is_verified)
+        <p class="alert">
+            لم تصل من هذه الزيارة أي إشارة من المتصفح، فهي خارج كل رقم في اللوحة.
+            آلةٌ في الغالب الأعمّ، وقد تكون متصفّحًا عُطّل فيه جافاسكربت
+            <span class="badge badge--assumption">فرضية</span>.
+        </p>
+    @endunless
 
     <div class="layout-main-aside">
         <div class="layout-flow">

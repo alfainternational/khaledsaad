@@ -90,6 +90,7 @@ class InsightsReport
             'conversion_rate' => $this->percent($conversions, $count),
             'live_now' => VisitorSession::query()->human()->live()->count(),
             'bot_hits' => VisitorSession::query()->bots()->whereBetween('started_at', [$this->from, $this->to])->count(),
+            'unverified' => VisitorSession::query()->unverified()->whereBetween('started_at', [$this->from, $this->to])->count(),
         ];
     }
 
@@ -362,7 +363,21 @@ class InsightsReport
         return VisitorPageView::query()
             ->whereBetween('viewed_at', [$this->from, $this->to])
             ->where('status_code', '>=', 400)
-            ->select('path', 'status_code', DB::raw('count(*) as hits'), DB::raw('max(viewed_at) as last_seen'))
+            ->select(
+                'path',
+                'status_code',
+                DB::raw('count(*) as hits'),
+
+                /*
+                 * عمود ثانٍ يفصل الرابط المكسور عن ضجيج الماسحات.
+                 *
+                 * `/wp-admin` و`/phpinfo.php` تتصدّر القائمة دائمًا وليس
+                 * فيها ما يُصلَح؛ والرابط الذي يصله متصفّح حقيقي يختفي
+                 * تحتها. العدّ وحده لا يفرّق بينهما، وهذا العمود يفرّق.
+                 */
+                DB::raw('sum(case when is_verified = 1 then 1 else 0 end) as verified_hits'),
+                DB::raw('max(viewed_at) as last_seen'),
+            )
             ->groupBy('path', 'status_code')
             ->orderByDesc('hits')
             ->limit($limit)
@@ -371,6 +386,7 @@ class InsightsReport
                 'path' => $row->path,
                 'status' => (int) $row->status_code,
                 'hits' => (int) $row->hits,
+                'verified_hits' => (int) $row->verified_hits,
                 'last_seen' => $row->last_seen,
             ])
             ->all();
@@ -447,6 +463,42 @@ class InsightsReport
             'language' => $byLanguage,
             'unknown' => $total - $byTimezone - $byLanguage,
             'coverage_percent' => $this->percent($byTimezone + $byLanguage, $total),
+        ];
+    }
+
+    /**
+     * على ماذا بُنيت كل نسبة أعلاه — الفجوة تُعلَن ولا تُطوى (§٤.٣).
+     *
+     * ثلاث خانات لا خانتان، وكل رقم في اللوحة مبنيّ على الأولى وحدها:
+     *
+     * - `verified`  متصفّح نفّذ صفحتنا: وصلت منه نبضة أو أُرسل منه نموذج.
+     * - `unverified` طلبٌ وصل بلا تنفيذ جافاسكربت. آلةٌ في الغالب الأعمّ،
+     *   وقد يكون متصفّحًا عُطّل فيه السكربت. لا يُدّعى أيّهما.
+     * - `bots` ما أعلن عن نفسه في سلسلة الوكيل، ويُعرض مفصَّلًا في جدوله.
+     *
+     * وحدّ هذا التمييز مُعلَن: التحقّق يُسقط من لا ينفّذ جافاسكربت، ولا
+     * يُسقط متصفّحًا آليًّا ينفّذه. فهو أرضية للضجيج لا سقفٌ له، ويبقى
+     * مستوى الدليل على «من هو إنسان» `inferred` (§٤.١).
+     *
+     * @return array<string, mixed>
+     */
+    public function audience(): array
+    {
+        $window = [$this->from, $this->to];
+
+        $verified = (clone $this->sessions())->count();
+        $unverified = VisitorSession::query()->unverified()->whereBetween('started_at', $window)->count();
+        $bots = VisitorSession::query()->bots()->whereBetween('started_at', $window)->count();
+        $total = $verified + $unverified + $bots;
+
+        return [
+            'verified' => $verified,
+            'unverified' => $unverified,
+            'bots' => $bots,
+            'total' => $total,
+            'verified_percent' => $this->percent($verified, $total),
+            'unverified_percent' => $this->percent($unverified, $total),
+            'bots_percent' => $this->percent($bots, $total),
         ];
     }
 

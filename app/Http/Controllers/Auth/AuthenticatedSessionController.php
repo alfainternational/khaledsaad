@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Concerns\CarriesStartIntent;
 use App\Http\Controllers\Controller;
+use App\Modules\Insights\ConversionRecorder;
 use App\Notifications\LoginOtpNotification;
 use App\Support\Presentation\ToolPresenter;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +17,10 @@ class AuthenticatedSessionController extends Controller
 {
     use CarriesStartIntent;
 
-    public function __construct(private readonly ToolPresenter $presenter) {}
+    public function __construct(
+        private readonly ToolPresenter $presenter,
+        private readonly ConversionRecorder $conversions,
+    ) {}
 
     public function create(Request $request): View
     {
@@ -59,6 +63,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('login.otp');
         }
 
+        // الدخول الناجح تحويل: من عاد بنفسه أهمّ إشارة بقاء لدينا،
+        // وبدونه تبدو المنصة بلا مستخدمين حتى وهم يدخلونها يوميًّا.
+        $this->conversions->record($request, 'login');
+
         $request->session()->regenerate();
         $this->forgetExperienceIntent($request);
 
@@ -98,6 +106,11 @@ class AuthenticatedSessionController extends Controller
         cache()->forget('login-otp:'.$userId);
 
         auth()->loginUsingId($userId, (bool) $request->session()->pull('otp_remember', false));
+
+        // من دخل بخطوتين دخل فعلًا: إغفاله هنا كان سيجعل التحقق الثنائي
+        // يبدو كأنه يُوقف المستخدمين، بينما هو يمرّرهم من باب آخر.
+        $this->conversions->record($request, 'login', 'otp');
+
         $request->session()->forget('otp_user_id');
         $request->session()->regenerate();
         $this->forgetExperienceIntent($request);

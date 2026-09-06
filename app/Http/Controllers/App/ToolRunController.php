@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Concerns\NavigatesWizardSteps;
 use App\Http\Controllers\Concerns\ResolvesWorkspace;
 use App\Http\Controllers\Controller;
+use App\Modules\Insights\ConversionRecorder;
 use App\Models\Project;
 use App\Models\Tool;
 use App\Models\ToolRun;
@@ -29,6 +30,7 @@ class ToolRunController extends Controller
         private readonly ToolRunService $service,
         private readonly RunPresenter $presenter,
         private readonly AttachmentUploader $uploader,
+        private readonly ConversionRecorder $conversions,
     ) {}
 
     public function start(Request $request, Project $project, Tool $tool): RedirectResponse
@@ -45,6 +47,9 @@ class ToolRunController extends Controller
         } catch (RuntimeException $exception) {
             return back()->withErrors(['tool' => $exception->getMessage()]);
         }
+
+        // تشغيل أداة داخل حساب: هذا هو الاستخدام الفعلي للمنتج، لا الزيارة.
+        $this->conversions->record($request, 'tool_run', $tool->key);
 
         // المستأنف يعود إلى حيث وقف، والمبتدئ يبدأ من الخطوة الأولى.
         return redirect()->route('app.runs.step', [$run, max(1, min($run->current_step, $run->toolVersion->stepCount()))]);
