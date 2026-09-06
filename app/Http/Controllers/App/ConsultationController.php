@@ -8,10 +8,12 @@ use App\Models\ConsultationConflict;
 use App\Models\ConsultationEvidence;
 use App\Models\ConsultationSession;
 use App\Models\Project;
+use App\Modules\Insights\FunnelRecorder;
 use App\Modules\Intake\ConsultationEvidenceService;
 use App\Modules\Intake\ConsultationPresenter;
 use App\Modules\Intake\ConsultationPrivacyService;
 use App\Modules\Intake\ConsultationService;
+use App\Support\Preflight\Preflight;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -25,7 +27,27 @@ class ConsultationController extends Controller
         private readonly ConsultationPresenter $presenter,
         private readonly ConsultationPrivacyService $privacy,
         private readonly ConsultationEvidenceService $evidence,
+        private readonly Preflight $preflight,
+        private readonly FunnelRecorder $funnel,
     ) {}
+
+    /**
+     * حالة الجلسة بلغة صاحبها لا بلغة الجدول.
+     *
+     * `analysis_queued` مصطلحٌ لنا، وقراءته على الشاشة تُشعر المستخدم أنه
+     * ينظر إلى داخل آلةٍ لا إلى منتَج.
+     */
+    private static function statusLabel(string $status): string
+    {
+        return match ($status) {
+            ConsultationSession::STATUS_ACTIVE => __('قيد الإجابة'),
+            ConsultationSession::STATUS_REVIEW => __('بانتظار مراجعتك'),
+            ConsultationSession::STATUS_QUEUED => __('قيد التحليل'),
+            ConsultationSession::STATUS_COMPLETED => __('اكتملت'),
+            ConsultationSession::STATUS_FAILED => __('تعذّرت — إجاباتك محفوظة'),
+            default => __('قيد الإجابة'),
+        };
+    }
 
     public function index(Request $request): View
     {
@@ -33,7 +55,10 @@ class ConsultationController extends Controller
             ->with(['consultationSessions' => fn ($query) => $query->latest('id')])
             ->latest('id')->get();
 
-        return view('app.consultations.index', [
+        $view = view('app.consultations.index', [
+            // البوابة قبل السؤال الأول على الحزمة كلها (INV-4): هنا وقع
+            // العطل الأصلي — ستون سؤالًا ثم جدارٌ كان قائمًا قبل البدء.
+            'preflight' => $preflight = $this->preflight->forBundle($request->user()?->primaryWorkspace()),
             'projects' => $projects->map(function (Project $project): array {
                 $latest = $project->consultationSessions->first();
 
@@ -44,11 +69,19 @@ class ConsultationController extends Controller
                     'consultation' => $latest ? [
                         'uuid' => $latest->uuid,
                         'status' => $latest->status,
+                        // القيمة الخام (`analysis_queued`) لا تُطبع للمستخدم:
+                        // هي مصطلحنا الداخلي لا لغته (INV-3).
+                        'status_label' => self::statusLabel($latest->status),
                         'answered' => $latest->questions_answered,
                     ] : null,
                 ];
             })->all(),
         ]);
+
+        // ما رآه المستخدم على بوابة الحزمة يُقاس — هنا وقع العطل الأصلي.
+        $this->funnel->preflight($request, $preflight->outcome->value, ['flow' => 'consultation']);
+
+        return $view;
     }
 
     public function start(Request $request, Project $project): RedirectResponse

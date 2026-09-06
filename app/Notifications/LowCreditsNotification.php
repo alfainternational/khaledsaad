@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\Presentation\Num;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -28,7 +29,9 @@ class LowCreditsNotification extends Notification
         return (new MailMessage)
             ->subject(__('رصيدك أوشك على الانتهاء'))
             ->greeting(__('تنبيه رصيد'))
-            ->line("رصيدك الحالي {$this->balance}، وقد لا يكفي لبدء تشخيص جديد.")
+            ->line(__('رصيدك الحالي :credits، وقد لا يكفي لبدء تشخيص جديد.', [
+                'credits' => Num::credits($this->balance),
+            ]))
             ->action(__('راجع الخطط وخيارات الرصيد'), route('app.billing'))
             ->line(__('يمكنك الترقية أو شراء حزمة أرصدة في أي وقت.'));
     }
@@ -41,7 +44,7 @@ class LowCreditsNotification extends Notification
         return [
             'type' => 'low_credits',
             'title' => __('رصيدك أوشك على الانتهاء'),
-            'body' => "رصيدك الحالي {$this->balance}.",
+            'body' => __('رصيدك الحالي :credits.', ['credits' => Num::credits($this->balance)]),
             'url' => route('app.billing'),
         ];
     }

@@ -42,6 +42,29 @@ final class AxisScore
      * بصفر يخفض الدرجة الكلية بلا سبب حقيقي، ويجعل المستخدم يطارد رقمًا لا
      * يعكس نشاطه بل نقص بياناته. الفرق بين الاثنين هو §٤.٣ بعينه.
      */
+    /**
+     * كم بندًا فُحص فعلًا من بنود المحور.
+     *
+     * الحساب هنا لا في القالب (INV-2): معادلةٌ في Blade لا اختبار لها ولا
+     * مصدر واحد، وتُنسخ إلى الشاشة التالية بصيغة مختلفة قليلًا — فيرى
+     * المستخدم رقمين لشيء واحد.
+     */
+    public function checkedItems(): int
+    {
+        return (int) round($this->coverage * count($this->breakdown));
+    }
+
+    public function totalItems(): int
+    {
+        return count($this->breakdown);
+    }
+
+    /** التغطية كنسبة مئوية صحيحة، جاهزة للعرض. */
+    public function coveragePercent(): int
+    {
+        return (int) round($this->coverage * 100);
+    }
+
     public function isActive(): bool
     {
         return $this->coverage > 0.0;

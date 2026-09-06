@@ -8,10 +8,12 @@
         <div>
             <p class="eyebrow">{{ $run['tool']['title'] }} · {{ $run['project']['name'] }}</p>
             <h1 id="run-status-title">{{ $run['status_label'] }}</h1>
-            <p class="muted">
-                إجاباتك محفوظة. يمكنك إغلاق الصفحة الآن —
-                ستجد هذا التحليل في قسم «أكمل ما بدأته» داخل لوحة التحكم، ويصلك إشعار عند اكتماله.
-            </p>
+            @unless ($run['failure'] ?? null)
+                <p class="muted">
+                    إجاباتك محفوظة. يمكنك إغلاق الصفحة الآن —
+                    ستجد هذا التحليل في قسم «أكمل ما بدأته» داخل لوحة التحكم، ويصلك إشعار عند اكتماله.
+                </p>
+            @endunless
         </div>
 
         {{-- الوعد بالعودة يحتاج طريقًا فعليًا، لا طمأنة فقط. --}}
@@ -23,12 +25,19 @@
         </div>
     </header>
 
-    <div class="progress">
-        <div class="progress__bar">
-            <span id="run-progress-bar" style="inline-size: {{ $run['progress_percent'] }}%"></span>
+    @php($failure = $run['failure'] ?? null)
+
+    {{-- شريط تقدّم فوق رسالة فشل يجعل الشاشة تناقض نفسها: «بقيت أسئلة
+         قليلة» أعلى «تعذّر التحليل». التقدّم يُخفى عند الفشل، ولا يُترك
+         ليقول للمستخدم إن شيئًا لا يزال يجري. --}}
+    @unless ($failure)
+        <div class="progress">
+            <div class="progress__bar">
+                <span id="run-progress-bar" style="inline-size: {{ $run['progress_percent'] }}%"></span>
+            </div>
+            <p class="muted"><span id="run-progress-value">{{ $run['progress_percent'] }}</span>% مكتمل</p>
         </div>
-        <p class="muted"><span id="run-progress-value">{{ $run['progress_percent'] }}</span>% مكتمل</p>
-    </div>
+    @endunless
 
     <ol class="stages" id="run-stages"
         data-progress-url="{{ route('app.runs.progress', $run['uuid']) }}"
@@ -37,22 +46,35 @@
             <li class="stage stage--{{ $stage['status'] }}" data-stage="{{ $stage['key'] }}">
                 <span class="stage__label">{{ $stage['label'] }}</span>
                 <span class="stage__status">{{ $stage['status_label'] }}</span>
-                @if ($stage['error'])
-                    <span class="stage__error">{{ $stage['error'] }}</span>
+                @if ($stage['has_error'] ?? false)
+                    <span class="stage__error">{{ __('تعذّرت هذه المرحلة') }}</span>
                 @endif
             </li>
         @endforeach
     </ol>
 
-    @if ($run['failure_reason'] || ($run['is_stale'] ?? false))
-        <div @class(['alert', 'alert--error' => $run['failure_reason'], 'alert--info' => ! $run['failure_reason']])>
-            <p>{{ $run['failure_reason'] ?: $run['stale_hint'] }}</p>
-        </div>
-
-        <form method="POST" action="{{ route('app.runs.retry', $run['uuid']) }}">
-            @csrf
-            <button type="submit" class="btn btn--primary">أعد المحاولة</button>
-        </form>
+    @if ($failure)
+        <x-ui.error-state
+            :title="$failure['title']"
+            :message="$failure['message']"
+            :kind="$failure['kind']"
+            {{-- المؤجَّل لا يُعرض معه زرّ إعادة: نحن نعيده تلقائيًّا، وزرٌّ
+                 يطلب منه أن يفعل ما نفعله نحن يوحي بأن الأمر بيده. --}}
+            :retry="($failure['is_waiting'] ?? false) ? null : route('app.runs.retry', $run['uuid'])">
+            {{-- الإجراء الوحيد يظهر للحدّ الذي يملك المستخدم رفعه فقط. --}}
+            @if ($failure['billing_action'])
+                <a href="{{ route('app.billing') }}" class="btn btn--ghost">{{ __('الاشتراك والفوترة') }}</a>
+            @endif
+            <a href="{{ route('app.projects.show', $run['project']['slug']) }}" class="btn btn--ghost">
+                {{ __('تقاريري السابقة') }}
+            </a>
+        </x-ui.error-state>
+    @elseif ($run['is_stale'] ?? false)
+        <x-ui.error-state
+            :title="__('التحليل لم يتقدّم منذ فترة')"
+            :message="$run['stale_hint']"
+            kind="ours"
+            :retry="route('app.runs.retry', $run['uuid'])" />
     @endif
 @endsection
 
@@ -81,8 +103,13 @@
                     const { data } = await response.json();
 
                     document.getElementById('run-status-title').textContent = data.status_label;
-                    document.getElementById('run-progress-bar').style.inlineSize = data.progress_percent + '%';
-                    document.getElementById('run-progress-value').textContent = data.progress_percent;
+
+                    // شريط التقدّم غائب من الصفحة عند الفشل — الكتابة فيه
+                    // بلا فحص كانت سترمي وتوقف الاستطلاع بصمت.
+                    const bar = document.getElementById('run-progress-bar');
+                    const value = document.getElementById('run-progress-value');
+                    if (bar) bar.style.inlineSize = data.progress_percent + '%';
+                    if (value) value.textContent = data.progress_percent;
 
                     data.stages.forEach((stage) => {
                         const node = container.querySelector('[data-stage="' + stage.key + '"]');

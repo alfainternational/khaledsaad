@@ -543,7 +543,7 @@
 
 /* --- التجاوب --- */
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
     .tool-hero,
     .public-tool-hero,
     .hero-grid.layout-hero {
@@ -556,7 +556,7 @@
     }
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 767px) {
     .public-card-grid,
     .public-step-grid {
         grid-template-columns: 1fr;

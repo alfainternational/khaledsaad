@@ -922,7 +922,7 @@
     white-space: nowrap;
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1023px) {
     .content-type-tabs {
         overflow-x: auto;
         grid-template-columns: repeat(5, minmax(9.5rem, 1fr));
@@ -948,7 +948,7 @@
     }
 }
 
-@media (max-width: 820px) {
+@media (max-width: 767px) {
     .content-library-hero__inner,
     .content-page__hero-grid,
     .content-library-featured {
@@ -965,7 +965,7 @@
     }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 479px) {
     .content-search {
         grid-template-columns: auto minmax(0, 1fr);
     }
@@ -1582,12 +1582,15 @@
 }
 
 .content-card__lesson-order {
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     color: #fff !important;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     border-color: var(--brand-blue) !important;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     background: var(--brand-blue) !important;
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1023px) {
     .content-page--learning .content-reading-grid {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -1611,7 +1614,7 @@
     }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 479px) {
     .learning-tools button {
         flex: 1 1 calc(50% - 0.55rem);
         justify-content: center;
@@ -1658,12 +1661,14 @@
     .learning-outline,
     .content-reading-sidebar,
     .learning-adjacent {
+        /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
         display: none !important;
     }
 
     .content-page__hero {
         min-height: auto;
         color: var(--ink);
+        /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
         background: var(--surface) !important;
     }
 

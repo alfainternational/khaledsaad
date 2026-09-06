@@ -8,6 +8,9 @@ use App\Models\GuestSession;
 use App\Models\Subscription;
 use App\Models\ToolRun;
 use App\Models\User;
+use App\Support\AI\Resilience\CircuitBreaker;
+use App\Support\AI\Resilience\FallbackChainGateway;
+use App\Support\AI\Resilience\SpendGuard;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -22,10 +25,19 @@ use Illuminate\View\View;
  */
 class OperationsController extends Controller
 {
-    public function index(): View
-    {
+    public function index(
+        FallbackChainGateway $chain,
+        CircuitBreaker $breaker,
+        SpendGuard $spend,
+    ): View {
         return view('admin.operations', [
             'queue' => $this->queueHealth(),
+            // ما بُني للمراقبة يجب أن يُرى: تنبيهٌ في البريد وحده يُقرأ
+            // متأخرًا، والقرار يُتخذ أمام لوحة لا في صندوق وارد.
+            'provider_health' => $this->providerHealth($chain, $breaker),
+            'spend' => $this->spend($spend),
+            'deferred' => $this->deferred(),
+            'margins' => $this->toolMargins(),
             'failures' => $this->recentFailures(),
             'providers' => $this->providerKeys(),
             'funnel' => $this->funnel(),
@@ -43,6 +55,117 @@ class OperationsController extends Controller
                 ? DB::table('failed_jobs')->latest('failed_at')->value('failed_at')
                 : null,
         ];
+    }
+
+    /**
+     * صحة كل مزوّد في السلسلة، وقدرتنا الكلية على الخدمة.
+     *
+     * كان الجدول يعرض «مفتاح مضبوط أم غائب» فقط — وهو سؤالٌ يُجاب مرة
+     * عند الإعداد. السؤال الذي يتكرر كل يوم هو: **هل يعمل الآن؟** ونفادُ
+     * الاشتراك لا يظهر في وجود المفتاح إطلاقًا، وهو ما أوقف المنصة.
+     *
+     * القراءة من القاطع لا باستدعاء المزوّد: فتحُ الصفحة لا يجوز أن
+     * يكلّف مالًا، والقاطع يحمل آخر ما عرفناه فعلًا.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function providerHealth(FallbackChainGateway $chain, CircuitBreaker $breaker): array
+    {
+        $rows = [];
+
+        foreach ($chain->health() as $provider => $health) {
+            $rows[] = [
+                'provider' => $provider,
+                'state' => $health->value,
+                'label' => $health->label(),
+                'serving' => $health->canServe(),
+                'failures' => $breaker->failures($provider),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * الإنفاق اليومي مقابل السقف.
+     *
+     * `null` في `ratio` تعني «بلا سقف» لا «صفر إنفاق» — والخلط بينهما
+     * يجعل اللوحة تطمئن حيث يجب أن تُنذر.
+     *
+     * @return array<string, mixed>
+     */
+    private function spend(SpendGuard $guard): array
+    {
+        return [
+            'today' => round($guard->spentToday(), 4),
+            'cap' => $guard->cap(),
+            'ratio' => $guard->ratio(),
+            'has_capacity' => $guard->hasCapacity(),
+        ];
+    }
+
+    /**
+     * التشغيلات المؤجَّلة وأعمارها — أهم رقم تشغيلي في الصفحة.
+     *
+     * كل صفٍّ هنا مستخدمٌ بذل مجهوده وينتظرنا. وعمرُ أقدمها هو الجواب عن
+     * «كم صبّرنا أحدهم؟»، وهو سؤالٌ لم يكن له جواب حين وقع العطل.
+     *
+     * @return array<string, mixed>
+     */
+    private function deferred(): array
+    {
+        $runs = ToolRun::where('status', ToolRun::STATUS_AWAITING_CAPACITY)
+            ->with(['toolVersion.tool:id,key,title', 'project:id,name'])
+            ->orderBy('updated_at')
+            ->limit(15)
+            ->get();
+
+        $oldest = ToolRun::where('status', ToolRun::STATUS_AWAITING_CAPACITY)->min('updated_at');
+
+        return [
+            'count' => ToolRun::where('status', ToolRun::STATUS_AWAITING_CAPACITY)->count(),
+            'oldest_at' => $oldest,
+            'runs' => $runs,
+        ];
+    }
+
+    /**
+     * تكلفة كل أداة مقابل سعرها بالأرصدة — الهامش الحقيقي.
+     *
+     * بدونه لا نعرف أي أداة تُباع بخسارة، فنسعّر بالحدس. آخر ثلاثين يومًا
+     * لأن أسعار المزوّدين تتغيّر، ومتوسطُ سنةٍ يخفي تغيّرًا وقع الشهر الماضي.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function toolMargins(): array
+    {
+        if (! Schema::hasTable('ai_usage_records')) {
+            return [];
+        }
+
+        return DB::table('ai_usage_records')
+            ->join('tool_runs', 'tool_runs.id', '=', 'ai_usage_records.tool_run_id')
+            ->join('tool_versions', 'tool_versions.id', '=', 'tool_runs.tool_version_id')
+            ->join('tools', 'tools.id', '=', 'tool_versions.tool_id')
+            ->where('ai_usage_records.created_at', '>=', now()->subDays(30))
+            ->groupBy('tools.key', 'tools.title', 'tool_versions.credit_cost')
+            ->selectRaw('tools.key, tools.title, tool_versions.credit_cost,
+                COUNT(DISTINCT tool_runs.id) as runs,
+                SUM(ai_usage_records.cost_usd) as cost_usd')
+            ->orderByDesc('cost_usd')
+            ->get()
+            ->map(fn ($row) => [
+                'key' => $row->key,
+                'title' => $row->title,
+                'credit_cost' => (int) $row->credit_cost,
+                'runs' => (int) $row->runs,
+                'cost_usd' => round((float) $row->cost_usd, 4),
+                // التكلفة لكل تشغيل هي ما يُقارَن بالسعر، لا المجموع.
+                'cost_per_run' => $row->runs > 0
+                    ? round((float) $row->cost_usd / (int) $row->runs, 4)
+                    : null,
+            ])
+            ->all();
     }
 
     /** @return Collection<int, ToolRun> */

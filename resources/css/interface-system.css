@@ -727,7 +727,7 @@ body[data-interface-system='v2'] .report-section {
     break-inside: avoid;
 }
 
-@media (max-width: 75rem) {
+@media (max-width: 1279px) {
     body[data-interface-system='v2'][data-interface-family='public'] .tools-catalog-grid--available,
     body[data-interface-system='v2'][data-interface-family='public'] .tools-catalog-grid--soon,
     body[data-interface-system='v2'][data-interface-family='public'] .public-page-grid,
@@ -736,7 +736,7 @@ body[data-interface-system='v2'] .report-section {
     }
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 767px) {
     body[data-interface-system='v2'] .page-head,
     body[data-interface-system='v2'] .ui-page-header {
         grid-template-columns: 1fr;

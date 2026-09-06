@@ -37,7 +37,7 @@
                     <h3>{{ $plan['name'] }}</h3>
                     <p class="score-big">{{ $plan['price'] }}<small> ريال/شهر</small></p>
                     <ul class="bullets">
-                        <li>{{ $plan['monthly_credits'] }} رصيد شهريًا</li>
+                        <li>{{ __(':credits شهريًا', ['credits' => \App\Support\Presentation\Num::credits((int) $plan['monthly_credits'])]) }}</li>
                         {{-- ما يُعرض هنا هو عناصر الخطة نفسها؛ حد المشاريع أحدها. --}}
                         @forelse ($plan['features'] as $feature)
                             <li>{{ $feature }}</li>

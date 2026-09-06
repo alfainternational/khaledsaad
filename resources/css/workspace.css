@@ -539,7 +539,7 @@
     align-items: start;
 }
 
-@media (max-width: 64rem) {
+@media (max-width: 1023px) {
     .layout-grid {
         grid-template-columns: repeat(8, minmax(0, 1fr));
     }
@@ -566,7 +566,7 @@
     }
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 767px) {
     .layout-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -605,7 +605,7 @@
     backdrop-filter: blur(2px);
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1023px) {
     .panel__side {
         position: fixed;
         inset-block: 0;
@@ -634,7 +634,7 @@
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
     .panel__top {
         gap: 0.55rem;
         padding-inline: 0.75rem;
@@ -763,7 +763,7 @@
     inset-block-start: 5.5rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
     .report-head {
         grid-template-columns: 1fr;
     }
@@ -1114,7 +1114,7 @@
     font-weight: 600;
 }
 
-@media (max-width: 70rem) {
+@media (max-width: 1023px) {
     .wizard-live-layout {
         grid-template-columns: 1fr;
     }
@@ -1215,7 +1215,7 @@
     outline-offset: 1px;
 }
 
-@media (max-width: 85rem) {
+@media (max-width: 1279px) {
     .filter-bar[data-filter-bar],
     .filter-bar--compact[data-filter-bar],
     .filter-bar--search[data-filter-bar] {
@@ -1228,7 +1228,7 @@
     }
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 767px) {
     .filter-bar[data-filter-bar],
     .filter-bar--compact[data-filter-bar],
     .filter-bar--search[data-filter-bar] {
@@ -1932,7 +1932,7 @@ label.experience-choice__card {
     line-height: 1.7;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
     .experience-choice__card {
         align-items: flex-start;
         padding: 0.9rem;
@@ -2056,6 +2056,7 @@ label.experience-choice__card {
 
 .table__cell--primary {
     min-inline-size: 16rem;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     white-space: normal !important;
 }
 
@@ -2109,7 +2110,7 @@ label.experience-choice__card {
     overflow: auto;
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 767px) {
     [data-table="entity"] thead {
         position: absolute;
         inline-size: 1px;
@@ -3179,7 +3180,7 @@ button.competitor-list__x:hover {
     justify-content: space-between;
 }
 
-@media (max-width: 60rem) {
+@media (max-width: 1023px) {
     .studio-grid {
         grid-template-columns: 1fr;
     }
@@ -3614,5 +3615,274 @@ button.competitor-list__x:hover {
 }
 .provenance-badge{display:inline-flex;align-items:center;border:1px solid var(--color-border,#d9e0ea);border-radius:999px;padding:.35rem .7rem;font-size:.82rem;font-weight:700;background:var(--color-surface,#fff)}
 .recommendation-contract{margin-block:1rem;padding:1rem;border:1px solid var(--color-border,#d9e0ea);border-radius:var(--radius-md,12px);box-shadow:none;break-inside:avoid}
-.recommendation-contract--missing{border-style:dashed;background:#fff8e8}.recommendation-contract__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:0}.recommendation-contract__grid div{border-inline-start:3px solid var(--color-primary,#2457d6);padding-inline-start:.65rem}.recommendation-contract dt{font-size:.78rem;font-weight:800;color:var(--color-muted,#5d6b82)}.recommendation-contract dd{margin:.2rem 0 0}.recommendation-template{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--color-border,#d9e0ea)}.score-equation{font-variant-numeric:tabular-nums;display:flex;gap:.35rem;align-items:center;justify-content:center;margin-top:.6rem}@media(max-width:640px){.recommendation-contract__grid{grid-template-columns:1fr}}@media print{[data-copy-template]{display:none!important}.recommendation-contract{break-inside:avoid}}
+/* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
+.recommendation-contract--missing{border-style:dashed;background:#fff8e8}.recommendation-contract__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:0}.recommendation-contract__grid div{border-inline-start:3px solid var(--color-primary,#2457d6);padding-inline-start:.65rem}.recommendation-contract dt{font-size:.78rem;font-weight:800;color:var(--color-muted,#5d6b82)}.recommendation-contract dd{margin:.2rem 0 0}.recommendation-template{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--color-border,#d9e0ea)}.score-equation{font-variant-numeric:tabular-nums;display:flex;gap:.35rem;align-items:center;justify-content:center;margin-top:.6rem}@media(max-width: 767px){.recommendation-contract__grid{grid-template-columns:1fr}}@media print{[data-copy-template]{display:none!important}.recommendation-contract{break-inside:avoid}}
 .human-traces{margin-block:.75rem;padding:.75rem 1rem;border-inline-start:3px solid var(--color-primary,#2457d6);background:var(--color-surface-subtle,#f5f9ff);font-size:.9rem}.human-traces ul{margin:.35rem 0 0;padding-inline-start:1.1rem}
+
+/* ==================================================================
+ * أنماط كانت في public/css/ui-repairs.css ونُقلت إلى المصدر.
+ *
+ * الملف نُشر خارج الحزمة لأن نظام الواجهة v2 لم يكن معتمدًا وقتها،
+ * فكان إعادةُ بناء الأصول تنشر عملًا غير مثبَّت. وقد اعتُمد v2،
+ * فسقط سببُ الاستثناء. وملفٌ اسمه «إصلاحات» ينمو إلى الأبد بحكم
+ * اسمه: من يجد نمطًا ناقصًا يضيفه هناك بدل أن يضعه في طبقته.
+ * ================================================================== */
+/* ------------------------------------------------------------------
+ * ١ — الترقيم: ستّ صفحات كانت تعرضه مكدَّسًا بلا شكل.
+ *
+ * يقابل `resources/views/vendor/pagination/tailwind.blade.php`.
+ * ------------------------------------------------------------------ */
+.pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-block-start: 1.25rem;
+    font-size: 0.88rem;
+}
+
+.pager__count {
+    color: var(--muted, #667085);
+    font-variant-numeric: tabular-nums;
+}
+
+.pager__links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.pager__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 2.4rem;
+    min-block-size: 2.4rem;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--line, #e3e8ef);
+    border-radius: 0.5rem;
+    color: inherit;
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.pager__link:hover {
+    border-color: var(--brand-blue, #2575ff);
+}
+
+.pager__link.is-current {
+    background: var(--brand-blue, #2575ff);
+    border-color: var(--brand-blue, #2575ff);
+    color: #fff;
+    font-weight: 700;
+}
+
+/* المعطَّل يُعرض ولا يُخفى: اختفاء «السابق» يُزحزح الشريط عند كل صفحة. */
+.pager__link.is-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.pager__gap,
+.pager__page {
+    color: var(--muted, #667085);
+    padding-inline: 0.35rem;
+}
+
+/* ------------------------------------------------------------------
+ * ٢ — عناصر عارية تمامًا: لا كلاس منسَّق واحد عليها.
+ * ------------------------------------------------------------------ */
+
+/*
+ * صفّ أزرار النموذج. كان `<div class="form-actions">` بلا نمط، فتنزل
+ * الأزرار تحت بعضها بعرض كامل بدل صفّ واحد — في صفحات إنشاء وتعديل
+ * التصنيفات والمحتوى.
+ *
+ * الاسم المنسَّق في المشروع `form__actions`؛ هذا يجعل الاثنين سواء بدل
+ * تعديل قوالب تحمل عمل جلسة أخرى.
+ */
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-block-start: 1rem;
+}
+
+/* مجموعة حقول داخل نموذج طويل: بلا فاصل بصري تصير الحقول كتلة واحدة. */
+.form-section {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1.15rem;
+    margin-block-end: 1.25rem;
+    border: 1px solid var(--line, #e3e8ef);
+    border-radius: 0.75rem;
+    background: var(--surface, #fff);
+}
+
+.form-section > legend {
+    padding-inline: 0.5rem;
+    font-weight: 700;
+    color: var(--ink-brand, #071f5b);
+}
+
+/*
+ * حالة الفراغ. رسالة «لا يوجد شيء» بلا تنسيق تبدو خطأً في الصفحة لا
+ * حالةً مقصودة — وهي أول ما يراه مستخدم جديد قبل أن يُنشئ أي شيء.
+ */
+.empty-state,
+.content-resources__empty {
+    margin: 0;
+    padding: 1.1rem 1.25rem;
+    border: 1px dashed var(--line, #e3e8ef);
+    border-radius: 0.75rem;
+    color: var(--muted, #667085);
+    text-align: center;
+}
+
+/* خيارات التسليم في مراجعة التشغيل: قسم بلا تنفّس يلتصق بما قبله. */
+.delivery-choice {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.15rem;
+    margin-block: 1.25rem;
+    border: 1px solid var(--line, #e3e8ef);
+    border-radius: 0.75rem;
+    background: var(--surface-soft, #f7f9fc);
+}
+
+/* صفحة التعريف العامة: `<main>` بلا حدّ عرض يمتدّ سطرها عبر الشاشة. */
+.profile-page {
+    inline-size: min(72rem, 100% - 2rem);
+    margin-inline: auto;
+    padding-block: 2rem;
+}
+
+/* بقيّة من قالب ترحيب قديم في صفحة التقرير المشترك. */
+.items-top {
+    align-items: flex-start;
+}
+
+/* ------------------------------------------------------------------
+ * ٣ — صِيَغ مُعلَنة بلا أثر.
+ *
+ * كلاسات تَعِد بمظهر مختلف ولا تُغيّر شيئًا، فيظهر «الثانوي» مطابقًا
+ * للأساسي و«الفرضية» مطابقة للحقيقة — وهذا الأخير يخالف §٤.١ نصًّا:
+ * ما هو فرضية يجب أن يُرى فرضية.
+ * ------------------------------------------------------------------ */
+.btn--secondary {
+    background: var(--surface-soft, #f1f5f9);
+    border-color: var(--line, #e3e8ef);
+    color: var(--ink-brand, #071f5b);
+}
+
+.tag--assumption {
+    background: rgba(255, 155, 39, 0.14);
+    border-color: rgba(255, 155, 39, 0.4);
+    color: var(--on-tint-warn, #b45309);
+}
+
+.section--soft {
+    background: var(--surface-soft, #f7f9fc);
+    border-radius: 1rem;
+    padding-block: 2rem;
+}
+
+:root[data-theme='dark'] .tag--assumption {
+    color: #ffb75e;
+}
+
+:root[data-theme='dark'] .btn--secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+}
+
+/* ==================================================================
+ * شاشة الفشل الموحّدة، والملاحة المعطّلة المعلنة، وقوائم الخطة.
+ *
+ * مكوّن `ErrorState` واحد لكل حالات الفشل: شاشةٌ ارتجالية بجانبه
+ * تعيد إنتاج ما أصلحناه، فالنمط هنا لا هناك.
+ * ================================================================== */
+.ui-error-state {
+    margin-block-start: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--line, #e3e8ef);
+    border-inline-start: 4px solid var(--warn, #f79009);
+    border-radius: 0.75rem;
+    background: var(--surface-raised, #fff);
+}
+
+/* عطلٌ لدينا: نبرة اعتذار لا نبرة اتهام. */
+.ui-error-state--ours { border-inline-start-color: var(--brand-blue, #2575ff); }
+.ui-error-state--theirs { border-inline-start-color: var(--warn, #f79009); }
+.ui-error-state--input { border-inline-start-color: var(--muted, #667085); }
+
+.ui-error-state__message {
+    margin-block: 0.5rem 1rem;
+    color: var(--muted, #667085);
+    max-inline-size: 62ch;
+}
+
+.ui-error-state__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/* عنصر ملاحة غير جاهز: معلن لا مخفيّ ولا موجَّه إلى بديل. */
+.panel__link.is-disabled {
+    opacity: 0.55;
+    cursor: default;
+    pointer-events: none;
+}
+
+.panel__link-badge {
+    margin-inline-start: auto;
+    padding-inline: 0.4rem;
+    border-radius: 0.35rem;
+    background: var(--tint, #f2f4f7);
+    font-size: 0.7rem;
+    font-style: normal;
+}
+
+.plan-group { margin-block-start: 1.75rem; }
+
+.plan-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-block-start: 0.75rem;
+    padding: 0;
+    list-style: none;
+}
+
+.task__project {
+    display: inline-block;
+    margin-block-start: 0.25rem;
+    font-size: 0.82rem;
+    color: var(--muted, #667085);
+}
+
+.report-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-block-start: 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.report-list__item {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line, #e3e8ef);
+    border-radius: 0.65rem;
+    background: var(--surface-raised, #fff);
+}
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block: 1rem;
+}

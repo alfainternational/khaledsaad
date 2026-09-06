@@ -66,14 +66,50 @@
     @else
         <section class="card">
             <h2 class="section-title">
-                {{ ($engagement['state'] ?? 'new') === 'new' ? 'على أي مشروع نبدأ؟' : 'أو ابدأ من جديد على مشروع' }}
+                {{ ($engagement['state'] ?? 'new') === 'new' ? __('على أي مشروع نبدأ؟') : __('أو ابدأ من جديد على مشروع') }}
             </h2>
-            <p class="muted">{{ __('تكلفة هذا التشغيل: :count رصيد', ['count' => $tool['credit_cost']]) }}</p>
+
+            {{-- شاشة ما قبل البدء (INV-4): التكلفة والوقت وعدد الأسئلة
+                 والرصيد قبل السؤال الأول. عرضُها بعد آخر سؤال هو ما جعل
+                 مستخدمًا يجيب عن ستين سؤالًا ثم يصطدم بجدار كان قائمًا
+                 قبل أن يبدأ. --}}
+            <p class="preflight__headline">{{ $preflight->headline() }}</p>
+
+            @if ($preflight->questionsSaved() > 0)
+                <p class="muted">
+                    {{ __('وفّرنا عليك :count لأن مشروعك يعرفها أصلًا.', [
+                        'count' => trans_choice(
+                            '{1} سؤالًا واحدًا|{2} سؤالين|[3,10] :count أسئلة|[11,*] :count سؤالًا',
+                            $preflight->questionsSaved(),
+                            ['count' => \App\Support\Presentation\Num::int($preflight->questionsSaved())],
+                        ),
+                    ]) }}
+                </p>
+            @endif
+
+            @if ($preflight->isOurFault())
+                {{-- المانع منّا: اعتذار بلا مطالبة، ولا رابط فوترة (INV-8).
+                     إظهار «اشحن رصيدك» هنا يحمّله عطلًا ليس منه. --}}
+                <p class="alert alert--info">
+                    {{ __('إجاباتك لن تضيع، لكننا لا نستطيع تشغيل التحليل الآن. سنُعيد الخدمة قريبًا — تفقّد تقاريرك السابقة ريثما نعود.') }}
+                </p>
+            @elseif (! $preflight->isReady())
+                {{-- الحدّ يُعلن قبل البدء ومعه إجراؤه الواحد، لا بعد المجهود. --}}
+                <p class="alert alert--info">
+                    {{ __('ينقصك :shortfall لتشغيل هذا التشخيص.', [
+                        'shortfall' => \App\Support\Presentation\Num::credits($preflight->shortfall()),
+                    ]) }}
+                    <a href="{{ route('app.billing') }}">{{ __('اشحن رصيدك') }}</a>
+                </p>
+            @endif
+
             <div class="run-launcher">
                 @foreach ($projects as $project)
                     <form method="POST" action="{{ route('app.runs.start', [$project['slug'], $tool['key']]) }}">
                         @csrf
-                        <button type="submit" class="btn btn--primary btn--sm">{{ $project['name'] }}</button>
+                        <button type="submit" class="btn btn--primary btn--sm" @disabled(! $preflight->isReady())>
+                            {{ $project['name'] }}
+                        </button>
                     </form>
                 @endforeach
             </div>

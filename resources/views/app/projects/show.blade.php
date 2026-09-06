@@ -133,10 +133,21 @@
                     @php($report = $group['latest'])
                     <li class="list__item">
                         <div>
+                            {{-- العنوان مرة واحدة، والبادئة شارة منفصلة.
+                                 تركيبُ «العنوان + أحدث نتيجة: + العنوان» كان
+                                 يطبع الاسم مرتين في سطر واحد، لأن عنوان
+                                 التقرير يبدأ بعنوان أداته أصلًا. --}}
                             <strong>{{ $group['tool_title'] }}</strong>
-                            <a href="{{ route('app.reports.show', $report['id']) }}">{{ __('أحدث نتيجة: :title', ['title' => $report['title']]) }}</a>
+                            <span class="tag">{{ __('أحدث نتيجة') }}</span>
+                            <a href="{{ route('app.reports.show', $report['id']) }}">
+                                {{ __('افتح التقرير') }}
+                            </a>
                         </div>
-                        <span class="score-chip">{{ $report['score'] }}/100</span>
+                        {{-- درجة تشخيصٍ واحد، لا جاهزية المشروع (A3). --}}
+                        <span class="score-chip">
+                            {{ __('درجة هذا التشخيص') }}:
+                            {{ \App\Support\Presentation\Num::score($report['score']) }}
+                        </span>
                         <time class="muted">{{ \Illuminate\Support\Carbon::parse($report['created_at'])->translatedFormat('j F Y') }}</time>
                         @if ($group['history'] !== [])
                             <details>
@@ -145,7 +156,7 @@
                                     @foreach ($group['history'] as $previous)
                                         <li>
                                             <a href="{{ route('app.reports.show', $previous['id']) }}">{{ $previous['title'] }}</a>
-                                            <span class="score-chip">{{ $previous['score'] }}/100</span>
+                                            <span class="score-chip">{{ \App\Support\Presentation\Num::score($previous['score']) }}</span>
                                             <time>{{ \Illuminate\Support\Carbon::parse($previous['created_at'])->translatedFormat('j F Y') }}</time>
                                         </li>
                                     @endforeach

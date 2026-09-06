@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
 use App\Modules\Execution\TaskGuideRequest;
+use App\Modules\Insights\FunnelRecorder;
 use App\Support\Presentation\ProjectPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class TaskController extends Controller
     public function __construct(
         private readonly ProjectPresenter $presenter,
         private readonly TaskGuideRequest $guides,
+        private readonly FunnelRecorder $funnel,
     ) {}
 
     public function index(Request $request, Project $project): View
@@ -36,7 +38,9 @@ class TaskController extends Controller
         $this->authorizeTask($request, $task);
 
         $data = $request->validate([
-            'status' => 'required|in:todo,doing,done',
+            // `suggested` مقبولة كي يستطيع المستخدم إعادة مهمة إلى الاقتراح
+            // بدل حذفها: التراجع عن التبنّي ليس إسقاطًا للتوصية.
+            'status' => 'required|in:suggested,todo,doing,done',
             'due_date' => 'nullable|date',
         ]);
 
@@ -47,6 +51,35 @@ class TaskController extends Controller
         ]);
 
         return back()->with('status', __('حُدثت حالة المهمة.'));
+    }
+
+    /**
+     * تبنّي مهمة مقترحة — النقلة من «قرأت» إلى «سأنفّذ».
+     *
+     * التبنّي فعلٌ صغير مقصود: الخطة تُقترح كاملة تلقائيًّا، ويختار منها
+     * المستخدم ما يلتزم به. بلا هذه الخطوة يواجه أربع عشرة مهمة مفتوحة
+     * لم يوافق على واحدة منها، فيهجرها كلها.
+     */
+    public function adopt(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorizeTask($request, $task);
+
+        if ($task->status !== Task::STATUS_SUGGESTED) {
+            return back();
+        }
+
+        $task->update([
+            'status' => Task::STATUS_TODO,
+            // المالك يُسجَّل عند التبنّي لا عند التوليد: المولَّد تلقائيًّا
+            // لا صاحب له بعد، ومن يتبنّاه هو من سيُنبَّه عليه.
+            'owner_id' => $task->owner_id ?? $request->user()->id,
+        ]);
+
+        // المؤشر الحاكم للاحتفاظ: من أنجز مهمة رأى أثرًا، ومن رأى أثرًا
+        // يجدّد. وقياسه يبدأ من التبنّي.
+        $this->funnel->record($request, FunnelRecorder::TASK_ADOPTED, ['task' => $task->id]);
+
+        return back()->with('status', __('أُضيفت المهمة إلى خطتك.'));
     }
 
     /**
@@ -76,6 +109,9 @@ class TaskController extends Controller
         $tasks = $project->tasks()->orderByDesc('priority')->get();
 
         return [
+            // المقترحة لها عمودها: بلا هذا تختفي مهامٌ وُلّدت تلقائيًّا من
+            // لوحة المشروع، فيرى المستخدم صفرًا بينما الخطة موجودة.
+            'suggested' => $tasks->where('status', Task::STATUS_SUGGESTED)->map(fn ($task) => $this->presenter->task($task))->values()->all(),
             'todo' => $tasks->where('status', Task::STATUS_TODO)->map(fn ($task) => $this->presenter->task($task))->values()->all(),
             'doing' => $tasks->where('status', Task::STATUS_DOING)->map(fn ($task) => $this->presenter->task($task))->values()->all(),
             'done' => $tasks->where('status', Task::STATUS_DONE)->map(fn ($task) => $this->presenter->task($task))->values()->all(),

@@ -231,7 +231,14 @@ class CheckoutService
                 // الاشتراك يمنح رصيد الخطة داخله، فلا نمنح مرتين.
                 $this->subscriptions->subscribe($workspace, $fresh->plan, $fresh);
             } elseif ($fresh->credits_granted > 0) {
-                $this->credits->grant($workspace, $fresh->credits_granted, "شراء: {$fresh->creditPack?->name}");
+                // مفتاحه الدفعة نفسها: إشعار البوابة يصل مرتين بحكم
+                // تصميمه، ومنحُه مرتين يعني رصيدًا مجانيًّا صامتًا.
+                $this->credits->grant(
+                    $workspace,
+                    $fresh->credits_granted,
+                    "شراء: {$fresh->creditPack?->name}",
+                    "grant:payment:{$fresh->id}",
+                );
             }
 
             $payment->setRawAttributes($fresh->getAttributes(), true);

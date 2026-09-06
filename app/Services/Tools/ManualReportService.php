@@ -6,6 +6,7 @@ use App\Models\Report;
 use App\Models\ToolRun;
 use App\Models\User;
 use App\Modules\Diagnosis\DeterministicScorer;
+use App\Modules\Execution\ReviewQueue;
 use App\Modules\Reporting\Publication\ReportPublicationGate;
 use App\Support\AI\JsonSchemaValidator;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,7 @@ class ManualReportService
         private readonly ReportComposer $composer,
         private readonly JsonSchemaValidator $validator,
         private readonly ReportPublicationGate $publication,
+        private readonly ReviewQueue $queue,
     ) {}
 
     /**
@@ -44,6 +46,19 @@ class ManualReportService
         if ($missing !== [] && ! $allowIncomplete) {
             throw ValidationException::withMessages([
                 'answers' => 'أكمل الحقول التالية أولًا: '.implode('، ', $missing),
+            ]);
+        }
+
+        /*
+         * السقف يُفحص قبل القبول لا بعده.
+         *
+         * الطابور المفتوح يقبل الطلب المئة بالوعد نفسه الذي أُعطي للأول،
+         * فيتأخر الاثنان ويُقرأ التأخير خذلانًا. الرفض المعلن هنا أصدق من
+         * قبولٍ لا يُوفى — وهو الفرق بين «لا نستقبل الآن» و«وعدناك وأخلفنا».
+         */
+        if (! $this->queue->isAcceptingRequests()) {
+            throw ValidationException::withMessages([
+                'review' => __('طابور المراجعة البشرية ممتلئ الآن. سنفتحه فور تسليم الطلبات القائمة — ويمكنك تشغيل التحليل التلقائي في الأثناء.'),
             ]);
         }
 

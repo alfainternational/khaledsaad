@@ -5,16 +5,19 @@ namespace App\Services\Tools;
 use App\Exceptions\AIInvalidOutputException;
 use App\Exceptions\AIProviderException;
 use App\Models\ToolRun;
+use App\Models\ToolRunAttempt;
 use App\Models\ToolRunStage;
 use App\Modules\Alerts\RunNotifier;
 use App\Modules\Competitors\CompetitorRegistry;
 use App\Modules\Diagnosis\DeterministicScorer;
+use App\Modules\Insights\FunnelRecorder;
 use App\Modules\Intake\IntakeCollector;
 use App\Modules\Reporting\Publication\ReportPublicationGate;
 use App\Services\Billing\CreditManager;
 use App\Services\Tools\V2\ReportSemanticGuard;
 use App\Support\AI\AIRequest;
 use App\Support\AI\StructuredRunner;
+use App\Support\Failures\FailureClassifier;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -136,7 +139,7 @@ class ToolRunPipeline
 
         try {
             $this->run($run, 'persist', fn () => $this->composer->compose($run, $baseline, $sections, $synthesis, $gaps));
-        $this->run($run, 'notify', fn () => $this->publish($run));
+            $this->run($run, 'notify', fn () => $this->publish($run));
         } catch (Throwable $exception) {
             $this->fail($run, $exception);
 
@@ -464,20 +467,75 @@ class ToolRunPipeline
     {
         $this->stage($run, $this->currentStageKey($run))->markFailed($exception->getMessage());
 
+        // العطل يُصنَّف مرة واحدة هنا، فترث الشاشة والعقد والإشعار التصنيف
+        // نفسه. قبل ذلك كانت كل طبقة تعيد تفسير نص الاستثناء بطريقتها.
+        $failure = (new FailureClassifier)->classify($exception);
+
+        $attempt = (int) $run->auto_attempts + 1;
+        $maxAttempts = (int) config('ai.auto_retry_attempts', 4);
+
+        /*
+         * عطلٌ لدينا يُؤجَّل ولا يُعلَن فشلًا (INV-5).
+         *
+         * الفرق ليس في الكلمة: `awaiting_capacity` يلتقطها الجدول الزمني
+         * فيعيد التشغيل بلا تدخل، و`failed` تنتظر مستخدمًا يضغط زرًّا لا
+         * يعرف أنه موجود. ستون إجابة أثمن من أن تُعلَّق على تذكّر أحد.
+         *
+         * والسقف موجود كي لا يدور عطلٌ دائم إلى الأبد: بعده يصير فشلًا
+         * صريحًا يُنظر فيه بيد بشرية.
+         */
+        $deferrable = $failure->kind->isAutoRecoverable() && $attempt < $maxAttempts;
+
         $run->forceFill([
-            'status' => ToolRun::STATUS_FAILED,
-            // قصّ دفاعي: حتى مع عمود TEXT لا نخزّن رسالة مرضية الطول، والقصّ
-            // يحمي أيضًا أي بيئة لم تُطبَّق فيها هجرة التوسيع بعد.
-            'failure_reason' => Str::limit($exception->getMessage(), 2000),
-            'completed_at' => now(),
+            'status' => $deferrable ? ToolRun::STATUS_AWAITING_CAPACITY : ToolRun::STATUS_FAILED,
+            // ما يقرأه المستخدم: رسالة مصنّفة تجيب على «ماذا كلّفني؟».
+            'failure_reason' => $failure->message,
+            'failure_kind' => $failure->kind->value,
+            'failure_code' => $failure->code,
+            // ما يقرأه من يستطيع التصرف: النص الأصلي، مقصوصًا دفاعيًا حتى
+            // مع عمود TEXT، وحمايةً لأي بيئة لم تُطبَّق فيها هجرة التوسيع.
+            'failure_detail' => Str::limit($exception->getMessage(), 2000),
+            'auto_attempts' => $attempt,
+            // تراجع أسّي: عطلٌ لا يزول في دقيقة لا يزول بعشر محاولات فيها.
+            'retry_after' => $deferrable
+                ? now()->addSeconds(($failure->retryAfter ?? 600) * (2 ** ($attempt - 1)))
+                : null,
+            'completed_at' => $deferrable ? null : now(),
         ])->save();
+
+        $run->attempts()->create([
+            'attempt' => $attempt,
+            'provider' => config('ai.default'),
+            'status' => $deferrable
+                ? ToolRunAttempt::STATUS_DEFERRED
+                : ToolRunAttempt::STATUS_FAILED,
+            'failure_kind' => $failure->kind->value,
+            'error_class' => $exception::class,
+            'error_detail' => Str::limit($exception->getMessage(), 2000),
+        ]);
 
         // BR-011: الفشل التقني لا يستهلك رصيدًا — يُسترد الحجز كاملًا.
         $this->credits->refund($run);
-        $this->notifier->reportFailed($run->fresh());
+
+        // ولا يُزعَج المستخدم بإشعار عن عطلٍ نتولّاه ونعيده تلقائيًّا:
+        // الإشعار يأتي عند الجاهزية معتذرًا، لا عند كل محاولة.
+        if (! $deferrable) {
+            $this->notifier->reportFailed($run->fresh());
+        }
+
+        // التأجيل حدث تشغيلي يُنبَّه عليه فورًا (§13): ارتفاعه يعني أن
+        // مزوّدًا يسقط، وأن مستخدمين ينتظرون بلا أن يعرف أحد.
+        Log::warning('حدث قمع: تأجيل تشغيل', [
+            'event' => FunnelRecorder::RUN_DEFERRED,
+            'tool_run_id' => $run->id,
+            'deferred' => $deferrable,
+            'failure_kind' => $failure->kind->value,
+        ]);
 
         Log::error('فشل خط أنابيب التقرير', [
             'tool_run_id' => $run->id,
+            'attempt' => $attempt,
+            'deferred' => $deferrable,
             'reason' => $exception->getMessage(),
         ]);
     }

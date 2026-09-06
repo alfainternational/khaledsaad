@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "media-feature-name-value-allowed-list": {
+      "min-width": ["/^(480|768|1024|1280)px$/"],
+      "max-width": ["/^(479|767|1023|1279)px$/"]
+    },
+    "property-disallowed-list": [
+      "left",
+      "right",
+      "margin-left",
+      "margin-right",
+      "padding-left",
+      "padding-right",
+      "border-left",
+      "border-right"
+    ],
+    "declaration-no-important": true
+  },
+  "overrides": [
+    {
+      "files": ["resources/css/tokens.css"],
+      "rules": { "declaration-no-important": null }
+    }
+  ]
+}

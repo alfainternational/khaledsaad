@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
+    /**
+     * مُقترحة من تقرير ولم يتبنَّها المستخدم بعد.
+     *
+     * وجودها هو ما يسمح بتوليد المهام تلقائيًّا دون إغراق اللوحة: الخطة
+     * تُقترح كاملة، ويتبنّى منها ما يريد بضغطة. بدون هذه الحالة كان
+     * الخيار إمّا زرًّا يدويًّا لكل توصية — فلا تُنشأ مهمة أصلًا وتبقى
+     * الحلقة مفتوحة — أو أربع عشرة مهمة مفتوحة تُواجهه فجأة فيهجرها كلها.
+     */
+    public const STATUS_SUGGESTED = 'suggested';
+
     public const STATUS_TODO = 'todo';
 
     public const STATUS_DOING = 'doing';
@@ -95,6 +105,7 @@ class Task extends Model
     public function statusLabel(): string
     {
         return match ($this->status) {
+            self::STATUS_SUGGESTED => 'مقترحة عليك',
             self::STATUS_DOING => 'قيد التنفيذ',
             self::STATUS_DONE => 'منجزة',
             default => 'لم تبدأ',

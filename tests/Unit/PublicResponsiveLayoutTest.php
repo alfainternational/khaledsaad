@@ -10,7 +10,19 @@ class PublicResponsiveLayoutTest extends TestCase
     {
         $css = str_replace("\r\n", "\n", file_get_contents(resource_path('css/app.css')));
         $view = file_get_contents(resource_path('views/partials/site-header.blade.php'));
-        $mobileQuery = strpos($css, '@media (max-width: 900px)');
+        /*
+         * الإرساء على القاعدة نفسها لا على أول ظهور لنقطة التوقّف.
+         *
+         * بعد توحيد النقاط في أربع (INV-10) صارت كتلٌ عدّة تتشارك
+         * `1023px`، فأولُ ظهورٍ لها لم يعد يعني هذه الكتلة. والإرساء على
+         * موضعٍ رقمي يكسره أي إعادة ترتيب — بينما القاعدة التي نحرسها
+         * هي التي يجب أن تُوجد.
+         */
+        $rule = strpos($css, '.desktop-nav,
+    .nav-actions');
+        $this->assertNotFalse($rule, 'قاعدة إخفاء ملاحة سطح المكتب غائبة.');
+
+        $mobileQuery = strrpos($css, '@media (max-width: 1023px)', $rule - strlen($css));
 
         $this->assertNotFalse($mobileQuery);
         $this->assertLessThan(
@@ -32,7 +44,8 @@ class PublicResponsiveLayoutTest extends TestCase
     public function test_small_mobile_layout_uses_safe_gutters_and_fluid_text(): void
     {
         $css = file_get_contents(resource_path('css/app.css'));
-        $smallQuery = strpos($css, '@media (max-width: 760px)');
+        // نقطة التوقّف من التوكنز الأربع (INV-10): كانت 760px قبل توحيدها.
+        $smallQuery = strpos($css, '@media (max-width: 767px)');
 
         $this->assertNotFalse($smallQuery);
 

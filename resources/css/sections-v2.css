@@ -440,6 +440,7 @@
    ١٣ · المحدِّدات المركّبة التي بقيت بيضاء
    `:where()` انتقائيته صفر، فقاعدة مثل `.method-section .section-heading > p`
    بانتقائية (0,2,1) تغلب قاعدتي (0,2,0) وإن جاءت بعدها. تُطابَق هنا بأعيانها
+   /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
    وبانتقائية أعلى — أدقّ من !important وأبقى على قابلية التخصيص لاحقًا.
    ========================================================================== */
 
@@ -464,6 +465,7 @@
 
 /* عناوين الأقسام المنزوعة الزينة: `.method-section .section-heading h2`
    انتقائيته (0,2,1) — يتعادل مع قواعدي ويسبقها بترتيب المصدر فيغلب.
+   /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
    `:root:root` يرفعها إلى (0,4,1) فتُحسم بلا !important. */
 :root:root .method-section .section-heading h2,
 :root:root .method-section .section-heading h3,
@@ -628,7 +630,7 @@
 
 .outcomes__more:hover { color: var(--brand-blue); border-color: var(--brand-blue); }
 
-@media (max-width: 62rem) {
+@media (max-width: 1023px) {
     .outcomes__object { display: none; }
 
     .outcomes__inner { grid-template-columns: 1fr; align-items: start; }
@@ -773,7 +775,7 @@
 
 .esec__more:hover { color: var(--brand-blue); border-color: var(--brand-blue); }
 
-@media (max-width: 62rem) {
+@media (max-width: 1023px) {
     .esec__object { display: none; }
 
     .esec__inner { grid-template-columns: 1fr; align-items: start; }
@@ -964,7 +966,7 @@
 /* القسم الختامي يُفصل بخطّ علوي: نهايةٌ معلنة لا قسمٌ آخر */
 .esec--close { border-block-start: 1px solid var(--line-strong); }
 
-@media (max-width: 62rem) {
+@media (max-width: 1023px) {
     .esec__object--wide { display: none; }
 
     .efaq__item summary { grid-template-columns: minmax(3rem, auto) minmax(0, 1fr); }

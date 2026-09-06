@@ -1,0 +1,98 @@
+name: بوابات الجودة
+
+# كل بوابة هنا تمنع **فئة** عطل لا حالةً واحدة. الفئات مشتقّة من تدقيق
+# خارجي وقع فعلًا: رقمٌ من مصدرين، وبوابةٌ بعد المجهود لا قبله، ورسالةُ
+# عطلٍ لنا بلغة رصيد المستخدم، ونقاط توقّف بلا نظام.
+#
+# القاعدة: كل عطل يُصلَح يضيف بوابة تمنع فئته. وPR إصلاح بلا اختبار جديد
+# يُرفض — هذه القاعدة وحدها هي ما يمنع عودة كل ما سبق.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  php:
+    name: PHP — الاختبارات والثوابت
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # التاريخ الكامل: مقارنة التنسيق تحتاج القاعدة لا اللقطة.
+          fetch-depth: 0
+
+      - name: تهيئة PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, gd, zip
+          coverage: none
+
+      - name: تثبيت الاعتماديات
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: تهيئة البيئة
+        run: |
+          cp .env.example .env || true
+          php artisan key:generate --force
+          # الاختبارات تعمل على sqlite في الذاكرة، وTestCase يرفض غيرها
+          # صراحةً — فكاش إعداد قديم يوجّه الاختبارات إلى قاعدة حقيقية.
+          php artisan config:clear
+
+      # التنسيق على الملفات المتغيّرة وحدها.
+      #
+      # المستودع يحمل انحرافَ تنسيقٍ سابقًا لهذا الخط (يفشل `pint --test`
+      # على HEAD نظيف). وبوابةٌ حمراء منذ يومها الأول تُعطَّل بعد أسبوع
+      # فلا تحرس شيئًا — فتحرس الجديدَ حتى يُنظَّف القديم دفعةً واحدة.
+      - name: التنسيق (المتغيّر فقط)
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          FILES=$(git diff --name-only --diff-filter=ACMR "$BASE" HEAD -- '*.php' || true)
+          if [ -n "$FILES" ]; then
+            echo "$FILES" | xargs vendor/bin/pint --test
+          else
+            echo "لا ملفات PHP متغيّرة."
+          fi
+
+      # الترجمة مخبوزة وتُشحن مع الكود: نصٌّ جديد بلا ترجمة يظهر عربيًّا
+      # في واجهة إنجليزية — وهو أسوأ من عدم دعم اللغة أصلًا.
+      - name: تدقيق التعريب
+        run: php artisan i18n:audit --strict
+
+      # كسرُ العقد صامتًا يعني تطبيقًا يتعطّل في يد المستخدم بعد نشرٍ
+      # بدا ناجحًا. المواصفة مولَّدة من المسارات، فاختلافها يعني تغييرًا
+      # لم يُعلَن.
+      - name: عقد api/v1
+        run: php artisan api:openapi --check
+
+      - name: الاختبارات
+        run: php artisan test
+
+  frontend:
+    name: الواجهة — التوكنز وقواعد CSS
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      # المولَّدات مطابقة لمصدرها: تعديلٌ يدوي في CSS أو Dart يُكتشف هنا
+      # لا على شاشة مستخدم بعد أسبوعين (INV-10).
+      - name: مطابقة التوكنز لمصدرها
+        run: npm run tokens:verify
+
+      # نقاط التوقّف الأربع، ولا !important جديد، ولا خصائص فيزيائية —
+      # فالشاشة تنقلب في LTR ولا يفتحها أحد منّا ليرى.
+      - name: قواعد CSS
+        run: npm run lint:css
+
+      - name: البناء
+        run: npm run build

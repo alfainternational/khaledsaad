@@ -4,6 +4,7 @@ namespace App\Modules\Reporting\Publication;
 
 use App\Models\Report;
 use App\Models\User;
+use App\Modules\Execution\MaterializeTasksFromReport;
 use App\Modules\Reporting\Validation\SemanticValidator;
 use App\Modules\Reporting\Validation\ValidationViolation;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ class ReportPublicationGate
     public function __construct(
         private readonly ReportContractAssembler $assembler,
         private readonly SemanticValidator $validator,
+        private readonly MaterializeTasksFromReport $tasks,
     ) {}
 
     /** @param callable(array<string,mixed>,array<int,array<string,mixed>>):array<string,mixed>|null $repair */
@@ -65,6 +67,18 @@ class ReportPublicationGate
         if ($result['error'] !== null) {
             throw ValidationException::withMessages(['report' => $result['error']]);
         }
+
+        /*
+         * الخطة تُولَّد هنا، خارج المعاملة.
+         *
+         * خارجها عمدًا: تعثّرُ توليد المهمة لا يجوز أن يُسقط تقريرًا اجتاز
+         * التحقق ودُفع ثمنه. التقرير هو ما اشتراه المستخدم، والمهام مشتقّة
+         * منه — فإن تأخّرت وُلّدت لاحقًا، وإن أسقطت التقرير ضاع الاثنان.
+         *
+         * وهنا تُقفل الحلقة التي كانت مفتوحة: ستة تقارير مليئة بالتوصيات
+         * وصفر مهام. المنتج كان ينتهي عند النقطة التي تبدأ عندها القيمة.
+         */
+        $this->tasks->handle($result['report']);
 
         return $result['report'];
     }

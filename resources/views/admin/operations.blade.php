@@ -11,6 +11,118 @@
         </div>
     </header>
 
+    {{--
+        قدرة التوليد: الجواب عن «هل تعمل المنصة الآن؟».
+
+        كان الجدول أدناه يقول «المفتاح مضبوط» — وهو صحيح ولا يكفي: نفادُ
+        الاشتراك لا يظهر في وجود مفتاح، وهو ما أوقف المنصة كلها. وكان أول
+        من يكتشفه صاحبَ ستين إجابة.
+    --}}
+    <section aria-labelledby="capacity-heading">
+        <h2 id="capacity-heading" class="section-title">{{ __('قدرة التوليد') }}</h2>
+
+        <div class="layout-metrics">
+            @foreach ($provider_health as $row)
+                <article @class(['stat', 'stat--alert' => ! $row['serving']])>
+                    <span class="stat__value">{{ $row['label'] }}</span>
+                    <span class="stat__label">
+                        {{ $row['provider'] }}
+                        @if ($row['failures'] > 0)
+                            · {{ __(':count عطلًا متتاليًا', ['count' => \App\Support\Presentation\Num::int($row['failures'])]) }}
+                        @endif
+                    </span>
+                </article>
+            @endforeach
+
+            <article @class(['stat', 'stat--alert' => ! $spend['has_capacity']])>
+                <span class="stat__value">
+                    @if ($spend['ratio'] === null)
+                        {{ __('بلا سقف') }}
+                    @else
+                        {{ \App\Support\Presentation\Num::ratio($spend['ratio']) }}
+                    @endif
+                </span>
+                <span class="stat__label">
+                    {{ __('الإنفاق اليوم: :spent$', ['spent' => $spend['today']]) }}
+                    @if ($spend['cap'] > 0)
+                        {{ __('من :cap$', ['cap' => $spend['cap']]) }}
+                    @endif
+                </span>
+            </article>
+
+            <article @class(['stat', 'stat--alert' => $deferred['count'] > 0])>
+                <span class="stat__value">{{ \App\Support\Presentation\Num::int($deferred['count']) }}</span>
+                <span class="stat__label">
+                    {{ __('تشغيل مؤجَّل ينتظرنا') }}
+                    @if ($deferred['oldest_at'])
+                        · {{ __('أقدمها منذ :ago', [
+                            'ago' => \Illuminate\Support\Carbon::parse($deferred['oldest_at'])->diffForHumans(null, true),
+                        ]) }}
+                    @endif
+                </span>
+            </article>
+        </div>
+
+        @if ($deferred['runs']->isNotEmpty())
+            {{-- كل صفٍّ هنا مستخدمٌ بذل مجهوده وينتظر. --}}
+            <table class="table table--compact">
+                <caption>{{ __('تشغيلات تنتظر عودة القدرة — تُعاد تلقائيًّا') }}</caption>
+                <thead>
+                    <tr>
+                        <th>{{ __('المشروع') }}</th>
+                        <th>{{ __('الأداة') }}</th>
+                        <th>{{ __('ينتظر منذ') }}</th>
+                        <th>{{ __('المحاولات') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($deferred['runs'] as $run)
+                        <tr>
+                            <td>{{ $run->project?->name }}</td>
+                            <td>{{ $run->toolVersion?->tool?->title }}</td>
+                            <td>{{ $run->updated_at?->diffForHumans(null, true) }}</td>
+                            <td>{{ \App\Support\Presentation\Num::int($run->auto_attempts) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    </section>
+
+    {{--
+        الهامش الحقيقي لكل أداة.
+
+        بدونه نسعّر بالحدس ولا نعرف أي أداة تُباع بخسارة. الرقم المقارَن هو
+        التكلفة لكل تشغيل لا مجموعها — والمجموع يخدع لأنه يخلط الرواج بالكلفة.
+    --}}
+    @if ($margins !== [])
+        <section aria-labelledby="margins-heading">
+            <h2 id="margins-heading" class="section-title">{{ __('تكلفة كل أداة مقابل سعرها') }}</h2>
+            <p class="muted">{{ __('آخر 30 يومًا. التكلفة بالدولار من سجل الاستهلاك، والسعر بالأرصدة من نسخة الأداة.') }}</p>
+
+            <table class="table table--compact">
+                <thead>
+                    <tr>
+                        <th>{{ __('الأداة') }}</th>
+                        <th>{{ __('تشغيلات') }}</th>
+                        <th>{{ __('تكلفة التشغيل الواحد') }}</th>
+                        <th>{{ __('سعره بالأرصدة') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($margins as $row)
+                        <tr>
+                            <td>{{ $row['title'] }}</td>
+                            <td>{{ \App\Support\Presentation\Num::int($row['runs']) }}</td>
+                            <td>{{ $row['cost_per_run'] !== null ? $row['cost_per_run'].'$' : '—' }}</td>
+                            <td>{{ \App\Support\Presentation\Num::credits($row['credit_cost']) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </section>
+    @endif
+
     {{-- بند ٢٠: صحة النظام — الطابور والمزوّدون وآخر الأعطال --}}
     <section class="layout-metrics" aria-label="صحة النظام">
         <article class="stat">

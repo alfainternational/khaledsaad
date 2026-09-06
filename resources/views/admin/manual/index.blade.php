@@ -12,6 +12,35 @@
         </div>
     </header>
 
+    {{--
+        المدّة المعلنة وحالتها.
+
+        وعدٌ بمراجعة بشرية يتأخر يضرّ أكثر من عدم عرضه: من وُعِد بيومين ثم
+        انتظر أسبوعًا يقرأ التأخير خذلانًا لا ازدحامًا. هذا الشريط يجعل
+        التأخير مرئيًّا قبل أن يصير شكوى.
+    --}}
+    <section class="layout-metrics" aria-label="{{ __('حالة طابور المراجعة') }}">
+        <article @class(['stat', 'stat--alert' => $queue['crowded'] || ! $queue['accepting']])>
+            <span class="stat__value">
+                {{ \App\Support\Presentation\Num::int($queue['open']) }}@if ($queue['max'] > 0)<span class="muted"> / {{ \App\Support\Presentation\Num::int($queue['max']) }}</span>@endif
+            </span>
+            <span class="stat__label">
+                {{ $queue['accepting'] ? __('طلب مفتوح') : __('الطابور ممتلئ — الاستقبال متوقف') }}
+            </span>
+        </article>
+
+        <article @class(['stat', 'stat--alert' => $queue['breached'] > 0])>
+            <span class="stat__value">{{ \App\Support\Presentation\Num::int($queue['breached']) }}</span>
+            <span class="stat__label">{{ __('تجاوز المدّة المعلنة') }}</span>
+        </article>
+
+        <article class="stat">
+            <span class="stat__value">{{ \App\Support\Presentation\Num::int($queue['sla_hours']) }}</span>
+            <span class="stat__label">{{ __('ساعة — المدّة الموعودة') }}</span>
+        </article>
+    </section>
+
+
     <section aria-labelledby="pending-heading">
         <h2 id="pending-heading" class="section-title">بانتظار المراجعة</h2>
 

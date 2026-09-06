@@ -13,16 +13,26 @@ use Illuminate\Support\Facades\Log;
 
 class DeepSeekGateway implements ArtificialIntelligenceGateway
 {
+    /**
+     * ملفّ الإعداد الذي تقرأ منه هذه البوابة.
+     *
+     * المزوّدات المتوافقة مع واجهة OpenAI (DeepSeek وGroq وCerebras
+     * وغيرها) تشترك في الشكل نفسه، فالفرق بينها إعدادٌ لا كود. جعلُ
+     * الملفّ معاملًا هو ما يسمح ببناء سلسلة احتياطية دون نسخ هذا الصنف
+     * لكل مزوّد — ونسخُه كان سيعني إصلاح كل عطلٍ في أربعة مواضع.
+     */
+    public function __construct(protected readonly string $profile = 'deepseek') {}
+
     public function provider(): string
     {
-        return 'deepseek';
+        return $this->profile;
     }
 
     public function modelForTier(string $tier): string
     {
-        $tiers = config('ai.deepseek.tiers', []);
+        $tiers = config("ai.{$this->profile}.tiers", []);
 
-        return $tiers[$tier] ?? config('ai.deepseek.model');
+        return $tiers[$tier] ?? config("ai.{$this->profile}.model");
     }
 
     public function run(AIRequest $request): AIResponse
@@ -115,7 +125,7 @@ class DeepSeekGateway implements ArtificialIntelligenceGateway
 
     private function client(): PendingRequest
     {
-        $config = config('ai.deepseek');
+        $config = config("ai.{$this->profile}");
 
         return Http::baseUrl($config['base_url'])
             ->withToken($config['api_key'])
@@ -241,9 +251,11 @@ class DeepSeekGateway implements ArtificialIntelligenceGateway
             'provider' => $this->provider(),
             'status' => $status,
             'kind' => $exception instanceof ConnectionException ? 'connection_or_timeout' : 'http_error',
-            'timeout_seconds' => config('ai.deepseek.timeout'),
+            'timeout_seconds' => config("ai.{$this->profile}.timeout"),
         ]);
 
-        return new AIProviderException('DeepSeek', $status);
+        // اسم المزوّد الفعلي لا اسم ثابت: السلسلة تحتاج أن تعرف مَن سقط،
+        // وسجلٌّ يقول «DeepSeek» عن عطلٍ في Groq يضلّل من يقرأه.
+        return new AIProviderException($this->provider(), $status);
     }
 }

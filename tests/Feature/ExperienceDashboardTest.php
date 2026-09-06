@@ -2,13 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\MarketingLearningRun;
 use App\Models\CreditTransaction;
+use App\Models\MarketingLearningRun;
 use App\Models\Tool;
 use App\Models\User;
 use App\Services\Projects\ProjectService;
 use App\Support\Experience\Experience;
 use App\Support\Experience\ExperienceService;
+use App\Support\Presentation\Num;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -101,10 +102,22 @@ class ExperienceDashboardTest extends TestCase
         app(ProjectService::class)->create($user, ['name' => 'مشروع التكلفة']);
         $tool = Tool::query()->where('key', 'marketing-score')->firstOrFail();
 
-        $this->actingAs($user)
+        // البوابة قبل السؤال الأول (INV-4): التكلفة والرصيد وعدد الأسئلة
+        // والوقت معًا. الصيغة القديمة كانت تُثبّت خطأً نحويًا («5 رصيد»)
+        // بدل أن تحرس المعنى، فصار الفحص على ما يجب أن يعرفه المستخدم.
+        $response = $this->actingAs($user)
             ->get(route('app.tools.show', $tool->key))
-            ->assertOk()
-            ->assertSeeText("تكلفة هذا التشغيل: {$tool->currentVersion->credit_cost} رصيد");
+            ->assertOk();
+
+        $response->assertSeeText('يكلّف');
+        $response->assertSeeText('رصيدك');
+        $response->assertSeeText(Num::credits((int) $tool->currentVersion->credit_cost));
+
+        // ولا يُلصق رقمٌ باسم مفرد في أي موضع من الشاشة.
+        $this->assertStringNotContainsString(
+            "{$tool->currentVersion->credit_cost} رصيد<",
+            $response->getContent(),
+        );
     }
 
     public function test_billing_hides_zero_value_technical_transactions(): void

@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "count": 3723,
+    "count": 3839,
     "entries": {
         "## أسئلة شائعة": {
             "type": "php",
@@ -26,7 +26,7 @@
                 "resources/views/app/runs/status.blade.php"
             ]
         },
-        "(:v1 سطرًا لم يُفهم — التغطية :v2٪.)": {
+        "(:v1 سطرًا لم يُفهم — التغطية :v2.)": {
             "type": "blade",
             "contexts": [
                 "resources/views/reports/readiness-card.blade.php"
@@ -101,6 +101,12 @@
                 "resources/views/site/try/result.blade.php"
             ]
         },
+        ". إرسالُ نموذج ليس تحويلًا بذاته.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
         "0 كلمة": {
             "type": "blade",
             "contexts": [
@@ -149,6 +155,12 @@
                 "app"
             ]
         },
+        ":active من :total محاور مقيسة": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         ":browser على :device": {
             "type": "php",
             "contexts": [
@@ -179,6 +191,12 @@
                 "app"
             ]
         },
+        ":count عطلًا متتاليًا": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
         ":count كيلوبايت": {
             "type": "js",
             "contexts": [
@@ -201,6 +219,12 @@
             "type": "js",
             "contexts": [
                 "resources/js"
+            ]
+        },
+        ":credits شهريًا": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/billing/index.blade.php"
             ]
         },
         ":delta٪ عن المدة السابقة": {
@@ -249,6 +273,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/admin/insights/partials/breakdown.blade.php"
+            ]
+        },
+        ":questions · نحو :minutes · يكلّف :cost (رصيدك: :balance)": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         ":seconds ث": {
@@ -322,12 +352,6 @@
             "type": "blade",
             "contexts": [
                 "resources/views/site/pricing.blade.php"
-            ]
-        },
-        ":v1 رصيد شهريًا": {
-            "type": "blade",
-            "contexts": [
-                "resources/views/app/billing/index.blade.php"
             ]
         },
         ":v1 ريال": {
@@ -453,7 +477,7 @@
                 "resources/views/app/agency-reports/brief.blade.php"
             ]
         },
-        ":v1 — :v2 (:v3 يومًا). القياس داخلي بالكامل: مصدره طلبات هذا الخادم ونبض متصفح الزائر، بلا أي خدمة خارجية.": {
+        ":v1 — :v2 (:v3 يومًا). القياس داخلي بالكامل: مصدره طلبات هذا الخادم ونبض متصفح الزائر، بلا أي خدمة خارجية. والأرقام كلها مبنيّة على الزيارات المتحقَّقة وحدها — تفصيلها في «أساس الأرقام» أسفل.": {
             "type": "blade",
             "contexts": [
                 "resources/views/admin/insights/index.blade.php"
@@ -483,12 +507,6 @@
                 "resources/views/app/projects/show.blade.php"
             ]
         },
-        ":v1/100 · نضج تسويقي": {
-            "type": "blade",
-            "contexts": [
-                "resources/views/app/dashboard.blade.php"
-            ]
-        },
         ":v1<small> رصيد</small>": {
             "type": "blade",
             "contexts": [
@@ -508,15 +526,7 @@
                 "resources/views/admin/insights/partials/breakdown.blade.php",
                 "resources/views/admin/usage.blade.php",
                 "resources/views/agency-reports/partials/unified-context.blade.php",
-                "resources/views/app/agency-reports/index.blade.php",
-                "resources/views/app/presence/show.blade.php",
-                "resources/views/app/readiness/show.blade.php"
-            ]
-        },
-        ":v1٪ من مرات ذكرك": {
-            "type": "blade",
-            "contexts": [
-                "resources/views/app/presence/show.blade.php"
+                "resources/views/app/agency-reports/index.blade.php"
             ]
         },
         ":value من 100": {
@@ -1255,6 +1265,12 @@
                 "resources/views/home.blade.php"
             ]
         },
+        "<strong>آلية معلنة — :v1 (:v2٪):</strong> ما عرّف نفسه في سلسلة الوكيل. مفصَّلة في جدول الزحف أسفل الصفحة.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
         "<strong>أسلوب الشراء:</strong> :v1": {
             "type": "blade",
             "contexts": [
@@ -1333,6 +1349,12 @@
                 "resources/views/admin/insights/index.blade.php"
             ]
         },
+        "<strong>الزيارة المتحقَّقة:</strong> زيارةٌ وصلت منها إشارة من المتصفح — نبضة بيكون أو نموذج مُرسَل برمز CSRF. الطلب الذي لا ينفّذ جافاسكربت لا يدخل أي رقم هنا.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
         "<strong>الزيارة:</strong> نشاط متصل ينتهي بسكون :v1 دقيقة، فيبدأ الطلب التالي زيارة جديدة.": {
             "type": "blade",
             "contexts": [
@@ -1375,6 +1397,12 @@
                 "resources/views/components/human-trace-list.blade.php"
             ]
         },
+        "<strong>غير متحقَّقة — :v1 (:v2٪):</strong> طلبٌ وصل بلا تنفيذ جافاسكربت. آلةٌ في الغالب الأعمّ، وقد يكون متصفّحًا عُطّل فيه السكربت.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
         "<strong>كيف تحسنها:</strong> :v1": {
             "type": "blade",
             "contexts": [
@@ -1403,6 +1431,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/messages/studio.blade.php"
+            ]
+        },
+        "<strong>متحقَّقة — :v1 (:v2٪):</strong> متصفّح نفّذ صفحتنا فعلًا — وصلت منه نبضة أو أُرسل منه نموذج. هذه وحدها ما يُبنى عليه قرار.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
             ]
         },
         "<strong>مثال مناسب لهذا الحقل:</strong>": {
@@ -1733,6 +1767,18 @@
                 "resources/views/agency-reports/partials/operations.blade.php"
             ]
         },
+        "، وزيارات حسابات الإدارة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
+        "آخر 30 يومًا. التكلفة بالدولار من سجل الاستهلاك، والسعر بالأرصدة من نسخة الأداة.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
         "آخر :v1 يومًا. استخدم هذه الأرقام لمقارنة تكلفة كل تشخيص بحجم استخدامه.": {
             "type": "blade",
             "contexts": [
@@ -1941,12 +1987,6 @@
                 "resources/views/agency-reports/partials/owner-document.blade.php"
             ]
         },
-        "أجبت عن :v1 سؤالًا · الحالة: :v2": {
-            "type": "blade",
-            "contexts": [
-                "resources/views/app/consultations/index.blade.php"
-            ]
-        },
         "أجّله بلا ندم": {
             "type": "blade",
             "contexts": [
@@ -1971,7 +2011,7 @@
                 "resources/views/site/pages/show.blade.php"
             ]
         },
-        "أحدث نتيجة: :title": {
+        "أحدث نتيجة": {
             "type": "blade",
             "contexts": [
                 "resources/views/app/projects/show.blade.php"
@@ -2299,9 +2339,22 @@
                 "resources/views/site/sectors/show.blade.php"
             ]
         },
+        "أساس الأرقام": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
         "أساس البلد": {
             "type": "php",
             "contexts": [
+                "app"
+            ]
+        },
+        "أساس التحقّق": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/session.blade.php",
                 "app"
             ]
         },
@@ -2541,6 +2594,12 @@
                 "resources/views/app/projects/index.blade.php"
             ]
         },
+        "أضف مشروعك الأول، ثم شغّل تشخيصًا — تتحول توصياته إلى خطة أسبوعية تتابعها هنا.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/plan/index.blade.php"
+            ]
+        },
         "أضف مشروعك قبل بدء التشخيص": {
             "type": "blade",
             "contexts": [
@@ -2564,6 +2623,7 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/consultations/index.blade.php",
+                "resources/views/app/plan/index.blade.php",
                 "resources/views/app/projects/index.blade.php",
                 "resources/views/layouts/app.blade.php"
             ]
@@ -2590,6 +2650,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/prospects/index.blade.php"
+            ]
+        },
+        "أضِفها إلى خطتي": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/plan/index.blade.php"
             ]
         },
         "أضِفهم": {
@@ -2637,9 +2703,14 @@
         "أعد المحاولة": {
             "type": "blade",
             "contexts": [
-                "resources/views/app/runs/status.blade.php",
                 "resources/views/errors/429.blade.php",
                 "resources/views/errors/500.blade.php"
+            ]
+        },
+        "أعد المحاولة الآن": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/components/ui/error-state.blade.php"
             ]
         },
         "أعد المراجعة": {
@@ -2750,6 +2821,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/admin/content/categories/form.blade.php"
+            ]
+        },
+        "أقدمها منذ :ago": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
             ]
         },
         "أقسام الإحصاءات": {
@@ -2864,7 +2941,8 @@
         "أكمل الإجابات": {
             "type": "blade",
             "contexts": [
-                "resources/views/app/learning/marketing/result.blade.php"
+                "resources/views/app/learning/marketing/result.blade.php",
+                "app"
             ]
         },
         "أكمل الإجابات المطلوبة قبل إرسال التطبيق للمراجعة.": {
@@ -3475,6 +3553,12 @@
                 "app"
             ]
         },
+        "أُضيف :credits إلى :name.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "أُضيف :name — ولّد رسالته حين تشاء.": {
             "type": "php",
             "contexts": [
@@ -3524,6 +3608,12 @@
             ]
         },
         "أُضيفت التوصية إلى قائمة مهامك.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "أُضيفت المهمة إلى خطتك.": {
             "type": "php",
             "contexts": [
                 "app"
@@ -3649,6 +3739,54 @@
                 "app"
             ]
         },
+        "إجاباتك لن تضيع. تفقّد تقاريرك السابقة ريثما نُعيد الخدمة.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/consultations/index.blade.php"
+            ]
+        },
+        "إجاباتك لن تضيع، لكننا لا نستطيع تشغيل التحليل الآن. سنُعيد الخدمة قريبًا — تفقّد تقاريرك السابقة ريثما نعود.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/tools/show.blade.php"
+            ]
+        },
+        "إجاباتك محفوظة بالكامل، ولم يُخصم من رصيدك شيء. سنشغّل التحليل تلقائيًا فور عودة الخدمة ونُشعرك.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "إجاباتك محفوظة بالكامل، ولم يُخصم من رصيدك شيء. نحن نتابع السبب ونعيد التشغيل — ويصلك إشعار عند جاهزية تقريرك.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "إجاباتك محفوظة بالكامل، ولم يُخصم من رصيدك شيء. نعيد التشغيل تلقائيًّا فور عودة الخدمة ونُشعرك.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "إجاباتك محفوظة بالكامل، ولم يُخصم من رصيدك شيء. نعيد التشغيل ونُشعرك عند جاهزية تقريرك.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "إجاباتك محفوظة ولم يُخصم من رصيدك شيء. نعيد التشغيل تلقائيًا، ونُشعرك عند اكتمال تقريرك.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "إجاباتك محفوظة ولم يُخصم من رصيدك شيء. نعيد المحاولة تلقائيًا خلال دقائق.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "إجاباتك محفوظة. نقيّم كل واحدة ونجهز لك النتيجة والمقترحات، وستظهر هنا تلقائيًا.": {
             "type": "blade",
             "contexts": [
@@ -3668,6 +3806,12 @@
             ]
         },
         "إجاباتك محفوظة، وأُعيد الرصيد المستخدم. يمكنك المحاولة مرة أخرى.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "إجاباتك محفوظة، ويكمل التشغيل من حيث توقّف.": {
             "type": "php",
             "contexts": [
                 "app"
@@ -4253,6 +4397,7 @@
         "ابدأ تشخيصًا": {
             "type": "blade",
             "contexts": [
+                "resources/views/app/reports/index.blade.php",
                 "resources/views/partials/site-footer.blade.php"
             ]
         },
@@ -4871,6 +5016,12 @@
                 "resources/views/errors/419.blade.php"
             ]
         },
+        "ارفع خطتك": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "ارفع دليلًا": {
             "type": "blade",
             "contexts": [
@@ -5051,6 +5202,12 @@
                 "resources/views/admin/usage.blade.php"
             ]
         },
+        "استهلكت حصة خطتك لهذا الشهر": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "استوديو الرسائل": {
             "type": "blade",
             "contexts": [
@@ -5172,6 +5329,14 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/billing/index.blade.php"
+            ]
+        },
+        "اشحن رصيدك": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/consultations/index.blade.php",
+                "resources/views/app/tools/show.blade.php",
+                "app"
             ]
         },
         "اضبط lang=\"ar\" وdir=\"rtl\" ورتّب العناوين h1 ثم h2.": {
@@ -5333,12 +5498,6 @@
                 "app"
             ]
         },
-        "افتح أحد تقارير المشروع وحوّل التوصيات التي تريد تنفيذها إلى مهام قابلة للمتابعة.": {
-            "type": "blade",
-            "contexts": [
-                "resources/views/app/tasks/index.blade.php"
-            ]
-        },
         "افتح الاستوديو بهذا السياق": {
             "type": "blade",
             "contexts": [
@@ -5374,6 +5533,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/learning/marketing/index.blade.php"
+            ]
+        },
+        "افتح تقاريري": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/plan/index.blade.php"
             ]
         },
         "افتح لوحة المهام": {
@@ -5776,6 +5941,12 @@
                 "resources/views/admin/insights/partials/nav.blade.php"
             ]
         },
+        "الأثر": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/plan/index.blade.php"
+            ]
+        },
         "الأثر والجهد. ابدأ بهذه، وأجّل تلك بلا ندم.": {
             "type": "blade",
             "contexts": [
@@ -6128,6 +6299,18 @@
                 "resources/views/admin/tools/show.blade.php"
             ]
         },
+        "الإنفاق اليوم: :spent$": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
+        "الإنفاق اليومي بلغ :percent من السقف.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "الاتجاه": {
             "type": "blade",
             "contexts": [
@@ -6190,6 +6373,18 @@
                 "resources/views/app/consultations/show.blade.php"
             ]
         },
+        "الاستشارة الشاملة :tools · تكلّف :cost (رصيدك: :balance)": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "الاستشارة الشاملة :tools وتكلّف :cost، ورصيدك الحالي :balance.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "الاستفسارات العقارية شهريًا": {
             "type": "php",
             "contexts": [
@@ -6248,6 +6443,7 @@
         "الاشتراك والفوترة": {
             "type": "blade",
             "contexts": [
+                "resources/views/app/runs/status.blade.php",
                 "resources/views/partials/panel-nav.blade.php"
             ]
         },
@@ -6498,6 +6694,12 @@
                 "app"
             ]
         },
+        "التحليل لم يتقدّم منذ فترة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/runs/status.blade.php"
+            ]
+        },
         "التحليل يقوم على إجاباتك: كلما دقّت، قربت النتيجة من واقعك.": {
             "type": "config",
             "contexts": [
@@ -6509,6 +6711,12 @@
             "contexts": [
                 "resources/views/admin/insights/partials/breakdown.blade.php",
                 "app"
+            ]
+        },
+        "التحويل:": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
             ]
         },
         "التحويلات": {
@@ -6563,7 +6771,7 @@
             "contexts": [
                 "resources/views/agency-reports/partials/unified-context.blade.php",
                 "resources/views/app/agency-reports/index.blade.php",
-                "resources/views/partials/panel-nav.blade.php"
+                "app"
             ]
         },
         "التشخيص الأول مجاني ولا يطلب بطاقة. والخطط المدفوعة تفتح التقرير الكامل بالأدلة والمتابعة والتنبيهات — تراها كلها بأسعارها في صفحة الأسعار قبل أن تختار.": {
@@ -6654,6 +6862,24 @@
                 "resources/views/agency-reports/partials/unified-context.blade.php"
             ]
         },
+        "التشغيل متوقف مؤقتًا لأسباب لدينا — لا تبدأ الآن كي لا يضيع وقتك.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "التشغيل يحتاج رصيدًا أو خطة أعلى": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "التشغيلات المتأثرة محفوظة وتُعاد تلقائيًّا عند عودة القدرة.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "التشفير": {
             "type": "php",
             "contexts": [
@@ -6738,7 +6964,6 @@
             "contexts": [
                 "resources/views/admin/features/form.blade.php",
                 "resources/views/app/projects/show.blade.php",
-                "resources/views/partials/panel-nav.blade.php",
                 "app"
             ]
         },
@@ -6946,6 +7171,7 @@
         "الجهد": {
             "type": "blade",
             "contexts": [
+                "resources/views/app/plan/index.blade.php",
                 "resources/views/reports/readiness-card.blade.php"
             ]
         },
@@ -7159,7 +7385,9 @@
         "الخطة والمهام": {
             "type": "blade",
             "contexts": [
-                "resources/views/partials/panel-nav.blade.php"
+                "resources/views/app/plan/index.blade.php",
+                "resources/views/app/reports/index.blade.php",
+                "app"
             ]
         },
         "الخطط": {
@@ -7289,8 +7517,8 @@
         "الدروس": {
             "type": "blade",
             "contexts": [
-                "resources/views/partials/panel-nav.blade.php",
-                "resources/views/site/content/index.blade.php"
+                "resources/views/site/content/index.blade.php",
+                "app"
             ]
         },
         "الدروس العشرون وتطبيقاتها ومراجعة الإجابات.": {
@@ -7883,6 +8111,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/agency-reports/partials/owner-document.blade.php"
+            ]
+        },
+        "الطابور ممتلئ — الاستقبال متوقف": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/manual/index.blade.php"
             ]
         },
         "الطالب يعيش التجربة ووليّ الأمر يدفع ويقرّر، ولكل منهما لغة تقنعه": {
@@ -8494,6 +8728,12 @@
                 "resources/views/app/readiness/show.blade.php"
             ]
         },
+        "المحاولات": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
         "المحتوى": {
             "type": "blade",
             "contexts": [
@@ -8626,6 +8866,12 @@
             "contexts": [
                 "resources/views/admin/gateways/form.blade.php",
                 "resources/views/admin/gateways/index.blade.php"
+            ]
+        },
+        "المزوّد :provider: :state": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "المزوّد الافتراضي": {
@@ -8916,7 +9162,6 @@
                 "resources/views/admin/content/index.blade.php",
                 "resources/views/admin/content/media.blade.php",
                 "resources/views/admin/content/subscribers.blade.php",
-                "resources/views/partials/panel-nav.blade.php",
                 "resources/views/site/content/show.blade.php"
             ]
         },
@@ -9535,7 +9780,7 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/dashboard.blade.php",
-                "resources/views/partials/panel-nav.blade.php"
+                "app"
             ]
         },
         "انتقل إلى مسار الأعمال": {
@@ -9641,6 +9886,12 @@
                 "resources/views/admin/users/index.blade.php"
             ]
         },
+        "انقطع الاتصال أثناء التحليل": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "انقل الثلاثة الأولى من قائمة الإصلاح كما هي، بلا إعادة صياغة.": {
             "type": "php",
             "contexts": [
@@ -9696,6 +9947,18 @@
                 "app"
             ]
         },
+        "بانتظار عودة الخدمة": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "بانتظار مراجعتك": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "بحث": {
             "type": "blade",
             "contexts": [
@@ -9743,6 +10006,12 @@
             ]
         },
         "بدأتها": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "بدأتها ولم تُغلقها بعد.": {
             "type": "php",
             "contexts": [
                 "app"
@@ -9964,6 +10233,12 @@
                 "app"
             ]
         },
+        "بلا سقف": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
         "بلا ملف llms.txt": {
             "type": "blade",
             "contexts": [
@@ -10155,6 +10430,7 @@
         "تأخرت عن": {
             "type": "blade",
             "contexts": [
+                "resources/views/app/plan/index.blade.php",
                 "resources/views/app/tasks/index.blade.php"
             ]
         },
@@ -10303,6 +10579,12 @@
                 "resources/views/layouts/app.blade.php",
                 "resources/views/layouts/auth.blade.php",
                 "resources/views/layouts/public.blade.php"
+            ]
+        },
+        "تجاوز المدّة المعلنة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/manual/index.blade.php"
             ]
         },
         "تجرّب اقتراحات متفرقة وآراء متعارضة، وتنفق وقتك ومالك بلا معيار تحكم به.": {
@@ -10504,6 +10786,12 @@
                 "resources/views/admin/dashboard.blade.php"
             ]
         },
+        "تحليلك في الانتظار — والسبب لدينا لا لديك": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "تحويل": {
             "type": "blade",
             "contexts": [
@@ -10690,6 +10978,18 @@
                 "config/catalogue.php"
             ]
         },
+        "تشغيل مؤجَّل ينتظرنا": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
+        "تشغيل هذه الأداة يكلّف :needed، ورصيدك الحالي :have.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "تشغيل/إيقاف": {
             "type": "blade",
             "contexts": [
@@ -10706,7 +11006,14 @@
         "تشغيلات": {
             "type": "blade",
             "contexts": [
+                "resources/views/admin/operations.blade.php",
                 "resources/views/admin/tools/index.blade.php"
+            ]
+        },
+        "تشغيلات تنتظر عودة القدرة — تُعاد تلقائيًّا": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
             ]
         },
         "تصدير CSV": {
@@ -10744,6 +11051,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/notifications/index.blade.php"
+            ]
+        },
+        "تصفية حسب المشروع": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/reports/index.blade.php"
             ]
         },
         "تصفّح": {
@@ -10785,9 +11098,9 @@
             ]
         },
         "تطبيقاتي": {
-            "type": "blade",
+            "type": "php",
             "contexts": [
-                "resources/views/partials/panel-nav.blade.php"
+                "app"
             ]
         },
         "تطلب حذف حسابك وكل ما يتعلق به حذفًا نهائيًا.": {
@@ -11146,6 +11459,12 @@
                 "app"
             ]
         },
+        "تعذّر تحميل هوية الواجهة": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "تعذّر تسجيل حدث زائر": {
             "type": "php",
             "contexts": [
@@ -11153,6 +11472,18 @@
             ]
         },
         "تعذّر تسجيل مشاهدة صفحة": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "تعذّر تشغيل التحليل — والسبب لدينا لا لديك": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "تعذّر تعليم الزيارة متحقَّقة": {
             "type": "php",
             "contexts": [
                 "app"
@@ -11208,6 +11539,18 @@
             ]
         },
         "تعذّرت قراءته": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "تعذّرت هذه المرحلة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/runs/status.blade.php"
+            ]
+        },
+        "تعذّرت — إجاباتك محفوظة": {
             "type": "php",
             "contexts": [
                 "app"
@@ -11418,19 +11761,22 @@
         "تقاريري": {
             "type": "blade",
             "contexts": [
-                "resources/views/app/notifications/index.blade.php"
+                "resources/views/app/notifications/index.blade.php",
+                "resources/views/app/plan/index.blade.php",
+                "resources/views/app/reports/index.blade.php",
+                "app"
+            ]
+        },
+        "تقاريري السابقة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/runs/status.blade.php"
             ]
         },
         "تقدمك في المهام": {
             "type": "blade",
             "contexts": [
                 "resources/views/app/learning/marketing/index.blade.php"
-            ]
-        },
-        "تقدمي": {
-            "type": "blade",
-            "contexts": [
-                "resources/views/partials/panel-nav.blade.php"
             ]
         },
         "تقديرات تحتاج تحققًا": {
@@ -11554,6 +11900,12 @@
                 "resources/views/admin/tools/index.blade.php"
             ]
         },
+        "تكلفة التشغيل الواحد": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
         "تكلفة الدقيقة (دولار)": {
             "type": "php",
             "contexts": [
@@ -11590,10 +11942,10 @@
                 "app"
             ]
         },
-        "تكلفة هذا التشغيل: :count رصيد": {
+        "تكلفة كل أداة مقابل سعرها": {
             "type": "blade",
             "contexts": [
-                "resources/views/app/tools/show.blade.php"
+                "resources/views/admin/operations.blade.php"
             ]
         },
         "تم اعتماد الدفع وأُضيف رصيدك.": {
@@ -11699,6 +12051,12 @@
             ]
         },
         "تنبيه ميزانية": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "تنبيه: قدرة مزوّد الذكاء": {
             "type": "php",
             "contexts": [
                 "app"
@@ -11825,6 +12183,12 @@
             ]
         },
         "توقفت متابعة التقرير. يمكنك تفعيلها مرة أخرى في أي وقت.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "توقّف التحليل قبل أن يكتمل": {
             "type": "php",
             "contexts": [
                 "app"
@@ -12014,6 +12378,12 @@
             ]
         },
         "جاهزة": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "جاهزية المشروع": {
             "type": "php",
             "contexts": [
                 "app"
@@ -12211,6 +12581,12 @@
                 "resources/views/admin/usage.blade.php"
             ]
         },
+        "حالة طابور المراجعة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/manual/index.blade.php"
+            ]
+        },
         "حالته": {
             "type": "blade",
             "contexts": [
@@ -12226,6 +12602,7 @@
         "حتى": {
             "type": "blade",
             "contexts": [
+                "resources/views/app/plan/index.blade.php",
                 "resources/views/app/tasks/index.blade.php",
                 "resources/views/site/pricing.blade.php"
             ]
@@ -12298,6 +12675,12 @@
                 "resources/views/errors/500.blade.php"
             ]
         },
+        "حدثٌ اسمه مُدرَج في": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
         "حدود المسؤولية": {
             "type": "config",
             "contexts": [
@@ -12308,6 +12691,12 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "حدّ هذا التمييز مُعلَن: التحقّق يُسقط من لا ينفّذ جافاسكربت، ولا يُسقط متصفّحًا آليًّا ينفّذه. فهو أرضية للضجيج لا سقفٌ له.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
             ]
         },
         "حدّث": {
@@ -13063,6 +13452,12 @@
                 "resources/views/app/billing/index.blade.php"
             ]
         },
+        "خطتك الحالية لا تسمح بتشغيل الأدوات. فعّل خطة مناسبة من صفحة الفوترة.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "خطط له هذا الشهر": {
             "type": "blade",
             "contexts": [
@@ -13171,6 +13566,12 @@
                 "resources/views/admin/insights/index.blade.php"
             ]
         },
+        "درجة آخر تشخيص": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "درجة الجاهزية": {
             "type": "blade",
             "contexts": [
@@ -13205,6 +13606,13 @@
             "type": "blade",
             "contexts": [
                 "resources/views/home.blade.php"
+            ]
+        },
+        "درجة هذا التشخيص": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/projects/show.blade.php",
+                "resources/views/app/reports/index.blade.php"
             ]
         },
         "درجتك :score من 100": {
@@ -13605,10 +14013,34 @@
                 "app"
             ]
         },
+        "رصيدك الحالي :credits.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "رصيدك الحالي :credits، وقد لا يكفي لبدء تشخيص جديد.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "رصيدك لا يكفي لتشغيل هذه الأداة": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "رصيدك وخطتك": {
             "type": "blade",
             "contexts": [
                 "resources/views/app/billing/index.blade.php"
+            ]
+        },
+        "رصيدك يكفي :affordable من :total — نبدأ بالأعلى أثرًا. (رصيدك: :balance)": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "رفض": {
@@ -13700,6 +14132,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/components/evidence-badge.blade.php"
+            ]
+        },
+        "رُصدت الحالات التالية قبل أن تصل إلى أي مستخدم:": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "رُفض أمامه": {
@@ -13816,7 +14254,7 @@
                 "resources/views/admin/insights/session.blade.php"
             ]
         },
-        "زيارة آلية في المدة)": {
+        "زيارة آلية في المدة)، والزيارات غير المتحقَّقة (": {
             "type": "blade",
             "contexts": [
                 "resources/views/admin/insights/index.blade.php"
@@ -13869,6 +14307,12 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "ساعة — المدّة الموعودة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/manual/index.blade.php"
             ]
         },
         "ساعدت في إدارة حملات وسائل التواصل وزيادة تفاعل الجمهور.": {
@@ -14118,6 +14562,12 @@
                 "resources/views/admin/plans/form.blade.php"
             ]
         },
+        "سعره بالأرصدة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
         "سقف استعلامات النماذج شهريًا لكل مساحة عمل. دورة استطلاع واحدة = ١٥ استعلامًا (٥ أسئلة × ٣ محاولات).": {
             "type": "config",
             "contexts": [
@@ -14159,6 +14609,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/site/pricing.blade.php",
+                "app"
+            ]
+        },
+        "سنعيدها قريبًا؛ التطبيق يعمل بآخر نسخة محفوظة لديه.": {
+            "type": "php",
+            "contexts": [
                 "app"
             ]
         },
@@ -14335,6 +14791,24 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "شغّل تشخيصًا واحدًا، فيصلك تقرير بدرجتك وفجواتك وقائمة إصلاح مرتّبة بالأثر مقابل الجهد.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/reports/index.blade.php"
+            ]
+        },
+        "شغّل تشخيصًا — تتحول توصياته إلى مهام مقترحة هنا تلقائيًّا.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/tasks/index.blade.php"
+            ]
+        },
+        "شغّل تشخيصًا — تتحول توصياته إلى مهام مقترحة هنا تلقائيًّا، وتتبنّى منها ما تريد.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/plan/index.blade.php"
             ]
         },
         "شكرًا — تقييمك يعلّم المنصة ما ينفعك.": {
@@ -14651,6 +15125,12 @@
                 "resources/views/admin/operations.blade.php"
             ]
         },
+        "طابور المراجعة البشرية ممتلئ الآن. سنفتحه فور تسليم الطلبات القائمة — ويمكنك تشغيل التحليل التلقائي في الأثناء.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "طاقتك الأسبوعية": {
             "type": "php",
             "contexts": [
@@ -14721,6 +15201,12 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "طلب مفتوح": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/manual/index.blade.php"
             ]
         },
         "طلبات المراجعة اليدوية": {
@@ -14808,6 +15294,13 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "عبر مشاريعك كلها": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/plan/index.blade.php",
+                "resources/views/app/reports/index.blade.php"
             ]
         },
         "عتبة انحراف الدرجة": {
@@ -15280,6 +15773,12 @@
                 "resources/views/admin/operations.blade.php"
             ]
         },
+        "غير متحقَّقة": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/session.blade.php"
+            ]
+        },
         "غير محدد": {
             "type": "blade",
             "contexts": [
@@ -15511,6 +16010,7 @@
                 "resources/views/app/dashboard.blade.php",
                 "resources/views/app/learning/marketing/exercise.blade.php",
                 "resources/views/app/partials/question-assist.blade.php",
+                "resources/views/app/projects/index.blade.php",
                 "resources/views/app/readiness/show.blade.php",
                 "resources/views/components/evidence-badge.blade.php",
                 "resources/views/components/recommendation-contract.blade.php",
@@ -15735,6 +16235,12 @@
                 "config/legal.php"
             ]
         },
+        "في الانتظار": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "في الطابور": {
             "type": "php",
             "contexts": [
@@ -15789,13 +16295,13 @@
                 "app"
             ]
         },
-        "فُحص :v1 بندًا من :v2 — تغطية :v3٪.": {
+        "فُحص :checked من :total بندًا — تغطية :coverage.": {
             "type": "blade",
             "contexts": [
                 "resources/views/app/readiness/show.blade.php"
             ]
         },
-        "فُحص :v1 بندًا من :v2، أي تغطية :v3٪.": {
+        "فُحص :checked من :total بندًا، أي تغطية :coverage.": {
             "type": "blade",
             "contexts": [
                 "resources/views/reports/readiness-card.blade.php"
@@ -15909,6 +16415,12 @@
                 "resources/views/site/content/show.blade.php"
             ]
         },
+        "قدرة التوليد": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
         "قدّم دليلًا ملموسًا أو تجربة مشابهة لحالتها، ولا تعِد بما لا يُثبت.": {
             "type": "php",
             "contexts": [
@@ -15969,7 +16481,8 @@
                 "resources/views/home.blade.php",
                 "resources/views/site/tools/index.blade.php",
                 "resources/views/site/tools/show.blade.php",
-                "resources/views/site/tools/_catalog-card.blade.php"
+                "resources/views/site/tools/_catalog-card.blade.php",
+                "app"
             ]
         },
         "قسم جديد": {
@@ -16058,6 +16571,12 @@
                 "resources/views/app/consultations/index.blade.php"
             ]
         },
+        "قيد الإجابة": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "قيد الانتظار": {
             "type": "blade",
             "contexts": [
@@ -16073,7 +16592,8 @@
         "قيد التنفيذ": {
             "type": "blade",
             "contexts": [
-                "resources/views/app/tasks/index.blade.php"
+                "resources/views/app/tasks/index.blade.php",
+                "app"
             ]
         },
         "قيد المراجعة": {
@@ -16217,6 +16737,12 @@
                 "resources/views/site/content/index.blade.php"
             ]
         },
+        "كل المشاريع": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/reports/index.blade.php"
+            ]
+        },
         "كل المكتبة": {
             "type": "blade",
             "contexts": [
@@ -16227,6 +16753,12 @@
             "type": "php",
             "contexts": [
                 "app"
+            ]
+        },
+        "كل تشخيص اكتمل، بدرجته وأداته وتاريخه.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/reports/index.blade.php"
             ]
         },
         "كل توصية تصير مهمة لها موعد": {
@@ -16245,6 +16777,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/home.blade.php"
+            ]
+        },
+        "كل رقم في هذه الصفحة مبنيّ على <strong>الزيارات المتحقَّقة</strong> وحدها: :v1 من :v2 (:v3٪).": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
             ]
         },
         "كل سؤال يُسأل :v1 مرات على الأقل. جواب واحد لا يُبنى عليه رقم.": {
@@ -16298,6 +16836,7 @@
         "كل مهمة هنا جاءت من توصية في تقرير، ومعها أثرها وجهدها وموعدها.": {
             "type": "blade",
             "contexts": [
+                "resources/views/app/plan/index.blade.php",
                 "resources/views/app/tasks/index.blade.php"
             ]
         },
@@ -16841,6 +17380,12 @@
                 "app"
             ]
         },
+        "لا تقارير بعد": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/reports/index.blade.php"
+            ]
+        },
         "لا توجد أرقام كافية بعد. أول خطوة صحيحة هي تركيب القياس قبل زيادة الإنفاق.": {
             "type": "blade",
             "contexts": [
@@ -17142,6 +17687,12 @@
                 "resources/views/agency-reports/partials/operations.blade.php"
             ]
         },
+        "لا مزوّد قادر على الخدمة — التوليد متوقف والمنصة في وضع محدود.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "لا مساحة استهلكت استعلامًا هذا الشهر. السقف يُنشأ عند أول حجز.": {
             "type": "blade",
             "contexts": [
@@ -17163,6 +17714,7 @@
         "لا مهام بعد": {
             "type": "blade",
             "contexts": [
+                "resources/views/app/plan/index.blade.php",
                 "resources/views/app/tasks/index.blade.php"
             ]
         },
@@ -17515,6 +18067,12 @@
                 "resources/views/reports/pdf.blade.php"
             ]
         },
+        "لم تصل من هذه الزيارة أي إشارة من المتصفح، فهي خارج كل رقم في اللوحة. آلةٌ في الغالب الأعمّ، وقد تكون متصفّحًا عُطّل فيه جافاسكربت": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/session.blade.php"
+            ]
+        },
         "لم تضف منافسيك المحليين بعد. إضافتهم تساعد على مقارنة مشروعك بالجهات الأقرب إلى عملائك وسوقك.": {
             "type": "blade",
             "contexts": [
@@ -17603,6 +18161,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/agency-reports/partials/decision-card.blade.php"
+            ]
+        },
+        "لم تُقَس محاور الجاهزية بعد — هذه درجة تشخيص واحد.": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "لم تُكتب خلاصة كافية لهذه النتيجة بعد.": {
@@ -18074,6 +18638,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/home.blade.php"
+            ]
+        },
+        "ما أنجزته يرفع جاهزية مشروعك.": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "ما أهم شيء أفعله الآن لتحسين مشروعي؟": {
@@ -18779,6 +19349,12 @@
                 "config/brand.php"
             ]
         },
+        "متذبذب": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "متصفح Chrome": {
             "type": "php",
             "contexts": [
@@ -18874,6 +19450,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/site/try/result.blade.php"
+            ]
+        },
+        "متوقف": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "متوقّفة حتى الشهر القادم": {
@@ -19491,6 +20073,12 @@
                 "resources/views/agency-reports/partials/owner-guide.blade.php"
             ]
         },
+        "مرتّبة بالأثر مقابل الجهد — الأعلى أثرًا وأقلّها جهدًا أولًا.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "مرتّبة على الأثر ثم الجهد — ابدأ من الأعلى.": {
             "type": "blade",
             "contexts": [
@@ -19597,9 +20185,9 @@
             ]
         },
         "مساري": {
-            "type": "blade",
+            "type": "php",
             "contexts": [
-                "resources/views/partials/panel-nav.blade.php"
+                "app"
             ]
         },
         "مساعد وسائل التواصل الاجتماعي": {
@@ -19624,6 +20212,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/admin/insights/index.blade.php"
+            ]
+        },
+        "مستحقة أو متأخرة — ابدأ من هنا.": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "مستخدم": {
@@ -19761,9 +20355,9 @@
             ]
         },
         "مشاريعي": {
-            "type": "blade",
+            "type": "php",
             "contexts": [
-                "resources/views/partials/panel-nav.blade.php"
+                "app"
             ]
         },
         "مشاهدة الفيديو التعليمي <span>↗</span>": {
@@ -20209,6 +20803,13 @@
                 "app"
             ]
         },
+        "مقترحة عليك": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/tasks/index.blade.php",
+                "app"
+            ]
+        },
         "مقتطف مما قُرئ منه": {
             "type": "blade",
             "contexts": [
@@ -20501,6 +21102,12 @@
                 "resources/views/app/consultations/_answer-field.blade.php"
             ]
         },
+        "من 100 · الجاهزية التقنية": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/readiness/show.blade.php"
+            ]
+        },
         "من 7 إلى 10 دقائق · كل خطوة تُحفظ · تعود في أي وقت": {
             "type": "blade",
             "contexts": [
@@ -20511,6 +21118,12 @@
             "type": "config",
             "contexts": [
                 "config/brand.php"
+            ]
+        },
+        "من :cap$": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
             ]
         },
         "من :v1": {
@@ -20530,12 +21143,6 @@
             "type": "blade",
             "contexts": [
                 "resources/views/admin/insights/index.blade.php"
-            ]
-        },
-        "من :v1 محاور مقيسة من :v2": {
-            "type": "blade",
-            "contexts": [
-                "resources/views/app/dashboard.blade.php"
             ]
         },
         "من :v1 محاولة": {
@@ -20628,10 +21235,28 @@
                 "app"
             ]
         },
+        "من متصفح": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
         "من مختبر الجمهور قبل الاستوديو. تُعرض كما حُفظت ولا تُحوَّل تلقائيًّا، لأن تحويل رسالة عامة إلى رسائل شخصيات يخترع نية لم تحددها.": {
             "type": "blade",
             "contexts": [
                 "resources/views/app/messages/studio.blade.php"
+            ]
+        },
+        "من مرات ذكرك": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/presence/show.blade.php"
+            ]
+        },
+        "من هذا التقرير": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/plan/index.blade.php"
             ]
         },
         "من وضع في سلتك قرّر الشراء تقريبًا، وخسارته أغلى خسارة عندك": {
@@ -20745,7 +21370,8 @@
         "منجزة": {
             "type": "blade",
             "contexts": [
-                "resources/views/app/tasks/index.blade.php"
+                "resources/views/app/tasks/index.blade.php",
+                "app"
             ]
         },
         "منح رصيد": {
@@ -21096,6 +21722,13 @@
                 "resources/views/site/pages/profile.blade.php"
             ]
         },
+        "نبض المتصفح": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/session.blade.php",
+                "app"
+            ]
+        },
         "نبض النمو": {
             "type": "config",
             "contexts": [
@@ -21170,6 +21803,12 @@
             ]
         },
         "نجحت %d محاولة من %d.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "نحتاج إكمال بعض الإجابات": {
             "type": "php",
             "contexts": [
                 "app"
@@ -21508,6 +22147,12 @@
                 "app"
             ]
         },
+        "نفدت حصته": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "نفرّق بين ما هو مؤكد من كلامك وما يحتاج تأكيدًا": {
             "type": "blade",
             "contexts": [
@@ -21641,6 +22286,13 @@
                 "app"
             ]
         },
+        "نموذج مُرسَل": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/session.blade.php",
+                "app"
+            ]
+        },
         "نهاية الفترة": {
             "type": "blade",
             "contexts": [
@@ -21763,6 +22415,12 @@
                 "app"
             ]
         },
+        "هذا الأسبوع": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "هذا البرومبت مقفل بعد الاستخدام (BR-012) ولا يُعدّل.": {
             "type": "blade",
             "contexts": [
@@ -21780,6 +22438,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/reports/show.blade.php"
+            ]
+        },
+        "هذا التشخيص غير متاح حاليًا.": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "هذا التشخيص غير متاح حاليًا. اختر تشخيصًا آخر للبدء.": {
@@ -22276,12 +22940,6 @@
                 "app"
             ]
         },
-        "وزيارات حسابات الإدارة": {
-            "type": "blade",
-            "contexts": [
-                "resources/views/admin/insights/index.blade.php"
-            ]
-        },
         "وسائل الإعلام الاجتماعي": {
             "type": "config",
             "contexts": [
@@ -22372,6 +23030,12 @@
                 "resources/views/admin/content/categories/form.blade.php"
             ]
         },
+        "وصل التحليل ناقصًا — والخلل لدينا": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "وصلت طلبات كثيرة من جهازك خلال وقت قصير، فأوقفناها مؤقتًا لحماية الخدمة. انتظر نحو دقيقة ثم أعد المحاولة. لم يضع شيء مما أرسلته.": {
             "type": "blade",
             "contexts": [
@@ -22444,6 +23108,12 @@
                 "config/catalogue.php"
             ]
         },
+        "وفّرنا عليك :count لأن مشروعك يعرفها أصلًا.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/tools/show.blade.php"
+            ]
+        },
         "وقت نشط": {
             "type": "blade",
             "contexts": [
@@ -22484,6 +23154,24 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/prospects/index.blade.php"
+            ]
+        },
+        "ويُطلقه الخادم عند وقوعه فعلًا:": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
+            ]
+        },
+        "وُلّدت من توصيات تقاريرك. تبنَّ ما تريد تنفيذه فعلًا.": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
+        "وُلّدت من توصيات تقاريرك. تبنَّ منها ما ستنفّذه فعلًا هذا الأسبوع.": {
+            "type": "php",
+            "contexts": [
+                "app"
             ]
         },
         "يبدأ :v1 تشخيصات اعتمادًا على إجاباتك المحفوظة، ثم يجمع نتائجها في المستند الموحّد عند اكتمالها.": {
@@ -22627,6 +23315,12 @@
                 "resources/views/reports/pdf.blade.php"
             ]
         },
+        "يعمل": {
+            "type": "php",
+            "contexts": [
+                "app"
+            ]
+        },
         "يفصل بين ما تريده الآن وما تريده لاحقًا، فلا تدفع اليوم مقابل عمل يخص السنة القادمة.": {
             "type": "php",
             "contexts": [
@@ -22711,6 +23405,12 @@
                 "config/brand.php"
             ]
         },
+        "ينتظر منذ": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/operations.blade.php"
+            ]
+        },
         "ينتهي التشخيص بمهام لها مواعيد ومؤشرات تقيس بها تقدمك.": {
             "type": "blade",
             "contexts": [
@@ -22721,6 +23421,18 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/agency-reports/show.blade.php"
+            ]
+        },
+        "ينقصك :shortfall لتشغيل الاستشارة كاملة.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/consultations/index.blade.php"
+            ]
+        },
+        "ينقصك :shortfall لتشغيل هذا التشخيص.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/app/tools/show.blade.php"
             ]
         },
         "ينقصك:": {
@@ -22897,6 +23609,12 @@
             "type": "blade",
             "contexts": [
                 "resources/views/app/reports/show.blade.php"
+            ]
+        },
+        "— لا يُدّعى أيّهما ولا تُحذف.": {
+            "type": "blade",
+            "contexts": [
+                "resources/views/admin/insights/index.blade.php"
             ]
         },
         "— لم أحدد بعد —": {

@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Services\Billing\CreditManager;
 use App\Services\Billing\SubscriptionAssignmentService;
+use App\Support\Presentation\Num;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -72,7 +73,10 @@ class AdminUserController extends Controller
             __('منحة من الإدارة'),
         );
 
-        return back()->with('status', "أُضيف {$data['credits']} رصيدًا إلى {$user->name}.");
+        return back()->with('status', __('أُضيف :credits إلى :name.', [
+            'credits' => Num::credits((int) $data['credits']),
+            'name' => $user->name,
+        ]));
     }
 
     public function edit(User $user): View

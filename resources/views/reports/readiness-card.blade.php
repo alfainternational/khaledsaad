@@ -88,8 +88,11 @@
             <p class="eyebrow">على أي أساس</p>
             <p style="font-size: 9pt; margin: 0;">
                 {{-- كل رقم يُعرض مع أساسه (§١٣): بلا التغطية لا يعرف القارئ إن كانت ٤١ من فحص كامل أم ناقص. --}}
-                فُحص {{ (int) round($score->coverage * count($score->breakdown)) }} بندًا من
-                {{ count($score->breakdown) }}، أي تغطية {{ (int) round($score->coverage * 100) }}٪.
+                {{ __('فُحص :checked من :total بندًا، أي تغطية :coverage.', [
+                    'checked' => \App\Support\Presentation\Num::int($score->checkedItems()),
+                    'total' => \App\Support\Presentation\Num::int($score->totalItems()),
+                    'coverage' => \App\Support\Presentation\Num::ratio($score->coverage),
+                ]) }}
             </p>
             <p class="muted" style="font-size: 8.5pt; margin: 4pt 0 0;">
                 هذه الدرجة مرصودة من صفحات موقعك وإعداداته، لا من إجاباتك عن نفسك.
@@ -151,7 +154,7 @@
         {{ $crawl['total_visits'] }} زيارة بوت خلال آخر 30 يومًا، من
         {{ $crawl['parsed_lines'] }} سطرًا مقروءًا.
         @if ($crawl['unparsed_lines'] > 0)
-            ({{ $crawl['unparsed_lines'] }} سطرًا لم يُفهم — التغطية {{ (int) round($crawl['parse_ratio'] * 100) }}٪.)
+            ({{ $crawl['unparsed_lines'] }} سطرًا لم يُفهم — التغطية {{ \App\Support\Presentation\Num::ratio($crawl['parse_ratio']) }}.)
         @endif
     </p>
 

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Tool;
+use App\Modules\Insights\FunnelRecorder;
 use App\Services\Tools\ToolEngagement;
+use App\Support\Preflight\Preflight;
 use App\Support\Presentation\EngagementPresenter;
 use App\Support\Presentation\ToolPresenter;
 use Illuminate\Http\Request;
@@ -17,6 +19,8 @@ class ToolCatalogController extends Controller
         private readonly ToolPresenter $presenter,
         private readonly ToolEngagement $engagement,
         private readonly EngagementPresenter $engagements,
+        private readonly Preflight $preflight,
+        private readonly FunnelRecorder $funnel,
     ) {}
 
     public function index(Request $request): View
@@ -30,14 +34,27 @@ class ToolCatalogController extends Controller
 
     public function show(Request $request, Tool $tool): View
     {
-        return view('app.tools.show', [
+        $view = view('app.tools.show', [
             'tool' => $this->presenter->detail($tool->load(['currentVersion.fields'])),
             'engagement' => $this->engagements->decorate(
                 $this->engagement->forUser($request->user(), $tool),
                 $tool->key,
             ),
             'projects' => $this->projects($request),
+            // البوابة قبل السؤال الأول لا بعد الأخير (INV-4): التكلفة وعدد
+            // الأسئلة والوقت والرصيد تُعرض هنا، فلا يبذل أحد مجهودًا ثم
+            // يصطدم بحدٍّ كان قائمًا قبل أن يبدأ.
+            'preflight' => $preflight = $this->preflight->forTool(
+                $tool,
+                $request->user()?->primaryWorkspace(),
+            ),
         ]);
+
+        // ما رآه المستخدم على البوابة يُقاس: بلا هذا لا نعرف كم واحدًا
+        // يصطدم بجدار قبل أن يبدأ — وهو السؤال الذي لم يسأله أحد.
+        $this->funnel->preflight($request, $preflight->outcome->value, ['tool' => $tool->key]);
+
+        return $view;
     }
 
     /**

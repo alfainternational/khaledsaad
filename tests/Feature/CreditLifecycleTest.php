@@ -89,7 +89,9 @@ class CreditLifecycleTest extends TestCase
         $run = $this->draftRun();
         $run->project->workspace->wallet->forceFill(['balance' => 0])->save();
 
-        $this->expectExceptionMessage('رصيدك غير كافٍ');
+        // الرسالة تذكر التكلفة والرصيد معًا (§10)، ولا تكتفي بحكم
+        // «رصيدك غير كافٍ» الذي لا يمكّن المستخدم من قرار.
+        $this->expectExceptionMessage('تشغيل هذه الأداة يكلّف');
         app(ToolRunService::class)->queue($run);
 
         Queue::assertNothingPushed();

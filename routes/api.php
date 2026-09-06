@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\AgencyReportController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CompetitorController;
 use App\Http\Controllers\Api\V1\ConsultationController;
+use App\Http\Controllers\Api\V1\DesignTokenController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\EngagementController;
 use App\Http\Controllers\Api\V1\ExperienceController;
@@ -54,6 +55,15 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
     Route::prefix('public')->name('public.')->middleware('throttle:60,1')->group(function (): void {
         Route::get('bootstrap', [PublicContentController::class, 'bootstrap'])->name('bootstrap');
+
+        /*
+         * توكنز التصميم: تغييرٌ بصري يصل التطبيق بلا مراجعة متجر (INV-10).
+         *
+         * عامّة لا محميّة: التطبيق يحتاجها ليرسم **شاشة الدخول نفسها**،
+         * أي قبل أن يملك رمزًا. ولا تحمل بيانَ مستخدمٍ أصلًا — ألوانٌ
+         * ومسافاتٌ ومقاسات.
+         */
+        Route::get('design-tokens', [DesignTokenController::class, 'index'])->name('design-tokens');
         Route::get('legal/{page}', [PublicContentController::class, 'legal'])->name('legal');
         Route::get('mobile-app', [PublicContentController::class, 'mobileApp'])->name('mobile-app');
         Route::get('content', [PublicContentLibraryController::class, 'index'])->name('content.index');

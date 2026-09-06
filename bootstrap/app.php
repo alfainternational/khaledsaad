@@ -1,14 +1,22 @@
 <?php
 
+use App\Exceptions\AIInvalidOutputException;
+use App\Exceptions\AIProviderException;
+use App\Exceptions\BillingLimitException;
 use App\Http\Middleware\AuthenticateBrowserSession;
+use App\Http\Middleware\EnsureExperienceAccess;
 use App\Http\Middleware\EnsureFeature;
 use App\Http\Middleware\EnsureSupportedAppVersion;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackVisit;
+use App\Modules\Insights\VisitorIdentity;
+use App\Support\Failures\FailureClassifier;
+use App\Support\Failures\FailureKind;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
             'feature' => EnsureFeature::class,
-            'experience-access' => \App\Http\Middleware\EnsureExperienceAccess::class,
+            'experience-access' => EnsureExperienceAccess::class,
         ]);
 
         /*
@@ -74,8 +82,8 @@ return Application::configure(basePath: dirname(__DIR__))
          * قاعدتنا، ولا تحمل هوية ولا صلاحية ولا تُستعمل في أي قرار وصول.
          */
         $middleware->encryptCookies(except: [
-            \App\Modules\Insights\VisitorIdentity::COOKIE,
-            \App\Modules\Insights\VisitorIdentity::VISIT_COOKIE,
+            VisitorIdentity::COOKIE,
+            VisitorIdentity::VISIT_COOKIE,
         ]);
 
         // إشعارات البوابات تصل من خوادمها بلا جلسة ولا رمز CSRF؛
@@ -95,5 +103,31 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        /*
+         * شكل الخطأ في `api/v1` يحمل تصنيفه (INV-8).
+         *
+         * الحقل `kind` هو ما يجعل الثابت يسري على الويب والتطبيق معًا دون
+         * أن يعيد أيٌّ منهما تفسير النص: `ours` عطلٌ لدينا ويأتي دائمًا
+         * بـ `user_action = null`، و`theirs` حدٌّ يملك المستخدم رفعه.
+         * بدون هذا كانت أعطال المزوّد تصل بصيغة ٥٠٠ خام، فيخترع كل عميل
+         * لها رسالةً من عنده — وهكذا وُلد «رصيدك غير كافٍ» فوق عطلٍ منّا.
+         */
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (! $request->expectsJson() && ! $request->is('api/*')) {
+                return null;
+            }
+
+            if (! $exception instanceof BillingLimitException
+                && ! $exception instanceof AIProviderException
+                && ! $exception instanceof AIInvalidOutputException) {
+                return null;
+            }
+
+            $failure = (new FailureClassifier)->classify($exception);
+
+            return response()->json(
+                ['error' => $failure->toArray()],
+                $failure->kind === FailureKind::Theirs ? 402 : 503,
+            );
+        });
     })->create();

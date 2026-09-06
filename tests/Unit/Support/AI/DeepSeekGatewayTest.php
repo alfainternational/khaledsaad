@@ -6,6 +6,7 @@ use App\Contracts\AI\ArtificialIntelligenceGateway;
 use App\Exceptions\AIProviderException;
 use App\Support\AI\AIRequest;
 use App\Support\AI\DeepSeekGateway;
+use App\Support\AI\Resilience\FallbackChainGateway;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -29,13 +30,20 @@ class DeepSeekGatewayTest extends TestCase
         ]);
     }
 
+    /**
+     * العقد يُحلّ إلى **سلسلة** لا إلى مزوّد واحد.
+     *
+     * كان يُحلّ إلى `DeepSeekGateway` مباشرة، فنفادُ اشتراكه أوقف المنصة
+     * كلها ولم يكن خلفه أحد. ما يحرسه هذا الاختبار الآن هو أن كل مستدعٍ
+     * يمرّ بالسلسلة — لأن مستدعيًا واحدًا يتجاوزها يعيد نقطة الانهيار.
+     */
     #[Test]
-    public function the_ai_contract_resolves_to_the_deepseek_gateway(): void
+    public function the_ai_contract_resolves_to_a_provider_chain(): void
     {
-        $this->assertInstanceOf(
-            DeepSeekGateway::class,
-            app(ArtificialIntelligenceGateway::class),
-        );
+        $gateway = app(ArtificialIntelligenceGateway::class);
+
+        $this->assertInstanceOf(FallbackChainGateway::class, $gateway);
+        $this->assertArrayHasKey('deepseek', $gateway->health());
     }
 
     #[Test]
@@ -197,7 +205,9 @@ class DeepSeekGatewayTest extends TestCase
             $this->fail('Expected an AI provider exception.');
         } catch (AIProviderException $exception) {
             $this->assertSame(429, $exception->statusCode);
-            $this->assertStringContainsString('DeepSeek', $exception->getMessage());
+            // اسم المزوّد الفعلي لا اسمًا معروضًا ثابتًا: السلسلة تحتاج أن
+            // تعرف مَن سقط، وسجلٌّ يقول «DeepSeek» عن عطلٍ في مزوّد آخر يضلّل.
+            $this->assertStringContainsString('deepseek', $exception->getMessage());
             $this->assertStringNotContainsString('secret-test-key', $exception->getMessage());
         }
     }

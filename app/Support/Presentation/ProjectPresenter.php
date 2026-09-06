@@ -36,6 +36,50 @@ class ProjectPresenter
                 ? Report::bandFor($project->latest_score)
                 : null,
             'maturity' => $this->maturity($project),
+            // الدرجة المعروضة ومعها اسمها: مصدر واحد للشاشتين (A3).
+            'headline_score' => $this->headlineScore($project),
+        ];
+    }
+
+    /**
+     * الدرجة المعروضة على بطاقة المشروع — بمصدر واحد واسم صريح.
+     *
+     * كانت الرئيسية تعرض `maturity_score` وصفحة المشاريع تعرض
+     * `latest_score` بالشكل نفسه `NN/100`، فرأى المستخدم رقمين مختلفين
+     * لمشروع واحد وسأل: «أيّهما أصدّق؟». الرقمان صحيحان، والعطل أنهما
+     * بلا اسمين. لذلك تعيد هذه الدالة الرقم ومعه اسمُه دائمًا، وتُقرأ من
+     * الشاشتين معًا فلا تتفرّق الحقيقة بينهما.
+     *
+     * ملاحظة على `latest_score`: هو درجة آخر تقرير لا درجة المشروع —
+     * لذلك يُسمّى «آخر تشخيص» صراحةً ولا يُقدَّم كجاهزية للمشروع.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function headlineScore(Project $project): ?array
+    {
+        $maturity = $this->maturity($project);
+
+        if ($maturity !== null) {
+            return [
+                'value' => $maturity[MetricKey::MATURITY_SCORE],
+                'name' => __('جاهزية المشروع'),
+                'basis' => __(':active من :total محاور مقيسة', [
+                    'active' => Num::int($maturity['axes_active']),
+                    'total' => Num::int($maturity['axes_total']),
+                ]),
+                'is_assumption' => $maturity['is_assumption'],
+            ];
+        }
+
+        if ($project->latest_score === null) {
+            return null;
+        }
+
+        return [
+            'value' => $project->latest_score,
+            'name' => __('درجة آخر تشخيص'),
+            'basis' => __('لم تُقَس محاور الجاهزية بعد — هذه درجة تشخيص واحد.'),
+            'is_assumption' => false,
         ];
     }
 

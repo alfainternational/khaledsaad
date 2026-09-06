@@ -71,26 +71,25 @@
                     <a class="card card--link" href="{{ route('app.projects.show', $project['slug']) }}">
                         <h3>{{ $project['name'] }}</h3>
 
-                        @if ($project['maturity'])
+                        @if ($project['headline_score'])
                             {{--
-                                درجة النضج تتصدّر لأنها تصف النشاط كله لا أداة
-                                واحدة. ومعها أساسها دائمًا: «٤١ من محورين» غير
-                                «٤١ من ثمانية» (§١٣).
+                                الرقم ومعه اسمه دائمًا: «جاهزية المشروع» غير
+                                «درجة آخر تشخيص»، وعرضهما بلاحقة /100 بلا
+                                اسمين هو ما جعل المستخدم يرى رقمين لمشروع
+                                واحد ويسأل أيّهما يصدّق. ومعه أساسه (§١٣).
                             --}}
                             <p class="score-chip">
-                                {{ $project['maturity']['maturity_score'] }}/100 · نضج تسويقي
+                                {{ \App\Support\Presentation\Num::score($project['headline_score']['value']) }}
+                                · {{ $project['headline_score']['name'] }}
                             </p>
                             <p class="muted">
-                                من {{ $project['maturity']['axes_active'] }} محاور مقيسة
-                                من {{ $project['maturity']['axes_total'] }}
-                                @if ($project['maturity']['is_assumption'])
-                                    · <span class="tag tag--assumption">فرضية</span>
+                                {{ $project['headline_score']['basis'] }}
+                                @if ($project['headline_score']['is_assumption'])
+                                    · <span class="tag tag--assumption">{{ __('فرضية') }}</span>
                                 @endif
                             </p>
-                        @elseif ($project['latest_score'] !== null)
-                            <p class="score-chip">{{ $project['latest_score'] }}/100 · {{ $project['score_band'] }}</p>
                         @else
-                            <p class="muted">لم يبدأ التشخيص بعد</p>
+                            <p class="muted">{{ __('لم يبدأ التشخيص بعد') }}</p>
                         @endif
 
                         <p class="muted">{{ $project['sector_display'] }}</p>

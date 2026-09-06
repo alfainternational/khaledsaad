@@ -31,6 +31,16 @@ self.addEventListener('fetch', (event) => {
 
     const url = new URL(request.url);
 
+    /*
+     * لا يُخزَّن أي ردّ من الواجهة البرمجية إطلاقًا.
+     *
+     * ردودها تحمل رصيدًا وحصةً ودرجة، وعرضُ رصيدٍ قديم يعيد إنتاج
+     * التناقض نفسه من باب آخر: صفحةٌ تقول «٩٩٩٦٧» وأخرى تقول «٠».
+     * كان هذا يتحقق بالمصادفة (لأننا لا نخزّن شيئًا)، وصار قاعدةً
+     * مكتوبة كي لا يكسرها أول من يضيف تخزينًا «للسرعة».
+     */
+    if (url.pathname.startsWith('/api/')) return;
+
     // أصول البناء مبصومة بالمحتوى — كاش أولًا بأمان.
     if (url.pathname.startsWith('/build/') || url.pathname.startsWith('/assets/')) {
         event.respondWith(

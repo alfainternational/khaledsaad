@@ -4,7 +4,7 @@
     "description": "شخّص تسويق مشروعك واعرف درجتك وفجواتك وخطوتك التالية.",
     "lang": "ar",
     "dir": "rtl",
-    "start_url": "/app/dashboard",
+    "start_url": "/app/dashboard?source=pwa",
     "scope": "/",
     "display": "standalone",
     "background_color": "#ffffff",
@@ -15,6 +15,18 @@
             "sizes": "any",
             "type": "image/png",
             "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "مهام اليوم",
+            "short_name": "المهام",
+            "url": "/app/plan?source=pwa"
+        },
+        {
+            "name": "تقاريري",
+            "short_name": "التقارير",
+            "url": "/app/reports?source=pwa"
         }
     ]
 }

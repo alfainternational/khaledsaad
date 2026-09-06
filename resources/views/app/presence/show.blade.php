@@ -62,7 +62,7 @@
                         @if ($metrics['mention_rate'] === null)
                             <span class="muted">لم يُقَس</span>
                         @else
-                            {{ round($metrics['mention_rate'] * 100) }}٪
+                            {{ \App\Support\Presentation\Num::ratio($metrics['mention_rate']) }}
                             <span class="muted">من {{ $metrics['basis']['successful_attempts'] }} محاولة</span>
                         @endif
                     </dd>
@@ -73,7 +73,7 @@
                         @if ($metrics['share_of_voice'] === null)
                             <span class="muted">لم تُذكر أي علامة</span>
                         @else
-                            {{ round($metrics['share_of_voice'] * 100) }}٪
+                            {{ \App\Support\Presentation\Num::ratio($metrics['share_of_voice']) }}
                         @endif
                     </dd>
                 </div>
@@ -83,7 +83,7 @@
                         @if ($metrics['citation_rate'] === null)
                             <span class="muted">لم تُذكر بعد</span>
                         @else
-                            {{ round($metrics['citation_rate'] * 100) }}٪ من مرات ذكرك
+                            {{ \App\Support\Presentation\Num::ratio($metrics['citation_rate']) }} {{ __('من مرات ذكرك') }}
                         @endif
                     </dd>
                 </div>

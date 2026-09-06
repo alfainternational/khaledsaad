@@ -68,8 +68,10 @@ class AdaptiveInterfaceLayoutTest extends TestCase
             '.layout-page--reading',
             '.layout-page--form',
             '.layout-page--operational',
-            '@media (max-width: 64rem)',
-            '@media (max-width: 48rem)',
+            // نقاط التوقّف من التوكنز الأربع (INV-10): كانت 64rem و48rem
+            // قبل توحيدها، وقيمتاهما 1024px و768px — فالحدّ الأعلى ناقص واحد.
+            '@media (max-width: 1023px)',
+            '@media (max-width: 767px)',
         ] as $contract) {
             $this->assertStringContainsString($contract, $css, $contract);
         }

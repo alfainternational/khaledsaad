@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\ToolRun;
+use App\Modules\Execution\ReviewQueue;
 use App\Services\Tools\ManualReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -49,7 +50,12 @@ class AdminManualReportController extends Controller
             ])
             ->all();
 
-        return view('admin.manual.index', ['pending' => $pending, 'done' => $done]);
+        return view('admin.manual.index', [
+            'pending' => $pending,
+            'done' => $done,
+            // المدّة المعلنة وحالتها: طابورٌ بلا SLA يُقاس هو وعدٌ بلا سقف.
+            'queue' => app(ReviewQueue::class)->status(),
+        ]);
     }
 
     /**

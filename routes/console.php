@@ -70,3 +70,23 @@ Schedule::command('payments:reconcile --minutes=15 --limit=100')->everyTenMinute
  * العميل ساعاتٍ على باقة انتهت — أو ينتظر ترقيته دون سبب ظاهر له.
  */
 Schedule::command('subscriptions:apply-scheduled')->hourly()->withoutOverlapping();
+
+/*
+ * قدرة مزوّدات الذكاء: كل عشر دقائق.
+ *
+ * العطل الذي وقع (نفاد الاشتراك) كان يجب أن يصل إلى المشغّل قبل أن يصل
+ * إلى مستخدم — وقد وصل إلى مستخدم أولًا لأنه لم يكن أحد يسأل. عشر دقائق
+ * لأن نافذة الاكتشاف يجب أن تكون أقصر من صبر مستخدم يجيب عن أسئلة.
+ *
+ * `--probe` يرسل نداء رمزٍ واحد: تكلفته لا تُذكر، ويكشف نفاد الحصة
+ * والمفتاح الباطل قبل أن يكشفهما تشغيلٌ حقيقي.
+ */
+Schedule::command('ai:watch-capacity --probe')->everyTenMinutes()->withoutOverlapping();
+
+/*
+ * إعادة ما أُجّل لعطلٍ لدينا: كل خمس دقائق.
+ *
+ * الأمر يفحص القدرة أولًا فلا يعيد على مزوّد ما زال ساقطًا. وبدون هذا
+ * الجدول تبقى `awaiting_capacity` كلمةً ألطف من «فشل» لا وعدًا مُنفَّذًا.
+ */
+Schedule::command('runs:resume')->everyFiveMinutes()->withoutOverlapping();

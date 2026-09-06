@@ -39,6 +39,7 @@ body[data-layout='marketing'] .site-header {
     z-index: 80;
     height: 82px;
     border: 0;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     background: var(--ref-canvas) !important;
     box-shadow: none;
 }
@@ -101,11 +102,14 @@ body[data-layout='marketing'] .nav-cta {
     min-height: auto;
     border: 0;
     border-radius: 0;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     background: transparent !important;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     color: var(--ref-ink) !important;
     font-size: 13px;
     font-weight: 800;
     text-transform: uppercase;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     box-shadow: none !important;
 }
 
@@ -385,13 +389,16 @@ html[data-theme='dark'] body[data-layout='marketing'] main,
 html[data-theme='dark'] body[data-layout='marketing'] .site-footer,
 html[data-theme='dark'] body[data-layout='marketing'] .mobile-menu {
     color-scheme: light;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     background-color: var(--ref-canvas) !important;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     color: var(--ref-ink) !important;
 }
 
 html[data-theme='dark'] body[data-layout='marketing'] .site-header a,
 html[data-theme='dark'] body[data-layout='marketing'] .mobile-menu a,
 html[data-theme='dark'] body[data-layout='marketing'] .mobile-menu span {
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     color: var(--ref-ink) !important;
 }
 
@@ -503,6 +510,7 @@ body[data-layout='marketing'] .esec__score {
 }
 
 body[data-layout='marketing'] .esec__score b {
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     color: var(--ref-ink) !important;
     direction: ltr;
     font-size: clamp(46px, 4.4vw, 70px);
@@ -516,6 +524,7 @@ body[data-layout='marketing'] .esec__score i {
 }
 
 body[data-layout='marketing'] .esec__score span {
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     color: var(--ref-muted) !important;
     font-size: 13px;
 }
@@ -617,9 +626,12 @@ body[data-layout='marketing'] .outcomes__object {
     object-fit: contain;
     object-position: center center;
     transform: translateY(-50%);
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     translate: none !important;
     transform-origin: center;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     rotate: 0deg !important;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     scale: 1 !important;
     filter: none;
     mix-blend-mode: normal;
@@ -672,14 +684,19 @@ body[data-layout='marketing'] .efaq__item summary {
 }
 
 body[data-layout='marketing'] .efaq__item {
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     display: block !important;
 }
 
 body[data-layout='marketing'] .efaq__item > .erow__desc {
     display: block;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     width: 100% !important;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     inline-size: 100% !important;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     max-width: none !important;
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     justify-self: stretch !important;
     padding-inline-start: 124px;
 }
@@ -731,7 +748,7 @@ body[data-layout='marketing'] .footer-bottom {
     border-color: var(--ref-line);
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1023px) {
     body[data-layout='marketing'] .desktop-nav,
     body[data-layout='marketing'] .nav-actions {
         display: none;
@@ -760,7 +777,7 @@ body[data-layout='marketing'] .footer-bottom {
     }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
     body[data-layout='marketing'] {
         background: var(--ref-canvas);
     }
@@ -912,8 +929,10 @@ body[data-layout='marketing'] .footer-bottom {
         top: 250px;
         /* توسيط فيزيائي: يعمل مع translate في الاتجاهين، والمنطقي يكسره
            لأن transform لا ينعكس. الطرفان يبقيان فيزيائيين معًا أو لا يعمل. */
+        /* stylelint-disable-next-line property-disallowed-list -- السبب أعلاه. */
         right: auto;
         bottom: auto;
+        /* stylelint-disable-next-line property-disallowed-list -- السبب أعلاه. */
         left: 50%;
         width: min(88%, 720px);
         height: 245px;
@@ -940,8 +959,10 @@ body[data-layout='marketing'] .footer-bottom {
     }
 }
 
+/* stylelint-disable declaration-no-important -- تعطيل الحركة يجب أن يتغلّب على كل تصريح، وهو نمط الوصول المعياري (§08). */
 @media (prefers-reduced-motion: reduce) {
     body[data-layout='marketing'] * {
         scroll-behavior: auto !important;
     }
 }
+/* stylelint-enable declaration-no-important */

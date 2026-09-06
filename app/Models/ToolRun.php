@@ -27,6 +27,15 @@ class ToolRun extends Model
     public const STATUS_FAILED = 'failed';
 
     /**
+     * عطلٌ لدينا: التشغيل ينتظر عودة القدرة ويُعاد **تلقائيًّا**.
+     *
+     * ليست تسميةً ألطف لـ`failed`. الفرق تشغيلي: هذه الحالة يلتقطها
+     * الجدول الزمني فيعيدها بلا تدخل، وتلك تنتظر مستخدمًا يضغط زرًّا لا
+     * يعرف أنه موجود. ومجهود ستين إجابة لا يُعلَّق على تذكّر أحد.
+     */
+    public const STATUS_AWAITING_CAPACITY = 'awaiting_capacity';
+
+    /**
      * أطول مرحلة قِيست عمليًا نحو 30 ثانية، وأبطأ تشغيل كامل نحو خمس دقائق.
      * عشر دقائق بلا تقدم تعني تعطلًا لا بطئًا.
      */
@@ -35,6 +44,7 @@ class ToolRun extends Model
     protected $fillable = [
         'uuid', 'project_id', 'consultation_session_id', 'tool_version_id', 'user_id', 'guest_session_id', 'status', 'locale',
         'allow_incomplete', 'current_step', 'base_score', 'confidence', 'snapshot', 'failure_reason',
+        'failure_kind', 'failure_code', 'failure_detail', 'retry_after', 'auto_attempts',
         'attempts', 'started_at', 'completed_at',
     ];
 
@@ -45,6 +55,7 @@ class ToolRun extends Model
             'allow_incomplete' => 'boolean',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'retry_after' => 'datetime',
         ];
     }
 
@@ -118,6 +129,19 @@ class ToolRun extends Model
     }
 
     /**
+     * ينتظر قدرتنا لا فعلَ المستخدم — فلا يُعرض له كفشل ولا يُطلب منه شيء.
+     */
+    public function isAwaitingCapacity(): bool
+    {
+        return $this->status === self::STATUS_AWAITING_CAPACITY;
+    }
+
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(ToolRunAttempt::class);
+    }
+
+    /**
      * تشغيل متوقف فعليًا: مضى وقت أطول من المعقول دون تقدم.
      *
      * السبب العملي: مع طابور database لا يعمل شيء ما لم يكن هناك عامل مشغّل.
@@ -126,7 +150,7 @@ class ToolRun extends Model
      */
     public function isStale(): bool
     {
-        if ($this->isTerminal() || $this->status === self::STATUS_DRAFT) {
+        if ($this->isTerminal() || $this->status === self::STATUS_DRAFT || $this->isAwaitingCapacity()) {
             return false;
         }
 

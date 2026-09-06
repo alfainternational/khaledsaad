@@ -4,6 +4,7 @@ namespace App\Modules\Brain;
 
 use App\Models\Project;
 use App\Models\ProjectAnswer;
+use App\Modules\Intake\FactValidity;
 use App\Modules\Shared\Evidence\EvidenceLevel;
 use App\Modules\Shared\Evidence\EvidenceMapper;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ class ProjectKnowledgeService
     public function __construct(
         private readonly BrainWriter $brain,
         private readonly EvidenceMapper $evidence,
+        private readonly FactValidity $validity,
     ) {}
 
     /**
@@ -57,6 +59,11 @@ class ProjectKnowledgeService
                     'value_json' => ['value' => $value],
                     'source_tool_key' => $sourceType === 'consultation' ? 'consultation' : ($sourceType === 'tool' ? $sourceKey : null),
                     'source_run_id' => $sourceType === 'tool' ? $sourceId : null,
+                    // كل حقيقة تُكتب بعمرٍ يناسب نوعها. بلا هذا تُستعمل
+                    // ميزانيةٌ من أربعة أشهر كأنها الحاضر — بلا خطأ يظهر
+                    // ولا اختبار يحمرّ، والتشخيص كله مبنيّ عليها.
+                    'confirmed_at' => now(),
+                    'valid_until' => $this->validity->expiresAt($fieldKey),
                 ],
             );
 

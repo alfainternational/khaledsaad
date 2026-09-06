@@ -13,11 +13,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ProjectAnswer extends Model
 {
-    protected $fillable = ['project_id', 'field_key', 'value_json', 'source_tool_key', 'source_run_id'];
+    protected $fillable = [
+        'project_id', 'field_key', 'value_json', 'source_tool_key', 'source_run_id',
+        'confirmed_at', 'valid_until',
+    ];
 
     protected function casts(): array
     {
-        return ['value_json' => 'array'];
+        return [
+            'value_json' => 'array',
+            'confirmed_at' => 'datetime',
+            'valid_until' => 'datetime',
+        ];
     }
 
     public function project(): BelongsTo

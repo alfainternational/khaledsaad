@@ -36,8 +36,12 @@ class ReadinessCardTest extends TestCase
         $this->assertStringContainsString('بطاقة الجاهزية للذكاء الاصطناعي', $html);
 
         // رقم بلا أساسه يخالف §١٣: القارئ لا يعرف إن كانت ٤١ من فحص كامل أم ناقص.
+        //
+        // الفحص على العنصرين لا على ترتيب الكلمات: صياغة الجملة تتغيّر مع
+        // الترجمة ومع إعادة الصياغة، والأساس هو ما يجب أن يبقى.
         $this->assertStringContainsString('تغطية', $html);
-        $this->assertStringContainsString('بندًا من', $html);
+        $this->assertStringContainsString('بندًا', $html);
+        $this->assertMatchesRegularExpression('/فُحص\s*\d+\s*من\s*\d+/u', $html);
     }
 
     #[Test]

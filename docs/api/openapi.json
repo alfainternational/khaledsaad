@@ -1,0 +1,4347 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "خالد سعد — عقد api/v1",
+        "version": "1.0.0",
+        "description": "مولَّدة من جدول المسارات — لا تُحرَّر يدويًّا.\n\nإصدارٌ واحد لا ثانٍ: يتطوّر api/v1 في مكانه، محروسًا ببوابة\nحدّ أدنى لإصدار التطبيق تُشحن قبل أي تغيير في العقد."
+    },
+    "servers": [
+        {
+            "url": "http://localhost/khaledsaad/public/api"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "Error": {
+                "type": "object",
+                "required": [
+                    "error"
+                ],
+                "properties": {
+                    "error": {
+                        "type": "object",
+                        "required": [
+                            "kind",
+                            "code",
+                            "title",
+                            "message",
+                            "user_action"
+                        ],
+                        "properties": {
+                            "kind": {
+                                "type": "string",
+                                "enum": [
+                                    "ours",
+                                    "theirs",
+                                    "input"
+                                ]
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "message": {
+                                "type": "string"
+                            },
+                            "user_action": {
+                                "nullable": true,
+                                "description": "يجب أن يكون null حين kind = ours.",
+                                "type": "object",
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "route": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                }
+                            },
+                            "retry_after": {
+                                "type": "integer",
+                                "nullable": true
+                            }
+                        }
+                    }
+                }
+            },
+            "Envelope": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "object"
+                    },
+                    "meta": {
+                        "type": "object",
+                        "properties": {
+                            "locale": {
+                                "type": "string"
+                            },
+                            "server_time": {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        }
+                    }
+                }
+            },
+            "LabelledValue": {
+                "type": "object",
+                "required": [
+                    "value",
+                    "label"
+                ],
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "responses": {
+            "Success": {
+                "description": "نجاح",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Envelope"
+                        }
+                    }
+                }
+            },
+            "Error": {
+                "description": "عطل مصنَّف",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/api/v1/admin/catalog": {
+            "get": {
+                "operationId": "api.v1.admin.catalog",
+                "summary": "api.v1.admin.catalog",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/consultations": {
+            "get": {
+                "operationId": "api.v1.admin.consultations.index",
+                "summary": "api.v1.admin.consultations.index",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/consultations/blueprints/{blueprint}/draft": {
+            "post": {
+                "operationId": "api.v1.admin.consultations.draft",
+                "summary": "api.v1.admin.consultations.draft",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/consultations/versions/{version}": {
+            "get": {
+                "operationId": "api.v1.admin.consultations.show",
+                "summary": "api.v1.admin.consultations.show",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/consultations/versions/{version}/publish": {
+            "post": {
+                "operationId": "api.v1.admin.consultations.publish",
+                "summary": "api.v1.admin.consultations.publish",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/consultations/versions/{version}/questions/{question}": {
+            "put": {
+                "operationId": "api.v1.admin.consultations.questions.update",
+                "summary": "api.v1.admin.consultations.questions.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/consultations/versions/{version}/simulate": {
+            "post": {
+                "operationId": "api.v1.admin.consultations.simulate",
+                "summary": "api.v1.admin.consultations.simulate",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/dashboard": {
+            "get": {
+                "operationId": "api.v1.admin.dashboard",
+                "summary": "api.v1.admin.dashboard",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/features": {
+            "post": {
+                "operationId": "api.v1.admin.features.store",
+                "summary": "api.v1.admin.features.store",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/features/{feature}": {
+            "put": {
+                "operationId": "api.v1.admin.features.update",
+                "summary": "api.v1.admin.features.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "api.v1.admin.features.destroy",
+                "summary": "api.v1.admin.features.destroy",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/gateways": {
+            "post": {
+                "operationId": "api.v1.admin.gateways.store",
+                "summary": "api.v1.admin.gateways.store",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/gateways/{gateway}": {
+            "put": {
+                "operationId": "api.v1.admin.gateways.update",
+                "summary": "api.v1.admin.gateways.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "api.v1.admin.gateways.destroy",
+                "summary": "api.v1.admin.gateways.destroy",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/gateways/{gateway}/default": {
+            "patch": {
+                "operationId": "api.v1.admin.gateways.default",
+                "summary": "api.v1.admin.gateways.default",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/gateways/{gateway}/test": {
+            "post": {
+                "operationId": "api.v1.admin.gateways.test",
+                "summary": "api.v1.admin.gateways.test",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/gateways/{gateway}/toggle": {
+            "patch": {
+                "operationId": "api.v1.admin.gateways.toggle",
+                "summary": "api.v1.admin.gateways.toggle",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/manual-reports": {
+            "get": {
+                "operationId": "api.v1.admin.manual-reports.index",
+                "summary": "api.v1.admin.manual-reports.index",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/manual-reports/{run}": {
+            "get": {
+                "operationId": "api.v1.admin.manual-reports.show",
+                "summary": "api.v1.admin.manual-reports.show",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.admin.manual-reports.store",
+                "summary": "api.v1.admin.manual-reports.store",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/packs": {
+            "post": {
+                "operationId": "api.v1.admin.packs.store",
+                "summary": "api.v1.admin.packs.store",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/packs/{pack}": {
+            "put": {
+                "operationId": "api.v1.admin.packs.update",
+                "summary": "api.v1.admin.packs.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "api.v1.admin.packs.destroy",
+                "summary": "api.v1.admin.packs.destroy",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/payments": {
+            "get": {
+                "operationId": "api.v1.admin.payments.index",
+                "summary": "api.v1.admin.payments.index",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/payments/{payment}/approve": {
+            "post": {
+                "operationId": "api.v1.admin.payments.approve",
+                "summary": "api.v1.admin.payments.approve",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/payments/{payment}/refund": {
+            "post": {
+                "operationId": "api.v1.admin.payments.refund",
+                "summary": "api.v1.admin.payments.refund",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/payments/{payment}/reject": {
+            "post": {
+                "operationId": "api.v1.admin.payments.reject",
+                "summary": "api.v1.admin.payments.reject",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/plans": {
+            "post": {
+                "operationId": "api.v1.admin.plans.store",
+                "summary": "api.v1.admin.plans.store",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/plans/{plan}": {
+            "put": {
+                "operationId": "api.v1.admin.plans.update",
+                "summary": "api.v1.admin.plans.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "api.v1.admin.plans.destroy",
+                "summary": "api.v1.admin.plans.destroy",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/settings": {
+            "get": {
+                "operationId": "api.v1.admin.settings.index",
+                "summary": "api.v1.admin.settings.index",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "api.v1.admin.settings.update",
+                "summary": "api.v1.admin.settings.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/tools": {
+            "get": {
+                "operationId": "api.v1.admin.tools.index",
+                "summary": "api.v1.admin.tools.index",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.admin.tools.store",
+                "summary": "api.v1.admin.tools.store",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/tools/{tool}": {
+            "get": {
+                "operationId": "api.v1.admin.tools.show",
+                "summary": "api.v1.admin.tools.show",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "api.v1.admin.tools.update",
+                "summary": "api.v1.admin.tools.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "api.v1.admin.tools.destroy",
+                "summary": "api.v1.admin.tools.destroy",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/tools/{tool}/prompts/{prompt}": {
+            "put": {
+                "operationId": "api.v1.admin.tools.prompts.update",
+                "summary": "api.v1.admin.tools.prompts.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/tools/{tool}/status": {
+            "patch": {
+                "operationId": "api.v1.admin.tools.status",
+                "summary": "api.v1.admin.tools.status",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/usage": {
+            "get": {
+                "operationId": "api.v1.admin.usage",
+                "summary": "api.v1.admin.usage",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users": {
+            "get": {
+                "operationId": "api.v1.admin.users.index",
+                "summary": "api.v1.admin.users.index",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users/plans/assign": {
+            "post": {
+                "operationId": "api.v1.admin.users.plans.assign",
+                "summary": "api.v1.admin.users.plans.assign",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users/plans/preview": {
+            "post": {
+                "operationId": "api.v1.admin.users.plans.preview",
+                "summary": "api.v1.admin.users.plans.preview",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users/{user}": {
+            "put": {
+                "operationId": "api.v1.admin.users.update",
+                "summary": "api.v1.admin.users.update",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users/{user}/admin": {
+            "patch": {
+                "operationId": "api.v1.admin.users.admin",
+                "summary": "api.v1.admin.users.admin",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users/{user}/credits": {
+            "post": {
+                "operationId": "api.v1.admin.users.credits",
+                "summary": "api.v1.admin.users.credits",
+                "tags": [
+                    "admin"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/agency-reports/{agencyReport}": {
+            "get": {
+                "operationId": "api.v1.agency-reports.show",
+                "summary": "api.v1.agency-reports.show",
+                "tags": [
+                    "agency-reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/agency-reports/{agencyReport}/brief/pdf": {
+            "get": {
+                "operationId": "api.v1.agency-reports.brief.pdf",
+                "summary": "api.v1.agency-reports.brief.pdf",
+                "tags": [
+                    "agency-reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/agency-reports/{agencyReport}/data.json": {
+            "get": {
+                "operationId": "api.v1.agency-reports.data",
+                "summary": "api.v1.agency-reports.data",
+                "tags": [
+                    "agency-reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/agency-reports/{agencyReport}/pdf": {
+            "get": {
+                "operationId": "api.v1.agency-reports.pdf",
+                "summary": "api.v1.agency-reports.pdf",
+                "tags": [
+                    "agency-reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/agency-reports/{agencyReport}/share": {
+            "post": {
+                "operationId": "api.v1.agency-reports.share",
+                "summary": "api.v1.agency-reports.share",
+                "tags": [
+                    "agency-reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "api.v1.agency-reports.share.revoke",
+                "summary": "api.v1.agency-reports.share.revoke",
+                "tags": [
+                    "agency-reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/forgot-password": {
+            "post": {
+                "operationId": "api.v1.auth.forgot-password",
+                "summary": "api.v1.auth.forgot-password",
+                "tags": [
+                    "auth"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "operationId": "api.v1.auth.login",
+                "summary": "api.v1.auth.login",
+                "tags": [
+                    "auth"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "operationId": "api.v1.auth.logout",
+                "summary": "api.v1.auth.logout",
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "operationId": "api.v1.auth.me",
+                "summary": "api.v1.auth.me",
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "operationId": "api.v1.auth.register",
+                "summary": "api.v1.auth.register",
+                "tags": [
+                    "auth"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/reset-password": {
+            "post": {
+                "operationId": "api.v1.auth.reset-password",
+                "summary": "api.v1.auth.reset-password",
+                "tags": [
+                    "auth"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/billing": {
+            "get": {
+                "operationId": "api.v1.billing",
+                "summary": "api.v1.billing",
+                "tags": [
+                    "billing"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/billing/packs": {
+            "get": {
+                "operationId": "api.v1.billing.packs",
+                "summary": "api.v1.billing.packs",
+                "tags": [
+                    "billing"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/billing/subscribe/{plan}": {
+            "post": {
+                "operationId": "api.v1.billing.subscribe",
+                "summary": "api.v1.billing.subscribe",
+                "tags": [
+                    "billing"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/checkout/pack/{pack}": {
+            "post": {
+                "operationId": "api.v1.checkout.pack",
+                "summary": "api.v1.checkout.pack",
+                "tags": [
+                    "checkout"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/checkout/plan/{plan}": {
+            "post": {
+                "operationId": "api.v1.checkout.plan",
+                "summary": "api.v1.checkout.plan",
+                "tags": [
+                    "checkout"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/checkout/{payment}/callback": {
+            "get": {
+                "operationId": "api.v1.checkout.callback",
+                "summary": "api.v1.checkout.callback",
+                "tags": [
+                    "checkout"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/checkout/{payment}/cancel": {
+            "post": {
+                "operationId": "api.v1.checkout.cancel",
+                "summary": "api.v1.checkout.cancel",
+                "tags": [
+                    "checkout"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/competitors/{competitor}/confirm": {
+            "post": {
+                "operationId": "api.v1.competitors.confirm",
+                "summary": "api.v1.competitors.confirm",
+                "tags": [
+                    "competitors"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/competitors/{competitor}/dismiss": {
+            "post": {
+                "operationId": "api.v1.competitors.dismiss",
+                "summary": "api.v1.competitors.dismiss",
+                "tags": [
+                    "competitors"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations": {
+            "get": {
+                "operationId": "api.v1.consultations.index",
+                "summary": "api.v1.consultations.index",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}": {
+            "get": {
+                "operationId": "api.v1.consultations.show",
+                "summary": "api.v1.consultations.show",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "api.v1.consultations.destroy",
+                "summary": "api.v1.consultations.destroy",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/answers/{question}": {
+            "put": {
+                "operationId": "api.v1.consultations.answer",
+                "summary": "api.v1.consultations.answer",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/confirm": {
+            "post": {
+                "operationId": "api.v1.consultations.confirm",
+                "summary": "api.v1.consultations.confirm",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/conflicts/{conflict}/resolve": {
+            "post": {
+                "operationId": "api.v1.consultations.conflicts.resolve",
+                "summary": "api.v1.consultations.conflicts.resolve",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/evidence": {
+            "post": {
+                "operationId": "api.v1.consultations.evidence.store",
+                "summary": "api.v1.consultations.evidence.store",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/evidence/{evidence}": {
+            "delete": {
+                "operationId": "api.v1.consultations.evidence.destroy",
+                "summary": "api.v1.consultations.evidence.destroy",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/export": {
+            "get": {
+                "operationId": "api.v1.consultations.export",
+                "summary": "api.v1.consultations.export",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/retry": {
+            "post": {
+                "operationId": "api.v1.consultations.retry",
+                "summary": "api.v1.consultations.retry",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/review": {
+            "post": {
+                "operationId": "api.v1.consultations.review",
+                "summary": "api.v1.consultations.review",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/consultations/{consultation}/status": {
+            "get": {
+                "operationId": "api.v1.consultations.status",
+                "summary": "api.v1.consultations.status",
+                "tags": [
+                    "consultations"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/devices": {
+            "post": {
+                "operationId": "api.v1.devices.store",
+                "summary": "api.v1.devices.store",
+                "tags": [
+                    "devices"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "api.v1.devices.destroy",
+                "summary": "api.v1.devices.destroy",
+                "tags": [
+                    "devices"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/engagements/unfinished": {
+            "get": {
+                "operationId": "api.v1.engagements.unfinished",
+                "summary": "api.v1.engagements.unfinished",
+                "tags": [
+                    "engagements"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/experiences/{experience}/activate": {
+            "post": {
+                "operationId": "api.v1.experiences.activate",
+                "summary": "api.v1.experiences.activate",
+                "tags": [
+                    "experiences"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/experiences/{experience}/switch": {
+            "post": {
+                "operationId": "api.v1.experiences.switch",
+                "summary": "api.v1.experiences.switch",
+                "tags": [
+                    "experiences"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/kpis/{kpi}/entries": {
+            "post": {
+                "operationId": "api.v1.kpis.record",
+                "summary": "api.v1.kpis.record",
+                "tags": [
+                    "kpis"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/learning/marketing": {
+            "get": {
+                "operationId": "api.v1.learning.marketing.index",
+                "summary": "api.v1.learning.marketing.index",
+                "tags": [
+                    "learning"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/learning/marketing/{exercise}": {
+            "get": {
+                "operationId": "api.v1.learning.marketing.show",
+                "summary": "api.v1.learning.marketing.show",
+                "tags": [
+                    "learning"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/learning/marketing/{exercise}/answers/{question}": {
+            "put": {
+                "operationId": "api.v1.learning.marketing.answer",
+                "summary": "api.v1.learning.marketing.answer",
+                "tags": [
+                    "learning"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/learning/marketing/{exercise}/review": {
+            "post": {
+                "operationId": "api.v1.learning.marketing.review",
+                "summary": "api.v1.learning.marketing.review",
+                "tags": [
+                    "learning"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications": {
+            "get": {
+                "operationId": "api.v1.notifications.index",
+                "summary": "api.v1.notifications.index",
+                "tags": [
+                    "notifications"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/read-all": {
+            "post": {
+                "operationId": "api.v1.notifications.read-all",
+                "summary": "api.v1.notifications.read-all",
+                "tags": [
+                    "notifications"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/notifications/{id}/read": {
+            "post": {
+                "operationId": "api.v1.notifications.read",
+                "summary": "api.v1.notifications.read",
+                "tags": [
+                    "notifications"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/portfolio": {
+            "get": {
+                "operationId": "api.v1.portfolio",
+                "summary": "api.v1.portfolio",
+                "tags": [
+                    "portfolio"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects": {
+            "get": {
+                "operationId": "api.v1.projects.index",
+                "summary": "api.v1.projects.index",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.projects.store",
+                "summary": "api.v1.projects.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}": {
+            "get": {
+                "operationId": "api.v1.projects.show",
+                "summary": "api.v1.projects.show",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "api.v1.projects.update",
+                "summary": "api.v1.projects.update",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/agency-brief": {
+            "get": {
+                "operationId": "api.v1.projects.agency-brief.show",
+                "summary": "api.v1.projects.agency-brief.show",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.projects.agency-brief.save",
+                "summary": "api.v1.projects.agency-brief.save",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/agency-reports": {
+            "get": {
+                "operationId": "api.v1.projects.agency-reports.index",
+                "summary": "api.v1.projects.agency-reports.index",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.projects.agency-reports.store",
+                "summary": "api.v1.projects.agency-reports.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/answer-fitness": {
+            "post": {
+                "operationId": "api.v1.assist.fitness",
+                "summary": "api.v1.assist.fitness",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/assist": {
+            "post": {
+                "operationId": "api.v1.assist.store",
+                "summary": "api.v1.assist.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/competitors": {
+            "get": {
+                "operationId": "api.v1.competitors.index",
+                "summary": "api.v1.competitors.index",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.competitors.store",
+                "summary": "api.v1.competitors.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/consultations": {
+            "post": {
+                "operationId": "api.v1.consultations.store",
+                "summary": "api.v1.consultations.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/full-diagnosis": {
+            "post": {
+                "operationId": "api.v1.projects.full-diagnosis",
+                "summary": "api.v1.projects.full-diagnosis",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/geo": {
+            "get": {
+                "operationId": "api.v1.geo.show",
+                "summary": "api.v1.geo.show",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.geo.generate",
+                "summary": "api.v1.geo.generate",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/geo/llms.txt": {
+            "get": {
+                "operationId": "api.v1.geo.llms",
+                "summary": "api.v1.geo.llms",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/kpis": {
+            "post": {
+                "operationId": "api.v1.kpis.store",
+                "summary": "api.v1.kpis.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/message-studio": {
+            "get": {
+                "operationId": "api.v1.messages.studio",
+                "summary": "api.v1.messages.studio",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/message-studio/results/{result}/revise": {
+            "post": {
+                "operationId": "api.v1.messages.revise",
+                "summary": "api.v1.messages.revise",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/message-studio/suggest": {
+            "post": {
+                "operationId": "api.v1.messages.suggest",
+                "summary": "api.v1.messages.suggest",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/message-studio/tests": {
+            "post": {
+                "operationId": "api.v1.messages.test",
+                "summary": "api.v1.messages.test",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/message-studio/variants": {
+            "post": {
+                "operationId": "api.v1.messages.store",
+                "summary": "api.v1.messages.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/message-studio/variants/{variant}": {
+            "patch": {
+                "operationId": "api.v1.messages.status",
+                "summary": "api.v1.messages.status",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/personas": {
+            "get": {
+                "operationId": "api.v1.personas.index",
+                "summary": "api.v1.personas.index",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.personas.build",
+                "summary": "api.v1.personas.build",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/personas/tests": {
+            "post": {
+                "operationId": "api.v1.personas.test",
+                "summary": "api.v1.personas.test",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/presence": {
+            "get": {
+                "operationId": "api.v1.presence.show",
+                "summary": "api.v1.presence.show",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/presence/probe": {
+            "post": {
+                "operationId": "api.v1.presence.probe",
+                "summary": "api.v1.presence.probe",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/prospect-messages/{message}": {
+            "patch": {
+                "operationId": "api.v1.prospects.messages.sent",
+                "summary": "api.v1.prospects.messages.sent",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/prospects": {
+            "get": {
+                "operationId": "api.v1.prospects.index",
+                "summary": "api.v1.prospects.index",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "api.v1.prospects.store",
+                "summary": "api.v1.prospects.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/prospects/messages": {
+            "post": {
+                "operationId": "api.v1.prospects.generate",
+                "summary": "api.v1.prospects.generate",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/prospects/{prospect}": {
+            "patch": {
+                "operationId": "api.v1.prospects.update",
+                "summary": "api.v1.prospects.update",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/readiness": {
+            "get": {
+                "operationId": "api.v1.readiness.show",
+                "summary": "api.v1.readiness.show",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/readiness/audit": {
+            "post": {
+                "operationId": "api.v1.readiness.audit",
+                "summary": "api.v1.readiness.audit",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/readiness/log": {
+            "post": {
+                "operationId": "api.v1.readiness.log",
+                "summary": "api.v1.readiness.log",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/readiness/pdf": {
+            "get": {
+                "operationId": "api.v1.readiness.pdf",
+                "summary": "api.v1.readiness.pdf",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/reports": {
+            "get": {
+                "operationId": "api.v1.reports.index",
+                "summary": "api.v1.reports.index",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/runs": {
+            "get": {
+                "operationId": "api.v1.runs.index",
+                "summary": "api.v1.runs.index",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/tasks": {
+            "get": {
+                "operationId": "api.v1.tasks.index",
+                "summary": "api.v1.tasks.index",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/tools": {
+            "get": {
+                "operationId": "api.v1.engagements.project-tools",
+                "summary": "api.v1.engagements.project-tools",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/tools/{tool}/runs": {
+            "post": {
+                "operationId": "api.v1.runs.store",
+                "summary": "api.v1.runs.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{project}/voice": {
+            "post": {
+                "operationId": "api.v1.voice.store",
+                "summary": "api.v1.voice.store",
+                "tags": [
+                    "projects"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/bootstrap": {
+            "get": {
+                "operationId": "api.v1.public.bootstrap",
+                "summary": "api.v1.public.bootstrap",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/content": {
+            "get": {
+                "operationId": "api.v1.public.content.index",
+                "summary": "api.v1.public.content.index",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/content/subscribe": {
+            "post": {
+                "operationId": "api.v1.public.content.subscribe",
+                "summary": "api.v1.public.content.subscribe",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/content/{content}": {
+            "get": {
+                "operationId": "api.v1.public.content.show",
+                "summary": "api.v1.public.content.show",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/design-tokens": {
+            "get": {
+                "operationId": "api.v1.public.design-tokens",
+                "summary": "api.v1.public.design-tokens",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/legal/{page}": {
+            "get": {
+                "operationId": "api.v1.public.legal",
+                "summary": "api.v1.public.legal",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/mobile-app": {
+            "get": {
+                "operationId": "api.v1.public.mobile-app",
+                "summary": "api.v1.public.mobile-app",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/runs/{run}": {
+            "get": {
+                "operationId": "api.v1.public.runs.show",
+                "summary": "api.v1.public.runs.show",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/runs/{run}/preflight": {
+            "get": {
+                "operationId": "api.v1.public.runs.preflight",
+                "summary": "api.v1.public.runs.preflight",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/runs/{run}/steps/{step}": {
+            "put": {
+                "operationId": "api.v1.public.runs.step",
+                "summary": "api.v1.public.runs.step",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/shared-reports/{token}": {
+            "get": {
+                "operationId": "api.v1.public.shared-reports.show",
+                "summary": "api.v1.public.shared-reports.show",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/shared-reports/{token}/pdf": {
+            "get": {
+                "operationId": "api.v1.public.shared-reports.pdf",
+                "summary": "api.v1.public.shared-reports.pdf",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/public/tools/{tool}/runs": {
+            "post": {
+                "operationId": "api.v1.public.runs.start",
+                "summary": "api.v1.public.runs.start",
+                "tags": [
+                    "public"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/pulse": {
+            "get": {
+                "operationId": "api.v1.pulse.index",
+                "summary": "api.v1.pulse.index",
+                "tags": [
+                    "pulse"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/{report}": {
+            "get": {
+                "operationId": "api.v1.reports.show",
+                "summary": "api.v1.reports.show",
+                "tags": [
+                    "reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/{report}/feedback": {
+            "post": {
+                "operationId": "api.v1.reports.feedback",
+                "summary": "api.v1.reports.feedback",
+                "tags": [
+                    "reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/{report}/gaps": {
+            "get": {
+                "operationId": "api.v1.reports.gaps.index",
+                "summary": "api.v1.reports.gaps.index",
+                "tags": [
+                    "reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "api.v1.reports.gaps.update",
+                "summary": "api.v1.reports.gaps.update",
+                "tags": [
+                    "reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/{report}/pdf": {
+            "get": {
+                "operationId": "api.v1.reports.pdf",
+                "summary": "api.v1.reports.pdf",
+                "tags": [
+                    "reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/{report}/tasks": {
+            "post": {
+                "operationId": "api.v1.reports.convert",
+                "summary": "api.v1.reports.convert",
+                "tags": [
+                    "reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/{report}/unwatch": {
+            "post": {
+                "operationId": "api.v1.reports.unwatch",
+                "summary": "api.v1.reports.unwatch",
+                "tags": [
+                    "reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/{report}/watch": {
+            "post": {
+                "operationId": "api.v1.reports.watch",
+                "summary": "api.v1.reports.watch",
+                "tags": [
+                    "reports"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}": {
+            "get": {
+                "operationId": "api.v1.runs.show",
+                "summary": "api.v1.runs.show",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/files": {
+            "post": {
+                "operationId": "api.v1.runs.files.store",
+                "summary": "api.v1.runs.files.store",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/files/{file}": {
+            "delete": {
+                "operationId": "api.v1.runs.files.destroy",
+                "summary": "api.v1.runs.files.destroy",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/insights": {
+            "post": {
+                "operationId": "api.v1.runs.insights",
+                "summary": "api.v1.runs.insights",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/manual": {
+            "post": {
+                "operationId": "api.v1.runs.manual",
+                "summary": "api.v1.runs.manual",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/preflight": {
+            "get": {
+                "operationId": "api.v1.runs.preflight",
+                "summary": "api.v1.runs.preflight",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/progress": {
+            "get": {
+                "operationId": "api.v1.runs.progress",
+                "summary": "api.v1.runs.progress",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/queue": {
+            "post": {
+                "operationId": "api.v1.runs.queue",
+                "summary": "api.v1.runs.queue",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/retry": {
+            "post": {
+                "operationId": "api.v1.runs.retry",
+                "summary": "api.v1.runs.retry",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/runs/{run}/steps/{step}": {
+            "put": {
+                "operationId": "api.v1.runs.step",
+                "summary": "api.v1.runs.step",
+                "tags": [
+                    "runs"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/tasks/{task}": {
+            "patch": {
+                "operationId": "api.v1.tasks.update",
+                "summary": "api.v1.tasks.update",
+                "tags": [
+                    "tasks"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/tasks/{task}/develop": {
+            "post": {
+                "operationId": "api.v1.tasks.develop",
+                "summary": "api.v1.tasks.develop",
+                "tags": [
+                    "tasks"
+                ],
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/tools": {
+            "get": {
+                "operationId": "api.v1.tools.index",
+                "summary": "api.v1.tools.index",
+                "tags": [
+                    "tools"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        },
+        "/api/v1/tools/{tool}": {
+            "get": {
+                "operationId": "api.v1.tools.show",
+                "summary": "api.v1.tools.show",
+                "tags": [
+                    "tools"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/Success"
+                    },
+                    "402": {
+                        "$ref": "#/components/responses/Error"
+                    },
+                    "503": {
+                        "$ref": "#/components/responses/Error"
+                    }
+                }
+            }
+        }
+    }
+}

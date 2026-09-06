@@ -406,7 +406,7 @@ a.public-page-card:hover {
     margin-top: 1.25rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
     .public-page-grid,
     .profile-columns {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -422,7 +422,7 @@ a.public-page-card:hover {
     }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 479px) {
     .public-page-grid,
     .profile-columns,
     .profile-summary,
@@ -458,6 +458,7 @@ a.public-page-card:hover {
     .site-header,
     .site-footer,
     .profile-hero__actions {
+        /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
         display: none !important;
     }
 

@@ -80,6 +80,26 @@ class PulseComposer
             ];
         }
 
+        // 2ب) خطة مقترحة بانتظار تبنّيها.
+        //
+        // تُذكر بعد المتأخر لا قبله: المتأخر التزامٌ قائم، والمقترح دعوة.
+        // ولولا هذه الإشارة لبقيت الخطة المولَّدة تلقائيًّا في صفحة لا
+        // يفتحها من لا يعرف أنها امتلأت.
+        $suggested = $project->tasks()->where('status', Task::STATUS_SUGGESTED)->count();
+
+        if ($suggested > 0) {
+            $items[] = [
+                'type' => 'suggested',
+                'title' => trans_choice(
+                    '{1} مهمة واحدة مقترحة تنتظر تبنّيك|{2} مهمتان مقترحتان تنتظران تبنّيك'
+                    .'|[3,10] :count مهام مقترحة تنتظر تبنّيك|[11,*] :count مهمة مقترحة تنتظر تبنّيك',
+                    $suggested,
+                    ['count' => $suggested],
+                ),
+                'body' => __('وُلّدت من توصيات تقاريرك. تبنَّ منها ما ستنفّذه فعلًا هذا الأسبوع.'),
+            ];
+        }
+
         // 3) منافسون مرشحون بانتظار الحسم.
         $candidates = $project->competitors()
             ->where('status', ProjectCompetitor::STATUS_CANDIDATE)

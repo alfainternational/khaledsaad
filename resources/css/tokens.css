@@ -1,0 +1,76 @@
+/* مُولَّد من design/tokens.json — لا تعدّله يدويًّا. عدّل المصدر وشغّل: npm run tokens:build */
+
+:root {
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+    --space-16: 64px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 1px 2px rgba(7, 31, 91, 0.06);
+    --shadow-md: 0 4px 16px rgba(7, 31, 91, 0.08);
+    --shadow-lg: 0 12px 32px rgba(7, 31, 91, 0.12);
+    --font-sans: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-display: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+    --font-size-xs: 0.78rem;
+    --font-size-sm: 0.88rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.15rem;
+    --font-size-xl: 1.4rem;
+    --font-size-2xl: 1.8rem;
+    --font-size-3xl: 2.4rem;
+    --font-leading-tight: 1.4;
+    --font-leading-normal: 1.7;
+    --font-leading-loose: 1.9;
+    --bp-sm: 480px;
+    --bp-md: 768px;
+    --bp-lg: 1024px;
+    --bp-xl: 1280px;
+    --color-surface: #ffffff;
+    --color-surface-raised: #f8fafc;
+    --color-text: #0f172a;
+    --color-text-muted: #667085;
+    --color-primary: #134fc4;
+    --color-primary-contrast: #ffffff;
+    --color-border: #e3e8ef;
+    --color-success: #067647;
+    --color-warning: #b45309;
+    --color-danger: #b42318;
+    --color-info: #0b6b78;
+}
+
+/* الوضع الداكن: تُعاد تعريف الأدوار وحدها، والقيم البنيوية تبقى. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --color-surface: #071f5b;
+        --color-surface-raised: #0d2a6f;
+        --color-text: #f1f5f9;
+        --color-text-muted: #a9b6cf;
+        --color-primary: #7aa2ff;
+        --color-primary-contrast: #071f5b;
+        --color-border: #1e3a7a;
+        --color-success: #34d399;
+        --color-warning: #fbbf24;
+        --color-danger: #f87171;
+        --color-info: #5eead4;
+    }
+}
+
+:root[data-theme="dark"] {
+    --color-surface: #071f5b;
+    --color-surface-raised: #0d2a6f;
+    --color-text: #f1f5f9;
+    --color-text-muted: #a9b6cf;
+    --color-primary: #7aa2ff;
+    --color-primary-contrast: #071f5b;
+    --color-border: #1e3a7a;
+    --color-success: #34d399;
+    --color-warning: #fbbf24;
+    --color-danger: #f87171;
+    --color-info: #5eead4;
+}

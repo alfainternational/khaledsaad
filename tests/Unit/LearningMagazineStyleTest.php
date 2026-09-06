@@ -23,7 +23,8 @@ class LearningMagazineStyleTest extends TestCase
     public function test_late_learning_rules_keep_the_reading_grid_single_column_on_mobile(): void
     {
         $css = file_get_contents(resource_path('css/content-library.css'));
-        $lastMobileQuery = strrpos($css, '@media (max-width: 1050px)');
+        // نقطة التوقّف من التوكنز الأربع (INV-10): كانت 1050px قبل توحيدها.
+        $lastMobileQuery = strrpos($css, '@media (max-width: 1023px)');
 
         $this->assertNotFalse($lastMobileQuery);
 

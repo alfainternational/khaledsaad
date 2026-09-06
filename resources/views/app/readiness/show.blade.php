@@ -50,15 +50,21 @@
         @if ($score->isActive())
             <div class="score-row">
                 <div>
-                    <span class="score-num">{{ $score->score }}</span>
-                    <span class="score-den">/ 100</span>
+                    {{-- ومعه اسمه: هذه «جاهزية تقنية» لا جاهزية المشروع. --}}
+                    <span class="score-num">{{ \App\Support\Presentation\Num::int($score->score) }}</span>
+                    <span class="score-den">{{ __('من 100 · الجاهزية التقنية') }}</span>
                 </div>
                 <div>
                     {{-- الوسم يقول مصدر الرقم: هذا ما يفرّقه عن درجة مبنيّة على كلامك. --}}
                     <span class="tag tag--measured">مقيس من موقعك</span>
+                    {{-- الأرقام تصل محسوبة من `AxisScore`: القالب يعرض ولا
+                         يحسب (INV-2). --}}
                     <p class="muted">
-                        فُحص {{ (int) round($score->coverage * count($score->breakdown)) }} بندًا من
-                        {{ count($score->breakdown) }} — تغطية {{ (int) round($score->coverage * 100) }}٪.
+                        {{ __('فُحص :checked من :total بندًا — تغطية :coverage.', [
+                            'checked' => \App\Support\Presentation\Num::int($score->checkedItems()),
+                            'total' => \App\Support\Presentation\Num::int($score->totalItems()),
+                            'coverage' => \App\Support\Presentation\Num::pct($score->coveragePercent()),
+                        ]) }}
                     </p>
                 </div>
             </div>
@@ -182,7 +188,7 @@
                             <span class="muted">لم يُقَس</span>
                         @endif
                     </td>
-                    <td>{{ (int) round($axis['axis_coverage'] * 100) }}٪</td>
+                    <td>{{ \App\Support\Presentation\Num::ratio($axis['axis_coverage']) }}</td>
                     <td>
                         @if ($axis['is_assumption'])
                             <span class="tag tag--assumption">فرضية</span>

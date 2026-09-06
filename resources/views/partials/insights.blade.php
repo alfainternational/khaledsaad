@@ -5,7 +5,6 @@
     حزمة الأصول لا يمكن إعادة بناؤها الآن بلا نشر عمل غير معتمَد. تُطوى
     قواعده في `resources/css/` عند أول بناء كامل ويُحذف الملف ووسمه.
 --}}
-<link rel="stylesheet" href="{{ asset('css/ui-repairs.css') }}?v={{ @filemtime(public_path('css/ui-repairs.css')) ?: 1 }}">
 
 {{--
     جسر الالتقاط بين الخادم والمتصفح.

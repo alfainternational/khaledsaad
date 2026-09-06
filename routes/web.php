@@ -36,6 +36,7 @@ use App\Http\Controllers\App\LegacyMarketingLearningController;
 use App\Http\Controllers\App\MarketingCourseController;
 use App\Http\Controllers\App\MessageStudioController;
 use App\Http\Controllers\App\NotificationController;
+use App\Http\Controllers\App\PlanController;
 use App\Http\Controllers\App\PortfolioController;
 use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\ProjectController;
@@ -45,6 +46,7 @@ use App\Http\Controllers\App\QuestionAssistController;
 use App\Http\Controllers\App\ReadinessController;
 use App\Http\Controllers\App\ReportController;
 use App\Http\Controllers\App\ReportGapController;
+use App\Http\Controllers\App\ReportIndexController;
 use App\Http\Controllers\App\ReportWatchController;
 use App\Http\Controllers\App\SearchController;
 use App\Http\Controllers\App\SecurityController;
@@ -428,9 +430,20 @@ Route::middleware(['auth', 'experience-access'])->prefix('app')->name('app.')->g
     Route::post('security/otp', [SecurityController::class, 'toggleOtp'])->name('security.otp');
     Route::post('security/logout-others', [SecurityController::class, 'logoutOthers'])->name('security.logout-others');
 
+    /*
+     * «الخطة والمهام» و«تقاريري» عبر المشاريع كلها.
+     *
+     * كان عنصرا الملاحة هذان يشيران إلى `projects.index` لأن القسمين لم
+     * يكونا مبنيَّين — فكانت القائمة تعد بثلاثة أبواب تفتح كلها على باب
+     * واحد. المسار الحقيقي هو الإصلاح؛ تعطيل الرابط كان سيصدُق ولا يكفي.
+     */
+    Route::get('plan', [PlanController::class, 'index'])->name('plan');
+    Route::get('reports', [ReportIndexController::class, 'index'])->name('reports.index');
+
     Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('projects.tasks');
     Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::post('tasks/{task}/develop', [TaskController::class, 'develop'])->name('tasks.develop');
+    Route::post('tasks/{task}/adopt', [TaskController::class, 'adopt'])->name('tasks.adopt');
 
     Route::middleware('feature:'.FeatureKey::KPI_TRACKING)->group(function (): void {
         Route::post('projects/{project}/kpis', [KpiController::class, 'store'])->name('kpis.store');

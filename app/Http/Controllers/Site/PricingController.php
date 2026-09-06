@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Modules\Shared\I18n\StoredText;
 use App\Modules\Shared\I18n\TranslatedConfig;
 use Illuminate\View\View;
-use App\Modules\Shared\I18n\StoredText;
 
 /**
  * صفحة الأسعار العامة (بند ٢٤ من خطة الواجهات).
@@ -32,9 +32,14 @@ class PricingController extends Controller
                 'features' => $plan->isGoverned()
                     ? $plan->featureItems()->orderBy('plan_features.sort_order')->get()
                         ->filter(fn ($feature) => (bool) $feature->pivot->enabled)
-                        ->map(fn ($feature) => trim($feature->pivot->note ?: $feature->name))
+                        // الترجمة هنا كما في `Entitlements::summaryForPlan`:
+                        // هذه الصفحة تبني قائمتها بنفسها، فأي إصلاح هناك لا
+                        // يصلها. وهو ما أبقاها عربيةً بعد ترجمة صفحة الفوترة.
+                        ->map(fn ($feature) => trim(
+                            StoredText::of($feature->pivot->note) ?: $feature->displayName(),
+                        ))
                         ->values()->all()
-                    : array_values(array_filter((array) $plan->features)),
+                    : array_map(StoredText::of(...), array_values(array_filter((array) $plan->features))),
             ])
             ->values();
 

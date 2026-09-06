@@ -103,35 +103,33 @@
     </nav>
 @else
     @php($panelExperience = auth()->user()?->activeExperience() ?? \App\Support\Experience\Experience::BUSINESS)
-    <nav class="panel__nav" aria-label="التنقل الرئيسي">
-        @if ($panelExperience === \App\Support\Experience\Experience::LEARNING)
-            <p class="panel__nav-label">{{ __('التعلم بالتطبيق') }}</p>
-            @foreach ([
-                [__('مساري'), route('app.dashboard'), request()->routeIs('app.dashboard')],
-                [__('الدروس'), route('content.index'), false],
-                [__('تطبيقاتي'), route('app.learning.marketing.home').'#course-lessons', request()->routeIs('app.learning.marketing.*')],
-                [__('تقدمي'), route('app.learning.marketing.home').'#learning-progress', false],
-                [__('المكتبة'), route('content.index'), false],
-            ] as [$label, $url, $active])
-                <a href="{{ $url }}" @class(['panel__link', 'is-active' => $active])>
+    <nav class="panel__nav" aria-label="{{ __('التنقل الرئيسي') }}">
+        <p class="panel__nav-label">
+            {{ $panelExperience === \App\Support\Experience\Experience::LEARNING
+                ? __('التعلم بالتطبيق')
+                : __('تحسين المشروع') }}
+        </p>
+
+        {{-- القائمة تُقرأ من السجل لا تُكتب هنا: عنصرٌ يشير إلى وجهة عنصرٍ
+             آخر صار خطأً يكشفه اختبار، بدل أن يمرّ في المراجعة (INV-6). --}}
+        @foreach (\App\Support\Navigation\NavRegistry::primary($panelExperience) as $item)
+            @if ($item->isAvailable())
+                <a href="{{ $item->url() }}" @class(['panel__link', 'is-active' => $item->isActive()])>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg>
-                    <span>{{ $label }}</span>
+                    <span>{{ $item->label }}</span>
                 </a>
-            @endforeach
-        @else
-            <p class="panel__nav-label">{{ __('تحسين المشروع') }}</p>
-            @foreach ([
-                [__('اليوم'), route('app.dashboard'), request()->routeIs('app.dashboard')],
-                [__('مشاريعي'), route('app.projects.index'), request()->routeIs('app.projects.*') || request()->routeIs('app.tasks.*')],
-                [__('التشخيص'), route('app.tools.index'), request()->routeIs('app.tools.*') || request()->routeIs('app.runs.*')],
-                [__('الخطة والمهام'), route('app.projects.index'), request()->routeIs('app.tasks.*')],
-                [__('التقارير'), route('app.projects.index'), request()->routeIs('app.reports.*')],
-            ] as [$label, $url, $active])
-                <a href="{{ $url }}" @class(['panel__link', 'is-active' => $active])>
+            @else
+                {{-- لا رابط يعمل ويكذب: العنصر غير الجاهز يُرسم معطّلًا
+                     بشارته، ولا يُوجَّه إلى بديل يشبهه. --}}
+                <span class="panel__link is-disabled" aria-disabled="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg>
-                    <span>{{ $label }}</span>
-                </a>
-            @endforeach
+                    <span>{{ $item->label }}</span>
+                    @if ($item->badge)<em class="panel__link-badge">{{ $item->badge }}</em>@endif
+                </span>
+            @endif
+        @endforeach
+
+        @if ($panelExperience === \App\Support\Experience\Experience::BUSINESS)
             <a href="{{ route('app.consultations.index') }}" @class(['panel__link', 'is-active' => request()->routeIs('app.consultations.*')])>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/></svg>
                 <span>{{ __('ساعدني أختار من أين أبدأ') }}</span>

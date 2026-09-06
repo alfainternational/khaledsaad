@@ -66,7 +66,14 @@ class SubscriptionManager
 
             // لا تمنح إعادة إرسال الطلب نفسه أو إعادة اختيار الخطة الحالية رصيدًا.
             if ($grantCredits && ($isNew || $planChanged || $newPaidPeriod) && $plan->monthly_credits > 0) {
-                $this->credits->grant($workspace, $plan->monthly_credits, "رصيد خطة {$plan->name}");
+                // مفتاحه الفترة لا اللحظة: تكرار مهمة التجديد داخل الفترة
+                // نفسها لا يمنح رصيدًا ثانيًا، وبداية فترة جديدة تمنحه.
+                $this->credits->grant(
+                    $workspace,
+                    $plan->monthly_credits,
+                    "رصيد خطة {$plan->name}",
+                    "grant:plan:{$workspace->id}:{$plan->id}:".$subscription->current_period_starts_at?->format('Y-m-d'),
+                );
             }
 
             return $subscription;

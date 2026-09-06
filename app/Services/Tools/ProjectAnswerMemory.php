@@ -10,6 +10,7 @@ use App\Models\ToolRun;
 use App\Models\ToolRunAnswer;
 use App\Modules\Brain\ProjectKnowledgeService;
 use App\Modules\Intake\Assist\ProfileQuestions;
+use App\Modules\Intake\FactValidity;
 use App\Modules\Intake\Fitness\AnswerFitnessScorer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,7 @@ class ProjectAnswerMemory
     public function __construct(
         private readonly ProjectKnowledgeService $knowledge,
         private readonly AnswerFitnessScorer $fitness,
+        private readonly FactValidity $validity,
     ) {}
 
     /**
@@ -101,8 +103,19 @@ class ProjectAnswerMemory
     {
         $run->loadMissing(['project', 'toolVersion.fields']);
 
-        $known = ProjectAnswer::where('project_id', $run->project_id)
-            ->pluck('value_json', 'field_key');
+        /*
+         * الحقيقة المنتهية صلاحيتها تُملأ ولا تُعدّ «معروفة».
+         *
+         * التمييز جوهري: حذفُها يجعل المستخدم يكتب من جديد ما لم يتغيّر
+         * غالبًا (احتكاكٌ بلا داعٍ)، وإبقاؤها «معروفة» يخفي السؤال فيدخل
+         * التشخيصَ رقمٌ عمره أربعة أشهر بلا أن يراه صاحبه. فتُعرض القيمة
+         * جاهزة ويُطلب تأكيدها — وهو أقلّ الطريقين احتكاكًا وأصدقهما.
+         */
+        $answers = ProjectAnswer::where('project_id', $run->project_id)->get();
+        $known = $answers->pluck('value_json', 'field_key');
+        $stale = $answers->filter(fn (ProjectAnswer $answer) => $this->validity->isStale($answer))
+            ->pluck('field_key')
+            ->all();
 
         $filled = [];
 
@@ -119,7 +132,11 @@ class ProjectAnswerMemory
                 ['value_json' => ['value' => $value], 'source' => ToolRunAnswer::SOURCE_PROFILE],
             );
 
-            $filled[] = $field->key;
+            // المنتهية صلاحيتها لا تدخل قائمة «المعروف»، فيُعرض سؤالها
+            // للتأكيد بدل أن يُطوى بصمت.
+            if (! in_array($field->key, $stale, true)) {
+                $filled[] = $field->key;
+            }
         }
 
         return $filled;

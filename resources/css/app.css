@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+/* التوكنز المولَّدة أولًا: كل ما بعدها يبني عليها (INV-10). */
+@import './tokens.css';
 @import './workspace.css';
 @import './site-pages.css';
 @import './public-pages.css';
@@ -547,6 +549,7 @@ svg {
     z-index: 3;
     top: 50%;
     /* توسيط فيزيائي: يعمل مع translate في الاتجاهين، والمنطقي يكسره لأن transform لا ينعكس. */
+    /* stylelint-disable-next-line property-disallowed-list -- السبب أعلاه. */
     right: 50%;
     width: min(100%, 37rem);
     overflow: hidden;
@@ -2091,6 +2094,7 @@ svg {
     position: absolute;
     top: 50%;
     /* توسيط فيزيائي: يعمل مع translate في الاتجاهين، والمنطقي يكسره لأن transform لا ينعكس. */
+    /* stylelint-disable-next-line property-disallowed-list -- السبب أعلاه. */
     right: 50%;
     width: 0.7rem;
     height: 1px;
@@ -2228,6 +2232,7 @@ svg {
 /* سطر المكان: تابعٌ للجملة التي فوقه لا فقرة مستقلة، فيقترب منها ويخفت
    قليلًا. كان هذا المحتوى عمودًا كاملًا بعنوان «المقر» — أي لافتة مكتب. */
 .footer-brand__where {
+    /* stylelint-disable-next-line declaration-no-important -- دين تراكمي معلن: يتغلّب على تخصّص أعلى. يُزال بإعادة ترتيب التخصّص، ولا يُضاف مثله (§08). */
     margin-block-start: 0.5rem !important;
     opacity: 0.85;
 }
@@ -2284,7 +2289,7 @@ svg {
     transform: translateY(0);
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1023px) {
     .hero-grid {
         grid-template-columns: minmax(0, 0.9fr) minmax(28rem, 1.1fr);
         gap: 2rem;
@@ -2307,7 +2312,7 @@ svg {
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
     .desktop-nav,
     .nav-actions {
         display: none;
@@ -2515,7 +2520,7 @@ svg {
     }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
     .container {
         padding-inline: var(--ui-page-inline);
     }
@@ -2775,13 +2780,13 @@ svg {
 .admin-question { padding-block: 1rem; border-top: 1px solid var(--line); }
 .admin-question code { direction: ltr; unicode-bidi: isolate; }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
     .consultation-shell { padding-inline: 0.25rem; }
     .consultation-options label { min-height: 48px; }
     .consultation-data-actions { align-items: flex-start; flex-direction: column; }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 479px) {
     .hero-actions {
         display: grid;
     }
@@ -2842,6 +2847,7 @@ svg {
     }
 }
 
+/* stylelint-disable declaration-no-important -- تعطيل الحركة يجب أن يتغلّب على كل تصريح، وهو نمط الوصول المعياري (§08). */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -2857,6 +2863,7 @@ svg {
         transform: none;
     }
 }
+/* stylelint-enable declaration-no-important */
 
 /* رحلة تطبيق دروس التسويق */
 .learning-head {
@@ -3272,7 +3279,7 @@ svg {
     justify-content: flex-end;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 767px) {
     .learning-recommendation,
     .learning-project-card,
     .learning-section-head,
@@ -3957,7 +3964,7 @@ svg {
     outline: none;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1023px) {
     .catalog-grid,
     .catalog-grid--three,
     .sector-grid,
@@ -3972,7 +3979,7 @@ svg {
     }
 }
 
-@media (max-width: 860px) {
+@media (max-width: 767px) {
     .nav-actions .nav-login {
         display: none;
     }
@@ -3983,7 +3990,7 @@ svg {
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
     .catalog-grid,
     .catalog-grid--three,
     .sector-grid,
@@ -4042,7 +4049,7 @@ svg {
     margin-top: 2rem;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
     .problem-card__art {
         width: 5rem;
     }
@@ -4221,7 +4228,7 @@ svg {
     font-weight: 600;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
     .try-cta {
         grid-template-columns: 1fr;
     }
@@ -4777,7 +4784,7 @@ svg {
 :root[data-theme='dark'] .fix-matrix__cell--win h3 { color: #4ade9b; }
 :root[data-theme='dark'] .fix-matrix__cell--plan h3 { color: #7fb0ff; }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
     .fix-matrix {
         grid-template-columns: 1fr;
     }
@@ -4886,6 +4893,7 @@ tr.is-problem td { color: var(--brand-red); }
     border-radius: 4px;
 }
 
+/* stylelint-disable declaration-no-important -- تعطيل الحركة يجب أن يتغلّب على كل تصريح، وهو نمط الوصول المعياري (§08). */
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;
@@ -4899,6 +4907,7 @@ tr.is-problem td { color: var(--brand-red); }
         transition-duration: 0.01ms !important;
     }
 }
+/* stylelint-enable declaration-no-important */
 
 /* ==========================================================================
    طبقة «الوضوح الطبي» الحاكمة — تُقرأ أخيرًا فتضبط ما تراكم قبلها.

@@ -105,6 +105,36 @@ class CatalogueTranslationTest extends TestCase
     }
 
     #[Test]
+    public function the_public_pricing_page_carries_no_arabic_for_an_english_reader(): void
+    {
+        $html = $this->get(route('pricing', ['lang' => 'en']))->assertOk()->getContent();
+        $items = $this->listItemsIn($html);
+
+        $this->assertNotEmpty($items, 'الصفحة لم تعرض عناصر باقات أصلًا.');
+
+        /*
+         * فحص الصفحة لا الخدمة: هذه الصفحة تبني قائمة عناصرها بنفسها بدل
+         * `Entitlements`، فترجمة الخدمة وحدها تركتها عربية — واختبارٌ يفحص
+         * الخدمة كان سيمرّ أخضر بينما الشاشة معطوبة.
+         */
+        foreach ($items as $item) {
+            $this->assertDoesNotMatchRegularExpression(
+                '/[\x{0600}-\x{06FF}]/u',
+                $item,
+                "عنصر باقة يصل الزائر الإنجليزي عربيًّا: {$item}",
+            );
+        }
+    }
+
+    /** @return array<int, string> */
+    private function listItemsIn(string $html): array
+    {
+        preg_match_all('/<li[^>]*>([^<]+)<\/li>/u', $html, $matches);
+
+        return array_values(array_filter(array_map('trim', $matches[1] ?? [])));
+    }
+
+    #[Test]
     public function a_label_the_admin_invented_falls_back_to_his_own_words(): void
     {
         $feature = Feature::create([

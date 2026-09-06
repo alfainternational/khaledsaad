@@ -17,6 +17,7 @@ class CreditTransaction extends Model
 
     protected $fillable = [
         'credit_wallet_id', 'tool_run_id', 'type', 'amount', 'balance_after', 'reason',
+        'idempotency_key',
     ];
 
     public function wallet(): BelongsTo
